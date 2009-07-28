@@ -2,7 +2,7 @@
 #include "Client.h"
 #include "math/mathconst.h"
 #include <math.h>
-#include <SDL.h> // FIXME use correct standard path
+#include "SDL.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>

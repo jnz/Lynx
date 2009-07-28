@@ -84,7 +84,7 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 			if(polygon.IsPlanar(this))
 				m_polylist.push_back(polygon);
 			else
-				fprintf(stderr, "BSP: Invalid triangle (%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)\n", 
+				fprintf(stderr, "BSP: Nonplanar triangle (%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)\n", 
 							m_vertices[polygon.vertices[0]].x, 
 							m_vertices[polygon.vertices[0]].y, 
 							m_vertices[polygon.vertices[0]].z, 

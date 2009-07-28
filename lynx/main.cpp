@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include <SDL.h>
+#include "SDL.h"
 #include <time.h>
 #include "Renderer.h"
 #include "Server.h"

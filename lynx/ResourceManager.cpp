@@ -1,6 +1,6 @@
 #include "lynx.h"
-#include <SDL.h>
-#include <SDL_opengl.h>
+#include "SDL.h"
+#include "SDL_opengl.h"
 #include <stdio.h>
 #include "ResourceManager.h"
 

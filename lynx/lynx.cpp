@@ -1,5 +1,5 @@
 #include "lynx.h"
-#include <SDL.h>
+#include "SDL.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
