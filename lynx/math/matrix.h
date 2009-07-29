@@ -41,7 +41,7 @@ public:
 			 float m14, float m24, float m34, float m44);
 
 	bool Inverse(matrix_t* out); // *out can be the matrix itself. this method is btw. not that expensive.
-	float Det();
+	float Det() const;
 
 	void SetZeroMatrix();
 	void SetIdentity();
@@ -58,8 +58,8 @@ public:
 	void SetCamTransform(const vec3_t* position, const vec3_t* angles); // camera ZXY angle order (Inverse of SetTransform)
 	void GetVec3Cam(vec3_t* dir, vec3_t* up, vec3_t* side); // only useful after SetCamTransform
 
-	void MultiplyVec3(vec3_t *pDest, const vec3_t* pV); // pDest = M * pV. pV kann pDest sein
-	void MultiplyVec3Fast(vec3_t *pDest, const vec3_t* pV); // w Komponente in Homogenen Koordinaten wird als 1 angenommen
+	void MultiplyVec3(vec3_t *pDest, const vec3_t* pV) const; // pDest = M * pV. pV kann pDest sein
+	void MultiplyVec3Fast(vec3_t *pDest, const vec3_t* pV) const; // w Komponente in Homogenen Koordinaten wird als 1 angenommen
 
 #ifdef _DEBUG
 	void Print();

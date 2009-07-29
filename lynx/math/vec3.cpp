@@ -143,7 +143,7 @@ vec3_t vec3_t::rand(float mx, float my, float mz)
 	return *this;
 }
 
-vec3_t vec3_t::operator -(void)
+vec3_t vec3_t::operator -(void) const
 {
 	return vec3_t(-x, -y, -z);
 }

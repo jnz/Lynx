@@ -288,7 +288,7 @@ bool matrix_t::Inverse(matrix_t* out)
 	return true;
 }
 
-float matrix_t::Det()
+float matrix_t::Det() const
 {
 	// doom3's determinant
 	float det2_01_12 = m[0][1] * m[1][2] - m[0][2] * m[1][1];
@@ -306,7 +306,7 @@ float matrix_t::Det()
 	return ( - det3_201_123 * m[3][0] + det3_201_023 * m[3][1] - det3_201_013 * m[3][2] + det3_201_012 * m[3][3] );
 }
 
-void matrix_t::MultiplyVec3(vec3_t *pDest, const vec3_t *pV)
+void matrix_t::MultiplyVec3(vec3_t *pDest, const vec3_t *pV) const
 {
 	vec3_t tmp = *pV;
 	float w =	m[0][3]*pV->x + 
@@ -334,7 +334,7 @@ void matrix_t::MultiplyVec3(vec3_t *pDest, const vec3_t *pV)
 
 }
 
-void matrix_t::MultiplyVec3Fast(vec3_t *pDest, const vec3_t *pV)
+void matrix_t::MultiplyVec3Fast(vec3_t *pDest, const vec3_t *pV) const
 {
 	vec3_t tmp = *pV;
 #ifdef _DEBUG

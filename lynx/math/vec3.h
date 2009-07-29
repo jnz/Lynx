@@ -47,7 +47,7 @@ struct vec3_t
 	vec3_t &operator -= ( const vec3_t &v );
 	vec3_t &operator *= ( const float &f );
 	vec3_t &operator /= ( const float &f );
-	vec3_t  operator -  (void);
+	vec3_t  operator -  (void) const;
 };
 
 float vabs(vec3_t v);
