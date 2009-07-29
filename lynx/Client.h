@@ -2,9 +2,8 @@
 
 #include <enet/enet.h>
 #include "WorldClient.h"
-#include "Observer.h"
 
-class CClient : public CObserver
+class CClient
 {
 public:
 	CClient(CWorldClient* world);
@@ -24,8 +23,6 @@ protected:
 	void InputMouseMove(int dx, int dy);
 	void InputCalcDir();
 	CObj* GetLocalObj();
-
-	void NotifyError(int error);
 
 private:
 	ENetHost* m_client;

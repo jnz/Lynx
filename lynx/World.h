@@ -4,14 +4,13 @@ class CWorld;
 #include <map>
 #include <list>
 #include "Obj.h"
-#include "Subject.h"
 #include "ResourceManager.h"
 #include "BSPTree.h"
 
 #define OBJMAPTYPE	std::map<int, CObj*>
 #define OBJITER		std::map<int, CObj*>::iterator
 
-class CWorld : public CSubject
+class CWorld
 {
 public:
 	CWorld(void);
@@ -19,7 +18,7 @@ public:
 
 	virtual void Update(const float dt); // Neues Frame berechnen
 
-	void	AddObj(CObj* obj); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
+	void	AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
 	void	DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht
 	
 	CObj*	GetObj(int objid); // Objekt mit dieser ID suchen

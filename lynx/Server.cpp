@@ -8,34 +8,6 @@
 
 #define MAXCLIENTS			8
 #define SERVER_UPDATETIME	500
-enum clientstate_t {
-		S0_CLIENT_CONNECTED=0, 
-		S1_CLIENT_SENDING_WORLD
-		};
-
-class CClientInfo
-{
-public:
-	CClientInfo(ENetPeer* peer)
-	{
-		m_id = ++m_idpool;
-		m_peer = peer;
-		m_state = S0_CLIENT_CONNECTED;
-		m_obj = 0;
-	}
-
-	int GetID() { return m_id; }
-	ENetPeer* GetPeer() { return m_peer; }
-
-	clientstate_t m_state;
-	int m_obj; // Objekt in Welt, das diesen Client repräsentiert
-
-private:
-	int m_id;
-	ENetPeer* m_peer;
-	static int m_idpool;
-};
-int CClientInfo::m_idpool = 0;
 
 CServer::CServer(CWorld* world)
 {
@@ -96,9 +68,14 @@ void CServer::Update(const float dt)
                     event.peer->address.port);
 
             clientinfo = new CClientInfo(event.peer);
+			
+			// Fire Event
+			EventNewClientConnected e;
+			e.client = clientinfo;
+			NotifyAll(e);
+
 			event.peer->data = clientinfo;
 			m_clientlist[clientinfo->GetID()] = clientinfo;
-
 			success = SendWorldToClient(clientinfo);
 			assert(success);
 			// FIXME
@@ -146,17 +123,23 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 	ENetPacket* packet;
 	int reqsize = m_world->Serialize(true, NULL);
 	assert(reqsize > 0);
+	int localobj = client->m_obj;
 
-	if(!stream.Resize(reqsize+CNetMsg::MaxHeaderLen()))
+	if(!stream.Resize(reqsize+CNetMsg::MaxHeaderLen()+sizeof(localobj)))
 		return false;
 
 	CNetMsg::WriteHeader(&stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
+	stream.WriteDWORD(localobj);
 	if(m_world->Serialize(true, &stream) != reqsize)
+	{
+		assert(0);
 		return false;
+	}
 
 	packet = enet_packet_create(stream.GetBuffer(), 
 								stream.GetBytesWritten(), 
 								ENET_PACKET_FLAG_RELIABLE);
+	assert(packet);
 	if(!packet)
 		return false;
 

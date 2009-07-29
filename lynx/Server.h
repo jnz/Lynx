@@ -3,10 +3,11 @@
 #include <enet/enet.h>
 #include <map>
 #include "World.h"
+#include "ClientInfo.h"
+#include "Subject.h"
+#include "Events.h"
 
-class CClientInfo;
-
-class CServer
+class CServer : public CSubject<EventNewClientConnected>
 {
 public:
 	CServer(CWorld* world);

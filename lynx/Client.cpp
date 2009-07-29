@@ -21,19 +21,12 @@ CClient::CClient(CWorldClient* world)
 	m_backward = 0;
 	m_strafe_left = 0;
 	m_strafe_right = 0;
-
-	world->AddObserver(this);
 }
 
 CClient::~CClient(void)
 {
 	Shutdown();
 	enet_deinitialize();
-}
-
-void CClient::NotifyError(int error)
-{
-	Shutdown();
 }
 
 bool CClient::Connect(char* server, int port)
@@ -124,12 +117,15 @@ void CClient::Update(const float dt)
 void CClient::OnReceive(CStream* stream)
 {
 	BYTE type;
+	DWORD localobj;
 
 	type = CNetMsg::ReadHeader(stream);
 	switch(type)
 	{
 	case NET_MSG_SERIALIZE_WORLD:
+		stream->ReadDWORD(&localobj);
 		m_world->Serialize(false, stream);
+		m_world->SetLocalObj(localobj);
 		break;
 	case NET_MSG_UPDATE_WORLD:
 		m_world->SerializePositions(false, stream, 0, 0, 0);

@@ -192,7 +192,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ClientInfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Frustum.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameLogic.cpp"
 				>
 			</File>
 			<File
@@ -246,7 +254,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ClientInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Events.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Frustum.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameLogic.h"
 				>
 			</File>
 			<File
@@ -343,18 +363,6 @@
 		<Filter
 			Name="ObserverPattern"
 			>
-			<File
-				RelativePath=".\Observer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Observer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Subject.cpp"
-				>
-			</File>
 			<File
 				RelativePath=".\Subject.h"
 				>

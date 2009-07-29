@@ -6,14 +6,15 @@
 #include "Server.h"
 #include "Client.h"
 #include "WorldClient.h"
+#include "GameLogic.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define SCREEN_WIDTH		640
-#define SCREEN_HEIGHT		480
+#define SCREEN_WIDTH		800
+#define SCREEN_HEIGHT		600
 #define BPP					32
 #define FULLSCREEN			0
 
@@ -33,6 +34,9 @@ int main(int argc, char** argv)
 	CRenderer renderer(&worldcl); // View
 	CServer server(&worldsv); // Controller
 	CClient client(&worldcl); // Controller
+	CGameLogic svgame(&worldsv); // Controller
+
+	server.AddObserver(&svgame);
 
 	if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
 		return -1;

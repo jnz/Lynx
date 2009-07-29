@@ -18,12 +18,15 @@ CWorld::~CWorld(void)
 	DeleteAllObjs();
 }
 
-void CWorld::AddObj(CObj* obj)
+void CWorld::AddObj(CObj* obj, bool inthisframe)
 {
 	assert(obj && !GetObj(obj->GetID()));
 	assert(GetObjCount() < USHRT_MAX);
 
-	m_addobj.push_back(obj);
+	if(inthisframe)
+		m_objlist[obj->GetID()] = obj;
+	else
+		m_addobj.push_back(obj);
 }
 
 void CWorld::DelObj(int objid)
@@ -264,7 +267,7 @@ int CWorld::Serialize(bool write, CStream* stream)
 		if(level != "")
 			if(m_bsptree.Load(level)==false)
 			{
-				NotifyError(0);
+				// FIXME error handling
 				return 0;
 			}
 
@@ -286,7 +289,7 @@ int CWorld::Serialize(bool write, CStream* stream)
 
 					DeleteAllObjs();
 					m_bsptree.Unload();
-					NotifyError(0);
+					// FIXME error handling
 					return 0;
 				}
 			}
@@ -296,9 +299,10 @@ int CWorld::Serialize(bool write, CStream* stream)
 		{
 			DeleteAllObjs();
 			m_bsptree.Unload();
-			NotifyError(0);
+			// FIXME error handling
 			return 0;
 		}
+		UpdatePendingObjs();
 	}
 
 	return size;
