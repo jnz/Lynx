@@ -9,18 +9,22 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+#define CLIENT_UPDATERATE   50
+
 CClient::CClient(CWorldClient* world)
 {
 	m_world = world;
 	enet_initialize();
 	m_client = NULL;
 	m_server = NULL;
-	m_isconnecting = NULL;
+	m_isconnecting = false;
 
 	m_forward = 0;
 	m_backward = 0;
 	m_strafe_left = 0;
 	m_strafe_right = 0;
+
+    m_lastupdate = CLynx::GetTicks();
 }
 
 CClient::~CClient(void)
@@ -49,6 +53,7 @@ bool CClient::Connect(char* server, int port)
 		Shutdown();
 		return false;
 	}
+    m_isconnecting = true;
 
 	return true;
 }
@@ -102,16 +107,38 @@ void CClient::Update(const float dt)
 		}
 	}
 
+    DWORD ticks = CLynx::GetTicks();
+    if(ticks - m_lastupdate > CLIENT_UPDATERATE && IsConnected())
+    {
+        ENetPacket* packet;
+        CObj* localctrl = GetLocalController();
+        CStream stream(128);
+        CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
+        stream.WriteVec3(localctrl->GetOrigin());
+        stream.WriteVec3(localctrl->GetVel());
+        stream.WriteVec3(localctrl->GetRot());
+        
+    	packet = enet_packet_create(stream.GetBuffer(), 
+								    stream.GetBytesWritten(), 0);
+	    assert(packet);
+	    if(packet)
+        {
+	        int success = enet_peer_send(m_server, 0, packet);
+            assert(success == 0);
+        }
+        m_lastupdate = ticks;
+    }
+
 	// FIXME: no SDL code here
 	int dx, dy;
 	BYTE* keystate = CLynx::GetKeyState();
 	CLynx::GetMouseDelta(&dx, &dy);
 	m_forward = !!(keystate[SDLK_UP] | keystate[SDLK_w]);
 	m_backward = !!(keystate[SDLK_DOWN] | keystate[SDLK_s]);
-	m_strafe_left = !!(keystate[SDLK_LEFT] | keystate[SDLK_a]);
-	m_strafe_right = !!(keystate[SDLK_RIGHT] | keystate[SDLK_d]);
-	InputMouseMove(dx, dy);
-	InputCalcDir();
+    m_strafe_left = !!(keystate[SDLK_LEFT] | keystate[SDLK_a]);
+    m_strafe_right = !!(keystate[SDLK_RIGHT] | keystate[SDLK_d]);
+    InputMouseMove(dx, dy);
+    InputCalcDir();
 }
 
 void CClient::OnReceive(CStream* stream)
@@ -127,9 +154,6 @@ void CClient::OnReceive(CStream* stream)
 		m_world->Serialize(false, stream);
 		m_world->SetLocalObj(localobj);
 		break;
-	case NET_MSG_UPDATE_WORLD:
-		m_world->SerializePositions(false, stream, 0, 0, 0);
-		break;
 	case NET_MSG_INVALID:
 	default:
 		assert(0);
@@ -138,9 +162,9 @@ void CClient::OnReceive(CStream* stream)
 
 void CClient::InputMouseMove(int dx, int dy)
 {
-	CObj* obj = GetLocalObj();
+	CObj* obj = GetLocalController();
 	const float sensitivity = 0.5f; // FIXME
-	vec3_t rot = obj->pos.rot;
+	vec3_t rot = obj->GetRot();
 
 	rot.v[0] += (float)dy * sensitivity;
 	if(rot.v[0] >= 89)
@@ -150,28 +174,29 @@ void CClient::InputMouseMove(int dx, int dy)
 
 	rot.v[1] -= (float)dx * sensitivity;
 	rot.v[1] = CLynx::AngleMod(rot.v[1]);
-	obj->pos.rot = rot;
+	obj->SetRot(rot);
 }
 
 void CClient::InputCalcDir()
 {
-	CPosition* pos;
+	vec3_t velocity, rot;
 	vec3_t dir, side;
 	vec3_t newdir(0,0,0);
 
-	pos = &GetLocalObj()->pos;
-	vec3_t::AngleVec3(pos->rot, &dir, NULL, &side);
+    velocity = GetLocalController()->GetVel();
+    rot = GetLocalController()->GetRot();
+	vec3_t::AngleVec3(rot, &dir, NULL, &side);
 
 	newdir += (float)m_forward * dir;
 	newdir -= (float)m_backward * dir;
 	newdir -= (float)m_strafe_left * side;
 	newdir += (float)m_strafe_right * side;
-	pos->velocity = newdir;
+	GetLocalController()->SetVel(newdir);
 }
 
-CObj* CClient::GetLocalObj()
+CObj* CClient::GetLocalController()
 {
-	return m_world->GetLocalObj();
+	return m_world->GetLocalController();
 }
 
 /*

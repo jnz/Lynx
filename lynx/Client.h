@@ -22,7 +22,7 @@ protected:
 
 	void InputMouseMove(int dx, int dy);
 	void InputCalcDir();
-	CObj* GetLocalObj();
+	CObj* GetLocalController();
 
 private:
 	ENetHost* m_client;
@@ -36,4 +36,6 @@ private:
 	int m_strafe_right;
 
 	CWorldClient* m_world;
+
+    DWORD m_lastupdate;
 };

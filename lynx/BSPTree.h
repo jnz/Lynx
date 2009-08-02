@@ -88,7 +88,7 @@ public:
 		};
 
 		void					CalculateSphere(CBSPTree* tree, std::vector<bsp_poly_t>& polygons);
-		bool					IsLeaf() { return !front && !back; }
+		bool					IsLeaf() const { return !front && !back; }
 
 		plane_t					plane;
 		float					sphere; // sphere radius
@@ -110,9 +110,7 @@ public:
 	void		ClearMarks(CBSPNode* node);
 	void		MarkLeaf(const vec3_t& pos, float radius, CBSPNode* node);
 	CBSPNode*	GetLeaf(const vec3_t& pos);
-	// Temp. Stat Variable (FIXME)
-	int			GetLeafCount() { return m_leafcount; }
-	int			m_visited;
+	int			GetLeafCount() const { return m_leafcount; }
 
 private:
 	int			m_nodecount; // increased by every CBSPNode constructor

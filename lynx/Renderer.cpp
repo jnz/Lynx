@@ -15,18 +15,16 @@
 #define PLANE_FAR		10000.0f
 
 //#define DRAWFRUSTUM
-//#define DRAW_BBOX
 
 // Local Render Functions
-#ifdef DRAW_BBOX
-void DrawBBox(const vec3_t& min, const vec3_t& max);
-#endif
 #ifdef DRAWFRUSTUM
 static void RenderFrustum(void* frustum);
 #endif
-static void BSP_RenderTree(CBSPTree* tree, 
-						   vec3_t* origin, 
-						   CFrustum* frustum);
+static void BSP_RenderTree(const CBSPTree* tree, 
+						   const vec3_t* origin, 
+						   CFrustum* frustum,
+                           int* leafs_visited);
+
 static void RenderCube();
 
 #define COLORLEAFS
@@ -137,8 +135,8 @@ void CRenderer::Update(const float dt)
 	CFrustum frustum;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	obj = m_world->GetLocalObj();
-	m.SetCamTransform(&(obj->pos.origin+obj->GetEyePos()), &obj->pos.rot);
+    obj = m_world->GetLocalController();
+	m.SetCamTransform(&(obj->GetOrigin()+obj->GetEyePos()), &obj->GetRot());
 	m.GetVec3Cam(&dir, &up, &side);
 	glLoadMatrixf(m.pm);
 
@@ -155,7 +153,7 @@ void CRenderer::Update(const float dt)
 				  PLANE_NEAR, 
 				  PLANE_FAR);
 #else
-	frustum.Setup(obj->pos.origin+obj->GetEyePos(), dir, up, side, 
+	frustum.Setup(obj->GetOrigin()+obj->GetEyePos(), dir, up, side, 
 				  obj->GetFOV(), (float)m_width/(float)m_height,
 				  PLANE_NEAR, 
 				  PLANE_FAR); 
@@ -164,21 +162,24 @@ void CRenderer::Update(const float dt)
 
 	stat_obj_hidden = 0;
 	stat_obj_visible = 0;
+    stat_bsp_leafs_visited = 0;
 
 	glBindTexture(GL_TEXTURE_2D, 
 		m_world->m_resman.GetTexture(CLynx::GetBaseDirLevel() + "testlvl/wall.tga"));
 #ifdef DRAWFRUSTUM
-	BSP_RenderTree(&m_world->m_bsptree, &lastpos.origin, &frustum);
+	BSP_RenderTree(&m_world->m_bsptree, &lastpos.origin, &frustum, &stat_bsp_leafs_visited);
 #else
-	BSP_RenderTree(&m_world->m_bsptree, &obj->pos.origin, &frustum);
+	BSP_RenderTree(m_world->GetBSP(), &obj->GetOrigin(), &frustum, &stat_bsp_leafs_visited);
 #endif
 
 	glEnable(GL_LIGHTING);
 	for(iter=m_world->ObjBegin();iter!=m_world->ObjEnd();iter++)
 	{
 		obj = (*iter).second;
+        if(obj->GetID() == m_world->GetLocalObj()->GetID())
+            continue;
 
-		if(!frustum.TestSphere(obj->pos.origin, obj->GetRadius()))
+		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
 		{
 			stat_obj_hidden++;
 			continue;
@@ -186,13 +187,8 @@ void CRenderer::Update(const float dt)
 		stat_obj_visible++;
 
 		glPushMatrix();
-		glTranslatef(obj->pos.origin.x, obj->pos.origin.y, obj->pos.origin.z);
-#ifdef DRAW_BBOX
-		vec3_t min, max;
-		obj->GetAABB(&min, &max);
-		DrawBBox(min, max);
-#endif
-		glMultMatrixf(obj->pos.m.pm);
+		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+		glMultMatrixf(obj->m.pm);
 		if(obj->m_mesh)
 		{
 			obj->m_mesh->Render(&obj->m_mesh_state);
@@ -232,8 +228,8 @@ void CRenderer::UpdatePerspective()
 	glLoadIdentity();
 }
 
-void BSP_RenderPolygons(CBSPTree* tree, 
-						std::vector<bsp_poly_t>& polylist)
+void BSP_RenderPolygons(const CBSPTree* tree, 
+						const std::vector<bsp_poly_t>& polylist)
 {
 	int c;
 	int t;
@@ -243,11 +239,10 @@ void BSP_RenderPolygons(CBSPTree* tree,
 	int vi, ni, ti;
 
 	assert(polycount > 0);
-	tree->m_visited++;
 
 	for(c=0;c<polycount;c++)
 	{
-		poly = &polylist[c];
+		poly = (bsp_poly_t*)&polylist[c];
 		tcount = (int)poly->vertices.size();
 /*
 #ifdef COLORLEAFS
@@ -274,10 +269,11 @@ void BSP_RenderPolygons(CBSPTree* tree,
 /*
 	In-order BSP Tree walking
 */
-void BSP_RenderNode(CBSPTree* tree, 
-					CBSPTree::CBSPNode* node, 
-					vec3_t* pos, 
-					CFrustum* frustum)
+void BSP_RenderNode(const CBSPTree* tree, 
+					const CBSPTree::CBSPNode* node, 
+					const vec3_t* pos, 
+					CFrustum* frustum,
+                    int* leafs_visited)
 {
 	if(!frustum->TestSphere(node->sphere_origin, node->sphere))
 		return;
@@ -293,6 +289,7 @@ void BSP_RenderNode(CBSPTree* tree,
 		else
 			glColor3f(1,1,1);*/
 		BSP_RenderPolygons(tree, node->polylist);
+        (*leafs_visited)++;
 		return;
 	}
 
@@ -300,31 +297,31 @@ void BSP_RenderNode(CBSPTree* tree,
 	{
 	case POINTPLANE_FRONT:
 		if(node->back)
-			BSP_RenderNode(tree, node->back, pos, frustum);
+			BSP_RenderNode(tree, node->back, pos, frustum, leafs_visited);
 		if(node->front)
-			BSP_RenderNode(tree, node->front, pos, frustum);
+			BSP_RenderNode(tree, node->front, pos, frustum, leafs_visited);
 		break;
 	case POINTPLANE_BACK:
 	case POINT_ON_PLANE:
 		if(node->front)
-			BSP_RenderNode(tree, node->front, pos, frustum);
+			BSP_RenderNode(tree, node->front, pos, frustum, leafs_visited);
 		if(node->back)
-			BSP_RenderNode(tree, node->back, pos, frustum);
+			BSP_RenderNode(tree, node->back, pos, frustum, leafs_visited);
 		break;
 	}
 }
 
-void BSP_RenderTree(CBSPTree* tree, vec3_t* origin, CFrustum* frustum)
+void BSP_RenderTree(const CBSPTree* tree, const vec3_t* origin, CFrustum* frustum, int* leafs_visited)
 {
 	if(!tree || !tree->m_root)
 		return;
 
 	//tree->ClearMarks(tree->m_root);
 	//tree->MarkLeaf(frustum->pos, 10, tree->m_root);
-	tree->m_visited = 0;
+    *leafs_visited = 0;
 	
 	glDepthFunc(GL_ALWAYS); // We do this, because the tree is already sorted, but we need the z-buffer info for the models
-	BSP_RenderNode(tree, tree->m_root, origin, frustum);
+	BSP_RenderNode(tree, tree->m_root, origin, frustum, leafs_visited);
 	glDepthFunc(GL_LEQUAL);
 }
 

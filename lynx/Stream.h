@@ -19,19 +19,20 @@ public:
 	// WRITE FUNCTIONS
 	void ResetWritePosition(); // Reset write pointer to start
 	int GetSpaceLeft(); // Bytes left to write
-	int GetBytesWritten(); // written bytes
+	int GetBytesWritten() const; // written bytes
 	void WriteDWORD(DWORD value);
 	void WriteInt32(INT32 value);
 	void WriteInt16(INT16 value);
 	void WriteWORD(WORD value);
 	void WriteBYTE(BYTE value);
 	void WriteFloat(float value);
-	void WriteAngle3(vec3_t* value); // 3 Bytes
-	void WritePos6(vec3_t* value); // 6 Bytes
+	void WriteAngle3(const vec3_t& value); // 3 Bytes
+	void WritePos6(const vec3_t& value); // 6 Bytes
 	void WriteFloat2(float value); // 2 Byte
-	void WriteVec3(vec3_t* value);
-	void WriteBytes(BYTE* values, int len);
+	void WriteVec3(const vec3_t& value);
+	void WriteBytes(const BYTE* values, int len);
 	WORD WriteString(const std::string& value); // Max Str len: 0xffff. return written bytes
+    void WriteStream(const CStream& stream);
 	
 	static size_t StringSize(const std::string& value); // size in bytes the string would occupy in the stream
 

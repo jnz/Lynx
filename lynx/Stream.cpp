@@ -22,6 +22,7 @@ CStream::CStream(int size)
 	m_position = 0;
 	m_used = 0;
 	m_foreign = false;
+    m_buffer = NULL;
 	if(!Resize(size))
 		CStream();
 }
@@ -94,7 +95,7 @@ int CStream::GetSpaceLeft()
 	return m_size - m_used;
 }
 
-int CStream::GetBytesWritten()
+int CStream::GetBytesWritten() const
 {
 	return m_used;
 }
@@ -156,18 +157,18 @@ void CStream::WriteFloat(float value)
 	m_used += sizeof(value);
 }
 
-void CStream::WriteAngle3(vec3_t* value)
+void CStream::WriteAngle3(const vec3_t& value)
 {
-	WriteBYTE((BYTE)(value->x*256/360) & 255);
-	WriteBYTE((BYTE)(value->y*256/360) & 255);
-	WriteBYTE((BYTE)(value->z*256/360) & 255);
+	WriteBYTE((BYTE)(value.x*256/360) & 255);
+	WriteBYTE((BYTE)(value.y*256/360) & 255);
+	WriteBYTE((BYTE)(value.z*256/360) & 255);
 }
 
-void CStream::WritePos6(vec3_t* value)
+void CStream::WritePos6(const vec3_t& value)
 {
-	WriteInt16((INT16)(value->x*8.0f));
-	WriteInt16((INT16)(value->y*8.0f));
-	WriteInt16((INT16)(value->z*8.0f));
+	WriteInt16((INT16)(value.x*8.0f));
+	WriteInt16((INT16)(value.y*8.0f));
+	WriteInt16((INT16)(value.z*8.0f));
 }
 
 void CStream::WriteFloat2(float value)
@@ -175,14 +176,14 @@ void CStream::WriteFloat2(float value)
 	WriteInt16((INT16)(value*8.0f));
 }
 
-void CStream::WriteVec3(vec3_t* value)
+void CStream::WriteVec3(const vec3_t& value)
 {
-	WriteFloat(value->v[0]);
-	WriteFloat(value->v[1]);
-	WriteFloat(value->v[2]);
+	WriteFloat(value.v[0]);
+	WriteFloat(value.v[1]);
+	WriteFloat(value.v[2]);
 }
 
-void CStream::WriteBytes(BYTE* values, int len)
+void CStream::WriteBytes(const BYTE* values, int len)
 {
 	assert(m_used + len <= m_size);
 	memcpy(m_buffer+m_used, values, len);
@@ -198,6 +199,12 @@ WORD CStream::WriteString(const std::string& value)
 	WriteWORD(len);
 	WriteBytes((BYTE*)value.c_str(), len);
 	return sizeof(WORD) + len;
+}
+
+void CStream::WriteStream(const CStream& stream)
+{
+    assert(stream.GetBytesWritten() > 0);
+    WriteBytes(stream.m_buffer, stream.GetBytesWritten());
 }
 
 size_t CStream::StringSize(const std::string& value)

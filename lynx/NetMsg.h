@@ -17,14 +17,10 @@ public:
 #define NET_MAGIC				0x5		// 101 (binary)
 
 #define NET_MSG_INVALID			0
-#define NET_MSG_CONNECT			1
-#define NET_MSG_CLIENT_INFO		2
-#define NET_MSG_SERVER_INFO		3
-#define NET_MSG_SERIALIZE_WORLD	4
-#define NET_MSG_UPDATE_WORLD	5
-#define NET_MSG_CLIENT_KEY		6
+#define NET_MSG_SERIALIZE_WORLD	1
+#define NET_MSG_CLIENT_CTRL     2
 
-#define NET_MSG_MAX				7 // make this the largest number
+#define NET_MSG_MAX				3 // make this the largest number
 
 /*
 #pragma pack(push, 1)

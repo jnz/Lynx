@@ -6,8 +6,10 @@
 #include "ClientInfo.h"
 #include "Subject.h"
 #include "Events.h"
+#include "Stream.h"
 
-class CServer : public CSubject<EventNewClientConnected>
+class CServer : public CSubject<EventNewClientConnected>,
+                public CSubject<EventClientDisconnected>
 {
 public:
 	CServer(CWorld* world);
@@ -20,7 +22,7 @@ public:
 
 protected:
 	bool SendWorldToClient(CClientInfo* client);
-	bool SendDeltaWorldToClient(CClientInfo* client);
+	void OnReceive(CStream* stream, CClientInfo* client);
 
 private:
 	ENetHost* m_server;
@@ -28,4 +30,6 @@ private:
 
 	DWORD m_lastupdate;
 	CWorld* m_world;
+
+  	CStream m_stream; // damit buffer nicht jedesmal neu erstellt werden muss
 };

@@ -19,6 +19,7 @@ int CNetMsg::ReadHeader(CStream* stream)
 	stream->ReadBYTE(&magic);
 	stream->ReadBYTE(&type);
 
+    assert(magic == NET_MAGIC && type > NET_MSG_INVALID && type < NET_MSG_MAX);
 	if(magic == NET_MAGIC && type > NET_MSG_INVALID && type < NET_MSG_MAX)
 		return type;
 	else

@@ -16,6 +16,7 @@ public:
 	// Public Stats (FIXME)
 	int stat_obj_visible;
 	int stat_obj_hidden;
+    int stat_bsp_leafs_visited;
 
 protected:
 	void UpdatePerspective();

@@ -4,13 +4,15 @@
 #include "Events.h"
 #include "World.h"
 
-class CGameLogic : public CObserver<EventNewClientConnected>
+class CGameLogic : public CObserver<EventNewClientConnected>,
+	               public CObserver<EventClientDisconnected>
 {
 public:
 	CGameLogic(CWorld* world);
 	~CGameLogic(void);
 
 	void Notify(EventNewClientConnected);
+	void Notify(EventClientDisconnected);
 
 private:
 	CWorld* m_world;

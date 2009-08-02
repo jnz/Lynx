@@ -1,5 +1,7 @@
 #pragma once
 #include <enet/enet.h>
+//#include "World.h"
+//#include <list>
 
 enum clientstate_t {
 		S0_CLIENT_CONNECTED=0, 
@@ -22,6 +24,8 @@ public:
 
 	clientstate_t m_state;
 	int m_obj; // Objekt in Welt, das diesen Client repräsentiert
+
+    //std::list<world_state_t> worldstates;
 
 private:
 	int m_id;

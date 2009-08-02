@@ -6,3 +6,8 @@ struct EventNewClientConnected
 {
 	CClientInfo* client;
 };
+
+struct EventClientDisconnected
+{
+	CClientInfo* client;
+};

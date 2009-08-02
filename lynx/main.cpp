@@ -36,7 +36,8 @@ int main(int argc, char** argv)
 	CClient client(&worldcl); // Controller
 	CGameLogic svgame(&worldsv); // Controller
 
-	server.AddObserver(&svgame);
+    ((CSubject<EventNewClientConnected>*)&server)->AddObserver(&svgame);
+    ((CSubject<EventClientDisconnected>*)&server)->AddObserver(&svgame);
 
 	if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
 		return -1;
@@ -50,18 +51,18 @@ int main(int argc, char** argv)
 
 	CObj* obj;
 	obj = new CObj(&worldsv);
-	obj->pos.origin = vec3_t(-45.0f, 8.0f, 0);
+	obj->SetOrigin(vec3_t(-45.0f, 8.0f, 0));
 	obj->SetSpeed(6.0f);
-	obj->pos.velocity = vec3_t(0.0f, 0, 0.0f);
-	obj->pos.rot.y = 270;
+	obj->SetVel(vec3_t(0.0f, 0, 0.0f));
+	obj->SetRot(vec3_t(0,270,0));
 	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
 	//obj->SetResource(CLynx::GetBaseDirModel() + "q2/tris2.md2");
 	obj->SetAnimation("default");
 	worldsv.AddObj(obj);
 
-	worldsv.m_bsptree.Load(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
+    worldsv.LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
 
-	if(!client.Connect("localhost", 9999))
+	if(!client.Connect("192.168.168.132", 9999))
 	{
 		fprintf(stderr, "Failed to connect to server\n");
 		assert(0);
@@ -83,7 +84,7 @@ int main(int argc, char** argv)
 		{
 			char title[128];
 			sprintf(title, "lynx (FPS: %i) vis: %i/%i bsp-leafes: %i/%i", 
-				fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden, worldcl.m_bsptree.m_visited, worldcl.m_bsptree.GetLeafCount());
+                fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden, renderer.stat_bsp_leafs_visited, worldcl.GetBSP()->GetLeafCount());
 			SDL_WM_SetCaption(title, NULL);
 			fpscounter = 0;
 			fpstimer = time;

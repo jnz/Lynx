@@ -2,6 +2,7 @@
 #include "math/mathconst.h"
 #include "World.h"
 #include <math.h>
+#include <list>
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -10,7 +11,9 @@
 
 CWorld::CWorld(void)
 {
-
+    state.worldid = 0;
+    m_leveltimestart = CLynx::GetTicks();
+    state.leveltime = 0;
 }
 
 CWorld::~CWorld(void)
@@ -59,6 +62,12 @@ void CWorld::Update(const float dt)
 	OBJITER iter;
 	CObj* obj;
 
+    if(!IsClient())
+    {
+        state.leveltime = CLynx::GetTicks() - m_leveltimestart;
+        state.worldid++;
+    }
+
 	UpdatePendingObjs();
 
 	if(!m_bsptree.m_root)
@@ -67,8 +76,8 @@ void CWorld::Update(const float dt)
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 	{
 		obj = (*iter).second;
-		obj->pos.velocity.SetLength(obj->GetSpeed());
-		assert(obj->GetSpeed() > 0);
+		//obj->GetVel().SetLength(obj->GetSpeed());
+		//assert(obj->GetSpeed() > 0);
 		ObjCollision(obj, dt);
 	}
 	m_bsptree.ClearMarks(m_bsptree.m_root);
@@ -94,7 +103,7 @@ void ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t* out, float ove
 #define MAX_CLIP_PLANES		5
 void CWorld::ObjCollision(CObj* obj, float dt)
 {
-	obj->pos.origin += obj->pos.velocity * dt;
+    obj->SetOrigin(obj->GetOrigin() + obj->GetVel() * dt);
 	/*
 	vec3_t planes[MAX_CLIP_PLANES];
 	vec3_t newpos;
@@ -221,151 +230,139 @@ void CWorld::UpdatePendingObjs()
 	}
 }
 
-int CWorld::Serialize(bool write, CStream* stream)
+bool CWorld::LoadLevel(const std::string path)
 {
+    bool success = m_bsptree.Load(path);
+    if(success)
+        state.level = path;
+    return success;
+}
+
+// DELTA COMPRESSION CODE (ugly atm) ------------------------------------
+
+#define WORLD_STATE_WORLDID     (1 <<  0)
+#define WORLD_STATE_LEVELTIME   (1 <<  1)
+#define WORLD_STATE_LEVEL       (1 <<  2)
+
+#define WORLD_STATE_FULLUPDATE  ((1 <<  3)-1)
+
+void CWorld::Serialize(bool write, CStream* stream, world_state_t* oldstate)
+{
+    assert(stream);
 	int size = 0;
 	CObj* obj;
+    OBJITER iter;
 
 	if(write)
 	{
-		OBJITER iter;
-		WORD reqsize;
+        DWORD updateflags = 0;
+        CStream tempstream(16384); // FIXME, das geht eleganter, ohne den tempstream. würde ein memcpy sparen wenn man den platz für die updateflags spart und hinterher mit dem korrekten wert füllt
 
-		if(stream)
-		{
-			stream->WriteDWORD((DWORD)GetObjCount());
-			stream->WriteString(m_bsptree.GetFilename());
-		}
-		size += sizeof(DWORD);
-		size += (int)CStream::StringSize(m_bsptree.GetFilename());
+        // Zuerst in tempstream schreiben um gleichzeitig die updateflags zu erkennen
+        DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, &tempstream);
+        DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, &tempstream);
+        DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, &tempstream);
 
+        stream->WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
+        stream->WriteStream(tempstream);
+
+        assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // muss zwingend eingehalten werden
+
+        // Alle Objekte schreiben
+        assert(GetObjCount() < USHRT_MAX);
+        stream->WriteWORD((WORD)GetObjCount());
+
+        obj_state_t* obj_oldstate;
 		for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 		{
 			obj = (*iter).second;
-			reqsize = obj->Serialize(true, NULL);
-			size += reqsize+sizeof(WORD); // +2 für reqsize
-			assert(reqsize <= USHRT_MAX);
-			if(stream)
-			{
-				stream->WriteWORD(reqsize);
-				obj->Serialize(true, stream);
-			}
+            obj_oldstate = NULL;
+            if(oldstate) // Delta Compression
+            {
+                std::map<int,int>::iterator indexiter = oldstate->objindex.find(obj->GetID());
+                if(indexiter  != oldstate->objindex.end())
+                    obj_oldstate = &oldstate->objstates[(*indexiter ).second];
+            }
+            stream->WriteWORD(obj->GetID()); // FIXME wird damit doppelt geschrieben
+            obj->Serialize(true, stream, obj_oldstate);
 		}
 	}
 	else
 	{
-		assert(stream);
-		DWORD objcount;
-		WORD objsize, objsizeread;
-		std::string level;
+        DWORD updateflags;
+        DWORD worldid;
+        std::string level;
+        WORD objcount;
+        WORD objid;
 
-		DeleteAllObjs();
+        stream->ReadDWORD(&updateflags);
+        assert(updateflags > 0);
+        assert(updateflags & WORLD_STATE_WORLDID); // erscheint mir sonst falsch
+        if(updateflags & WORLD_STATE_WORLDID)
+            stream->ReadDWORD(&worldid);
+        if(worldid < state.worldid)
+        {
+            assert(0); // anschauen, ob ok
+            return;
+        }
+        state.worldid = worldid;
+        if(updateflags & WORLD_STATE_LEVELTIME)
+            stream->ReadDWORD(&state.leveltime);
+        if(updateflags & WORLD_STATE_LEVEL)
+        {
+            stream->ReadString(&level);
+            assert(level.size() > 0);
+            if(level != m_bsptree.GetFilename())
+            {
+                if(m_bsptree.Load(level)==false)
+			    {
+    				// FIXME error handling
+				    return;
+			    }
+            }
+        }
+	   
+        stream->ReadWORD(&objcount);
+        assert(objcount < USHRT_MAX);
+        std::map<int,int> objread; // objekte die gelesen wurden, was hier nicht steht, muss gelöscht werden
+        for(int i=0;i<objcount;i++)
+        {
+            stream->ReadWORD(&objid);
+            obj = GetObj(objid);
+            if(!obj)
+            {
+                obj = new CObj(this);
+                obj->Serialize(false, stream);
+                AddObj(obj);
+            }
+            else
+                obj->Serialize(false, stream);
+            objread[obj->GetID()] = obj->GetID();
+        }
+        // Alle Objekte löschen, die in dem neuen State nicht mehr vorhanden sind
+        for(iter=m_objlist.begin();iter!=m_objlist.end();iter++)
+        {
+            obj = (*iter).second;
+            if(objread.find(obj->GetID()) != objread.end())
+                continue;
+            assert(0); // nur mal zum sehen, ob hier alles klappt. danach zeile löschen
+            DelObj(obj->GetID());
+        }
 
-		stream->ReadDWORD(&objcount);
-		stream->ReadString(&level);
-		fprintf(stderr, "Obj count: %i\n", objcount);
-		if(level != "")
-			if(m_bsptree.Load(level)==false)
-			{
-				// FIXME error handling
-				return 0;
-			}
-
-		while(stream->GetBytesToRead() > 0)
-		{
-			stream->ReadWORD(&objsize);
-			assert(stream->GetBytesToRead() >= objsize);
-			if(stream->GetBytesToRead() >= objsize)
-			{
-				obj = new CObj(this);
-				objsizeread = obj->Serialize(false, stream);
-				assert(objsizeread == objsize);
-				if(objsizeread == objsize)
-					AddObj(obj);
-				else
-				{
-					fprintf(stderr, "Failed to serialize object from stream\n");
-					delete obj;
-
-					DeleteAllObjs();
-					m_bsptree.Unload();
-					// FIXME error handling
-					return 0;
-				}
-			}
-		}
-		assert(m_addobj.size() == objcount);
-		if(m_addobj.size() != objcount)
-		{
-			DeleteAllObjs();
-			m_bsptree.Unload();
-			// FIXME error handling
-			return 0;
-		}
 		UpdatePendingObjs();
 	}
-
-	return size;
 }
 
-int CWorld::SerializePositions(bool write, CStream* stream, int objpvs, int mtu, int* lastobj)
+void CWorld::GenerateWorldState(world_state_t* worldstate)
 {
-	CObj* obj;
-	int written = stream->GetBytesWritten();
-	WORD objsize;
-	int objs = 0;
-
-	assert(stream);
-
-	if(write)
+    OBJITER iter;
+	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 	{
-		OBJITER iter;
-		
-		assert(lastobj);
-
-		iter = (*lastobj) ? m_objlist.find(*lastobj) : m_objlist.begin();
-		for(;iter!=m_objlist.end();iter++)
-		{
-			obj = (*iter).second;
-			objsize = obj->pos.Serialize(true, NULL);
-			if(stream->GetBytesWritten()-written + 
-				objsize + (int)sizeof(INT32)+(int)sizeof(WORD) > mtu)
-			{
-				*lastobj = obj->GetID();
-				return objs;
-			}
-
-			assert(obj->GetID() <= INT_MAX);
-			if(obj->GetID() > INT_MAX)
-				continue;
-			stream->WriteInt32((INT32)obj->GetID());
-			stream->WriteWORD(objsize);
-			obj->pos.Serialize(true, stream);
-			objs++;
-		}
-		*lastobj = -1;
-	}
-	else
-	{
-		INT32 objid;
-		int read;
-
-		while(stream->GetBytesToRead() > 3)
-		{
-			objid = 0;
-			stream->ReadInt32(&objid);
-			stream->ReadWORD(&objsize);
-			obj = GetObj(objid);
-			//assert(obj);
-			if(!obj)
-				return -1;
-			read = obj->pos.Serialize(false, stream);
-			assert(read == objsize);
-			if(read != objsize)
-				return -1;
-			objs++;
-		}		
-	}
-
-	return objs;
+		CObj* obj = (*iter).second;
+        worldstate->objstates.push_back(obj->GetState());
+        worldstate->objindex[obj->GetID()] = (int)worldstate->objstates.size()-1;
+    }
+    worldstate->level = state.level;
+    worldstate->leveltime = state.leveltime;
+    worldstate->worldid = state.worldid;
 }

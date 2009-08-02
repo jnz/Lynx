@@ -4,11 +4,26 @@ class CWorld;
 #include <map>
 #include <list>
 #include "Obj.h"
-#include "ResourceManager.h"
 #include "BSPTree.h"
+#include "ResourceManager.h"
 
 #define OBJMAPTYPE	std::map<int, CObj*>
 #define OBJITER		std::map<int, CObj*>::iterator
+
+/*
+    if you change world_state_t, change:
+    - GenerateWorldState
+    - Serialize
+ */
+struct world_state_t
+{
+    DWORD   leveltime; // in ms
+    DWORD   worldid; // fortlaufende nummer
+
+    std::string level; // Pfad zu Level
+    std::vector<obj_state_t> objstates;
+    std::map<int,int> objindex; // ID zu objstates index tabelle
+};
 
 class CWorld
 {
@@ -16,44 +31,35 @@ public:
 	CWorld(void);
 	virtual ~CWorld(void);
 
+    virtual bool IsClient() { return false; }
+
 	virtual void Update(const float dt); // Neues Frame berechnen
 
 	void	AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
 	void	DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht
-	
+
 	CObj*	GetObj(int objid); // Objekt mit dieser ID suchen
 
 	int		GetObjCount() { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
 	OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
 	OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
 
-	int		Serialize(bool write, CStream* stream); // Komplette Welt in einen Byte-Stream schreiben
-	int		SerializePositions(bool write, CStream* stream, int objpvs, int mtu, int* lastobj); // Nur Positionsupdates schreiben. objpvs = nur objekte berücksichtigen, die sichtbar für obj sind
-	/*
-		SerializePositions
+	void	Serialize(bool write, CStream* stream, world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben
 
-		write: true
-		Schreibt alle Positionen von Objekten die für das Objekt (objpvs) potentiell 
-		sichtbar sind in einen Bytestream.
-		mtu gibt an, wie viele Bytes maximal in den Stream geschrieben werden
-		dürfen.
-		Wenn nicht alle Objekte in den Stream geschrieben werden können,
-		wird in lastobj die ID vom nächsten Objekt geschrieben. Bei erneutem Aufruf
-		von SerializePositions wird an dieser Stelle weitergemacht. Wenn lastobj auf 
-		ein int mit dem Wert 0 zeigt, wird wieder von vorne angefangen.
-		return int: anzahl geschriebener objekte
-		nach dem letzten objekt wird lastobj auf den wert -1 gesetzt
+    bool    LoadLevel(const std::string path);
+    const   CBSPTree* GetBSP() { return &m_bsptree; }
+    DWORD   GetLeveltime() { return state.leveltime; }
+    DWORD   GetWorldID() { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
 
-		write: false
-		Alle Objektpositionen aus diesem Stream werden aktualisiert.
-		return int: anzahl gelesener objekte
-		return -1: fehler beim lesen (stream ungültig)
-	*/
-
-	CResourceManager m_resman;
-	CBSPTree m_bsptree;
+    CResourceManager m_resman;
 
 protected:
+
+    void    GenerateWorldState(world_state_t* worldstate);
+
+    world_state_t state;
+    DWORD    m_leveltimestart;
+    CBSPTree m_bsptree;
 
 	OBJMAPTYPE m_objlist;
 	void	UpdatePendingObjs(); // Entfernt zu löschende Objekte und fügt neue hinzu (siehe m_addobj und removeobj)

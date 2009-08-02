@@ -8,71 +8,21 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+#define OBJ_STATE_ORIGIN         (1 <<  0)
+#define OBJ_STATE_VEL            (1 <<  1)
+#define OBJ_STATE_ROT            (1 <<  2)
+#define OBJ_STATE_SPEED          (1 <<  3)
+#define OBJ_STATE_FOV            (1 <<  4)
+#define OBJ_STATE_RADIUS         (1 <<  5)
+#define OBJ_STATE_RESOURCE       (1 <<  6)
+#define OBJ_STATE_ANIMATION      (1 <<  7)
+#define OBJ_STATE_MIN            (1 <<  8)
+#define OBJ_STATE_MAX            (1 <<  9)
+#define OBJ_STATE_EYEPOS         (1 << 10)
+
+#define OBJ_STATE_FULLUPDATE    ((1 << 11)-1)
+
 #define DEFAULT_FOV		90.0f
-//#define SAVE_BANDWIDTH		// Benötigte Bandbreite wird um ca. 50% reduziert
-
-#define OBJ_UPDATE_FOV			(1<<0)
-#define	OBJ_UPDATE_AABB			(1<<1)
-#define OBJ_UPDATE_RESOURCE		(1<<2)
-#define OBJ_UPDATE_ANIMATION	(1<<3)
-#define OBJ_UPDATE_SPEED		(1<<4)
-#define OBJ_UPDATE_EYEPOS		(1<<5)
-
-CPosition::CPosition()
-{
-
-}
-
-int CPosition::Serialize(bool write, CStream* stream)
-{
-#ifdef SAVE_BANDWIDTH
-	const int reqsize = STREAM_SIZE_POS6 +				// velocity
-						STREAM_SIZE_POS6 +				// origin
-						STREAM_SIZE_ANGLE3;				// angle
-#else
-	const int reqsize = STREAM_SIZE_VEC3 +				// velocity
-						STREAM_SIZE_VEC3 +				// origin
-						STREAM_SIZE_VEC3;				// angle
-#endif
-
-	if(!stream || 
-		(write && stream->GetSpaceLeft() < reqsize) ||
-		(!write && stream->GetBytesToRead() < reqsize))
-		return reqsize;
-
-	if(write)
-	{
-#ifdef SAVE_BANDWIDTH
-		stream->WritePos6(&origin);
-		stream->WritePos6(&velocity);
-		stream->WriteAngle3(&rot);
-#else
-		stream->WriteVec3(&origin);
-		stream->WriteVec3(&velocity);
-		stream->WriteVec3(&rot);
-#endif
-	}
-	else
-	{
-#ifdef SAVE_BANDWIDTH
-		stream->ReadPos6(&origin);
-		stream->ReadPos6(&velocity);
-		stream->ReadAngle3(&rot);
-#else
-		stream->ReadVec3(&origin);
-		stream->ReadVec3(&velocity);
-		stream->ReadVec3(&rot);
-#endif
-		UpdateMatrix();
-	}
-
-	return reqsize;
-}
-
-void CPosition::UpdateMatrix()
-{
-	m.SetTransform(NULL, &rot);
-}
 
 int CObj::m_idpool = 0;
 
@@ -80,175 +30,69 @@ CObj::CObj(CWorld* world)
 {
 	assert(world);
 	m_id = ++m_idpool;
-	m_speed = 0.0f;
-	m_radius = lynxmath::SQRT_2;
-	m_min = vec3_t(-1,-1,-1);
-	m_max = vec3_t(1,1,1);
-	m_fov = DEFAULT_FOV;
+	state.speed = 0.0f;
+	state.radius = lynxmath::SQRT_2;
+	state.min = vec3_t(-1,-1,-1);
+	state.max = vec3_t(1,1,1);
+	state.fov = DEFAULT_FOV;
+	state.eyepos = vec3_t(0,1,0);
 	m_mesh = NULL;
 	m_world = world;
-	m_updateflags = 0;
-	m_eyepos = vec3_t(0,1,0);
+    UpdateMatrix();
 }
 
 CObj::~CObj(void)
 {
 }
 
-void CObj::ClearUpdateFlags()
+void CObj::UpdateMatrix()
 {
-	m_updateflags = 0;
-}
-
-bool CObj::HasChanged()
-{
-	return (m_updateflags > 0);
-}
-
-int CObj::Serialize(bool write, CStream* stream)
-{
-	int reqsize;
-
-	if(write)
-	{
-		reqsize = 0;
-		reqsize += sizeof(WORD);
-		reqsize += sizeof(DWORD);
-		if(m_updateflags & OBJ_UPDATE_FOV)
-			reqsize += sizeof(float);
-		if(m_updateflags & OBJ_UPDATE_RESOURCE)
-			reqsize += sizeof(WORD) + (int)m_resource.size();
-		if(m_updateflags & OBJ_UPDATE_ANIMATION)
-			reqsize += sizeof(WORD) + (int)m_animation.size();
-		if(m_updateflags & OBJ_UPDATE_SPEED)
-			reqsize += sizeof(float);
-		if(m_updateflags & OBJ_UPDATE_EYEPOS)
-			reqsize += STREAM_SIZE_VEC3;
-		reqsize += pos.Serialize(write, NULL);
-
-		if(!stream || 
-			(write && stream->GetSpaceLeft() < reqsize))
-			return reqsize;
-
-		assert(GetID() < USHRT_MAX);
-		stream->WriteWORD((WORD)GetID());
-		stream->WriteDWORD(m_updateflags);
-		if(m_updateflags & OBJ_UPDATE_FOV)
-			stream->WriteFloat(m_fov);
-		if(m_updateflags & OBJ_UPDATE_RESOURCE)
-			stream->WriteString(m_resource);	
-		if(m_updateflags & OBJ_UPDATE_ANIMATION)
-			stream->WriteString(m_animation);
-		if(m_updateflags & OBJ_UPDATE_SPEED)
-			stream->WriteFloat(m_speed);
-		if(m_updateflags & OBJ_UPDATE_EYEPOS)
-			stream->WriteVec3(&m_eyepos);
-
-		pos.Serialize(true, stream);
-	}
-	else
-	{
-		WORD id;
-		DWORD updateflags;
-
-		assert(stream);
-
-		reqsize = stream->GetBytesRead();
-		stream->ReadWORD(&id);
-		m_id = id;
-		stream->ReadDWORD(&updateflags);
-		if(updateflags & OBJ_UPDATE_FOV)
-			stream->ReadFloat(&m_fov);
-		if(updateflags & OBJ_UPDATE_RESOURCE)
-		{
-			stream->ReadString(&m_resource);
-			m_mesh = m_world->m_resman.GetModel(m_resource);
-			if(m_mesh)
-			{
-				vec3_t min, max;
-				m_mesh->GetAABB(&min, &max);
-				SetAABB(min, max);
-				if(m_animation != "")
-					m_mesh->SetAnimationByName(&m_mesh_state, (char*)m_animation.c_str());
-				else
-					m_mesh->SetAnimation(&m_mesh_state, 0);
-			}
-			else
-				SetAABB(vec3_t(-1,-1,-1), vec3_t(1,1,1));
-		}
-		if(updateflags & OBJ_UPDATE_ANIMATION)
-		{
-			stream->ReadString(&m_animation);
-			if(m_mesh)
-				m_mesh->SetAnimationByName(&m_mesh_state, (char*)m_animation.c_str());
-		}
-		if(updateflags & OBJ_UPDATE_SPEED)
-			stream->ReadFloat(&m_speed);
-		if(updateflags & OBJ_UPDATE_EYEPOS)
-			stream->ReadVec3(&m_eyepos);
-
-		pos.Serialize(false, stream);
-
-		reqsize = stream->GetBytesRead()-reqsize;
-	}
-
-	return reqsize;
+	m.SetTransform(NULL, &state.rot);
 }
 
 float CObj::GetSpeed()
 {
-	return m_speed;
+	return state.speed;
 }
 
 void CObj::SetSpeed(float speed)
 {
-	if(speed != m_speed)
-	{
-		m_updateflags |= OBJ_UPDATE_SPEED;
-		m_speed = speed;
-	}
+    state.speed = speed;
 }
 
 float CObj::GetRadius()
 {
-	return m_radius;
+	return state.radius;
 }
 
 void CObj::SetAABB(const vec3_t& min, const vec3_t& max)
 {
-	if(min != m_min || max != m_max)
-		m_updateflags |= OBJ_UPDATE_AABB;
-
 	float length1 = min.AbsSquared();
 	float length2 = max.AbsSquared();
-	m_radius = length1 > length2 ? sqrt(length1) : sqrt(length2);
-	m_min = min;
-	m_max = max;
+	state.radius = length1 > length2 ? sqrt(length1) : sqrt(length2);
+	state.min = min;
+	state.max = max;
 }
 
 void CObj::GetAABB(vec3_t* min, vec3_t* max)
 {
-	*min = m_min;
-	*max = m_max;
+	*min = state.min;
+	*max = state.max;
 }
 
 float CObj::GetFOV()
 {
-	return m_fov;
+	return state.fov;
 }
 
 void CObj::SetFOV(float fov)
 {
-	if(fov != m_fov)
-	{
-		m_fov = fov;
-		m_updateflags |= OBJ_UPDATE_FOV;
-	}
+    state.fov = fov;
 }
 
 std::string CObj::GetResource()
 {
-	return m_resource;
+	return state.resource;
 }
 
 void CObj::SetResource(std::string resource)
@@ -257,12 +101,11 @@ void CObj::SetResource(std::string resource)
 	if(resource.size() >= USHRT_MAX)
 		return;
 
-	if(m_resource != resource)
+	if(state.resource != resource)
 	{
-		m_resource = resource;	
-		m_updateflags |= OBJ_UPDATE_RESOURCE;
+		state.resource = resource;	
 
-		CModelMD2* model = m_world->m_resman.GetModel(m_resource);
+		CModelMD2* model = m_world->m_resman.GetModel(resource);
 		assert(model);
 		if(model)
 		{
@@ -275,7 +118,7 @@ void CObj::SetResource(std::string resource)
 
 std::string CObj::GetAnimation()
 {
-	return m_animation;
+	return state.animation;
 }
 
 void CObj::SetAnimation(std::string animation)
@@ -284,23 +127,155 @@ void CObj::SetAnimation(std::string animation)
 	if(animation.size() >= USHRT_MAX)
 		return;
 
-	if(animation != m_animation)
+	if(animation != state.animation)
 	{
-		m_animation = animation;	
-		m_updateflags |= OBJ_UPDATE_ANIMATION;
+		state.animation = animation;	
 	}
 }
 
 vec3_t CObj::GetEyePos()
 {
-	return m_eyepos;
+	return state.eyepos;
 }
 
 void CObj::SetEyePos(const vec3_t& eyepos)
 {
-	if(eyepos != m_eyepos)
+    state.eyepos = eyepos;
+}
+
+// DELTA COMPRESSION CODE (ugly) ------------------------------------
+
+int DeltaDiffVec3(const vec3_t* newstate,
+                  const vec3_t* oldstate,
+                  const DWORD flagparam, 
+                  DWORD* updateflags,
+                  CStream* stream)
+{
+    if(!oldstate || !(*newstate == *oldstate)) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteVec3(*newstate);
+        return STREAM_SIZE_VEC3;
+    }
+    return 0;
+}
+
+int DeltaDiffFloat(const float* newstate,
+                   const float* oldstate,
+                   const DWORD flagparam, 
+                   DWORD* updateflags,
+                   CStream* stream)
+{
+    if(!oldstate || !(*newstate == *oldstate)) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteFloat(*newstate);
+        return sizeof(float);
+    }
+    return 0;
+}
+
+int DeltaDiffString(const std::string* newstate,
+                    const std::string* oldstate,
+                    const DWORD flagparam, 
+                    DWORD* updateflags,
+                    CStream* stream)
+{
+    if(!oldstate || *newstate != *oldstate) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteString(*newstate);
+        return (int)CStream::StringSize(*newstate);
+    }
+    return 0;
+}
+
+int DeltaDiffDWORD(const DWORD* newstate,
+                   const DWORD* oldstate,
+                   const DWORD flagparam, 
+                   DWORD* updateflags,
+                   CStream* stream)
+{
+    if(!oldstate || *newstate != *oldstate) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteDWORD(*newstate);
+        return sizeof(DWORD);
+    }
+    return 0;
+}
+
+bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
+{
+    assert(!(!write && oldstate));
+    assert(stream);
+    DWORD updateflags = 0;
+
+	if(write)
 	{
-		m_eyepos = eyepos;
-		m_updateflags |= OBJ_UPDATE_EYEPOS;
+		assert(GetID() < USHRT_MAX);
+        CStream tempstream(8192); // FIXME
+        
+        stream->WriteWORD((WORD)GetID()); // FIXME muss die id in den obj serialize stream?
+        DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &tempstream);
+        DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &tempstream);
+        DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &tempstream);
+        DeltaDiffFloat(&state.speed,      oldstate ? &oldstate->speed : NULL,     OBJ_STATE_SPEED,      &updateflags, &tempstream);
+        DeltaDiffFloat(&state.fov,        oldstate ? &oldstate->fov : NULL,       OBJ_STATE_FOV,        &updateflags, &tempstream);
+        DeltaDiffFloat(&state.radius,     oldstate ? &oldstate->radius : NULL,    OBJ_STATE_RADIUS,     &updateflags, &tempstream);
+        DeltaDiffString(&state.resource,  oldstate ? &oldstate->resource : NULL,  OBJ_STATE_RESOURCE,   &updateflags, &tempstream);
+        DeltaDiffString(&state.animation, oldstate ? &oldstate->animation : NULL, OBJ_STATE_ANIMATION,  &updateflags, &tempstream);
+        DeltaDiffVec3(&state.min,         oldstate ? &oldstate->min : NULL,       OBJ_STATE_MIN,        &updateflags, &tempstream);
+        DeltaDiffVec3(&state.max,         oldstate ? &oldstate->max : NULL,       OBJ_STATE_MAX,        &updateflags, &tempstream);
+        DeltaDiffVec3(&state.eyepos,      oldstate ? &oldstate->eyepos : NULL,    OBJ_STATE_EYEPOS,     &updateflags, &tempstream);
+        stream->WriteDWORD(updateflags);
+        stream->WriteStream(tempstream);
+
+        assert(oldstate ? 1 : (updateflags == OBJ_STATE_FULLUPDATE));
 	}
+	else
+	{
+		WORD id;
+
+		stream->ReadWORD(&id);
+        stream->ReadDWORD(&updateflags);
+
+        if(updateflags & OBJ_STATE_ORIGIN)
+            stream->ReadVec3(&state.origin);
+        if(updateflags & OBJ_STATE_VEL)
+            stream->ReadVec3(&state.vel);
+        if(updateflags & OBJ_STATE_ROT)
+        {
+            stream->ReadVec3(&state.rot);
+            UpdateMatrix();
+        }
+        if(updateflags & OBJ_STATE_SPEED)
+            stream->ReadFloat(&state.speed);
+        if(updateflags & OBJ_STATE_FOV)
+            stream->ReadFloat(&state.fov);
+        if(updateflags & OBJ_STATE_RADIUS)
+            stream->ReadFloat(&state.radius);
+        if(updateflags & OBJ_STATE_RESOURCE)
+            stream->ReadString(&state.resource);
+        if(updateflags & OBJ_STATE_ANIMATION)
+            stream->ReadString(&state.animation);
+        if(updateflags & OBJ_STATE_MIN)
+            stream->ReadVec3(&state.min);
+        if(updateflags & OBJ_STATE_MAX)
+            stream->ReadVec3(&state.max);
+        if(updateflags & OBJ_STATE_EYEPOS)
+            stream->ReadVec3(&state.eyepos);
+
+        m_id = id;
+		CModelMD2* mesh = m_world->m_resman.GetModel(state.resource);
+        if(!m_mesh && mesh && (updateflags & OBJ_STATE_RESOURCE))
+		{
+            m_mesh = mesh;
+			vec3_t min, max;
+			m_mesh->GetAABB(&min, &max);
+			SetAABB(min, max);
+			if(state.animation != "")
+				m_mesh->SetAnimationByName(&m_mesh_state, (char*)state.animation.c_str());
+			else
+				m_mesh->SetAnimation(&m_mesh_state, 0);
+		}
+	}
+
+	return updateflags != 0;
 }

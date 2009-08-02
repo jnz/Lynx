@@ -15,6 +15,7 @@ CServer::CServer(CWorld* world)
 	m_server = NULL;
 	m_lastupdate = 0;
 	m_world = world;
+    m_stream.Resize(16000);
 }
 
 CServer::~CServer(void)
@@ -56,7 +57,7 @@ void CServer::Update(const float dt)
     ENetEvent event;
 	CClientInfo* clientinfo;
 	std::map<int, CClientInfo*>::iterator iter;
-	bool success;
+    CStream stream;
 
     while(enet_host_service(m_server, &event, 0) > 0)
     {
@@ -70,17 +71,14 @@ void CServer::Update(const float dt)
             clientinfo = new CClientInfo(event.peer);
 			
 			// Fire Event
+            {
 			EventNewClientConnected e;
 			e.client = clientinfo;
-			NotifyAll(e);
+            CSubject<EventNewClientConnected>::NotifyAll(e);
+            }
 
 			event.peer->data = clientinfo;
 			m_clientlist[clientinfo->GetID()] = clientinfo;
-			success = SendWorldToClient(clientinfo);
-			assert(success);
-			// FIXME
-			// Disconnect client on error
-
             break;
 
         case ENET_EVENT_TYPE_RECEIVE:
@@ -89,6 +87,11 @@ void CServer::Update(const float dt)
                     event.packet->data,
                     event.peer->data,
                     event.channelID);
+
+			stream.SetBuffer(event.packet->data,
+							(int)event.packet->dataLength,
+							(int)event.packet->dataLength);
+			OnReceive(&stream, (CClientInfo*)event.peer->data);
 
 			enet_packet_destroy (event.packet);
             
@@ -99,6 +102,14 @@ void CServer::Update(const float dt)
 			assert(clientinfo);
 			fprintf(stderr, "Client %i disconnected.\n", clientinfo->GetID());
 			
+            // Observer benachrichtigen
+            {
+            EventClientDisconnected e;
+            e.client = clientinfo;
+            CSubject<EventClientDisconnected>::NotifyAll(e);
+            }
+
+            // Client aus Client-Liste löschen und Speicher freigeben
 			iter = m_clientlist.find(clientinfo->GetID());
 			assert(iter != m_clientlist.end());
 			delete (*iter).second;
@@ -111,33 +122,53 @@ void CServer::Update(const float dt)
 	{
 		std::map<int, CClientInfo*>::iterator iter;
 		for(iter = m_clientlist.begin();iter!=m_clientlist.end();iter++)
-			SendDeltaWorldToClient((*iter).second);
+			SendWorldToClient((*iter).second);
 		
 		m_lastupdate = CLynx::GetTicks();
 	}
 }
 
-bool CServer::SendWorldToClient(CClientInfo* client)
+void CServer::OnReceive(CStream* stream, CClientInfo* client)
 {
-	CStream stream;
-	ENetPacket* packet;
-	int reqsize = m_world->Serialize(true, NULL);
-	assert(reqsize > 0);
-	int localobj = client->m_obj;
+	BYTE type;
 
-	if(!stream.Resize(reqsize+CNetMsg::MaxHeaderLen()+sizeof(localobj)))
-		return false;
-
-	CNetMsg::WriteHeader(&stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
-	stream.WriteDWORD(localobj);
-	if(m_world->Serialize(true, &stream) != reqsize)
+	type = CNetMsg::ReadHeader(stream);
+	switch(type)
 	{
+	case NET_MSG_CLIENT_CTRL:
+        {
+            CObj* obj = m_world->GetObj(client->m_obj);
+            assert(obj);
+            vec3_t origin, vel, rot;
+            stream->ReadVec3(&origin);
+            stream->ReadVec3(&vel);
+            stream->ReadVec3(&rot);
+            obj->SetOrigin(origin);
+            obj->SetVel(vel);
+            obj->SetRot(rot);
+            // FIXME prüfen ob bewegung plausibel ist
+        }
+        break;
+	case NET_MSG_INVALID:
+	default:
 		assert(0);
-		return false;
 	}
 
-	packet = enet_packet_create(stream.GetBuffer(), 
-								stream.GetBytesWritten(), 
+
+}
+
+bool CServer::SendWorldToClient(CClientInfo* client)
+{
+	ENetPacket* packet;
+	int localobj = client->m_obj;
+    m_stream.ResetWritePosition();
+
+	CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
+	m_stream.WriteDWORD(localobj); // FIXME DWORD ist zu groß, WORD reicht
+	m_world->Serialize(true, &m_stream);
+
+	packet = enet_packet_create(m_stream.GetBuffer(), 
+								m_stream.GetBytesWritten(), 
 								ENET_PACKET_FLAG_RELIABLE);
 	assert(packet);
 	if(!packet)
@@ -146,43 +177,4 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 	//fprintf(stderr, "SV: Complete World: %i bytes\n", stream.GetBytesWritten());
 	client->m_state = S1_CLIENT_SENDING_WORLD;
 	return enet_peer_send(client->GetPeer(), 0, packet) == 0;
-}
-
-bool CServer::SendDeltaWorldToClient(CClientInfo* client)
-{
-	CStream stream;
-	ENetPacket* packet;
-	const int mtu = 1400; // FIXME do not hardcode this here
-	int lastobj = 0;
-	int objs;
-	int totalsize = 0;
-
-	if(!stream.Resize(mtu+CNetMsg::MaxHeaderLen()))
-		return false;
-
-	do
-	{
-		stream.ResetWritePosition();
-		CNetMsg::WriteHeader(&stream, NET_MSG_UPDATE_WORLD); // Writing Header
-		objs = m_world->SerializePositions(true, &stream, client->m_obj, mtu, &lastobj);
-		if(objs < 1)
-			break;
-
-		totalsize += stream.GetBytesWritten();
-		packet = enet_packet_create(stream.GetBuffer(), 
-									stream.GetBytesWritten(), 0);
-
-		assert(packet);
-		if(!packet)
-			return false;
-		if(enet_peer_send(client->GetPeer(), 0, packet) != 0)
-		{
-			assert(0);
-			return false;
-		}
-	}while(lastobj > 0);
-
-	//fprintf(stderr, "SV: Client Update: %i bytes\n", totalsize);
-
-	return true;
 }

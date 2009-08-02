@@ -19,11 +19,11 @@ struct plane_t
 	void SetupPlane(vec3_t n, float d);
 	void SetupPlane(float a, float b, float c, float d);
 
-	bool GetIntersection(float *f, const vec3_t& p, const vec3_t& v);
-	bool GetIntersectionSphere(float* f, const vec3_t& p, const vec3_t& v, float radius);
-	float GetDistFromPlane(const vec3_t& p);
-	pointplane_t Classify(const vec3_t& p, float epsilon = lynxmath::EPSILON);
-	bool IsPlaneBetween(const vec3_t&a, const vec3_t& b);
+	bool GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const;
+	bool GetIntersectionSphere(float* f, const vec3_t& p, const vec3_t& v, float radius) const;
+	float GetDistFromPlane(const vec3_t& p) const;
+	pointplane_t Classify(const vec3_t& p, float epsilon = lynxmath::EPSILON) const;
+	bool IsPlaneBetween(const vec3_t&a, const vec3_t& b) const;
 
 	// Plane Data
 	vec3_t m_n;

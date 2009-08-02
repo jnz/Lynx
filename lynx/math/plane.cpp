@@ -59,7 +59,7 @@ void plane_t::SetupPlane(float a, float b, float c, float d)
 	m_n.Normalize();
 }
 
-bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v)
+bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const
 {
 	float q;
 
@@ -71,7 +71,7 @@ bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v)
 	return true;
 }
 
-bool plane_t::GetIntersectionSphere(float* f, const vec3_t& p, const vec3_t& v, float radius)
+bool plane_t::GetIntersectionSphere(float* f, const vec3_t& p, const vec3_t& v, float radius) const
 {
 	float q = m_n * v;
 	if(fabs(q) < lynxmath::EPSILON)
@@ -82,12 +82,12 @@ bool plane_t::GetIntersectionSphere(float* f, const vec3_t& p, const vec3_t& v, 
 	return true;
 }
 
-float plane_t::GetDistFromPlane(const vec3_t& p)
+float plane_t::GetDistFromPlane(const vec3_t& p) const
 {
 	return p*m_n + m_d;
 }
 
-pointplane_t plane_t::Classify(const vec3_t& p, float epsilon)
+pointplane_t plane_t::Classify(const vec3_t& p, float epsilon) const
 {
 	float f = p*m_n + m_d; // GetDistFromPlane
 	if(f > epsilon)
@@ -98,7 +98,7 @@ pointplane_t plane_t::Classify(const vec3_t& p, float epsilon)
 		return POINT_ON_PLANE;
 }
 
-bool plane_t::IsPlaneBetween(const vec3_t& a, const vec3_t& b)
+bool plane_t::IsPlaneBetween(const vec3_t& a, const vec3_t& b) const
 {
 	float q;
 	float t;
