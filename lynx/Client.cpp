@@ -152,7 +152,7 @@ void CClient::OnReceive(CStream* stream)
 	BYTE type;
 	DWORD localobj;
 
-	fprintf(stderr, "Client Incoming data: %i bytes\n", stream->GetBytesToRead());
+	// fprintf(stderr, "%i Client Incoming data: %i bytes\n", CLynx::GetTicks()&255, stream->GetBytesToRead());
 
 	type = CNetMsg::ReadHeader(stream);
 	switch(type)

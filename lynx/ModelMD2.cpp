@@ -329,7 +329,6 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
 	delete[] frame;
 	fclose(f);
 	f = NULL;
-	fprintf(stderr, "MD2: Model %s: (Sphere: %.2f)\n", path, m_sphere);
 
 	m_anims = new anim_t[animlist.size()];
 	if(!m_anims)
@@ -342,15 +341,19 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
 	for(iter=animlist.begin();iter!=animlist.end();iter++)
 	{
 		m_anims[i] = (*iter);
+		/*
 		fprintf(stderr, "Animation: %s (%i-%i)\n", 
 					m_anims[i].name, 
 					m_anims[i].start,
 					m_anims[i].end);
+		*/
 		i++;
 	}
 
 	m_center = (m_max - m_min)*0.5f;
 	m_sphere = m_center.Abs();
+
+	fprintf(stderr, "MD2: Model %s: (Sphere: %.2f)\n", path, m_sphere);
 
 	return true;
 loaderr:

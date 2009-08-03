@@ -123,9 +123,9 @@ void CServer::Update(const float dt)
 				sent++;
 		
 		m_lastupdate = CLynx::GetTicks();
-		UpdateHistoryBuffer();
 		if(sent > 0)
 			m_history[m_world->GetWorldID()] = m_world->GenerateWorldState();
+		UpdateHistoryBuffer();
 	}
 }
 
@@ -164,7 +164,7 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
 
 void CServer::UpdateHistoryBuffer()
 {
-	DWORD lowestworldid = UINT_MAX;
+	DWORD lowestworldid = 0;
 	CClientInfo* client;
 	std::map<DWORD, world_state_t>::iterator worlditer;
 	std::map<int, CClientInfo*>::iterator clientiter;
@@ -193,7 +193,7 @@ void CServer::UpdateHistoryBuffer()
 			client->worldidACK = 0;
 			continue;
 		}
-		if(client->worldidACK < lowestworldid && client->worldidACK > 0)
+		if((lowestworldid == 0 || client->worldidACK < lowestworldid) && client->worldidACK > 0)
 		{
 			lowestworldid = client->worldidACK;
 		}
@@ -237,9 +237,18 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 	std::map<DWORD, world_state_t>::iterator iter;
 	iter = m_history.find(client->worldidACK);
 	if(iter == m_history.end())
+	{
 		m_world->Serialize(true, &m_stream, NULL);
+	}
 	else
-		m_world->Serialize(true, &m_stream, &(*iter).second);
+	{
+		if(!m_world->Serialize(true, &m_stream, &(*iter).second))
+		{
+			// Seit dem letzten bestätigtem Update vom Client hat sich nichts getan.
+			client->worldidACK = m_world->GetWorldID();
+			return true; // client benötigt kein update
+		}
+	}
 
 	assert(client->GetPeer()->mtu > m_stream.GetBytesWritten());
 	packet = enet_packet_create(m_stream.GetBuffer(), 

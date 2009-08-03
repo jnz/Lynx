@@ -241,18 +241,20 @@ bool CWorld::LoadLevel(const std::string path)
 
 // DELTA COMPRESSION CODE (ugly atm) ------------------------------------
 
-#define WORLD_STATE_WORLDID     (1 <<  0)
-#define WORLD_STATE_LEVELTIME   (1 <<  1)
-#define WORLD_STATE_LEVEL       (1 <<  2)
+#define WORLD_STATE_WORLDID			(1 <<  0)
+#define WORLD_STATE_LEVELTIME		(1 <<  1)
+#define WORLD_STATE_LEVEL			(1 <<  2)
 
-#define WORLD_STATE_FULLUPDATE  ((1 <<  3)-1)
+#define WORLD_STATE_NO_REAL_CHANGE	(WORLD_STATE_WORLDID|WORLD_STATE_LEVELTIME) // worldid und leveltime ändern sich sowieso immer
+#define WORLD_STATE_FULLUPDATE		((1 <<  3)-1)
 
-void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
+bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
 {
     assert(stream);
 	int size = 0;
 	CObj* obj;
     OBJITER iter;
+	int changes = 0;
 
 	if(write)
 	{
@@ -265,6 +267,9 @@ void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, &tempstream);
 		// [NEUE ATTRIBUTE HIER]
 
+		if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
+			changes++;
+		
         stream->WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
         stream->WriteStream(tempstream);
 
@@ -288,7 +293,8 @@ void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
                     obj_oldstate = (obj_state_t*)&oldstate->objstates[(*indexiter).second];
             }
             stream->WriteWORD(obj->GetID()); // FIXME wird damit doppelt geschrieben
-            obj->Serialize(true, stream, obj_oldstate);
+            if(obj->Serialize(true, stream, obj_oldstate))
+				changes++;
 		}
 	}
 	else
@@ -307,7 +313,7 @@ void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         if(worldid < state.worldid)
         {
             assert(0); // anschauen, ob ok
-            return;
+            return false;
         }
         state.worldid = worldid;
         if(updateflags & WORLD_STATE_LEVELTIME)
@@ -321,12 +327,15 @@ void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
                 if(m_bsptree.Load(level)==false)
 			    {
     				// FIXME error handling
-				    return;
+					assert(0);
+				    return true;
 			    }
             }
         }
 		// [NEUE ATTRIBUTE HIER]
-	   
+		if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
+			changes++;
+
         stream->ReadWORD(&objcount);
         assert(objcount < USHRT_MAX);
         std::map<int,int> objread; // objekte die gelesen wurden, was hier nicht steht, muss gelöscht werden
@@ -337,11 +346,11 @@ void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             if(!obj)
             {
                 obj = new CObj(this);
-                obj->Serialize(false, stream);
+				changes += obj->Serialize(false, stream) ? 1 : 0;
                 AddObj(obj);
             }
             else
-                obj->Serialize(false, stream);
+				changes += obj->Serialize(false, stream) ? 1 : 0;
             objread[obj->GetID()] = obj->GetID();
         }
         // Alle Objekte löschen, die in dem neuen State nicht mehr vorhanden sind
@@ -356,6 +365,8 @@ void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
 		UpdatePendingObjs();
 	}
+
+	return changes > 0;
 }
 
 world_state_t CWorld::GenerateWorldState()

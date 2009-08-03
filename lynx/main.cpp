@@ -28,9 +28,9 @@ int main(int argc, char** argv)
 	if(argc > 1)
 		serveraddress = argv[1];
 	if(argc > 2)
-		svport = atoi(argv[3]);
+		svport = atoi(argv[2]);
 	if(argc > 3)
-		startserver = atoi(argv[2]) > 0 ? true : false;
+		startserver = atoi(argv[3]) > 0 ? true : false;
 
 	srand((unsigned int)time(NULL));
 	{ // for dumpmemleak

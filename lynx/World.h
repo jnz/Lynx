@@ -44,7 +44,7 @@ public:
 	OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
 	OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
 
-	void	Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben
+	bool	Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
 
     bool    LoadLevel(const std::string path);
     const   CBSPTree* GetBSP() { return &m_bsptree; }

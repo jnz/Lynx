@@ -67,9 +67,11 @@ float CObj::GetRadius()
 
 void CObj::SetAABB(const vec3_t& min, const vec3_t& max)
 {
+/*
 	float length1 = min.AbsSquared();
 	float length2 = max.AbsSquared();
 	state.radius = length1 > length2 ? sqrt(length1) : sqrt(length2);
+	*/
 	state.min = min;
 	state.max = max;
 }
@@ -111,6 +113,7 @@ void CObj::SetResource(std::string resource)
 		{
 			vec3_t min, max;
 			model->GetAABB(&min, &max);
+			state.radius = model->GetSphere();
 			SetAABB(min, max);
 		}
 	}
@@ -213,10 +216,15 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
         CStream tempstream(8192); // FIXME
         
         stream->WriteWORD((WORD)GetID()); // FIXME muss die id in den obj serialize stream?
-        DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &tempstream);
+		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &tempstream);
         DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &tempstream);
         DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &tempstream);
-        DeltaDiffFloat(&state.speed,      oldstate ? &oldstate->speed : NULL,     OBJ_STATE_SPEED,      &updateflags, &tempstream);
+		// Update Position always
+/*		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &tempstream);
+        DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &tempstream);
+        DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &tempstream);
+  */      
+		DeltaDiffFloat(&state.speed,      oldstate ? &oldstate->speed : NULL,     OBJ_STATE_SPEED,      &updateflags, &tempstream);
         DeltaDiffFloat(&state.fov,        oldstate ? &oldstate->fov : NULL,       OBJ_STATE_FOV,        &updateflags, &tempstream);
         DeltaDiffFloat(&state.radius,     oldstate ? &oldstate->radius : NULL,    OBJ_STATE_RADIUS,     &updateflags, &tempstream);
         DeltaDiffString(&state.resource,  oldstate ? &oldstate->resource : NULL,  OBJ_STATE_RESOURCE,   &updateflags, &tempstream);
