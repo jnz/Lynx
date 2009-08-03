@@ -17,6 +17,7 @@ public:
 		m_peer = peer;
 		m_state = S0_CLIENT_CONNECTED;
 		m_obj = 0;
+		worldidACK = 0;
 	}
 
 	int GetID() { return m_id; }
@@ -24,8 +25,7 @@ public:
 
 	clientstate_t m_state;
 	int m_obj; // Objekt in Welt, das diesen Client repräsentiert
-
-    //std::list<world_state_t> worldstates;
+	DWORD worldidACK; // Letztes Weltupdate, das der Client bestätigt hat
 
 private:
 	int m_id;

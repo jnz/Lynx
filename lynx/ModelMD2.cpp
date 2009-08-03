@@ -173,7 +173,7 @@ void CModelMD2::Render(md2_state_t* state)
 	}
 }
 
-bool CModelMD2::Load(char *path, CResourceManager* resman)
+bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
 {
 	FILE* f;
 	std::string texpath;
@@ -192,7 +192,8 @@ bool CModelMD2::Load(char *path, CResourceManager* resman)
 	Unload();
 	
 	texpath = CLynx::ChangeFileExtension(path, "tga");
-	m_tex = resman->GetTexture((char*)texpath.c_str());
+	if(loadtexture) // Server muss nicht die Textur laden (oder?)
+		m_tex = resman->GetTexture((char*)texpath.c_str());
 
 	f = fopen(path, "rb");
 	if(!f)

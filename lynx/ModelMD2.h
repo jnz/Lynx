@@ -28,7 +28,7 @@ public:
 	CModelMD2(void);
 	~CModelMD2(void);
 
-	bool	Load(char *path, CResourceManager* resman);
+	bool	Load(char *path, CResourceManager* resman, bool loadtexture=true);
 	void	Unload();
 
 	void	Render(md2_state_t* state);

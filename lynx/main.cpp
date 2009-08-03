@@ -13,6 +13,7 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+#define WINDOW_TITLE		"lynx"
 #define SCREEN_WIDTH		800
 #define SCREEN_HEIGHT		600
 #define BPP					32
@@ -20,6 +21,17 @@
 
 int main(int argc, char** argv)
 {
+	char* serveraddress = "localhost";
+	int svport = 9999;
+	bool startserver = true;
+
+	if(argc > 1)
+		serveraddress = argv[1];
+	if(argc > 2)
+		svport = atoi(argv[3]);
+	if(argc > 3)
+		startserver = atoi(argv[2]) > 0 ? true : false;
+
 	srand((unsigned int)time(NULL));
 	{ // for dumpmemleak
 	int run;
@@ -29,47 +41,40 @@ int main(int argc, char** argv)
 	SDL_Event event;
 	
 	// Game Modules
-	CWorld worldsv; // Model
 	CWorldClient worldcl; // Model
 	CRenderer renderer(&worldcl); // View
-	CServer server(&worldsv); // Controller
 	CClient client(&worldcl); // Controller
+	CWorld worldsv; // Model
+	CServer server(&worldsv); // Controller
 	CGameLogic svgame(&worldsv); // Controller
 
-    ((CSubject<EventNewClientConnected>*)&server)->AddObserver(&svgame);
-    ((CSubject<EventClientDisconnected>*)&server)->AddObserver(&svgame);
-
-	if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
-		return -1;
-
-	if(!server.Create(9999))
+	if(startserver)
 	{
-		fprintf(stderr, "Failed to create server\n");
-		assert(0);
-		return -1;
+		((CSubject<EventNewClientConnected>*)&server)->AddObserver(&svgame);
+		((CSubject<EventClientDisconnected>*)&server)->AddObserver(&svgame);
+
+		fprintf(stderr, "Starting Server at port: %i\n", svport);
+		if(!server.Create(svport))
+		{
+			fprintf(stderr, "Failed to create server\n");
+			assert(0);
+			return -1;
+		}
+		svgame.InitGame();
 	}
 
-	CObj* obj;
-	obj = new CObj(&worldsv);
-	obj->SetOrigin(vec3_t(-45.0f, 8.0f, 0));
-	obj->SetSpeed(6.0f);
-	obj->SetVel(vec3_t(0.0f, 0, 0.0f));
-	obj->SetRot(vec3_t(0,270,0));
-	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
-	//obj->SetResource(CLynx::GetBaseDirModel() + "q2/tris2.md2");
-	obj->SetAnimation("default");
-	worldsv.AddObj(obj);
-
-    worldsv.LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
-
-	if(!client.Connect("192.168.168.132", 9999))
+	fprintf(stderr, "Connecting to %s:%i\n", serveraddress, svport);
+	if(!client.Connect("localhost", svport))
 	{
 		fprintf(stderr, "Failed to connect to server\n");
 		assert(0);
 		return -1;
 	}
 
-	SDL_WM_SetCaption("lynx", NULL);
+	if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
+		return -1;
+
+	SDL_WM_SetCaption(WINDOW_TITLE, NULL);
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_WM_GrabInput(SDL_GRAB_ON);
 	run = 1;
@@ -109,9 +114,13 @@ int main(int argc, char** argv)
 			};
 		}
 
-		worldsv.Update(dt);
+		// Update Game Classes
+		if(startserver)
+		{
+			worldsv.Update(dt);
+			server.Update(dt);
+		}
 		worldcl.Update(dt);
-		server.Update(dt);
 		client.Update(dt);
 		renderer.Update(dt);
 #ifdef _DEBUG

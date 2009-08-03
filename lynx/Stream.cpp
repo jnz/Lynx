@@ -203,7 +203,7 @@ WORD CStream::WriteString(const std::string& value)
 
 void CStream::WriteStream(const CStream& stream)
 {
-    assert(stream.GetBytesWritten() > 0);
+    //assert(stream.GetBytesWritten() > 0);
     WriteBytes(stream.m_buffer, stream.GetBytesWritten());
 }
 

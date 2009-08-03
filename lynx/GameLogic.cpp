@@ -1,12 +1,35 @@
+#include <assert.h>
 #include "GameLogic.h"
+
+#ifdef _DEBUG
+#include <crtdbg.h>
+#define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
+#endif
 
 CGameLogic::CGameLogic(CWorld* world)
 {
+	assert(m_world);
 	m_world = world;
 }
 
 CGameLogic::~CGameLogic(void)
 {
+}
+
+void CGameLogic::InitGame()
+{
+	CObj* obj;
+	obj = new CObj(m_world);
+	obj->SetOrigin(vec3_t(-45.0f, 8.0f, 0));
+	obj->SetSpeed(6.0f);
+	obj->SetVel(vec3_t(0.0f, 0, 0.0f));
+	obj->SetRot(vec3_t(0,270,0));
+	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
+	//obj->SetResource(CLynx::GetBaseDirModel() + "q2/tris2.md2");
+	obj->SetAnimation("default");
+	m_world->AddObj(obj);
+
+    m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
 }
 
 void CGameLogic::Notify(EventNewClientConnected e)

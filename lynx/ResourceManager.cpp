@@ -3,24 +3,39 @@
 #include "SDL_opengl.h"
 #include <stdio.h>
 #include "ResourceManager.h"
+#include "World.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-CResourceManager::CResourceManager(void)
+CResourceManager::CResourceManager(CWorld* world)
 {
+	// Keine Aufrufe in CWorld* world hinein (ist hier noch nicht fertig mit dem Konstruktor)
+	assert(world);
+	m_world = world;
 }
 
 CResourceManager::~CResourceManager(void)
 {
 	UnloadAllModels();
 	UnloadAllTextures();
-}	
+}
+
+bool CResourceManager::IsServer()
+{
+	return !m_world->IsClient();
+}
 
 unsigned int CResourceManager::GetTexture(std::string texname)
 {
+	if(IsServer())
+	{
+		assert(0);
+		return 0;
+	}
+
 	std::map<std::string, unsigned int>::iterator iter;
 	unsigned int texture;
 
@@ -57,7 +72,7 @@ CModelMD2* CResourceManager::GetModel(std::string mdlname)
 	if(iter == m_modelmap.end())
 	{
 		model = new CModelMD2();
-		if(model->Load((char*)mdlname.c_str(), this))
+		if(model->Load((char*)mdlname.c_str(), this, !IsServer()))
 		{
 			m_modelmap[mdlname] = model;
 		}

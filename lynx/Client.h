@@ -22,6 +22,7 @@ protected:
 
 	void InputMouseMove(int dx, int dy);
 	void InputCalcDir();
+	void SendClientState();
 	CObj* GetLocalController();
 
 private:

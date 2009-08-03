@@ -42,7 +42,6 @@ void CWorldClient::SetLocalObj(int id)
 void CWorldClient::Update(const float dt)
 {
 	CWorld::Update(dt);
-	//UpdatePendingObjs();
 
 	static int pressed = 0;
 	static vec3_t location;
@@ -82,8 +81,5 @@ void CWorldClient::Update(const float dt)
     vec3_t vel = controller->GetVel();
     vel.SetLength(controller->GetSpeed());
     controller->SetVel(vel);
-	if(m_bsptree.m_root)
-		ObjCollision(controller, dt);
-	else
-		controller->SetOrigin(controller->GetOrigin() + controller->GetVel() * dt);
+	ObjCollision(controller, dt);
 }

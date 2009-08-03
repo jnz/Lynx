@@ -6,8 +6,10 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAXCLIENTS			8
-#define SERVER_UPDATETIME	500
+#define MAXCLIENTS				8
+#define SERVER_UPDATETIME		500
+#define SERVER_MAX_WORLD_AGE	5000				// wie viele ms heben wir für den client eine welt auf
+#define MAX_WORLD_BACKLOG		(5*MAXCLIENTS)		// wie viele welten werden gespeichert
 
 CServer::CServer(CWorld* world)
 {
@@ -82,12 +84,6 @@ void CServer::Update(const float dt)
             break;
 
         case ENET_EVENT_TYPE_RECEIVE:
-            fprintf(stderr, "A packet of length %u containing %s was received from %s on channel %u.\n",
-                    event.packet->dataLength,
-                    event.packet->data,
-                    event.peer->data,
-                    event.channelID);
-
 			stream.SetBuffer(event.packet->data,
 							(int)event.packet->dataLength,
 							(int)event.packet->dataLength);
@@ -120,11 +116,16 @@ void CServer::Update(const float dt)
 
 	if(CLynx::GetTicks() - m_lastupdate > SERVER_UPDATETIME)
 	{
+		int sent = 0;
 		std::map<int, CClientInfo*>::iterator iter;
 		for(iter = m_clientlist.begin();iter!=m_clientlist.end();iter++)
-			SendWorldToClient((*iter).second);
+			if(SendWorldToClient((*iter).second))
+				sent++;
 		
 		m_lastupdate = CLynx::GetTicks();
+		UpdateHistoryBuffer();
+		if(sent > 0)
+			m_history[m_world->GetWorldID()] = m_world->GenerateWorldState();
 	}
 }
 
@@ -137,6 +138,10 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
 	{
 	case NET_MSG_CLIENT_CTRL:
         {
+			DWORD worldid;
+			stream->ReadDWORD(&worldid);
+			ClientHistoryACK(client, worldid);
+
             CObj* obj = m_world->GetObj(client->m_obj);
             assert(obj);
             vec3_t origin, vel, rot;
@@ -157,6 +162,69 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
 
 }
 
+void CServer::UpdateHistoryBuffer()
+{
+	DWORD lowestworldid = UINT_MAX;
+	CClientInfo* client;
+	std::map<DWORD, world_state_t>::iterator worlditer;
+	std::map<int, CClientInfo*>::iterator clientiter;
+	DWORD worldtime;
+	DWORD curtime = m_world->GetLeveltime();
+
+	for(clientiter = m_clientlist.begin();clientiter!=m_clientlist.end();clientiter++)
+	{
+		client = (*clientiter).second;
+
+		if(client->worldidACK == 0) // dieser client hat keine bekannte welt
+			continue;
+
+		worlditer = m_history.find(client->worldidACK);
+		if(worlditer == m_history.end())
+		{
+			assert(0);
+			client->worldidACK = 0;
+			fprintf(stderr, "Client last known world is not in history buffer\n");
+			continue;
+		}
+		worldtime = ((*worlditer).second).leveltime;
+		if(curtime - worldtime > SERVER_MAX_WORLD_AGE)
+		{
+			fprintf(stderr, "Client world is too old (%i ms)\n", curtime - worldtime);
+			client->worldidACK = 0;
+			continue;
+		}
+		if(client->worldidACK < lowestworldid && client->worldidACK > 0)
+		{
+			lowestworldid = client->worldidACK;
+		}
+	}
+
+	for(worlditer = m_history.begin();worlditer != m_history.end();)
+	{
+		worldtime = ((*worlditer).second).leveltime;
+		if(curtime - worldtime > SERVER_MAX_WORLD_AGE ||
+			((*worlditer).second).worldid < lowestworldid)
+		{
+			worlditer = m_history.erase(worlditer);
+			continue;
+		}
+		worlditer++;
+	}
+
+	assert(m_history.size() < MAX_WORLD_BACKLOG);
+	if(m_history.size() >= MAX_WORLD_BACKLOG)
+	{
+		fprintf(stderr, "Server History Buffer too large. Reset History Buffer.\n");
+		m_history.clear();
+	}
+}
+
+void CServer::ClientHistoryACK(CClientInfo* client, DWORD worldid)
+{
+	if(client->worldidACK < worldid)
+		client->worldidACK = worldid;
+}
+
 bool CServer::SendWorldToClient(CClientInfo* client)
 {
 	ENetPacket* packet;
@@ -165,11 +233,18 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 
 	CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
 	m_stream.WriteDWORD(localobj); // FIXME DWORD ist zu groß, WORD reicht
-	m_world->Serialize(true, &m_stream);
 
+	std::map<DWORD, world_state_t>::iterator iter;
+	iter = m_history.find(client->worldidACK);
+	if(iter == m_history.end())
+		m_world->Serialize(true, &m_stream, NULL);
+	else
+		m_world->Serialize(true, &m_stream, &(*iter).second);
+
+	assert(client->GetPeer()->mtu > m_stream.GetBytesWritten());
 	packet = enet_packet_create(m_stream.GetBuffer(), 
 								m_stream.GetBytesWritten(), 
-								ENET_PACKET_FLAG_RELIABLE);
+								0);
 	assert(packet);
 	if(!packet)
 		return false;

@@ -9,7 +9,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-CWorld::CWorld(void)
+#pragma warning(disable:4355)
+CWorld::CWorld(void) : m_resman(this)
 {
     state.worldid = 0;
     m_leveltimestart = CLynx::GetTicks();
@@ -246,7 +247,7 @@ bool CWorld::LoadLevel(const std::string path)
 
 #define WORLD_STATE_FULLUPDATE  ((1 <<  3)-1)
 
-void CWorld::Serialize(bool write, CStream* stream, world_state_t* oldstate)
+void CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
 {
     assert(stream);
 	int size = 0;
@@ -262,6 +263,7 @@ void CWorld::Serialize(bool write, CStream* stream, world_state_t* oldstate)
         DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, &tempstream);
         DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, &tempstream);
         DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, &tempstream);
+		// [NEUE ATTRIBUTE HIER]
 
         stream->WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
         stream->WriteStream(tempstream);
@@ -279,9 +281,11 @@ void CWorld::Serialize(bool write, CStream* stream, world_state_t* oldstate)
             obj_oldstate = NULL;
             if(oldstate) // Delta Compression
             {
-                std::map<int,int>::iterator indexiter = oldstate->objindex.find(obj->GetID());
-                if(indexiter  != oldstate->objindex.end())
-                    obj_oldstate = &oldstate->objstates[(*indexiter ).second];
+                std::map<int,int>::iterator indexiter;
+				std::map<int, int>* pmap = (std::map<int, int>*)&oldstate->objindex;
+				indexiter = pmap->find(obj->GetID());
+                if(indexiter != oldstate->objindex.end())
+                    obj_oldstate = (obj_state_t*)&oldstate->objstates[(*indexiter).second];
             }
             stream->WriteWORD(obj->GetID()); // FIXME wird damit doppelt geschrieben
             obj->Serialize(true, stream, obj_oldstate);
@@ -321,6 +325,7 @@ void CWorld::Serialize(bool write, CStream* stream, world_state_t* oldstate)
 			    }
             }
         }
+		// [NEUE ATTRIBUTE HIER]
 	   
         stream->ReadWORD(&objcount);
         assert(objcount < USHRT_MAX);
@@ -353,16 +358,20 @@ void CWorld::Serialize(bool write, CStream* stream, world_state_t* oldstate)
 	}
 }
 
-void CWorld::GenerateWorldState(world_state_t* worldstate)
+world_state_t CWorld::GenerateWorldState()
 {
+	world_state_t worldstate;
+
     OBJITER iter;
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 	{
 		CObj* obj = (*iter).second;
-        worldstate->objstates.push_back(obj->GetState());
-        worldstate->objindex[obj->GetID()] = (int)worldstate->objstates.size()-1;
+        worldstate.objstates.push_back(obj->GetState());
+        worldstate.objindex[obj->GetID()] = (int)worldstate.objstates.size()-1;
     }
-    worldstate->level = state.level;
-    worldstate->leveltime = state.leveltime;
-    worldstate->worldid = state.worldid;
+    worldstate.level = state.level;
+    worldstate.leveltime = state.leveltime;
+    worldstate.worldid = state.worldid;
+
+	return worldstate;
 }

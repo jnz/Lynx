@@ -24,9 +24,14 @@ protected:
 	bool SendWorldToClient(CClientInfo* client);
 	void OnReceive(CStream* stream, CClientInfo* client);
 
+	void UpdateHistoryBuffer(); // Alte HistoryBuffer Einträge löschen, kein Client benötigt mehr so eine alte Welt, oder die Welt ist zu alt und Client bekommt ein komplettes Update.
+	void ClientHistoryACK(CClientInfo* client, DWORD worldid); // Client bestätigt
+
 private:
 	ENetHost* m_server;
 	std::map<int, CClientInfo*> m_clientlist;
+
+	std::map<DWORD, world_state_t> m_history; // World History Buffer. Benötigt für Quake 3 Network Modell bzw. differentielle Updates an Clients
 
 	DWORD m_lastupdate;
 	CWorld* m_world;

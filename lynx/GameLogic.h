@@ -11,6 +11,9 @@ public:
 	CGameLogic(CWorld* world);
 	~CGameLogic(void);
 
+	void InitGame();
+
+protected:
 	void Notify(EventNewClientConnected);
 	void Notify(EventClientDisconnected);
 

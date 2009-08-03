@@ -107,6 +107,22 @@ void CClient::Update(const float dt)
 		}
 	}
 
+	// FIXME: no SDL code here
+	int dx, dy;
+	BYTE* keystate = CLynx::GetKeyState();
+	CLynx::GetMouseDelta(&dx, &dy);
+	m_forward = !!(keystate[SDLK_UP] | keystate[SDLK_w]);
+	m_backward = !!(keystate[SDLK_DOWN] | keystate[SDLK_s]);
+    m_strafe_left = !!(keystate[SDLK_LEFT] | keystate[SDLK_a]);
+    m_strafe_right = !!(keystate[SDLK_RIGHT] | keystate[SDLK_d]);
+    InputMouseMove(dx, dy);
+    InputCalcDir();
+
+	SendClientState();
+}
+
+void CClient::SendClientState()
+{
     DWORD ticks = CLynx::GetTicks();
     if(ticks - m_lastupdate > CLIENT_UPDATERATE && IsConnected())
     {
@@ -114,6 +130,7 @@ void CClient::Update(const float dt)
         CObj* localctrl = GetLocalController();
         CStream stream(128);
         CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
+		stream.WriteDWORD(m_world->GetWorldID());
         stream.WriteVec3(localctrl->GetOrigin());
         stream.WriteVec3(localctrl->GetVel());
         stream.WriteVec3(localctrl->GetRot());
@@ -128,23 +145,14 @@ void CClient::Update(const float dt)
         }
         m_lastupdate = ticks;
     }
-
-	// FIXME: no SDL code here
-	int dx, dy;
-	BYTE* keystate = CLynx::GetKeyState();
-	CLynx::GetMouseDelta(&dx, &dy);
-	m_forward = !!(keystate[SDLK_UP] | keystate[SDLK_w]);
-	m_backward = !!(keystate[SDLK_DOWN] | keystate[SDLK_s]);
-    m_strafe_left = !!(keystate[SDLK_LEFT] | keystate[SDLK_a]);
-    m_strafe_right = !!(keystate[SDLK_RIGHT] | keystate[SDLK_d]);
-    InputMouseMove(dx, dy);
-    InputCalcDir();
 }
 
 void CClient::OnReceive(CStream* stream)
 {
 	BYTE type;
 	DWORD localobj;
+
+	fprintf(stderr, "Client Incoming data: %i bytes\n", stream->GetBytesToRead());
 
 	type = CNetMsg::ReadHeader(stream);
 	switch(type)

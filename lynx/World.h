@@ -40,24 +40,23 @@ public:
 
 	CObj*	GetObj(int objid); // Objekt mit dieser ID suchen
 
-	int		GetObjCount() { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
+	int		GetObjCount() const { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
 	OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
 	OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
 
-	void	Serialize(bool write, CStream* stream, world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben
+	void	Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben
 
     bool    LoadLevel(const std::string path);
     const   CBSPTree* GetBSP() { return &m_bsptree; }
-    DWORD   GetLeveltime() { return state.leveltime; }
-    DWORD   GetWorldID() { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
+    DWORD   GetLeveltime() const { return state.leveltime; }
+    DWORD   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
+    world_state_t GenerateWorldState();
 
     CResourceManager m_resman;
 
 protected:
 
-    void    GenerateWorldState(world_state_t* worldstate);
-
-    world_state_t state;
+	world_state_t state;
     DWORD    m_leveltimestart;
     CBSPTree m_bsptree;
 
