@@ -39,6 +39,7 @@ CObj::CObj(CWorld* world)
 	m_mesh = NULL;
 	m_world = world;
     UpdateMatrix();
+	m_stream.Resize(512);
 }
 
 CObj::~CObj(void)
@@ -213,27 +214,22 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
 	if(write)
 	{
 		assert(GetID() < USHRT_MAX);
-        CStream tempstream(8192); // FIXME
-        
+		m_stream.ResetWritePosition();
+
         stream->WriteWORD((WORD)GetID()); // FIXME muss die id in den obj serialize stream?
-		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &tempstream);
-        DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &tempstream);
-        DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &tempstream);
-		// Update Position always
-/*		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &tempstream);
-        DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &tempstream);
-        DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &tempstream);
-  */      
-		DeltaDiffFloat(&state.speed,      oldstate ? &oldstate->speed : NULL,     OBJ_STATE_SPEED,      &updateflags, &tempstream);
-        DeltaDiffFloat(&state.fov,        oldstate ? &oldstate->fov : NULL,       OBJ_STATE_FOV,        &updateflags, &tempstream);
-        DeltaDiffFloat(&state.radius,     oldstate ? &oldstate->radius : NULL,    OBJ_STATE_RADIUS,     &updateflags, &tempstream);
-        DeltaDiffString(&state.resource,  oldstate ? &oldstate->resource : NULL,  OBJ_STATE_RESOURCE,   &updateflags, &tempstream);
-        DeltaDiffString(&state.animation, oldstate ? &oldstate->animation : NULL, OBJ_STATE_ANIMATION,  &updateflags, &tempstream);
-        DeltaDiffVec3(&state.min,         oldstate ? &oldstate->min : NULL,       OBJ_STATE_MIN,        &updateflags, &tempstream);
-        DeltaDiffVec3(&state.max,         oldstate ? &oldstate->max : NULL,       OBJ_STATE_MAX,        &updateflags, &tempstream);
-        DeltaDiffVec3(&state.eyepos,      oldstate ? &oldstate->eyepos : NULL,    OBJ_STATE_EYEPOS,     &updateflags, &tempstream);
+		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &m_stream);
+        DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &m_stream);
+        DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &m_stream);
+		DeltaDiffFloat(&state.speed,      oldstate ? &oldstate->speed : NULL,     OBJ_STATE_SPEED,      &updateflags, &m_stream);
+        DeltaDiffFloat(&state.fov,        oldstate ? &oldstate->fov : NULL,       OBJ_STATE_FOV,        &updateflags, &m_stream);
+        DeltaDiffFloat(&state.radius,     oldstate ? &oldstate->radius : NULL,    OBJ_STATE_RADIUS,     &updateflags, &m_stream);
+        DeltaDiffString(&state.resource,  oldstate ? &oldstate->resource : NULL,  OBJ_STATE_RESOURCE,   &updateflags, &m_stream);
+        DeltaDiffString(&state.animation, oldstate ? &oldstate->animation : NULL, OBJ_STATE_ANIMATION,  &updateflags, &m_stream);
+        DeltaDiffVec3(&state.min,         oldstate ? &oldstate->min : NULL,       OBJ_STATE_MIN,        &updateflags, &m_stream);
+        DeltaDiffVec3(&state.max,         oldstate ? &oldstate->max : NULL,       OBJ_STATE_MAX,        &updateflags, &m_stream);
+        DeltaDiffVec3(&state.eyepos,      oldstate ? &oldstate->eyepos : NULL,    OBJ_STATE_EYEPOS,     &updateflags, &m_stream);
         stream->WriteDWORD(updateflags);
-        stream->WriteStream(tempstream);
+        stream->WriteStream(m_stream);
 
         assert(oldstate ? 1 : (updateflags == OBJ_STATE_FULLUPDATE));
 	}

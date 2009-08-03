@@ -307,9 +307,11 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
         stream->ReadDWORD(&updateflags);
         assert(updateflags > 0);
-        assert(updateflags & WORLD_STATE_WORLDID); // erscheint mir sonst falsch
+        assert(updateflags & WORLD_STATE_WORLDID);
         if(updateflags & WORLD_STATE_WORLDID)
             stream->ReadDWORD(&worldid);
+		else
+			return false;
         if(worldid < state.worldid)
         {
             assert(0); // anschauen, ob ok
@@ -328,7 +330,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 			    {
     				// FIXME error handling
 					assert(0);
-				    return true;
+				    return false;
 			    }
             }
         }

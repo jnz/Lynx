@@ -14,6 +14,7 @@ public:
 
 	bool IsConnecting() { return m_isconnecting && m_server; }
 	bool IsConnected() { return m_server && !m_isconnecting; }
+	bool IsRunning() { return m_server != NULL; }
 
 	void Update(const float dt);
 

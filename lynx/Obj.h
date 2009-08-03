@@ -93,6 +93,7 @@ public:
 
 protected:
     obj_state_t state;
+	CStream		m_stream;
 
 private:
     // Don't touch these

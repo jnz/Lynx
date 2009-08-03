@@ -126,6 +126,11 @@ int main(int argc, char** argv)
 #ifdef _DEBUG
 		SDL_Delay(10); // so my notebook fan is quiet :-)
 #endif
+		if(!client.IsRunning())
+		{
+			fprintf(stderr, "Disconnected\n");
+			run = 0;
+		}
 	}
 	}
 	_CrtDumpMemoryLeaks();
