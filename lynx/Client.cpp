@@ -60,6 +60,9 @@ bool CClient::Connect(char* server, int port)
 
 void CClient::Shutdown()
 {
+	if(IsConnected())
+		enet_peer_disconnect_now(m_server, 0);
+
 	if(m_server)
 	{
 		enet_peer_reset(m_server);

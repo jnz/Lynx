@@ -361,7 +361,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             obj = (*iter).second;
             if(objread.find(obj->GetID()) != objread.end())
                 continue;
-            assert(0); // nur mal zum sehen, ob hier alles klappt. danach zeile löschen
+            //assert(0); // nur mal zum sehen, ob hier alles klappt. danach zeile löschen
             DelObj(obj->GetID());
         }
 
@@ -373,7 +373,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
 world_state_t CWorld::GenerateWorldState()
 {
-	world_state_t worldstate;
+	world_state_t worldstate = state;
 
     OBJITER iter;
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
@@ -382,9 +382,6 @@ world_state_t CWorld::GenerateWorldState()
         worldstate.objstates.push_back(obj->GetState());
         worldstate.objindex[obj->GetID()] = (int)worldstate.objstates.size()-1;
     }
-    worldstate.level = state.level;
-    worldstate.leveltime = state.leveltime;
-    worldstate.worldid = state.worldid;
 
 	return worldstate;
 }

@@ -32,6 +32,7 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 	int i;
 	int vi, ti, ni;
 	bsp_poly_t polygon;
+	int nonplanar = 0; // anzahl der nicht-ebenen polygone zählen
 
 	f = fopen(file.c_str(), "rb");
 	if(!f)
@@ -82,8 +83,12 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 				polygon.texcoords.push_back(ti-1);
 			}
 			if(polygon.IsPlanar(this))
+			{
 				m_polylist.push_back(polygon);
+			}
 			else
+			{
+				/*
 				fprintf(stderr, "BSP: Nonplanar triangle (%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)\n", 
 							m_vertices[polygon.vertices[0]].x, 
 							m_vertices[polygon.vertices[0]].y, 
@@ -94,6 +99,9 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 							m_vertices[polygon.vertices[2]].x, 
 							m_vertices[polygon.vertices[2]].y, 
 							m_vertices[polygon.vertices[2]].z);
+				*/
+				nonplanar++;
+			}
 		}
 	}
 	fclose(f);
@@ -101,6 +109,7 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 	fprintf(stderr, "BSP: Building tree from %i vertices in %i faces\n", 
 					m_vertices.size(), 
 					m_polylist.size());
+	fprintf(stderr, "BSP: Ignoring %i non-planar polygons: %i\n", nonplanar);
 
 	// Vertices u. faces wurde geladen
 	m_nodecount = 0;
