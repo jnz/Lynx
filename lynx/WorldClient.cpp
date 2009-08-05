@@ -5,8 +5,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAX_CLIENT_HISTORY          20
-#define RENDER_DELAY                500
+#define MAX_CLIENT_HISTORY          500
+#define RENDER_DELAY                100
 
 #pragma warning(disable: 4355)
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
@@ -102,7 +102,10 @@ bool CWorldClient::Serialize(bool write, CStream* stream, const world_state_t* o
 		clstate.state = GenerateWorldState();
 		clstate.localtime = CLynx::GetTicks();
 		m_history.push_front(clstate);
-		while(m_history.size() > MAX_CLIENT_HISTORY)
+		assert(m_history.size() < 80);
+		while(clstate.localtime - m_history.back().localtime > MAX_CLIENT_HISTORY)
+			m_history.pop_back();
+		while(m_history.size() > 80)
 			m_history.pop_back();
 		CreateClientInterp();
 	}
