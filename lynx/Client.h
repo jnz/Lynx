@@ -16,7 +16,7 @@ public:
 	bool IsConnected() { return m_server && !m_isconnecting; }
 	bool IsRunning() { return (m_server != NULL); }
 
-	void Update(const float dt);
+	void Update(const float dt, const DWORD ticks);
 
 protected:
 	void OnReceive(CStream* stream);

@@ -50,7 +50,7 @@ void CGameLogic::Notify(EventClientDisconnected e)
 	m_world->DelObj(e.client->m_obj);
 }
 
-void CGameLogic::Update(const float dt)
+void CGameLogic::Update(const float dt, const DWORD ticks)
 {
 	CObj* obj;
 	OBJITER iter;

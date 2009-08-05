@@ -54,7 +54,7 @@ void CServer::Shutdown()
 	m_clientlist.clear();
 }
 
-void CServer::Update(const float dt)
+void CServer::Update(const float dt, const DWORD ticks)
 {
     ENetEvent event;
 	CClientInfo* clientinfo;
@@ -114,7 +114,7 @@ void CServer::Update(const float dt)
         }
     }
 
-	if(CLynx::GetTicks() - m_lastupdate > SERVER_UPDATETIME)
+	if(ticks - m_lastupdate > SERVER_UPDATETIME)
 	{
 		int sent = 0;
 		std::map<int, CClientInfo*>::iterator iter;
@@ -124,7 +124,7 @@ void CServer::Update(const float dt)
 				sent++;
         }
 		
-		m_lastupdate = CLynx::GetTicks();
+		m_lastupdate = ticks;
 		if(sent > 0)
 			m_history[m_world->GetWorldID()] = m_world->GenerateWorldState();
 		UpdateHistoryBuffer();

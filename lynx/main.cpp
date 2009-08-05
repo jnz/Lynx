@@ -117,13 +117,13 @@ int main(int argc, char** argv)
 		// Update Game Classes
 		if(startserver)
 		{
-			svgame.Update(dt);
-			worldsv.Update(dt);
-			server.Update(dt);
+			svgame.Update(dt, time);
+			worldsv.Update(dt, time);
+			server.Update(dt, time);
 		}
-		worldcl.Update(dt);
-		client.Update(dt);
-		renderer.Update(dt);
+		worldcl.Update(dt, time);
+		client.Update(dt, time);
+		renderer.Update(dt, time);
 #ifdef _DEBUG
 		SDL_Delay(10); // so my notebook fan is quiet :-)
 #endif

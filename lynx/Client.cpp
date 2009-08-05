@@ -76,7 +76,7 @@ void CClient::Shutdown()
 	m_isconnecting = false;
 }
 
-void CClient::Update(const float dt)
+void CClient::Update(const float dt, const DWORD ticks)
 {
 	ENetEvent event;
 	CStream stream;

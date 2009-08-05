@@ -18,7 +18,7 @@ public:
 	const virtual CBSPTree* GetBSP() const { return m_pbsp; }
 	virtual CResourceManager* GetResourceManager() { return m_presman; }
 
-	void Update(const float dt);
+	void Update(const float dt, const DWORD ticks);
 
 protected:
 	CBSPTree* m_pbsp;
@@ -42,7 +42,7 @@ public:
 	void SetLocalObj(int id);
     CObj* GetLocalController() { return &m_ghostobj; }
 
-	void Update(const float dt);
+	void Update(const float dt, const DWORD ticks);
 
 	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
 

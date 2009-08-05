@@ -18,7 +18,7 @@ public:
 	bool Create(int port); // Server an Port starten
 	void Shutdown(); // Server herunterfahren
 
-	void Update(const float dt);
+	void Update(const float dt, const DWORD ticks);
 
 protected:
 	bool SendWorldToClient(CClientInfo* client);

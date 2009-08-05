@@ -126,7 +126,7 @@ void CRenderer::Shutdown()
 
 }
 
-void CRenderer::Update(const float dt)
+void CRenderer::Update(const float dt, const DWORD ticks)
 {
 	CObj* obj, *localctrl;
 	int localctrlid;

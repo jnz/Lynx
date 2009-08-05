@@ -12,7 +12,7 @@ public:
 	~CGameLogic(void);
 
 	void InitGame();
-	void Update(const float dt);
+	void Update(const float dt, const DWORD ticks);
 
 protected:
 	void Notify(EventNewClientConnected);

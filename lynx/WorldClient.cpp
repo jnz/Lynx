@@ -43,9 +43,9 @@ void CWorldClient::SetLocalObj(int id)
 	}
 }
 
-void CWorldClient::Update(const float dt)
+void CWorldClient::Update(const float dt, const DWORD ticks)
 {
-	CWorld::Update(dt);
+	CWorld::Update(dt, ticks);
     
 	static int pressed = 0;
 	static vec3_t location;
@@ -89,7 +89,9 @@ void CWorldClient::Update(const float dt)
 
 	if(m_pinterpworld == &m_interpworld)
 	{
-		m_interpworld.Update(dt);
+		m_interpworld.Update(dt, ticks);
+		if(ticks - m_interpworld.state2.localtime > RENDER_DELAY)
+			CreateClientInterp();
 	}
 }
 
@@ -130,7 +132,8 @@ void CWorldClient::CreateClientInterp()
 
     if(dtupdate > RENDER_DELAY)
     {
-        //fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
+        if(m_history.size() > 2)
+			fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
         return;
     }
 
@@ -194,16 +197,16 @@ void CWorldClient::CreateClientInterp()
 	m_pinterpworld = &m_interpworld;
 }
 
-void CWorldInterp::Update(const float dt)
+void CWorldInterp::Update(const float dt, const DWORD ticks)
 {
-	const DWORD tlocal = CLynx::GetTicks();
+	const DWORD tlocal = ticks;
     const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
 	const DWORD updategap = state2.localtime - state1.localtime;
 
 	const float a = (float)(rendertime - state1.localtime);
 	float f = a/updategap;
 
-	if(f > 1.25)
+	if(f > 1.0f)
 	{
 		fprintf(stderr, "Extrapolation factor > 1.25\n");
 		return;

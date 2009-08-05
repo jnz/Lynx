@@ -33,7 +33,7 @@ public:
 
     virtual bool IsClient() { return false; }
 
-	virtual void Update(const float dt); // Neues Frame berechnen
+	virtual void Update(const float dt, const DWORD ticks); // Neues Frame berechnen
 
 	void	AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
 	void	DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht

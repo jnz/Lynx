@@ -58,11 +58,11 @@ void CWorld::DeleteAllObjs()
 	m_objlist.clear();
 }
 
-void CWorld::Update(const float dt)
+void CWorld::Update(const float dt, const DWORD ticks)
 {
     if(!IsClient())
     {
-        state.leveltime = CLynx::GetTicks() - m_leveltimestart;
+        state.leveltime = ticks - m_leveltimestart;
         state.worldid++;
     }
 
