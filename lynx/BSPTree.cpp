@@ -14,6 +14,7 @@
 CBSPTree::CBSPTree(void)
 {
 	m_root = NULL;
+	m_leafcount = 0;
 }
 
 CBSPTree::~CBSPTree(void)

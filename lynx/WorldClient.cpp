@@ -5,7 +5,7 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAX_CLIENT_HISTORY          10
+#define MAX_CLIENT_HISTORY          20
 #define RENDER_DELAY                500
 
 #pragma warning(disable: 4355)

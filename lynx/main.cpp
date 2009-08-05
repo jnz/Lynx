@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 	}
 
 	fprintf(stderr, "Connecting to %s:%i\n", serveraddress, svport);
-	if(!client.Connect("localhost", svport))
+	if(!client.Connect(serveraddress, svport))
 	{
 		fprintf(stderr, "Failed to connect to server\n");
 		assert(0);
