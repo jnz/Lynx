@@ -20,6 +20,8 @@ public:
 
 	void Update(const float dt, const DWORD ticks);
 
+	float f; // Current scale factor
+
 protected:
 	CBSPTree* m_pbsp;
 	CResourceManager* m_presman;

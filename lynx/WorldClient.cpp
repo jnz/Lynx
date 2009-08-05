@@ -90,7 +90,7 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 	if(m_pinterpworld == &m_interpworld)
 	{
 		m_interpworld.Update(dt, ticks);
-		if(ticks - m_interpworld.state2.localtime > RENDER_DELAY)
+		if(m_interpworld.f >= 1.0)
 			CreateClientInterp();
 	}
 }
@@ -204,11 +204,11 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 	const DWORD updategap = state2.localtime - state1.localtime;
 
 	const float a = (float)(rendertime - state1.localtime);
-	float f = a/updategap;
+	f = a/updategap;
 
-	if(f > 1.0f)
+	if(f > 1.5f)
 	{
-		fprintf(stderr, "Extrapolation factor > 1.25\n");
+		fprintf(stderr, "Extrapolation factor > 1.5\n");
 		return;
 	}
 
