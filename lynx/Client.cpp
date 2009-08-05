@@ -87,8 +87,8 @@ void CClient::Update(const float dt, const DWORD ticks)
 		switch (event.type)
 		{
 		case ENET_EVENT_TYPE_RECEIVE:
-			fprintf(stderr, "CL: A packet of length %u was received \n",
-				event.packet->dataLength);
+			//fprintf(stderr, "CL: A packet of length %u was received \n",
+			//	event.packet->dataLength);
 
 			stream.SetBuffer(event.packet->data,
 							(int)event.packet->dataLength,

@@ -50,7 +50,7 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 	static int pressed = 0;
 	static vec3_t location;
 
-	if(CLynx::GetKeyState()[104])
+	if(CLynx::GetKeyState()[102])
 	{
 		float f = 999.9f;
 		vec3_t forward;
@@ -60,14 +60,19 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 		m_bsptree.ClearMarks(m_bsptree.m_root);
 
 		bsp_trace_t trace;
+		/*
 		m_bsptree.TraceBBox(obj->GetOrigin(), 
 							obj->GetOrigin() + forward, vec3_t(-1,-1,-1),
 							vec3_t(1,1,1), &trace);
+		*/
+		m_bsptree.TraceRay(obj->GetOrigin(), obj->GetOrigin() + forward, &f, m_bsptree.m_root);
+		/*
 		if(!trace.allsolid)
 		{
 			location = trace.endpoint;
 			pressed = 1;
 		}
+		*/
 	}
 	else
 	{

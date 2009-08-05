@@ -285,14 +285,14 @@ void BSP_RenderNode(const CBSPTree* tree,
 
 	if(node->IsLeaf())
 	{
-/*		if(node->marker)
+		if(node->marker)
 		{
 			int index = node->marker%(sizeof(g_colortable)/sizeof(g_colortable[0]));
 			vec3_t color = g_colortable[index];
 			glColor3fv(color.v);
 		}
 		else
-			glColor3f(1,1,1);*/
+			glColor3f(1,1,1);
 		BSP_RenderPolygons(tree, node->polylist);
         (*leafs_visited)++;
 		return;
