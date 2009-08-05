@@ -21,7 +21,7 @@
 
 int main(int argc, char** argv)
 {
-	char* serveraddress = "localhost";
+    char* serveraddress = "localhost";
 	int svport = 9999;
 	bool startserver = true;
 

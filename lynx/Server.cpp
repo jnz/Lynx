@@ -8,8 +8,8 @@
 
 #define MAXCLIENTS				8
 #define SERVER_UPDATETIME		50
-#define SERVER_MAX_WORLD_AGE	5000				// wie viele ms heben wir für den client eine welt auf
-#define MAX_WORLD_BACKLOG		(5*MAXCLIENTS)		// wie viele welten werden gespeichert
+#define SERVER_MAX_WORLD_AGE	1000				// wie viele ms heben wir für den client eine welt auf
+#define MAX_WORLD_BACKLOG		(10*MAXCLIENTS)		// wie viele welten werden gespeichert
 
 CServer::CServer(CWorld* world)
 {
