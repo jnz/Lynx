@@ -29,6 +29,8 @@ struct vec3_t
 
 	bool IsInArea(const vec3_t& min, const vec3_t& max) const;
 
+    static vec3_t Lerp(const vec3_t& p1, const vec3_t& p2, const float f);
+
 	/*
 		angles x = pitch, y = yaw, z = roll
 		bei 0/0/0 zeigt forward nach (0,0,-1)

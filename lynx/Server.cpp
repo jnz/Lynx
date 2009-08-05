@@ -7,7 +7,7 @@
 #endif
 
 #define MAXCLIENTS				8
-#define SERVER_UPDATETIME		500
+#define SERVER_UPDATETIME		20
 #define SERVER_MAX_WORLD_AGE	5000				// wie viele ms heben wir für den client eine welt auf
 #define MAX_WORLD_BACKLOG		(5*MAXCLIENTS)		// wie viele welten werden gespeichert
 
@@ -119,8 +119,10 @@ void CServer::Update(const float dt)
 		int sent = 0;
 		std::map<int, CClientInfo*>::iterator iter;
 		for(iter = m_clientlist.begin();iter!=m_clientlist.end();iter++)
+        {
 			if(SendWorldToClient((*iter).second))
 				sent++;
+        }
 		
 		m_lastupdate = CLynx::GetTicks();
 		if(sent > 0)

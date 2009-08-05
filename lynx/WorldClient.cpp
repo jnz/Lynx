@@ -5,6 +5,9 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+#define MAX_CLIENT_HISTORY          3
+#define RENDER_DELAY                100
+
 #pragma warning(disable: 4355)
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
 {
@@ -42,6 +45,7 @@ void CWorldClient::SetLocalObj(int id)
 void CWorldClient::Update(const float dt)
 {
 	CWorld::Update(dt);
+    //ClientInterp();
 
 	static int pressed = 0;
 	static vec3_t location;
@@ -82,4 +86,55 @@ void CWorldClient::Update(const float dt)
     vel.SetLength(controller->GetSpeed());
     controller->SetVel(vel);
 	ObjCollision(controller, dt);
+}
+
+bool CWorldClient::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
+{
+    bool changed = CWorld::Serialize(write, stream, oldstate);
+    /*
+    if(!changed)
+        return changed;
+
+    worldclient_state_t clstate;
+    clstate.state = GenerateWorldState();
+    clstate.localtime = CLynx::GetTicks();
+    m_history.push_front(clstate);
+    if(m_history.size() > MAX_CLIENT_HISTORY)
+        m_history.pop_back();
+    */
+    return changed;
+}
+
+void CWorldClient::ClientInterp()
+{
+    if(m_history.size() < 2)
+        return;
+
+    std::list<worldclient_state_t>::iterator iter = m_history.begin();
+    const DWORD tlocal = CLynx::GetTicks(); // aktuelle zeit
+    const DWORD tlocal_n = (*iter).localtime; // zeit von letztem packet
+    const DWORD dtupdate = tlocal - tlocal_n; // zeit seit letztem update
+
+    if(dtupdate > RENDER_DELAY)
+    {
+        fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
+        return;
+    }
+
+    worldclient_state_t staten = (*iter);
+    iter++;
+    worldclient_state_t staten1 = (*iter);
+
+    const DWORD tlocal_n1 = (*iter).localtime; // zeit von vorletztem packet
+    const DWORD dt = tlocal_n - tlocal_n1; // zeit zwischen letztem und vorletztem packet
+    const DWORD rendertime = tlocal_n + dtupdate - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
+    const int a = rendertime - tlocal_n1;
+    const float f = (float)a/dt; // lineare interpolation mit faktor f (f liegt zw. 0 und 1)
+    
+    OBJITER objiter;
+    for(objiter = ObjBegin(); objiter != ObjEnd(); objiter++)
+    {
+        WORD id = ((*objiter).second)->GetID();
+
+    }
 }

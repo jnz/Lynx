@@ -286,3 +286,8 @@ void vec3_t::Print()
 	fprintf(stderr, "%.2f %.2f %.2f\n", x, y, z);
 }
 #endif
+
+vec3_t vec3_t::Lerp(const vec3_t& p1, const vec3_t& p2, const float f)
+{
+    return (1-f)*p1 + f*p2;
+}

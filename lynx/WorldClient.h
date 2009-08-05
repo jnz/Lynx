@@ -1,6 +1,12 @@
 #pragma once
 #include "world.h"
 
+struct worldclient_state_t
+{
+    world_state_t state;
+    DWORD   localtime; // in ms
+};
+
 class CWorldClient :
 	public CWorld
 {
@@ -15,6 +21,14 @@ public:
     CObj* GetLocalController() { return &m_ghostobj; }
 
 	void Update(const float dt);
+
+	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
+
+protected:
+    std::list<worldclient_state_t> m_history; // History buffer for interpolation
+
+    void ClientInterp();
+
 
 private:
 	CObj* m_localobj; // Objekt mit dem dieser Client verknüpft ist

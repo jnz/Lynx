@@ -109,7 +109,7 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 	fprintf(stderr, "BSP: Building tree from %i vertices in %i faces\n", 
 					m_vertices.size(), 
 					m_polylist.size());
-	fprintf(stderr, "BSP: Ignoring %i non-planar polygons: %i\n", nonplanar);
+	fprintf(stderr, "BSP: Ignoring %i non-planar polygons\n", nonplanar);
 
 	// Vertices u. faces wurde geladen
 	m_nodecount = 0;

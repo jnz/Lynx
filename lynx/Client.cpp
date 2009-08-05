@@ -162,9 +162,8 @@ void CClient::OnReceive(CStream* stream)
 	{
 	case NET_MSG_SERIALIZE_WORLD:
 		stream->ReadDWORD(&localobj);
-		if(!m_world->Serialize(false, stream))
-			Shutdown();
-		m_world->SetLocalObj(localobj);
+		m_world->Serialize(false, stream);
+    	m_world->SetLocalObj(localobj);
 		break;
 	case NET_MSG_INVALID:
 	default:
