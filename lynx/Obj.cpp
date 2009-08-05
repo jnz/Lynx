@@ -106,15 +106,13 @@ void CObj::SetResource(std::string resource)
 
 	if(state.resource != resource)
 	{
-		state.resource = resource;	
-
-		CModelMD2* model = m_world->m_resman.GetModel(resource);
-		assert(model);
-		if(model)
+		state.resource = resource;
+		UpdateProperties();
+		if(m_mesh)
 		{
+			state.radius = m_mesh->GetSphere();
 			vec3_t min, max;
-			model->GetAABB(&min, &max);
-			state.radius = model->GetSphere();
+			m_mesh->GetAABB(&min, &max);
 			SetAABB(min, max);
 		}
 	}
@@ -133,7 +131,8 @@ void CObj::SetAnimation(std::string animation)
 
 	if(animation != state.animation)
 	{
-		state.animation = animation;	
+		state.animation = animation;
+		UpdateProperties();
 	}
 }
 
@@ -267,19 +266,28 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
             stream->ReadVec3(&state.eyepos);
 
         m_id = id;
-		CModelMD2* mesh = m_world->m_resman.GetModel(state.resource);
-        if(!m_mesh && mesh && (updateflags & OBJ_STATE_RESOURCE))
+        if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION)
 		{
-            m_mesh = mesh;
-			vec3_t min, max;
-			m_mesh->GetAABB(&min, &max);
-			SetAABB(min, max);
-			if(state.animation != "")
-				m_mesh->SetAnimationByName(&m_mesh_state, (char*)state.animation.c_str());
-			else
-				m_mesh->SetAnimation(&m_mesh_state, 0);
+			UpdateProperties();
 		}
 	}
 
 	return updateflags != 0;
+}
+
+void CObj::SetObjState(const obj_state_t* objstate, int id)
+{
+	m_id = id;
+	state = *objstate;
+	UpdateProperties();
+}
+
+void CObj::UpdateProperties()
+{
+	m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
+	if(state.animation != "")
+		m_mesh->SetAnimationByName(&m_mesh_state, (char*)state.animation.c_str());
+	else
+		m_mesh->SetAnimation(&m_mesh_state, 0);
+	UpdateMatrix();
 }

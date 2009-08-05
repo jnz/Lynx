@@ -5,8 +5,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAX_CLIENT_HISTORY          3
-#define RENDER_DELAY                100
+#define MAX_CLIENT_HISTORY          10
+#define RENDER_DELAY                500
 
 #pragma warning(disable: 4355)
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
@@ -14,6 +14,7 @@ CWorldClient::CWorldClient(void) : m_ghostobj(this)
 	m_localobj = &m_ghostobj;
 	m_ghostobj.SetOrigin(vec3_t(0,8.0f,0));
 	m_ghostobj.SetSpeed(50.0f);
+	m_pinterpworld = this;
 }
 
 CWorldClient::~CWorldClient(void)
@@ -45,8 +46,7 @@ void CWorldClient::SetLocalObj(int id)
 void CWorldClient::Update(const float dt)
 {
 	CWorld::Update(dt);
-    //ClientInterp();
-
+    
 	static int pressed = 0;
 	static vec3_t location;
 
@@ -85,56 +85,146 @@ void CWorldClient::Update(const float dt)
     vec3_t vel = controller->GetVel();
     vel.SetLength(controller->GetSpeed());
     controller->SetVel(vel);
-	ObjCollision(controller, dt);
+	ObjMove(controller, dt);
+
+	if(m_pinterpworld == &m_interpworld)
+	{
+		m_interpworld.Update(dt);
+	}
 }
 
 bool CWorldClient::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
 {
     bool changed = CWorld::Serialize(write, stream, oldstate);
-    /*
-    if(!changed)
-        return changed;
-
-    worldclient_state_t clstate;
-    clstate.state = GenerateWorldState();
-    clstate.localtime = CLynx::GetTicks();
-    m_history.push_front(clstate);
-    if(m_history.size() > MAX_CLIENT_HISTORY)
-        m_history.pop_back();
-    */
+    if(changed && !write)
+	{
+		worldclient_state_t clstate;
+		clstate.state = GenerateWorldState();
+		clstate.localtime = CLynx::GetTicks();
+		m_history.push_front(clstate);
+		while(m_history.size() > MAX_CLIENT_HISTORY)
+			m_history.pop_back();
+		CreateClientInterp();
+	}
     return changed;
 }
 
-void CWorldClient::ClientInterp()
+/*
+	Vorbereiten von Interpolierter Welt
+ */
+void CWorldClient::CreateClientInterp()
 {
-    if(m_history.size() < 2)
+	m_pinterpworld = this;
+
+	if(m_history.size() < 2)
         return;
 
     std::list<worldclient_state_t>::iterator iter = m_history.begin();
     const DWORD tlocal = CLynx::GetTicks(); // aktuelle zeit
     const DWORD tlocal_n = (*iter).localtime; // zeit von letztem packet
     const DWORD dtupdate = tlocal - tlocal_n; // zeit seit letztem update
+    const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
 
     if(dtupdate > RENDER_DELAY)
     {
-        fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
+        //fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
         return;
     }
 
-    worldclient_state_t staten = (*iter);
-    iter++;
-    worldclient_state_t staten1 = (*iter);
+	// Jetzt werden die beiden worldclient_state_t Objekte gesucht, die um den Renderzeitpunkt liegen
+	// Wenn es das nicht gibt, muss extrapoliert werden
 
-    const DWORD tlocal_n1 = (*iter).localtime; // zeit von vorletztem packet
-    const DWORD dt = tlocal_n - tlocal_n1; // zeit zwischen letztem und vorletztem packet
-    const DWORD rendertime = tlocal_n + dtupdate - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
-    const int a = rendertime - tlocal_n1;
-    const float f = (float)a/dt; // lineare interpolation mit faktor f (f liegt zw. 0 und 1)
-    
-    OBJITER objiter;
-    for(objiter = ObjBegin(); objiter != ObjEnd(); objiter++)
+	// LINEARE INTERPOLATION
+
+	std::list<worldclient_state_t>::iterator state1 = iter; // worldstate vor rendertime
+	std::list<worldclient_state_t>::iterator state2 = iter; // worldstate nach rendertime
+	for(iter = m_history.begin();iter != m_history.end();iter++)
+	{
+		if((*iter).localtime < rendertime)
+		{
+			state1 = iter;
+			break;
+		}
+		else
+			state2 = iter;
+	}
+	if((*state1).localtime > rendertime)
+	{
+		return;
+	}
+	if(state1 == m_history.end() || state2 == m_history.end() || state1 == state2)
+	{
+		assert(0);
+		return;
+	}
+
+	worldclient_state_t w1 = (*state1);
+	worldclient_state_t w2 = (*state2);
+	assert(w1.localtime < rendertime && w2.localtime >= rendertime);
+	
+	m_interpworld.DeleteAllObjs();
+	m_interpworld.m_pbsp = &m_bsptree; // FIXME ist das sicher bei einem level change?
+	m_interpworld.m_presman = &m_resman;
+	m_interpworld.state1 = w1;
+	m_interpworld.state2 = w2;
+
+	CObj* obj;
+	std::map<int, int>::iterator objiter;
+	for(objiter =  w1.state.objindex.begin();
+		objiter != w1.state.objindex.end(); objiter++)
     {
-        WORD id = ((*objiter).second)->GetID();
+		int id = (*objiter).first;
 
+		// Prüfen, ob Obj auch in w2 vorkommt
+		if(w2.state.objindex.find(id) == w2.state.objindex.end())
+		{
+			//assert(0); // OK soweit?
+			continue;
+		}
+
+		const obj_state_t objstate = w1.state.objstates[(*objiter).second];
+		obj = new CObj(&m_interpworld);
+		obj->SetObjState(&objstate, id);
+		m_interpworld.AddObj(obj);
     }
+	m_interpworld.UpdatePendingObjs();
+	m_pinterpworld = &m_interpworld;
+}
+
+void CWorldInterp::Update(const float dt)
+{
+	const DWORD tlocal = CLynx::GetTicks();
+    const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
+	const DWORD updategap = state2.localtime - state1.localtime;
+
+	const float a = (float)(rendertime - state1.localtime);
+	float f = a/updategap;
+
+	if(f > 1.25)
+	{
+		fprintf(stderr, "Extrapolation factor > 1.25\n");
+		return;
+	}
+
+	std::map<int, int>::iterator iter1, iter2;
+	OBJITER iter;
+	CObj* obj;
+	vec3_t origin1, origin2, origin;
+	vec3_t rot1, rot2, rot;
+	for(iter = ObjBegin();iter != ObjEnd(); iter++)
+	{
+		obj = (*iter).second;
+		iter1 = state1.state.objindex.find(obj->GetID());
+		iter2 = state2.state.objindex.find(obj->GetID());
+		origin1 = state1.state.objstates[(*iter1).second].origin;
+		origin2 = state2.state.objstates[(*iter2).second].origin;
+		rot1 = state1.state.objstates[(*iter1).second].rot;
+		rot2 = state2.state.objstates[(*iter2).second].rot;
+		
+		origin = vec3_t::Lerp(origin1, origin2, f);
+		rot = vec3_t::Lerp(rot1, rot2, f);
+		obj->SetOrigin(origin);
+		obj->SetRot(rot);
+		obj->UpdateMatrix();
+	}
 }

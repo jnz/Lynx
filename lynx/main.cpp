@@ -117,6 +117,7 @@ int main(int argc, char** argv)
 		// Update Game Classes
 		if(startserver)
 		{
+			svgame.Update(dt);
 			worldsv.Update(dt);
 			server.Update(dt);
 		}

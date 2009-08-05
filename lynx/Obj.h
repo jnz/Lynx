@@ -63,6 +63,7 @@ public:
 	bool		Serialize(bool write, CStream* stream, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
     void        GetObjState(obj_state_t* objstate) { *objstate = state; }
+	void		SetObjState(const obj_state_t* objstate, int id);
 
     const vec3_t GetOrigin() const { return state.origin; }
     void        SetOrigin(const vec3_t& origin) { state.origin = origin; }
@@ -85,13 +86,16 @@ public:
 	vec3_t		GetEyePos();
 	void		SetEyePos(const vec3_t& eyepos);
 
-	// Direct Access for Renderer
-	CModelMD2*	m_mesh;
-	md2_state_t m_mesh_state;
-
     obj_state_t GetState() { return state; }
 
 protected:
+
+	// Direct Access for Renderer
+	CModelMD2*	m_mesh;
+	md2_state_t m_mesh_state;
+	friend class CRenderer;
+
+	void		UpdateProperties();
     obj_state_t state;
 	CStream		m_stream;
 

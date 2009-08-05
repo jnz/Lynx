@@ -87,8 +87,8 @@ void CClient::Update(const float dt)
 		switch (event.type)
 		{
 		case ENET_EVENT_TYPE_RECEIVE:
-			//fprintf(stderr, "CL: A packet of length %u was received \n",
-			//	event.packet->dataLength);
+			fprintf(stderr, "CL: A packet of length %u was received \n",
+				event.packet->dataLength);
 
 			stream.SetBuffer(event.packet->data,
 							(int)event.packet->dataLength,
@@ -136,7 +136,7 @@ void CClient::SendClientState()
 		stream.WriteDWORD(m_world->GetWorldID());
         stream.WriteVec3(localctrl->GetOrigin());
         stream.WriteVec3(localctrl->GetVel());
-        stream.WriteVec3(localctrl->GetRot());
+        stream.WriteVec3(vec3_t(0, localctrl->GetRot().y, 0));
         
     	packet = enet_packet_create(stream.GetBuffer(), 
 								    stream.GetBytesWritten(), 0);
@@ -209,48 +209,3 @@ CObj* CClient::GetLocalController()
 {
 	return m_world->GetLocalController();
 }
-
-/*
-	GRAVEYARD
-
-sl sr  f  b |  dir (x, y, z)
- 0  0  0  0   ( 0, 0, 0)	0
- 0  0  0  1   ( 0, 0, 1)	1
- 0  0  1  0   ( 0, 0,-1)	2
- 0  0  1  1   ( 0, 0, 0)	3
- 0  1  0  0   ( 1, 0, 0)	4
- 0  1  0  1   ( S, 0, S)	5
- 0  1  1  0   ( S, 0,-S)	6
- 0  1  1  1   ( 1, 0, 0)	7
- 1  0  0  0   (-1, 0, 0)	8
- 1  0  0  1   (-S, 0, S)	9
- 1  0  1  0   (-S, 0,-S)	10
- 1  0  1  1   (-1, 0, 0)	11
- 1  1  0  0   ( 0, 0, 0)	12
- 1  1  0  1   ( 0, 0, 1)	13
- 1  1  1  0   ( 0, 0,-1)	14
- 1  1  1  1   ( 0, 0, 0)	15
-*/
-/*
-#define S SQRT_2_HALF
-static const vec3_t g_dir_table[] =
-{
-	vec3_t( 0, 0, 0),
-	vec3_t( 0, 0, 1),
-	vec3_t( 0, 0,-1),
-	vec3_t( 0, 0, 0),
-	vec3_t( 1, 0, 0),
-	vec3_t( S, 0, S),
-	vec3_t( S, 0,-S),
-	vec3_t( 1, 0, 0),
-	vec3_t(-1, 0, 0),
-	vec3_t(-S, 0, S),
-	vec3_t(-S, 0,-S),
-	vec3_t(-1, 0, 0),
-	vec3_t( 0, 0, 0),
-	vec3_t( 0, 0, 1),
-	vec3_t( 0, 0,-1),
-	vec3_t( 0, 0, 0)
-};
-#undef S
-*/

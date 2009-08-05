@@ -128,15 +128,20 @@ void CRenderer::Shutdown()
 
 void CRenderer::Update(const float dt)
 {
-	CObj* obj;
+	CObj* obj, *localctrl;
+	int localctrlid;
 	OBJITER iter;
 	matrix_t m;
 	vec3_t dir, up, side;
 	CFrustum frustum;
+	CWorld* world;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    obj = m_world->GetLocalController();
-	m.SetCamTransform(&(obj->GetOrigin()+obj->GetEyePos()), &obj->GetRot());
+    localctrl = m_world->GetLocalController();
+	localctrlid = m_world->GetLocalObj()->GetID();
+	world = m_world->GetInterpWorld();
+	m.SetCamTransform(&(localctrl->GetOrigin()+localctrl->GetEyePos()), 
+					  &localctrl->GetRot());
 	m.GetVec3Cam(&dir, &up, &side);
 	glLoadMatrixf(m.pm);
 
@@ -153,8 +158,8 @@ void CRenderer::Update(const float dt)
 				  PLANE_NEAR, 
 				  PLANE_FAR);
 #else
-	frustum.Setup(obj->GetOrigin()+obj->GetEyePos(), dir, up, side, 
-				  obj->GetFOV(), (float)m_width/(float)m_height,
+	frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
+				  localctrl->GetFOV(), (float)m_width/(float)m_height,
 				  PLANE_NEAR, 
 				  PLANE_FAR); 
 #endif
@@ -165,18 +170,18 @@ void CRenderer::Update(const float dt)
     stat_bsp_leafs_visited = 0;
 
 	glBindTexture(GL_TEXTURE_2D, 
-		m_world->m_resman.GetTexture(CLynx::GetBaseDirLevel() + "testlvl/wall.tga"));
+		world->GetResourceManager()->GetTexture(CLynx::GetBaseDirLevel() + "testlvl/wall.tga")); // FIXME?
 #ifdef DRAWFRUSTUM
-	BSP_RenderTree(&m_world->m_bsptree, &lastpos.origin, &frustum, &stat_bsp_leafs_visited);
+	BSP_RenderTree(&world->m_bsptree, &lastpos.origin, &frustum, &stat_bsp_leafs_visited);
 #else
-	BSP_RenderTree(m_world->GetBSP(), &obj->GetOrigin(), &frustum, &stat_bsp_leafs_visited);
+	BSP_RenderTree(world->GetBSP(), &localctrl->GetOrigin(), &frustum, &stat_bsp_leafs_visited);
 #endif
 
 	glEnable(GL_LIGHTING);
-	for(iter=m_world->ObjBegin();iter!=m_world->ObjEnd();iter++)
+	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
 	{
 		obj = (*iter).second;
-        if(obj->GetID() == m_world->GetLocalObj()->GetID())
+        if(obj->GetID() == localctrlid)
             continue;
 
 		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))

@@ -12,6 +12,7 @@ public:
 	~CGameLogic(void);
 
 	void InitGame();
+	void Update(const float dt);
 
 protected:
 	void Notify(EventNewClientConnected);

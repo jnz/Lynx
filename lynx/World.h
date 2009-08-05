@@ -19,9 +19,9 @@ struct world_state_t
 {
     DWORD   leveltime; // in ms
     DWORD   worldid; // fortlaufende nummer
-
     std::string level; // Pfad zu Level
-    std::vector<obj_state_t> objstates;
+
+	std::vector<obj_state_t> objstates;
     std::map<int,int> objindex; // ID zu objstates index tabelle
 };
 
@@ -47,15 +47,18 @@ public:
 	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
 
     bool    LoadLevel(const std::string path);
-    const   CBSPTree* GetBSP() { return &m_bsptree; }
+    const virtual CBSPTree* GetBSP() const { return &m_bsptree; }
     DWORD   GetLeveltime() const { return state.leveltime; }
     DWORD   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
     world_state_t GenerateWorldState();
 
-    CResourceManager m_resman;
+	virtual CResourceManager* GetResourceManager() { return &m_resman; }
+
+	void	ObjMove(CObj* obj, float dt);
 
 protected:
-
+	
+	CResourceManager m_resman;
 	world_state_t state;
     DWORD    m_leveltimestart;
     CBSPTree m_bsptree;
@@ -64,7 +67,6 @@ protected:
 	void	UpdatePendingObjs(); // Entfernt zu löschende Objekte und fügt neue hinzu (siehe m_addobj und removeobj)
 	void	DeleteAllObjs(); // Löscht alle Objekte aus m_objlist und gibt auch den Speicher frei
 
-	void	ObjCollision(CObj* obj, float dt);
 
 	std::list<CObj*> m_addobj; // Liste von Objekten die im nächsten Frame hinzugefügt werden
 	std::list<int> m_removeobj; // Liste von Objekten die im nächsten Frame gelöscht werden

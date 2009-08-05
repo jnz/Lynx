@@ -60,9 +60,6 @@ void CWorld::DeleteAllObjs()
 
 void CWorld::Update(const float dt)
 {
-	OBJITER iter;
-	CObj* obj;
-
     if(!IsClient())
     {
         state.leveltime = CLynx::GetTicks() - m_leveltimestart;
@@ -74,13 +71,6 @@ void CWorld::Update(const float dt)
 	if(!m_bsptree.m_root)
 		return;
 
-	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
-	{
-		obj = (*iter).second;
-		//obj->GetVel().SetLength(obj->GetSpeed());
-		//assert(obj->GetSpeed() > 0);
-		ObjCollision(obj, dt);
-	}
 	m_bsptree.ClearMarks(m_bsptree.m_root);
 }
 
@@ -102,7 +92,7 @@ void ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t* out, float ove
 }
 
 #define MAX_CLIP_PLANES		5
-void CWorld::ObjCollision(CObj* obj, float dt)
+void CWorld::ObjMove(CObj* obj, float dt)
 {
     obj->SetOrigin(obj->GetOrigin() + obj->GetVel() * dt);
 	/*
