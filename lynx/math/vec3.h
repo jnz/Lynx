@@ -25,11 +25,11 @@ struct vec3_t
 	bool IsNormalized() const;
 	void SetLength(float length);
 
-	bool IsNull() const;
+	bool IsNull() const; // Exakt auf 0,0,0 testen (ohne Epsilon)
 
 	bool IsInArea(const vec3_t& min, const vec3_t& max) const;
 
-    static vec3_t Lerp(const vec3_t& p1, const vec3_t& p2, const float f);
+    static vec3_t Lerp(const vec3_t& p1, const vec3_t& p2, const float f); // Lineare Interpolation zw. p1 und p2. Bei f=0 ist das Ergebnis p1, bei f=1 wird p2 zurückgegeben
 
 	/*
 		angles x = pitch, y = yaw, z = roll
@@ -38,6 +38,15 @@ struct vec3_t
 	*/
 	static void AngleVec3(const vec3_t& angles, vec3_t* forward, vec3_t* up, vec3_t* side);
 	static float GetAngleDeg(vec3_t& a, vec3_t& b); // angle between a and b in degrees
+
+	/*
+		Helferfunktion: Schnittpunkt Ray mit Zylinder. 
+		Rückgabe: true, in f steht der Skalierungsfaktor zum Schnittpunkt pStart + f*(pEnd-pStart)
+	*/
+	static bool RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd, 
+									 const vec3_t& edgeStart, const vec3_t& edgeEnd,
+									 const float radius,
+									 float* f);
 
 	static const vec3_t origin;
 

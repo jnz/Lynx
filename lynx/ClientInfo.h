@@ -1,7 +1,5 @@
 #pragma once
 #include <enet/enet.h>
-//#include "World.h"
-//#include <list>
 
 enum clientstate_t {
 		S0_CLIENT_CONNECTED=0, 

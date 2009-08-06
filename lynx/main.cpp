@@ -8,10 +8,12 @@
 #include "WorldClient.h"
 #include "GameLogic.h"
 
+// <memory leak detection>
 #ifdef _DEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
+// </memory leak detection>
 
 #define WINDOW_TITLE		"lynx"
 #define SCREEN_WIDTH		800
@@ -124,6 +126,7 @@ int main(int argc, char** argv)
 		worldcl.Update(dt, time);
 		client.Update(dt, time);
 		renderer.Update(dt, time);
+
 #ifdef _DEBUG
 		SDL_Delay(10); // so my notebook fan is quiet :-)
 #endif

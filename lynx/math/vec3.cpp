@@ -291,3 +291,11 @@ vec3_t vec3_t::Lerp(const vec3_t& p1, const vec3_t& p2, const float f)
 {
     return (1-f)*p1 + f*p2;
 }
+
+bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd, 
+                                  const vec3_t& edgeStart, const vec3_t& edgeEnd,
+                                  const float radius,
+                                  float* f)
+{
+    dfjkasdfjhsdfjh implementier mich
+}
