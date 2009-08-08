@@ -173,7 +173,7 @@ void CWorldClient::CreateClientInterp()
 	worldclient_state_t w2 = (*state2);
 	assert(w1.localtime < rendertime && w2.localtime >= rendertime);
 	
-	m_interpworld.DeleteAllObjs();
+	//m_interpworld.DeleteAllObjs();
 	m_interpworld.m_pbsp = &m_bsptree; // FIXME ist das sicher bei einem level change?
 	m_interpworld.m_presman = &m_resman;
 	m_interpworld.state1 = w1;
@@ -190,14 +190,32 @@ void CWorldClient::CreateClientInterp()
 		if(w2.state.objindex.find(id) == w2.state.objindex.end())
 		{
 			//assert(0); // OK soweit?
+            // Könnte man hier gleich löschen und die Schleife am Ende sparen?
 			continue;
 		}
 
 		const obj_state_t objstate = w1.state.objstates[(*objiter).second];
-		obj = new CObj(&m_interpworld);
-		obj->SetObjState(&objstate, id);
-		m_interpworld.AddObj(obj);
+        obj = m_interpworld.GetObj(id);
+        if(!obj)
+        {
+            obj = new CObj(&m_interpworld);
+		    obj->SetObjState(&objstate, id);
+		    m_interpworld.AddObj(obj);
+        }
+        else
+        {
+            obj->SetObjState(&objstate, id);
+        }
     }
+    // Objekte löschen, die es jetzt nicht mehr gibt
+    OBJITER deliter;
+    for(deliter = m_interpworld.ObjBegin();deliter != m_interpworld.ObjEnd(); deliter++)
+    {
+        obj = (*deliter).second;
+        if(w1.state.objindex.find(obj->GetID()) == w1.state.objindex.end())
+            m_interpworld.DelObj(obj->GetID());
+    }
+
 	m_interpworld.UpdatePendingObjs();
 	m_pinterpworld = &m_interpworld;
 }

@@ -278,8 +278,11 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
 void CObj::SetObjState(const obj_state_t* objstate, int id)
 {
 	m_id = id;
+    bool resourcechange =   objstate->resource != state.resource || 
+                            objstate->animation != state.animation;
 	state = *objstate;
-	UpdateProperties();
+    if(resourcechange)
+	    UpdateProperties();
 }
 
 void CObj::UpdateProperties()
