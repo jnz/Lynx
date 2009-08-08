@@ -8,8 +8,8 @@
 
 #define MAXCLIENTS				8
 #define SERVER_UPDATETIME		50
-#define SERVER_MAX_WORLD_AGE	1000				// wie viele ms heben wir für den client eine welt auf
-#define MAX_WORLD_BACKLOG		(10*MAXCLIENTS)		// wie viele welten werden gespeichert
+#define SERVER_MAX_WORLD_AGE	5000				// wie viele ms heben wir für den client eine welt auf
+#define MAX_WORLD_BACKLOG		(50*MAXCLIENTS)		// wie viele welten werden gespeichert
 
 CServer::CServer(CWorld* world)
 {
@@ -183,7 +183,7 @@ void CServer::UpdateHistoryBuffer()
 		worlditer = m_history.find(client->worldidACK);
 		if(worlditer == m_history.end())
 		{
-			assert(0);
+			//assert(0);
 			client->worldidACK = 0;
 			fprintf(stderr, "Client last known world is not in history buffer\n");
 			continue;
