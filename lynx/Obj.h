@@ -89,10 +89,9 @@ public:
     obj_state_t GetState() { return state; }
 
 protected:
-
 	// Direct Access for Renderer
 	CModelMD2*	m_mesh;
-	md2_state_t m_mesh_state;
+    md2_state_t m_mesh_state;
 	friend class CRenderer;
 
 	void		UpdateProperties();

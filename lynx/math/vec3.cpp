@@ -297,5 +297,5 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd,
                                   const float radius,
                                   float* f)
 {
-    dfjkasdfjhsdfjh implementier mich
+    return false;
 }
