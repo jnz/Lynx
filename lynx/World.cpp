@@ -94,103 +94,36 @@ void ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t* out, float ove
 #define MAX_CLIP_PLANES		5
 void CWorld::ObjMove(CObj* obj, float dt)
 {
-    obj->SetOrigin(obj->GetOrigin() + obj->GetVel() * dt);
-	/*
-	vec3_t planes[MAX_CLIP_PLANES];
-	vec3_t newpos;
-	vec3_t original_velocity, primal_velocity, new_velocity;
-	bsp_trace_t trace;
-	int numbumps = 4;
-	int bumpcount;
-	int numplanes=0, i, j;
-	vec3_t min, max;
+    vec3_t p2 = obj->GetOrigin() + obj->GetVel() * dt;
 
-	obj->GetAABB(&min, &max);
-	original_velocity = obj->pos.velocity;
-	primal_velocity = obj->pos.velocity;
+    const bool moved = obj->GetOrigin() != p2;
 
-	for(bumpcount=0;bumpcount<numbumps;bumpcount++)
-	{
-		newpos = obj->pos.origin + obj->pos.velocity * dt;
-		if(newpos == obj->pos.origin)
-			return;
+    if(moved && m_bsptree.m_root)
+    {
+        vec3_t q;
+        bsp_sphere_trace_t trace;
 
-		m_bsptree.TraceBBox(obj->pos.origin, newpos, min, max, &trace);
+        trace.start = obj->GetOrigin();
+        trace.radius = obj->GetRadius();
+//        do
+//        {
+            trace.end = p2;
+            trace.dir = trace.end - trace.start;
+            trace.f = 99999999.0f;
+            m_bsptree.TraceSphere(&trace, m_bsptree.m_root);
+            assert(trace.f > 0.0f);
+            if(trace.f < 1.0f)
+            {
+                trace.f = 0.0f;
+                q = trace.start + trace.f*trace.dir;
+                //p2 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
+                p2 = q;
+            }
 
-		if(trace.f < 0)
-		{
-			fprintf(stderr, "Phys: Negative trace %.2f\n", trace.f);
-			obj->pos.origin = trace.endpoint;
-			break;
-		}
-		if(trace.f >= 0)
-		{
-			obj->pos.origin = trace.endpoint;
-			original_velocity = obj->pos.velocity;
-			numplanes = 0;
-		}
-
-		if(trace.f == 1.0f)
-			break;
-
-		dt -= dt * trace.f;
-
-		if(numplanes >= MAX_CLIP_PLANES)
-		{
-			assert(0); // this shouldn't really happen
-			obj->pos.velocity = vec3_t::origin;
-			break;
-		}
-
-		planes[numplanes] = trace.p.m_n;
-		numplanes++;
-		
-		// modify original_velocity so it parallels all of the clip planes
-		for(i=0;i<numplanes;i++)
-		{
-			ClipVelocity(original_velocity, planes[i], &new_velocity, 1);
-
-			for(j=0;j<numplanes;j++)
-			{
-				if((j != i) && planes[i] != planes[j])
-				{
-					if(new_velocity * planes[j] < 0)
-						break;
-				}
-			}
-			if(j == numplanes)
-				break;
-		}
-
-		if(i != numplanes)
-		{
-			obj->pos.velocity = new_velocity;
-		}
-		else
-		{
-			if(numplanes != 2)
-			{
-				obj->pos.velocity = vec3_t::origin;
-				return;
-			}
-			vec3_t dir = planes[0] ^ planes[1];
-			float d = dir * obj->pos.velocity;
-			obj->pos.velocity = dir * d;
-		}
-		
-		if(obj->pos.velocity * primal_velocity <= 0.0f)
-		{
-			obj->pos.velocity = vec3_t::origin;
-			return;
-		}
-	}
-	*/
+//        }while(trace.f > lynxmath::EPSILON && trace.f < 1.0f);
+    }
+    obj->SetOrigin(p2);
 }
-/*
-		plane_t p = trace.p;
-		trace.p.m_d += trace.offset;
-		slide =		trace.end +
-					trace.p.m_n * -trace.p.GetDistFromPlane(trace.end);*/
 
 void CWorld::UpdatePendingObjs()
 {

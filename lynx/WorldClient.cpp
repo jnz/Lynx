@@ -59,7 +59,6 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 		forward *= 1000.0f;
 		m_bsptree.ClearMarks(m_bsptree.m_root);
 
-		bsp_trace_t trace;
 		/*
 		m_bsptree.TraceBBox(obj->GetOrigin(), 
 							obj->GetOrigin() + forward, vec3_t(-1,-1,-1),

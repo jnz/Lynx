@@ -16,8 +16,8 @@ struct CFrustum
 			   float fovY, float ratio,
 			   float near, float far);
 
-	bool TestSphere(const vec3_t& point, float radius); // Is the sphere inside the frustum
-	bool TestPlane(plane_t& plane); // Is the plane visible to the frustum?
+	bool TestSphere(const vec3_t& point, const float radius) const; // Is the sphere inside the frustum
+	bool TestPlane(const plane_t& plane) const; // Is the plane visible to the frustum?
 
 	plane_t planes[6]; // see frustum_plane_t
 	vec3_t ftl, ftr, fbl, fbr;

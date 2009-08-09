@@ -55,7 +55,7 @@ void CFrustum::Setup(const vec3_t& origin,
 	pos = origin;
 }
 
-bool CFrustum::TestSphere(const vec3_t& point, float radius)
+bool CFrustum::TestSphere(const vec3_t& point, float radius) const
 {
 	float dist;
 	radius = -radius;
@@ -70,7 +70,7 @@ bool CFrustum::TestSphere(const vec3_t& point, float radius)
 	return true;
 }
 
-bool CFrustum::TestPlane(plane_t &plane)
+bool CFrustum::TestPlane(const plane_t &plane) const
 {
 	if(plane.IsPlaneBetween(pos, ftl))
 		return true;

@@ -7,21 +7,14 @@
 
 class CBSPTree;
 
-struct bsp_trace_t
+struct bsp_sphere_trace_t
 {
 	vec3_t	start; // start point
 	vec3_t	end; // end point
-	bool	allsolid; // if true, plane is not valid
-	bool	startsolid; // start point in solid area
-	float	f; // 1.0f == no hit
+    vec3_t  dir; // muss gleich sein: end - start
+    float   radius;
+	float	f;
 	plane_t	p; // impact plane
-	vec3_t	endpoint; // endpoint = start + (end-start)*f
-	float	offset;	// AABB offset from plane
-
-	// private
-	vec3_t	trace_extend;
-	vec3_t	min;
-	vec3_t	max;
 };
 
 struct bsp_poly_t
@@ -46,11 +39,12 @@ struct bsp_poly_t
 		normals.clear();
 		texcoords.clear();
 	}
-	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f);
-	vec3_t GetNormal(CBSPTree* tree); // not unit length
+	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const float offset = 0); // offset = plane offset
+    bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, CBSPTree* tree); // radius = edge radius
+    bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, CBSPTree* tree);
+    vec3_t GetNormal(CBSPTree* tree); // not unit length
 	bool IsPlanar(CBSPTree* tree);
 	void GeneratePlanes(CBSPTree* tree); // Called when a polygon has reached a leaf - makes collision detection easier
-	void ClipBox(bsp_trace_t* trace, float f1, float f2, vec3_t start, vec3_t end);
 };
 
 enum polyplane_t {	POLYPLANE_SPLIT = 0,
@@ -97,16 +91,14 @@ public:
 		int						marker;
 	};
 
-	std::vector<vec3_t>		m_vertices;
-	std::vector<vec3_t>		m_normals;
-	std::vector<vec3_t>		m_texcoords; // FIXME use vec2_t
-	std::vector<bsp_poly_t> m_polylist;
-	CBSPNode*				m_root;
+	std::vector<vec3_t>		    m_vertices;
+	std::vector<vec3_t>		    m_normals;
+	std::vector<vec3_t>		    m_texcoords; // FIXME use vec2_t
+	std::vector<bsp_poly_t>     m_polylist;
+	CBSPNode*				    m_root;
 
 	void		TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNode* node);
-	void		TraceBBox(const vec3_t& start, const vec3_t& end, 
-							const vec3_t& min, const vec3_t& max,
-							bsp_trace_t* trace);
+	void		TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node);
 	void		ClearMarks(CBSPNode* node);
 	void		MarkLeaf(const vec3_t& pos, float radius, CBSPNode* node);
 	CBSPNode*	GetLeaf(const vec3_t& pos);
@@ -127,10 +119,4 @@ private:
 
 	void		GetLeftRightScore(int* left, int* right, CBSPNode* node);
 	CBSPNode*	GetLeaf(const vec3_t& pos, CBSPNode* node);
-	void		RecursiveTraceBBox(bsp_trace_t* trace, CBSPNode* node, 
-									float f1, float f2,
-									vec3_t start, vec3_t end);
-	void		TraceToLeaf(bsp_trace_t* trace, CBSPNode* node, 
-									float f1, float f2,
-									vec3_t start, vec3_t end);
 };

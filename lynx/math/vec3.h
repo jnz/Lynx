@@ -47,6 +47,12 @@ struct vec3_t
 									 const vec3_t& edgeStart, const vec3_t& edgeEnd,
 									 const float radius,
 									 float* f);
+    /*
+        Helferfunktion: Schnittpunkt Ray mit Sphere
+     */
+    static bool RaySphereIntersect(const vec3_t& pStart, const vec3_t& pEnd,
+                                   const vec3_t& pSphere, const float radius,
+                                   float* f);
 
 	static const vec3_t origin;
 

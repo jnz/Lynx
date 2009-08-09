@@ -170,7 +170,7 @@ void CRenderer::Update(const float dt, const DWORD ticks)
     stat_bsp_leafs_visited = 0;
 
 	glBindTexture(GL_TEXTURE_2D, 
-		world->GetResourceManager()->GetTexture(CLynx::GetBaseDirLevel() + "testlvl/wall.tga")); // FIXME?
+		world->GetResourceManager()->GetTexture(CLynx::GetBaseDirLevel() + "testlvl/wall.tga")); // FIXME
 #ifdef DRAWFRUSTUM
 	BSP_RenderTree(&world->m_bsptree, &lastpos.origin, &frustum, &stat_bsp_leafs_visited);
 #else

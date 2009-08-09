@@ -210,137 +210,117 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 		*f = f2;
 }
 
-void CBSPTree::TraceBBox(const vec3_t& start, const vec3_t& end, 
-							const vec3_t& min, const vec3_t& max,
-							bsp_trace_t* trace)
+void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node)
 {
-	trace->start = start;
-	trace->end = end;
-	trace->startsolid = true;
-	trace->allsolid = true;
-	trace->f = 1.0f;
-	trace->min = min;
-	trace->max = max;
-
-	trace->trace_extend.v[0] = -min.v[0] > max.v[0] ? -min.v[0] : max.v[0];
-	trace->trace_extend.v[1] = -min.v[1] > max.v[1] ? -min.v[1] : max.v[1];
-	trace->trace_extend.v[2] = -min.v[2] > max.v[2] ? -min.v[2] : max.v[2];
-
-	RecursiveTraceBBox(trace, m_root, 0.0f, 1.0f, trace->start, trace->end);
-
-	trace->endpoint = start + (end-start)*trace->f;
-}
-
-void CBSPTree::RecursiveTraceBBox(bsp_trace_t* trace, CBSPNode* node, 
-									float f1, float f2,
-									vec3_t start, vec3_t end)
-{
-	assert(f1 >= 0 && f2 >= f1);
-
-	if(trace->f < f1)
-		return;
-
 	if(node->IsLeaf())
 	{
-		TraceToLeaf(trace, node, f1, f2, start, end);
+		float cf;
+		float minf = 99999.9f;
+		int minindex = -1;
+		int size = (int)node->polylist.size();
+        plane_t hitplane;
+		for(int i=0;i<size;i++)
+		{
+             if(node->polylist[i].plane.m_n * trace->dir > 0.0f)
+            {
+				continue;
+            }
+
+            // Prüfen ob Polygonfläche getroffen wird
+			if(node->polylist[i].GetIntersectionPoint(trace->start, 
+                                                      trace->dir, &cf, trace->radius))
+            {
+				if(cf < minf && 
+					cf > 0.0f)
+				{
+					minf = cf;
+					minindex = i;
+                    hitplane = node->polylist[i].plane;
+				}
+                if(cf >= 0 && cf <= 1)
+                    continue;
+            }
+
+            // Prüfen ob Polygon Edge getroffen wird
+            if(node->polylist[i].GetEdgeIntersection(trace->start,
+                                                     trace->end,
+                                                     &cf, trace->radius, this))
+            {
+				if(cf < minf && 
+					cf > 0)
+				{
+					minf = cf;
+					minindex = i;
+                    hitplane = node->polylist[i].plane;
+				}
+                if(cf >= 0 && cf <= 1)
+                    continue;
+            }
+
+            // Prüfen ob Polygon Vertex getroffen wird
+            if(node->polylist[i].GetEdgeIntersection(trace->start,
+                                                     trace->end,
+                                                     &cf, trace->radius, this))
+            {
+				if(cf < minf && 
+					cf > 0.0f)
+				{
+					minf = cf;
+					minindex = i;
+                    hitplane = node->polylist[i].plane;
+				}
+                if(cf >= 0 && cf <= 1)
+                    continue;
+            }
+		}
+		trace->f = minf;
+		if(minindex != -1)
+		{
+            trace->p = hitplane;
+			node->polylist[minindex].colormarker++;
+			node->marker++;
+		}
 		return;
 	}
 
-	float offset;
-	float dist1, dist2;
+    pointplane_t locstart;
+    pointplane_t locend;
 
-	dist1 = node->plane.GetDistFromPlane(start);
-	dist2 = node->plane.GetDistFromPlane(end);
-
-	offset = fabsf(trace->trace_extend.v[0] * node->plane.m_n.v[0]) +
-			 fabsf(trace->trace_extend.v[1] * node->plane.m_n.v[1]) +
-			 fabsf(trace->trace_extend.v[2] * node->plane.m_n.v[2]);
-
-	if(dist1 >= offset && dist2 >= offset)
+    // Prüfen, ob alles vor der Splitplane liegt
+    node->plane.m_d -= trace->radius;
+	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
+	locend = node->plane.Classify(trace->end, BSP_EPSILON);
+    node->plane.m_d += trace->radius;
+	if(node->front && locstart >= POINT_ON_PLANE && locend >= POINT_ON_PLANE)
 	{
-		if(node->front)
-			RecursiveTraceBBox(trace, node->front, f1, f2, start, end);
+		TraceSphere(trace, node->front);
 		return;
 	}
-	if(dist1 < -offset && dist2 < -offset)
+
+    // Prüfen, ob alles hinter der Splitplane liegt
+    node->plane.m_d += trace->radius;
+	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
+	locend = node->plane.Classify(trace->end, BSP_EPSILON);
+    node->plane.m_d -= trace->radius;
+	if(node->back && locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
 	{
-		if(node->back)
-			RecursiveTraceBBox(trace, node->back, f1, f2, start, end);
+		TraceSphere(trace, node->back);
 		return;
 	}
-//#if 0
+
+	bsp_sphere_trace_t trace1 = *trace;
+    bsp_sphere_trace_t trace2 = *trace;
 	if(node->front)
-		RecursiveTraceBBox(trace, node->front, f1, f2, start, end);
+		TraceSphere(&trace1, node->front);
 	if(node->back)
-			RecursiveTraceBBox(trace, node->back, f1, f2, start, end);
-	return;
-//#endif
-	// put the crosspoint DIST_EPSILON pixels on the near side
-	float idist;
-	int side;
-	float frac, frac2;
-	float midf;
-	vec3_t mid;
+		TraceSphere(&trace2, node->back);
 
-	if(dist1 < dist2)
-	{
-		idist = 1.0f / (dist1 - dist2);
-		side = 1;
-		frac2 = (dist1 + offset + DIST_EPSILON)*idist;
-		frac = (dist1 - offset + DIST_EPSILON)*idist;
-	}
-	else if(dist1 > dist2)
-	{
-		idist = 1.0f / (dist1 - dist2);
-		side = 0;
-		frac2 = (dist1 - offset - DIST_EPSILON)*idist;
-		frac = (dist1 + offset + DIST_EPSILON)*idist;
-	}
+	if(trace1.f < trace2.f)
+		*trace = trace1;
 	else
-	{
-		side = 0;
-		frac = 1;
-		frac2 = 0;
-	}
+		*trace = trace2;
 
-	// move up to the node
-	if(frac < 0)
-		frac = 0;
-	if(frac > 1)
-		frac = 1;
-		
-	midf = f1 + (f2 - f1)*frac;
-	mid = start + (end - start)*frac;
-
-	if(node->child[side])
-		RecursiveTraceBBox(trace, node->child[side], f1, midf, start, mid);
-
-	// go past the node
-	if(frac2 < 0)
-		frac2 = 0;
-	if(frac2 > 1)
-		frac2 = 1;
-		
-	midf = f1 + (f2 - f1)*frac2;
-	mid = start + (end - start)*frac2;
-
-	side ^= 1;
-	if(node->child[side])
-		RecursiveTraceBBox(trace, node->child[side], midf, f2, mid, end);
 }
-
-void CBSPTree::TraceToLeaf(bsp_trace_t* trace, CBSPNode* node, 
-									float f1, float f2,
-									vec3_t start, vec3_t end)
-{
-	int size = (int)node->polylist.size();
-	assert(f1 >= 0.0f && f2 >= f1);
-
-	node->marker++;
-	for(int i=0;i<size;i++)
-		node->polylist[i].ClipBox(trace, f1, f2, start, end);
-}
-
 
 void CBSPTree::ClearMarks(CBSPNode* node)
 {
@@ -790,15 +770,18 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 	return true;
 }
 
-bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f)
+bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const float offset)
 {
 	vec3_t tmpintersect;
 	const int size = (int)planes.size();
 
-	if(!plane.GetIntersection(f, p, v))
+    plane.m_d -= offset;
+    const bool hit = plane.GetIntersection(f, p, v);
+    plane.m_d += offset;
+	if(!hit)
 		return false;
 
-	tmpintersect = p + v * (*f);
+	tmpintersect = p + v * (*f) - plane.m_n * offset;
 	for(int i=0;i<size;i++)
 	{
 		switch(planes[i].Classify(tmpintersect))
@@ -811,6 +794,57 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f
 		}
 	}
 	return true;
+}
+
+bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& end,
+                                     float* f, const float radius, CBSPTree* tree)
+{
+    float minf = 99999999.9f;
+    float cf;
+	const int size = (int)vertices.size();
+	vec3_t a, b;
+	for(int i=0;i<size;i++)
+	{
+		a = tree->m_vertices[vertices[i]];
+		b = tree->m_vertices[vertices[(i+1)%size]];
+
+        if(!vec3_t::RayCylinderIntersect(start, end, a, b, radius, &cf))
+            continue;
+        if(cf < minf)
+            minf = cf;
+    }
+    if(minf < 1.0f)
+    {
+        *f = minf;
+        return true;
+    }
+    else
+    {
+        return false;
+	}
+}
+
+bool bsp_poly_t::GetVertexIntersection(const vec3_t& start, const vec3_t& end,
+                                       float* f, const float radius, CBSPTree* tree)
+{
+    float minf = 9999999.9f;
+    float cf;
+    const int vertexcount = vertices.size();
+    for(int i=0;i<vertexcount;i++)
+    {
+        if(!vec3_t::RaySphereIntersect(start, end,
+                                       tree->m_vertices[vertices[i]], radius, &cf))
+            continue;
+        if(cf < minf)
+            minf = cf;
+    }
+    if(minf < 1.0f)
+    {
+        *f = minf;
+        return true;
+    }
+    else
+        return false;
 }
 
 vec3_t bsp_poly_t::GetNormal(CBSPTree* tree) // not unit length
@@ -865,67 +899,5 @@ void bsp_poly_t::GeneratePlanes(CBSPTree* tree)
 		p.m_n.Normalize();
 		p.m_d = -a * p.m_n;
 		planes.push_back(p);
-	}
-}
-
-void bsp_poly_t::ClipBox(bsp_trace_t* trace, float f1, float f2, vec3_t start, vec3_t end)
-{
-	float cf, f, offset;
-	vec3_t intersect;
-	vec3_t ofs, v = end-start;
-	plane_t p=plane;
-	int i;
-
-	if(p.m_n * v > 0.0f) // ignore backfaces
-		return;
-	p.GetIntersection(&cf, start, v);
-	if(cf < 0.0f)
-		return;
-	intersect = start + v * cf;
-
-	for(i=0;i<3;i++)
-	{
-		if(p.m_n.v[i] < 0)
-			ofs.v[i] = trace->max.v[i];
-		else
-			ofs.v[i] = trace->min.v[i];
-	}
-	offset = ofs * p.m_n;
-	p.m_d += offset;
-
-	p.GetIntersection(&cf, start, v);
-
-	if(cf >= 1.0f)
-		return;
-	
-	trace->allsolid = false;
-	if(cf < 0.0f)
-		trace->startsolid = false;
-	
-	for(int j=0;j<(int)planes.size();j++)
-	{
-		for(i=0;i<3;i++)
-		{
-			if(planes[j].m_n.v[i] < 0)
-				ofs.v[i] = trace->max.v[i];
-			else
-				ofs.v[i] = trace->min.v[i];
-		}
-		if(planes[j].GetDistFromPlane(intersect) < (ofs * planes[j].m_n))
-			return;
-	}
-
-	if(cf < -lynxmath::EPSILON)
-	{
-		fprintf(stderr, "BSP ClipBox: cf < 0.0f (%.2f)\n", cf);
-		return;
-	}
-
-	f = f1 + (f2-f1)*cf;
-	if(f < trace->f)
-	{
-		trace->f = f;
-		trace->p = plane;
-		trace->offset = offset;
 	}
 }

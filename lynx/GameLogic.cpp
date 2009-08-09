@@ -18,6 +18,7 @@ CGameLogic::~CGameLogic(void)
 
 void CGameLogic::InitGame()
 {
+    /*
 	CObj* obj;
 	obj = new CObj(m_world);
 	obj->SetOrigin(vec3_t(-45.0f, 8.0f, 0));
@@ -28,7 +29,7 @@ void CGameLogic::InitGame()
 	//obj->SetResource(CLynx::GetBaseDirModel() + "q2/tris2.md2");
 	obj->SetAnimation("default");
 	m_world->AddObj(obj);
-
+    */
     m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
 }
 

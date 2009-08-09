@@ -217,8 +217,8 @@ bool operator==(vec3_t const &a, vec3_t const &b)
 
 bool operator!=(vec3_t const &a, vec3_t const &b)
 {
-	return  (fabs(a.x-b.x) > lynxmath::EPSILON) &&
-			(fabs(a.y-b.y) > lynxmath::EPSILON) &&
+	return  (fabs(a.x-b.x) > lynxmath::EPSILON) ||
+			(fabs(a.y-b.y) > lynxmath::EPSILON) ||
 			(fabs(a.z-b.z) > lynxmath::EPSILON);
 }
 
@@ -297,5 +297,56 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd,
                                   const float radius,
                                   float* f)
 {
-    return false;
+    // math. for 3d game programming 2nd ed. page 270
+    const vec3_t pv = pEnd - pStart;
+    const vec3_t pa = edgeEnd - edgeStart;
+    const vec3_t s0 = pStart - edgeStart;
+    const float pa_squared = 1/pa.AbsSquared();
+    
+    // a
+    const vec3_t pva = pv * pa;
+    const float a = pv.AbsSquared() - pva.AbsSquared()*pa_squared;
+
+    // b
+    const float b = s0*pv - (s0*pa)*(pv*pva)*pa_squared;
+
+    // c
+    const float ps0a = s0*pa;
+    const float c = s0.AbsSquared() - radius*radius - ps0a*ps0a*pa_squared;
+
+    const float dis = b*b - a*c;
+    if(dis < 0)
+    {
+        *f = 1;
+        return false;
+    }
+
+    *f = (-b - sqrt(dis))/a;
+    const float collision = (pStart + *f*pv - edgeStart)*pa;
+
+    return collision > 0 && collision < pa_squared;
+}
+
+bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pEnd,
+                                const vec3_t& pSphere, const float radius,
+                                float* f)
+{
+    const vec3_t pv = pEnd - pStart;
+    
+    // a
+    const float a = pv.AbsSquared();
+    
+    // b
+    const float b = 2*(pStart*pv);
+
+    // c
+    const float c = pStart.AbsSquared() - radius*radius;
+
+    const float dis = b*b - 4*a*c;
+    if(dis < 0)
+        return false; // no intersection with sphere
+
+    *f = (-b - sqrt(dis))/(2*a);
+
+    return *f >= 0 && *f <= 1;
 }
