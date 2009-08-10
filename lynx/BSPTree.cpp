@@ -64,8 +64,10 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 		{
 			for(i=0;i<3;i++)
 				sv[i] = strtok(NULL, DELIM);
-			if(!sv[0] || !sv[1] || !sv[2])
+			if(!sv[0] || !sv[1])
 				continue;
+            if(!sv[2])
+                sv[2] = "0.0";
 			m_texcoords.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
 		}
 		else if(strcmp(tok, "f")==0) // face
@@ -167,7 +169,7 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 			if(node->polylist[i].plane.m_n * dir > 0.0f)
 				continue;
 
-			if(node->polylist[i].GetIntersectionPoint(start, dir, &cf))
+			if(node->polylist[i].GetIntersectionPoint(start, dir, &cf, this))
 				if(cf < minf && 
 					cf > lynxmath::EPSILON)
 				{
@@ -187,7 +189,7 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 	pointplane_t locstart = node->plane.Classify(start, BSP_EPSILON);
 	pointplane_t locend = node->plane.Classify(start+dir, BSP_EPSILON);
 
-	if(locstart >= POINT_ON_PLANE && locend >= POINT_ON_PLANE)
+	if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
 	{
 		TraceRay(start, dir, f, node->front);
 		return;
@@ -221,14 +223,16 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node)
         plane_t hitplane;
 		for(int i=0;i<size;i++)
 		{
-             if(node->polylist[i].plane.m_n * trace->dir > 0.0f)
+            /*
+            if(node->polylist[i].plane.m_n * trace->dir > 0.0f)
             {
 				continue;
             }
+            */
 
             // Prüfen ob Polygonfläche getroffen wird
 			if(node->polylist[i].GetIntersectionPoint(trace->start, 
-                                                      trace->dir, &cf, trace->radius))
+                                                      trace->dir, &cf, this, trace->radius))
             {
 				if(cf < minf && 
 					cf > 0.0f)
@@ -256,11 +260,11 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node)
                 if(cf >= 0 && cf <= 1)
                     continue;
             }
-
             // Prüfen ob Polygon Vertex getroffen wird
-            if(node->polylist[i].GetEdgeIntersection(trace->start,
-                                                     trace->end,
-                                                     &cf, trace->radius, this))
+            
+            if(node->polylist[i].GetVertexIntersection(trace->start,
+                                                       trace->end,
+                                                       &cf, trace->radius, this))
             {
 				if(cf < minf && 
 					cf > 0.0f)
@@ -291,7 +295,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node)
 	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
 	locend = node->plane.Classify(trace->end, BSP_EPSILON);
     node->plane.m_d += trace->radius;
-	if(node->front && locstart >= POINT_ON_PLANE && locend >= POINT_ON_PLANE)
+	if(node->front && locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
 	{
 		TraceSphere(trace, node->front);
 		return;
@@ -770,7 +774,7 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 	return true;
 }
 
-bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const float offset)
+bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CBSPTree* tree, const float offset)
 {
 	vec3_t tmpintersect;
 	const int size = (int)planes.size();
@@ -780,8 +784,31 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f
     plane.m_d += offset;
 	if(!hit)
 		return false;
-
 	tmpintersect = p + v * (*f) - plane.m_n * offset;
+
+    // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
+    assert(vertices.size() == 3);
+    const vec3_t P0 = tree->m_vertices[vertices[0]];
+    const vec3_t P1 = tree->m_vertices[vertices[1]];
+    const vec3_t P2 = tree->m_vertices[vertices[2]];
+    const vec3_t R = tmpintersect - P0;
+    const vec3_t Q1 = P1 - P0;
+    const vec3_t Q2 = P2 - P0;
+    const float Q1Q2 = Q1*Q2;
+    const float Q1_sqr = Q1.AbsSquared();
+    const float Q2_sqr = Q2.AbsSquared();
+    const float det = Q1_sqr*Q2_sqr - Q1Q2*Q1Q2;
+    assert(fabsf(det) > lynxmath::EPSILON);
+    const float invdet = 1/det;
+    const float RQ1 = R * Q1;
+    const float RQ2 = R * Q2;
+    
+    const float w1 = invdet*(Q2_sqr*RQ1 - Q1Q2*RQ2);
+    const float w2 = invdet*(-Q1Q2*RQ1  + Q1_sqr*RQ2);
+
+    return w1 >= 0 && w2 >= 0 && (w1 + w2 <= 1);
+
+    /*
 	for(int i=0;i<size;i++)
 	{
 		switch(planes[i].Classify(tmpintersect))
@@ -794,6 +821,7 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f
 		}
 	}
 	return true;
+    */
 }
 
 bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& end,

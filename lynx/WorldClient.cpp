@@ -64,7 +64,8 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 							obj->GetOrigin() + forward, vec3_t(-1,-1,-1),
 							vec3_t(1,1,1), &trace);
 		*/
-		m_bsptree.TraceRay(obj->GetOrigin(), obj->GetOrigin() + forward, &f, m_bsptree.m_root);
+        vec3_t start = obj->GetOrigin()+obj->GetEyePos();
+		m_bsptree.TraceRay(start, start + forward, &f, m_bsptree.m_root);
 		/*
 		if(!trace.allsolid)
 		{

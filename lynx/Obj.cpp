@@ -31,7 +31,8 @@ CObj::CObj(CWorld* world)
 	assert(world);
 	m_id = ++m_idpool;
 	state.speed = 0.0f;
-	state.radius = lynxmath::SQRT_2;
+	//state.radius = lynxmath::SQRT_2;
+    state.radius = 10*lynxmath::SQRT_2;
 	state.min = vec3_t(-1,-1,-1);
 	state.max = vec3_t(1,1,1);
 	state.fov = DEFAULT_FOV;

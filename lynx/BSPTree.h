@@ -39,7 +39,7 @@ struct bsp_poly_t
 		normals.clear();
 		texcoords.clear();
 	}
-	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const float offset = 0); // offset = plane offset
+	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CBSPTree* tree, const float offset = 0); // offset = plane offset
     bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, CBSPTree* tree); // radius = edge radius
     bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, CBSPTree* tree);
     vec3_t GetNormal(CBSPTree* tree); // not unit length

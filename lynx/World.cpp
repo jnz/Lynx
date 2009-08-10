@@ -96,7 +96,7 @@ void CWorld::ObjMove(CObj* obj, float dt)
 {
     vec3_t p2 = obj->GetOrigin() + obj->GetVel() * dt;
 
-    const bool moved = obj->GetOrigin() != p2;
+    const bool moved = obj->GetVel() != vec3_t::origin;
 
     if(moved && m_bsptree.m_root)
     {
@@ -114,7 +114,7 @@ void CWorld::ObjMove(CObj* obj, float dt)
             assert(trace.f > 0.0f);
             if(trace.f < 1.0f)
             {
-                trace.f = 0.0f;
+                trace.f -= 0.1f;
                 q = trace.start + trace.f*trace.dir;
                 //p2 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
                 p2 = q;

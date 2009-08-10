@@ -30,7 +30,8 @@ void CGameLogic::InitGame()
 	obj->SetAnimation("default");
 	m_world->AddObj(obj);
     */
-    m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
+    //m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/boxlvl.obj");
+    m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/polygon.obj");
 }
 
 void CGameLogic::Notify(EventNewClientConnected e)
