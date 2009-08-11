@@ -91,13 +91,43 @@ void ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t* out, float ove
 	}
 }
 
-#define MAX_CLIP_PLANES		5
+#define MAX_CLIP_PLANES		8
 void CWorld::ObjMove(CObj* obj, float dt)
 {
+    bsp_sphere_trace_t trace;
+    vec3_t p1 = obj->GetOrigin();
     vec3_t p2 = obj->GetOrigin() + obj->GetVel() * dt;
+    vec3_t q;
+    vec3_t p3;
+    vec3_t vel = obj->GetVel();
+    trace.radius = obj->GetRadius();
 
+    for(int i=0;(p2 - p1).AbsSquared()>lynxmath::EPSILON && i < MAX_CLIP_PLANES; i++)
+    {
+        trace.start = p1;
+        trace.end = p2;
+        trace.dir = trace.end - trace.start;
+        trace.f = MAX_TRACE_DIST;
+        GetBSP()->TraceSphere(&trace);
+        assert(trace.f > 0.0f);
+        if(trace.f < 1.0f)
+        {
+            q = trace.start + trace.f*trace.dir + 
+                trace.p.m_n * 1000 * lynxmath::EPSILON;
+            p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
+            vel = vel - 2*(vel*trace.p.m_n)*trace.p.m_n;
+            p1 = q;
+            p2 = p3;
+        }
+        else
+            break;
+    }
+
+    obj->SetOrigin(p2);
+    obj->SetVel(vel); // bounce
+
+/*
     const bool moved = obj->GetVel() != vec3_t::origin;
-
     if(moved && m_bsptree.m_root)
     {
         vec3_t q;
@@ -109,13 +139,12 @@ void CWorld::ObjMove(CObj* obj, float dt)
 //        {
             trace.end = p2;
             trace.dir = trace.end - trace.start;
-            trace.f = 99999999.0f;
+            trace.f = MAX_TRACE_DIST;
             m_bsptree.TraceSphere(&trace, m_bsptree.m_root);
             assert(trace.f > 0.0f);
             if(trace.f < 1.0f)
             {
-                trace.f -= 0.1f;
-                q = trace.start + trace.f*trace.dir;
+                q = trace.start + trace.f*trace.dir + trace.p.m_n * lynxmath::EPSILON;
                 //p2 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
                 p2 = q;
             }
@@ -123,6 +152,7 @@ void CWorld::ObjMove(CObj* obj, float dt)
 //        }while(trace.f > lynxmath::EPSILON && trace.f < 1.0f);
     }
     obj->SetOrigin(p2);
+    */
 }
 
 void CWorld::UpdatePendingObjs()

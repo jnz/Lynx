@@ -18,20 +18,21 @@ CGameLogic::~CGameLogic(void)
 
 void CGameLogic::InitGame()
 {
-    /*
+    /**/
 	CObj* obj;
 	obj = new CObj(m_world);
-	obj->SetOrigin(vec3_t(-45.0f, 8.0f, 0));
+	obj->SetOrigin(vec3_t(0.0f, 0.0f, 0));
 	obj->SetSpeed(6.0f);
-	obj->SetVel(vec3_t(0.0f, 0.5f, 0.0f));
+	obj->SetVel(vec3_t(30.0f, 30.0f, 24.0f));
 	obj->SetRot(vec3_t(0,270,0));
 	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
 	//obj->SetResource(CLynx::GetBaseDirModel() + "q2/tris2.md2");
 	obj->SetAnimation("default");
 	m_world->AddObj(obj);
-    */
-    //m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/boxlvl.obj");
-    m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/polygon.obj");
+    /**/
+    //m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
+    m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/boxlvl.obj");
+    //m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/polygon.obj");
 }
 
 void CGameLogic::Notify(EventNewClientConnected e)

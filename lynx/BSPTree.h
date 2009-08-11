@@ -7,13 +7,15 @@
 
 class CBSPTree;
 
+#define MAX_TRACE_DIST      999999.999f
+
 struct bsp_sphere_trace_t
 {
 	vec3_t	start; // start point
 	vec3_t	end; // end point
     vec3_t  dir; // muss gleich sein: end - start
     float   radius;
-	float	f;
+	float	f; // impact = start + f*dir
 	plane_t	p; // impact plane
 };
 
@@ -40,8 +42,8 @@ struct bsp_poly_t
 		texcoords.clear();
 	}
 	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CBSPTree* tree, const float offset = 0); // offset = plane offset
-    bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, CBSPTree* tree); // radius = edge radius
-    bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, CBSPTree* tree);
+    bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, const CBSPTree* tree); // radius = edge radius
+    bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, const CBSPTree* tree);
     vec3_t GetNormal(CBSPTree* tree); // not unit length
 	bool IsPlanar(CBSPTree* tree);
 	void GeneratePlanes(CBSPTree* tree); // Called when a polygon has reached a leaf - makes collision detection easier
@@ -98,11 +100,14 @@ public:
 	CBSPNode*				    m_root;
 
 	void		TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNode* node);
-	void		TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node);
+    void		TraceSphere(bsp_sphere_trace_t* trace) const;
 	void		ClearMarks(CBSPNode* node);
 	void		MarkLeaf(const vec3_t& pos, float radius, CBSPNode* node);
 	CBSPNode*	GetLeaf(const vec3_t& pos);
 	int			GetLeafCount() const { return m_leafcount; }
+
+protected:
+    void		TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const;
 
 private:
 	int			m_nodecount; // increased by every CBSPNode constructor

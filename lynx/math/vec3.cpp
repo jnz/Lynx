@@ -316,10 +316,7 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd,
 
     const float dis = b*b - a*c;
     if(dis < 0)
-    {
-        *f = 999999.9f;
         return false;
-    }
 
     *f = (-b - sqrt(dis))/a;
     const float collision = (pStart + *f*pv - edgeStart)*pa;
