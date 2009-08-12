@@ -193,6 +193,7 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 
 		glPushMatrix();
 		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
 		glMultMatrixf(obj->m.pm);
 		if(obj->m_mesh)
 		{

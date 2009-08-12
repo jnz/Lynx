@@ -56,23 +56,23 @@ public:
 	CWorldClient(void);
 	~CWorldClient(void);
 
-    virtual bool IsClient() const { return true; }
+    virtual bool    IsClient() const { return true; }
 
-	CObj* GetLocalObj() const;
-	void SetLocalObj(int id);
-    CObj* GetLocalController() { return &m_ghostobj; }
+	CObj*           GetLocalObj() const;
+	void            SetLocalObj(int id);
+    CObj*           GetLocalController() { return &m_ghostobj; }
 
-	void Update(const float dt, const DWORD ticks);
+	void            Update(const float dt, const DWORD ticks);
 
-	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
+	virtual bool    Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
 
-	CWorld* GetInterpWorld() { return m_pinterpworld; } // Interpolierte Welt
+	CWorld*         GetInterpWorld() { return &m_interpworld; } // Interpolierte Welt
 
 protected:
-    std::list<worldclient_state_t> m_history; // History buffer for Interpolation
-    void CreateClientInterp(); // Zwischen zwei Zuständen aus dem History-Buffer die InterpWorld generieren bzw. updaten
+    void            AddWorldToHistory(); // Aktuelle Welt in den History Buffer schieben
+    void            CreateClientInterp(); // Zwischen zwei Zuständen aus dem History-Buffer die InterpWorld generieren bzw. updaten
 
-	CWorld* m_pinterpworld; // Zeiger auf InterpWorld
+    std::list<worldclient_state_t> m_history; // History buffer for Interpolation
 	CWorldInterp m_interpworld; // InterpWorld Objekt
 
 private:

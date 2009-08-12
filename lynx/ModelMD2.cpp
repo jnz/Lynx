@@ -351,7 +351,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
 	}
 
 	m_center = (m_max - m_min)*0.5f;
-	m_sphere = m_center.Abs();
+	m_sphere = m_center.Abs()*0.5f;
 
 	fprintf(stderr, "MD2: Model %s: (Sphere: %.2f)\n", path, m_sphere);
 

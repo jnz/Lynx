@@ -74,29 +74,29 @@ void CWorld::Update(const float dt, const DWORD ticks)
 	m_bsptree.ClearMarks(m_bsptree.m_root);
 }
 
-#define GRAVITY             (1.81f) // Physikalisches Modell ist erbärmlich schlecht und kommt ohne Beschleunigung aus
+#define GRAVITY             (100.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
+const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON		(0.01f)
 void CWorld::ObjMove(CObj* obj, float dt)
 {
     bsp_sphere_trace_t trace;
     vec3_t p1 = obj->GetOrigin();
     vec3_t vel = obj->GetVel();
-    vel.y -= GRAVITY;
-    vec3_t p2 = p1 + vel*dt;
+    vel += gravity*dt;
+    vec3_t p2 = p1 + vel*dt + 0.5f*dt*dt*gravity;
     vec3_t q;
     vec3_t p3;
     trace.radius = obj->GetRadius();
     bool groundhit = false;
 
-    for(int i=0;(p2 - p1) != vec3_t::origin; i++)
+    for(int i=0;(p2 - p1) != vec3_t::origin && i < 10; i++)
     {
-        assert(i < 8);
+        assert(i < 9); // sollte nicht passieren
 
         trace.start = p1;
         trace.dir = p2 - p1;
         trace.f = MAX_TRACE_DIST;
         GetBSP()->TraceSphere(&trace);
-        assert(trace.f > 0.0f);
         if(trace.f < 1.0f)
         {
             q = trace.start + trace.f*trace.dir + 
@@ -105,6 +105,9 @@ void CWorld::ObjMove(CObj* obj, float dt)
 
             if(trace.p.m_n * vec3_t(0,1,0) > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
                 groundhit = true;
+
+            if(fabsf(q.y-p1.y)<STOP_EPSILON)
+                q.y = p1.y;
 
             if((p3-q).Abs()<10*STOP_EPSILON)
             {
@@ -122,8 +125,9 @@ void CWorld::ObjMove(CObj* obj, float dt)
     if(groundhit)
     {
         vel.y = 0;
-        //p2.y += GRAVITY*dt;
     }
+    obj->m_locIsOnGround = groundhit;
+
     obj->SetOrigin(p2);
     obj->SetVel(vel);
 }

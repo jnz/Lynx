@@ -85,15 +85,23 @@ public:
 	vec3_t		GetEyePos();
 	void		SetEyePos(const vec3_t& eyepos);
 
+    // Local Attributes
+    bool        locGetIsOnGround() const { return m_locIsOnGround; }
+
+
 protected:
 	// Direct Access for Renderer
 	CModelMD2*	m_mesh;
     md2_state_t m_mesh_state;
 	friend class CRenderer;
-
+    
 	void		UpdateProperties();
     obj_state_t state;
 	CStream		m_stream;
+
+    // Local Attributes
+    bool        m_locIsOnGround;
+    friend class CWorld;
 
 private:
     // Don't touch these

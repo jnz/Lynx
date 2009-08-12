@@ -35,11 +35,14 @@ CObj::CObj(CWorld* world)
 	state.min = vec3_t(-1,-1,-1);
 	state.max = vec3_t(1,1,1);
 	state.fov = DEFAULT_FOV;
-	state.eyepos = vec3_t(0,1,0);
+	state.eyepos = vec3_t(0,0.5f,0);
 	m_mesh = NULL;
 	m_world = world;
     UpdateMatrix();
 	m_stream.Resize(512);
+
+    // Local Attributes
+    m_locIsOnGround = false;
 }
 
 CObj::~CObj(void)

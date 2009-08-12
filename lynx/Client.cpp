@@ -208,6 +208,9 @@ void CClient::InputCalcDir()
     newdir.y = 0;
     newdir.SetLength(25.0f);
     newdir.y = velocity.y;
+    if(m_jump && GetLocalController()->locGetIsOnGround()) // FIXME
+        newdir.y += (float)m_jump * 50.5f;
+
 	GetLocalController()->SetVel(newdir);
 }
 

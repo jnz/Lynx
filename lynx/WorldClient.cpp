@@ -13,7 +13,11 @@ CWorldClient::CWorldClient(void) : m_ghostobj(this)
 {
 	m_localobj = &m_ghostobj;
 	m_ghostobj.SetOrigin(vec3_t(0,1000.0f,0));
-	m_pinterpworld = this;
+
+	m_interpworld.m_pbsp = &m_bsptree; // FIXME ist das sicher bei einem level change?
+	m_interpworld.m_presman = &m_resman;
+    m_interpworld.state1.localtime = 0;
+    m_interpworld.state2.localtime = 0;
 }
 
 CWorldClient::~CWorldClient(void)
@@ -83,31 +87,31 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
     CObj* controller = GetLocalController();
 	ObjMove(controller, dt);
 
-	if(m_pinterpworld == &m_interpworld)
-	{
-		if(m_interpworld.f >= 1.0)
-			CreateClientInterp();
-		m_interpworld.Update(dt, ticks);
-	}
+	if(m_interpworld.f >= 1.0f)
+		CreateClientInterp();
+    m_interpworld.Update(dt, ticks);
 }
 
 bool CWorldClient::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
 {
     bool changed = CWorld::Serialize(write, stream, oldstate);
     if(changed && !write)
-	{
-		worldclient_state_t clstate;
-		clstate.state = GetWorldState();
-		clstate.localtime = CLynx::GetTicks();
-		m_history.push_front(clstate);
-		assert(m_history.size() < 80);
-		while(clstate.localtime - m_history.back().localtime > MAX_CLIENT_HISTORY)
-			m_history.pop_back();
-		while(m_history.size() > 80)
-			m_history.pop_back();
-		CreateClientInterp();
-	}
+        AddWorldToHistory();
+
     return changed;
+}
+
+void CWorldClient::AddWorldToHistory()
+{
+	worldclient_state_t clstate;
+	clstate.state = GetWorldState();
+	clstate.localtime = CLynx::GetTicks();
+	m_history.push_front(clstate);
+	assert(m_history.size() < 80);
+	while(clstate.localtime - m_history.back().localtime > MAX_CLIENT_HISTORY)
+		m_history.pop_back();
+	while(m_history.size() > 80)
+		m_history.pop_back();
 }
 
 /*
@@ -115,8 +119,6 @@ bool CWorldClient::Serialize(bool write, CStream* stream, const world_state_t* o
  */
 void CWorldClient::CreateClientInterp()
 {
-	m_pinterpworld = this;
-
 	if(m_history.size() < 2)
         return;
 
@@ -140,7 +142,7 @@ void CWorldClient::CreateClientInterp()
 
 	std::list<worldclient_state_t>::iterator state1 = iter; // worldstate vor rendertime
 	std::list<worldclient_state_t>::iterator state2 = iter; // worldstate nach rendertime
-	for(iter = m_history.begin();iter != m_history.end();iter++)
+    for(iter = m_history.begin();iter != m_history.end();iter++)
 	{
 		if((*iter).localtime < rendertime)
 		{
@@ -150,13 +152,15 @@ void CWorldClient::CreateClientInterp()
 		else
 			state2 = iter;
 	}
+	if(state1 == state2)
+        return;
 	if((*state1).localtime > rendertime)
 	{
 		return;
 	}
-	if(state1 == m_history.end() || state2 == m_history.end() || state1 == state2)
+	if(state1 == m_history.end() || state2 == m_history.end())
 	{
-		assert(0);
+        assert(0);
 		return;
 	}
 
@@ -164,9 +168,6 @@ void CWorldClient::CreateClientInterp()
 	worldclient_state_t w2 = (*state2);
 	assert(w1.localtime < rendertime && w2.localtime >= rendertime);
 	
-	//m_interpworld.DeleteAllObjs();
-	m_interpworld.m_pbsp = &m_bsptree; // FIXME ist das sicher bei einem level change?
-	m_interpworld.m_presman = &m_resman;
 	m_interpworld.state1 = w1;
 	m_interpworld.state2 = w2;
 
@@ -208,7 +209,6 @@ void CWorldClient::CreateClientInterp()
     }
 
 	m_interpworld.UpdatePendingObjs();
-	m_pinterpworld = &m_interpworld;
 }
 
 void CWorldInterp::Update(const float dt, const DWORD ticks)
@@ -217,12 +217,14 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
     const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
 	const DWORD updategap = state2.localtime - state1.localtime;
 
+    if(updategap < 1)
+        return;
+
 	const float a = (float)(rendertime - state1.localtime);
 	f = a/updategap;
 
-	if(f > 1.5f)
+	if(f > 1.0f)
 	{
-		fprintf(stderr, "Extrapolation factor > 1.5\n");
 		return;
 	}
 
