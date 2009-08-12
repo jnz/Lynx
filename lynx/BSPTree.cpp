@@ -150,7 +150,7 @@ void CBSPTree::Unload()
 	m_filename = "";
 }
 
-std::string CBSPTree::GetFilename()
+std::string CBSPTree::GetFilename() const
 {
 	return m_filename;
 }
@@ -214,7 +214,6 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace) const
 {
     if(m_root == NULL)
     {
-        assert(0);
         trace->f = MAX_TRACE_DIST;
         return;
     }
@@ -880,7 +879,7 @@ vec3_t bsp_poly_t::GetNormal(CBSPTree* tree) // not unit length
 	return np;
 }
 
-void CBSPTree::GetLeftRightScore(int* left, int* right)
+void CBSPTree::GetLeftRightScore(int* left, int* right) const
 {
 	*left = 0;
 	*right = 0;
@@ -888,7 +887,7 @@ void CBSPTree::GetLeftRightScore(int* left, int* right)
 		GetLeftRightScore(left, right, m_root);
 }
 
-void CBSPTree::GetLeftRightScore(int* left, int* right, CBSPNode* node)
+void CBSPTree::GetLeftRightScore(int* left, int* right, CBSPNode* node) const
 {
 	if(node->front)
 	{

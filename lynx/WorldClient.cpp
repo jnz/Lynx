@@ -12,7 +12,7 @@
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
 {
 	m_localobj = &m_ghostobj;
-	m_ghostobj.SetOrigin(vec3_t(0,1.0f,0));
+	m_ghostobj.SetOrigin(vec3_t(0,500.0f,0));
 	m_pinterpworld = this;
 }
 
@@ -37,6 +37,14 @@ void CWorldClient::SetLocalObj(int id)
 	{
 		obj = GetObj(id);
 		assert(obj);
+        if(m_localobj->GetID() != id)
+        {
+            m_ghostobj.CopyObjStateFrom(obj);
+        }else if((m_ghostobj.GetOrigin()-m_localobj->GetOrigin()).AbsSquared() >= 100.0f)
+        {
+            fprintf(stderr, "CL: Reset position\n");
+            m_ghostobj.SetOrigin(m_localobj->GetOrigin());
+        }
 		if(obj)
 			m_localobj = obj;
 	}

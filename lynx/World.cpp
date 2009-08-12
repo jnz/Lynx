@@ -74,15 +74,18 @@ void CWorld::Update(const float dt, const DWORD ticks)
 	m_bsptree.ClearMarks(m_bsptree.m_root);
 }
 
+#define GRAVITY             (1.81f) // Physikalisches Modell ist erbärmlich schlecht und kommt ohne Beschleunigung aus
 #define STOP_EPSILON		(0.05f)
 void CWorld::ObjMove(CObj* obj, float dt)
 {
     bsp_sphere_trace_t trace;
     vec3_t p1 = obj->GetOrigin();
-    vec3_t p2 = obj->GetOrigin() + obj->GetVel() * dt;
+    vec3_t vel = obj->GetVel();
+    vec3_t p2 = p1 + vel*dt;
     vec3_t q;
     vec3_t p3;
     trace.radius = obj->GetRadius();
+    bool bhit = false;
 
     for(int i=0;(p2 - p1)!=vec3_t::origin; i++)
     {
@@ -95,6 +98,7 @@ void CWorld::ObjMove(CObj* obj, float dt)
         assert(trace.f > 0.0f);
         if(trace.f < 1.0f)
         {
+            bhit = true;
             q = trace.start + trace.f*trace.dir + 
                 trace.p.m_n * STOP_EPSILON;
             p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
@@ -111,7 +115,15 @@ void CWorld::ObjMove(CObj* obj, float dt)
         else
             break;
     }
-
+ 
+    if(bhit)
+    {/*
+        if(trace.p.m_n * vec3_t(0,1,0) > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
+        {
+            // hit floor
+        }
+      */
+    }
     obj->SetOrigin(p2);
 }
 
@@ -293,7 +305,7 @@ world_state_t CWorld::GetWorldState()
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 	{
 		CObj* obj = (*iter).second;
-        worldstate.objstates.push_back(obj->GetState());
+        worldstate.objstates.push_back(obj->GetObjState());
         worldstate.objindex[obj->GetID()] = (int)worldstate.objstates.size()-1;
     }
 

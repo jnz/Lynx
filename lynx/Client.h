@@ -44,6 +44,7 @@ private:
 	int m_backward;
 	int m_strafe_left;
 	int m_strafe_right;
+    int m_jump;
 
 	CWorldClient* m_world;
 

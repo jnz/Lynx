@@ -61,8 +61,9 @@ public:
 
 	bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
-    void        GetObjState(obj_state_t* objstate) { *objstate = state; }
+    obj_state_t GetObjState() const { return state; }
 	void		SetObjState(const obj_state_t* objstate, int id);
+    void        CopyObjStateFrom(const CObj* source);
 
     const vec3_t GetOrigin() const { return state.origin; }
     void        SetOrigin(const vec3_t& origin) { state.origin = origin; }
@@ -83,8 +84,6 @@ public:
 	void		SetAnimation(std::string animation);
 	vec3_t		GetEyePos();
 	void		SetEyePos(const vec3_t& eyepos);
-
-    obj_state_t GetState() { return state; }
 
 protected:
 	// Direct Access for Renderer

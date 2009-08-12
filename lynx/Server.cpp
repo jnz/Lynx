@@ -150,10 +150,16 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             stream->ReadVec3(&origin);
             stream->ReadVec3(&vel);
             stream->ReadVec3(&rot);
-            obj->SetOrigin(origin);
+            if((origin - obj->GetOrigin()).AbsSquared() < 100.0f)
+            {
+                obj->SetOrigin(origin);
+            }
+            else
+            {
+                fprintf(stderr, "SV: Reset client position\n");
+            }
             obj->SetVel(vel);
             obj->SetRot(rot);
-            // FIXME prüfen ob bewegung plausibel ist
         }
         break;
 	case NET_MSG_INVALID:

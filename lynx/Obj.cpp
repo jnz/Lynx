@@ -269,6 +269,11 @@ void CObj::SetObjState(const obj_state_t* objstate, int id)
 	    UpdateProperties();
 }
 
+void CObj::CopyObjStateFrom(const CObj* source)
+{
+    SetObjState(&source->state, m_id);
+}
+
 void CObj::UpdateProperties()
 {
 	m_mesh = m_world->GetResourceManager()->GetModel(state.resource);

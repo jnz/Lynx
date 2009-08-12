@@ -23,6 +23,7 @@ CClient::CClient(CWorldClient* world)
 	m_backward = 0;
 	m_strafe_left = 0;
 	m_strafe_right = 0;
+    m_jump = 0;
 
     m_lastupdate = CLynx::GetTicks();
 }
@@ -118,6 +119,7 @@ void CClient::Update(const float dt, const DWORD ticks)
 	m_backward = !!(keystate[SDLK_DOWN] | keystate[SDLK_s]);
     m_strafe_left = !!(keystate[SDLK_LEFT] | keystate[SDLK_a]);
     m_strafe_right = !!(keystate[SDLK_RIGHT] | keystate[SDLK_d]);
+    m_jump = !!(keystate[SDLK_SPACE]);
     InputMouseMove(dx, dy);
     InputCalcDir();
 
@@ -127,7 +129,8 @@ void CClient::Update(const float dt, const DWORD ticks)
 void CClient::SendClientState()
 {
     DWORD ticks = CLynx::GetTicks();
-    if(ticks - m_lastupdate > CLIENT_UPDATERATE && IsConnected())
+    if(ticks - m_lastupdate > CLIENT_UPDATERATE && IsConnected() &&
+        m_world->GetBSP()->GetFilename() != "")
     {
         ENetPacket* packet;
         CObj* localctrl = GetLocalController();
@@ -202,7 +205,6 @@ void CClient::InputCalcDir()
 	newdir -= (float)m_backward * dir;
 	newdir -= (float)m_strafe_left * side;
 	newdir += (float)m_strafe_right * side;
-    //newdir.z = 0.0f;
 	GetLocalController()->SetVel(newdir*25.0f);
 }
 

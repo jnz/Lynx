@@ -62,8 +62,8 @@ public:
 
 	bool		Load(std::string file);
 	void		Unload();
-	std::string GetFilename();
-	void		GetLeftRightScore(int* left, int* right);
+	std::string GetFilename() const;
+	void		GetLeftRightScore(int* left, int* right) const;
 
 	class CBSPNode
 	{
@@ -121,6 +121,6 @@ private:
 							 bsp_poly_t& polyfront, bsp_poly_t& polyback);
 	bool		IsConvexSet(std::vector<bsp_poly_t>& polygons);
 
-	void		GetLeftRightScore(int* left, int* right, CBSPNode* node);
+	void		GetLeftRightScore(int* left, int* right, CBSPNode* node) const;
 	CBSPNode*	GetLeaf(const vec3_t& pos, CBSPNode* node);
 };
