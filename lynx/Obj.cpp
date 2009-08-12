@@ -51,7 +51,7 @@ CObj::~CObj(void)
 
 void CObj::UpdateMatrix()
 {
-	m.SetTransform(NULL, &state.rot);
+    state.rot.ToMatrix(m);
 }
 
 float CObj::GetRadius()
@@ -147,10 +147,24 @@ int DeltaDiffVec3(const vec3_t* newstate,
                   DWORD* updateflags,
                   CStream* stream)
 {
-    if(!oldstate || !(*newstate == *oldstate)) {
+    if(!oldstate || (*newstate != *oldstate)) {
         *updateflags |= flagparam;
         if(stream) stream->WriteVec3(*newstate);
         return STREAM_SIZE_VEC3;
+    }
+    return 0;
+}
+
+int DeltaDiffQuat(const quaternion_t* newstate,
+                  const quaternion_t* oldstate,
+                  const DWORD flagparam, 
+                  DWORD* updateflags,
+                  CStream* stream)
+{
+    if(!oldstate || (*newstate != *oldstate)) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteQuat(*newstate);
+        return sizeof(quaternion_t);
     }
     return 0;
 }
@@ -211,7 +225,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
 
 		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &m_stream);
         DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &m_stream);
-        DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &m_stream);
+        DeltaDiffQuat(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &m_stream);
         DeltaDiffFloat(&state.fov,        oldstate ? &oldstate->fov : NULL,       OBJ_STATE_FOV,        &updateflags, &m_stream);
         DeltaDiffFloat(&state.radius,     oldstate ? &oldstate->radius : NULL,    OBJ_STATE_RADIUS,     &updateflags, &m_stream);
         DeltaDiffString(&state.resource,  oldstate ? &oldstate->resource : NULL,  OBJ_STATE_RESOURCE,   &updateflags, &m_stream);
@@ -234,7 +248,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             stream->ReadVec3(&state.vel);
         if(updateflags & OBJ_STATE_ROT)
         {
-            stream->ReadVec3(&state.rot);
+            stream->ReadQuat(&state.rot);
             UpdateMatrix();
         }
         if(updateflags & OBJ_STATE_FOV)

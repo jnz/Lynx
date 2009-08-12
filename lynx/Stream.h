@@ -2,6 +2,7 @@
 
 #include "lynx.h"
 #include "math/vec3.h"
+#include "math/quaternion.h"
 
 class CStream
 {
@@ -30,6 +31,7 @@ public:
 	void WritePos6(const vec3_t& value); // 6 Bytes
 	void WriteFloat2(float value); // 2 Byte
 	void WriteVec3(const vec3_t& value);
+    void WriteQuat(const quaternion_t& value);
 	void WriteBytes(const BYTE* values, int len);
 	WORD WriteString(const std::string& value); // Max Str len: 0xffff. return written bytes
     void WriteStream(const CStream& stream);
@@ -51,6 +53,7 @@ public:
 	void ReadPos6(vec3_t* value); // 6 Bytes
 	void ReadFloat2(float* value); // 2 Byte Float
 	void ReadVec3(vec3_t* value); // 3*4 Bytes
+    void ReadQuat(quaternion_t* value);
 	void ReadBytes(BYTE* values, int len);
 	void ReadString(std::string* value);
 

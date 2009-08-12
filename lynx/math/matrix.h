@@ -1,6 +1,7 @@
 #pragma once
 
 struct vec3_t;
+struct quaternion_t;
 
 /*
 	column-major order. 16 consecutive floats. as in OpenGL.
@@ -56,6 +57,7 @@ public:
 
 	void SetTransform(const vec3_t* position, const vec3_t* angles);
 	void SetCamTransform(const vec3_t* position, const vec3_t* angles); // camera ZXY angle order (Inverse of SetTransform)
+	void SetCamTransform(const vec3_t& position, const quaternion_t& quat);
 	void GetVec3Cam(vec3_t* dir, vec3_t* up, vec3_t* side); // only useful after SetCamTransform
 
 	void MultiplyVec3(vec3_t *pDest, const vec3_t* pV) const; // pDest = M * pV. pV kann pDest sein

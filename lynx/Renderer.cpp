@@ -140,9 +140,10 @@ void CRenderer::Update(const float dt, const DWORD ticks)
     localctrl = m_world->GetLocalController();
 	localctrlid = m_world->GetLocalObj()->GetID();
 	world = m_world->GetInterpWorld();
-	m.SetCamTransform(&(localctrl->GetOrigin()+localctrl->GetEyePos()), 
-					  &localctrl->GetRot());
-	m.GetVec3Cam(&dir, &up, &side);
+	m.SetCamTransform((localctrl->GetOrigin()+localctrl->GetEyePos()), 
+					   localctrl->GetRot());
+	
+    m.GetVec3Cam(&dir, &up, &side);
 	glLoadMatrixf(m.pm);
 
 /* <Frust drawing> */

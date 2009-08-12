@@ -146,10 +146,11 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
 
             CObj* obj = m_world->GetObj(client->m_obj);
             assert(obj);
-            vec3_t origin, vel, rot;
+            vec3_t origin, vel;
+            quaternion_t rot;
             stream->ReadVec3(&origin);
             stream->ReadVec3(&vel);
-            stream->ReadVec3(&rot);
+            stream->ReadQuat(&rot);
             if((origin - obj->GetOrigin()).AbsSquared() < MAX_SV_CL_POS_DIFF)
             {
                 obj->SetOrigin(origin);

@@ -24,6 +24,8 @@ CClient::CClient(CWorldClient* world)
 	m_strafe_left = 0;
 	m_strafe_right = 0;
     m_jump = 0;
+    m_lat = 0;
+    m_lon = 0;
 
     m_lastupdate = CLynx::GetTicks();
 }
@@ -139,7 +141,7 @@ void CClient::SendClientState()
 		stream.WriteDWORD(m_world->GetWorldID());
         stream.WriteVec3(localctrl->GetOrigin());
         stream.WriteVec3(localctrl->GetVel());
-        stream.WriteVec3(vec3_t(0, localctrl->GetRot().y, 0));
+        stream.WriteQuat(localctrl->GetRot());
         
     	packet = enet_packet_create(stream.GetBuffer(), 
 								    stream.GetBytesWritten(), 0);
@@ -178,30 +180,36 @@ void CClient::InputMouseMove(int dx, int dy)
 {
 	CObj* obj = GetLocalController();
 	const float sensitivity = 0.5f; // FIXME
-	vec3_t rot = obj->GetRot();
 
-	rot.v[0] += (float)dy * sensitivity;
-	if(rot.v[0] >= 89)
-		rot.v[0] = 89;
-	else if(rot.v[0] <= -89)
-		rot.v[0] = -89;
+	m_lat += (float)dy * sensitivity;
+	if(m_lat >= 89)
+		m_lat = 89;
+	else if(m_lat <= -89)
+		m_lat = -89;
 
-	rot.v[1] -= (float)dx * sensitivity;
-	rot.v[1] = CLynx::AngleMod(rot.v[1]);
-	obj->SetRot(rot);
+	m_lon -= (float)dx * sensitivity;
+	m_lon = CLynx::AngleMod(m_lon);
+
+    quaternion_t qlat, qlon, rot;
+    qlat.RotationAxis(vec3_t(1.0f,0.0f,0.0f), m_lat*lynxmath::DEGTORAD);
+    qlon.RotationAxis(vec3_t(0.0f,1.0f,0.0f), m_lon*lynxmath::DEGTORAD);
+    rot = qlon*qlat;
+    obj->SetRot(rot);
 }
 
 void CClient::InputCalcDir()
 {
-	vec3_t velocity, rot;
+	vec3_t velocity;
+    quaternion_t rot;
 	vec3_t dir, side;
 	vec3_t newdir(0,0,0);
 
     velocity = GetLocalController()->GetVel();
     rot = GetLocalController()->GetRot();
-	vec3_t::AngleVec3(rot, &dir, NULL, &side);
+    rot.GetVec3(&dir, NULL, &side);
+    dir = -dir;
 
-	newdir += (float)m_forward * dir;
+    newdir += (float)m_forward * dir;
 	newdir -= (float)m_backward * dir;
 	newdir -= (float)m_strafe_left * side;
 	newdir += (float)m_strafe_right * side;

@@ -23,7 +23,6 @@ void CGameLogic::InitGame()
 	obj->SetOrigin(vec3_t(0.0f, 45.0f, -10.0f));
 	//obj->SetVel(vec3_t(0.4f, 0.5f, 0.3f)*1);
     obj->SetVel(vec3_t::origin);
-	obj->SetRot(vec3_t(0,270,0));
 	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
     //obj->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
 	obj->SetAnimation("default");
@@ -62,7 +61,7 @@ void CGameLogic::Update(const float dt, const DWORD ticks)
 		m_world->ObjMove(obj, dt);
         if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() > 
            100*lynxmath::EPSILON)
-            obj->SetAnimation("salute");
+            obj->SetAnimation("run");
         else
             obj->SetAnimation("default");
 	}

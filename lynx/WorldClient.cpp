@@ -60,7 +60,7 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
     
 	static int pressed = 0;
 	static vec3_t location;
-
+/*
 	if(CLynx::GetKeyState()[102])
 	{
 		float f = 999.9f;
@@ -83,7 +83,7 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 			AddObj(obj);
 		}
 	}
-
+*/
     CObj* controller = GetLocalController();
 	ObjMove(controller, dt);
 
@@ -232,7 +232,7 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 	OBJITER iter;
 	CObj* obj;
 	vec3_t origin1, origin2, origin;
-	vec3_t rot1, rot2, rot;
+	quaternion_t rot1, rot2, rot;
 	for(iter = ObjBegin();iter != ObjEnd(); iter++)
 	{
 		obj = (*iter).second;
@@ -244,8 +244,9 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 		rot2 = state2.state.objstates[(*iter2).second].rot;
 		
 		origin = vec3_t::Lerp(origin1, origin2, f);
-		rot = vec3_t::Lerp(rot1, rot2, f);
-		obj->SetOrigin(origin);
+        quaternion_t::Slerp(&rot, rot1, rot2, f);
+
+        obj->SetOrigin(origin);
 		obj->SetRot(rot);
 		obj->UpdateMatrix();
 	}

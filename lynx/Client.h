@@ -45,6 +45,8 @@ private:
 	int m_strafe_left;
 	int m_strafe_right;
     int m_jump;
+    float m_lat; // mouse dx
+    float m_lon; // mouse dy
 
 	CWorldClient* m_world;
 

@@ -183,6 +183,14 @@ void CStream::WriteVec3(const vec3_t& value)
 	WriteFloat(value.v[2]);
 }
 
+void CStream::WriteQuat(const quaternion_t& value)
+{
+	WriteFloat(value.x);
+	WriteFloat(value.y);
+	WriteFloat(value.z);
+	WriteFloat(value.w);
+}
+
 void CStream::WriteBytes(const BYTE* values, int len)
 {
 	assert(m_used + len <= m_size);
@@ -296,6 +304,14 @@ void CStream::ReadVec3(vec3_t* value)
 {
 	for(int i=0;i<3;i++)
 		ReadFloat(&value->v[i]);
+}
+
+void CStream::ReadQuat(quaternion_t* value)
+{
+    ReadFloat(&value->x);
+    ReadFloat(&value->y);
+    ReadFloat(&value->z);
+    ReadFloat(&value->w);
 }
 
 void CStream::ReadBytes(BYTE* values, int len)

@@ -335,6 +335,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\math\quaternion.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\math\quaternion.h"
+				>
+			</File>
+			<File
 				RelativePath=".\math\vec3.cpp"
 				>
 			</File>

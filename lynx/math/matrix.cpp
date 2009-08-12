@@ -3,6 +3,7 @@
 #include "mathconst.h"
 #include "vec3.h"
 #include "matrix.h"
+#include "quaternion.h"
 #include <memory.h> // for memset
 #ifdef _DEBUG
 #include <stdio.h> // for fprintf
@@ -361,73 +362,73 @@ void matrix_t::MultiplyVec3Fast(vec3_t *pDest, const vec3_t *pV) const
 
 void MatrixMultiply(matrix_t *pDest, const matrix_t *pMx1, const matrix_t *pMx2)
 {
-	pDest->m[0][0] = pMx1->m[0][0]*pMx2->m[0][0]
-				+ pMx1->m[0][1]*pMx2->m[1][0]
-				+ pMx1->m[0][2]*pMx2->m[2][0]
-				+ pMx1->m[0][3]*pMx2->m[3][0];
-	pDest->m[1][0] = pMx1->m[1][0]*pMx2->m[0][0]
-				+ pMx1->m[1][1]*pMx2->m[1][0]
-				+ pMx1->m[1][2]*pMx2->m[2][0]
-				+ pMx1->m[1][3]*pMx2->m[3][0];
-	pDest->m[2][0] = pMx1->m[2][0]*pMx2->m[0][0]
-				+ pMx1->m[2][1]*pMx2->m[1][0]
-				+ pMx1->m[2][2]*pMx2->m[2][0]
-				+ pMx1->m[2][3]*pMx2->m[3][0];
-	pDest->m[3][0] = pMx1->m[3][0]*pMx2->m[0][0]
-				+ pMx1->m[3][1]*pMx2->m[1][0]
-				+ pMx1->m[3][2]*pMx2->m[2][0]
-				+ pMx1->m[3][3]*pMx2->m[3][0];
+	pDest->m[0][0] = pMx2->m[0][0]*pMx1->m[0][0]
+				   + pMx2->m[0][1]*pMx1->m[1][0]
+				   + pMx2->m[0][2]*pMx1->m[2][0]
+				   + pMx2->m[0][3]*pMx1->m[3][0];
+	pDest->m[1][0] = pMx2->m[1][0]*pMx1->m[0][0]
+				   + pMx2->m[1][1]*pMx1->m[1][0]
+				   + pMx2->m[1][2]*pMx1->m[2][0]
+				   + pMx2->m[1][3]*pMx1->m[3][0];
+	pDest->m[2][0] = pMx2->m[2][0]*pMx1->m[0][0]
+                   + pMx2->m[2][1]*pMx1->m[1][0]
+                   + pMx2->m[2][2]*pMx1->m[2][0]
+                   + pMx2->m[2][3]*pMx1->m[3][0];
+	pDest->m[3][0] = pMx2->m[3][0]*pMx1->m[0][0]
+                   + pMx2->m[3][1]*pMx1->m[1][0]
+                   + pMx2->m[3][2]*pMx1->m[2][0]
+                   + pMx2->m[3][3]*pMx1->m[3][0];
 
-	pDest->m[0][1] = pMx1->m[0][0]*pMx2->m[0][1]
-				+ pMx1->m[0][1]*pMx2->m[1][1]
-				+ pMx1->m[0][2]*pMx2->m[2][1]
-				+ pMx1->m[0][3]*pMx2->m[3][1];
-	pDest->m[1][1] = pMx1->m[1][0]*pMx2->m[0][1]
-				+ pMx1->m[1][1]*pMx2->m[1][1]
-				+ pMx1->m[1][2]*pMx2->m[2][1]
-				+ pMx1->m[1][3]*pMx2->m[3][1];
-	pDest->m[2][1] = pMx1->m[2][0]*pMx2->m[0][1]
-				+ pMx1->m[2][1]*pMx2->m[1][1]
-				+ pMx1->m[2][2]*pMx2->m[2][1]
-				+ pMx1->m[2][3]*pMx2->m[3][1];
-	pDest->m[3][1] = pMx1->m[3][0]*pMx2->m[0][1]
-				+ pMx1->m[3][1]*pMx2->m[1][1]
-				+ pMx1->m[3][2]*pMx2->m[2][1]
-				+ pMx1->m[3][3]*pMx2->m[3][1];
+	pDest->m[0][1] = pMx2->m[0][0]*pMx1->m[0][1]
+				   + pMx2->m[0][1]*pMx1->m[1][1]
+				   + pMx2->m[0][2]*pMx1->m[2][1]
+				   + pMx2->m[0][3]*pMx1->m[3][1];
+	pDest->m[1][1] = pMx2->m[1][0]*pMx1->m[0][1]
+				   + pMx2->m[1][1]*pMx1->m[1][1]
+				   + pMx2->m[1][2]*pMx1->m[2][1]
+				   + pMx2->m[1][3]*pMx1->m[3][1];
+	pDest->m[2][1] = pMx2->m[2][0]*pMx1->m[0][1]
+                   + pMx2->m[2][1]*pMx1->m[1][1]
+                   + pMx2->m[2][2]*pMx1->m[2][1]
+                   + pMx2->m[2][3]*pMx1->m[3][1];
+	pDest->m[3][1] = pMx2->m[3][0]*pMx1->m[0][1]
+                   + pMx2->m[3][1]*pMx1->m[1][1]
+                   + pMx2->m[3][2]*pMx1->m[2][1]
+                   + pMx2->m[3][3]*pMx1->m[3][1];
 
-	pDest->m[0][2] = pMx1->m[0][0]*pMx2->m[0][2]
-				+ pMx1->m[0][1]*pMx2->m[1][2]
-				+ pMx1->m[0][2]*pMx2->m[2][2]
-				+ pMx1->m[0][3]*pMx2->m[3][2];
-	pDest->m[1][2] = pMx1->m[1][0]*pMx2->m[0][2]
-				+ pMx1->m[1][1]*pMx2->m[1][2]
-				+ pMx1->m[1][2]*pMx2->m[2][2]
-				+ pMx1->m[1][3]*pMx2->m[3][2];
-	pDest->m[2][2] = pMx1->m[2][0]*pMx2->m[0][2]
-				+ pMx1->m[2][1]*pMx2->m[1][2]
-				+ pMx1->m[2][2]*pMx2->m[2][2]
-				+ pMx1->m[2][3]*pMx2->m[3][2];
-	pDest->m[3][2] = pMx1->m[3][0]*pMx2->m[0][2]
-				+ pMx1->m[3][1]*pMx2->m[1][2]
-				+ pMx1->m[3][2]*pMx2->m[2][2]
-				+ pMx1->m[3][3]*pMx2->m[3][2];
+	pDest->m[0][2] = pMx2->m[0][0]*pMx1->m[0][2]
+                   + pMx2->m[0][1]*pMx1->m[1][2]
+                   + pMx2->m[0][2]*pMx1->m[2][2]
+                   + pMx2->m[0][3]*pMx1->m[3][2];
+	pDest->m[1][2] = pMx2->m[1][0]*pMx1->m[0][2]
+                   + pMx2->m[1][1]*pMx1->m[1][2]
+                   + pMx2->m[1][2]*pMx1->m[2][2]
+                   + pMx2->m[1][3]*pMx1->m[3][2];
+	pDest->m[2][2] = pMx2->m[2][0]*pMx1->m[0][2]
+                   + pMx2->m[2][1]*pMx1->m[1][2]
+                   + pMx2->m[2][2]*pMx1->m[2][2]
+                   + pMx2->m[2][3]*pMx1->m[3][2];
+	pDest->m[3][2] = pMx2->m[3][0]*pMx1->m[0][2]
+                   + pMx2->m[3][1]*pMx1->m[1][2]
+                   + pMx2->m[3][2]*pMx1->m[2][2]
+                   + pMx2->m[3][3]*pMx1->m[3][2];
 
-	pDest->m[0][3] = pMx1->m[0][0]*pMx2->m[0][3]
-				+ pMx1->m[0][1]*pMx2->m[1][3]
-				+ pMx1->m[0][2]*pMx2->m[2][3]
-				+ pMx1->m[0][3]*pMx2->m[3][3];
-	pDest->m[1][3] = pMx1->m[1][0]*pMx2->m[0][3]
-				+ pMx1->m[1][1]*pMx2->m[1][3]
-				+ pMx1->m[1][2]*pMx2->m[2][3]
-				+ pMx1->m[1][3]*pMx2->m[3][3];
-	pDest->m[2][3] = pMx1->m[2][0]*pMx2->m[0][3]
-				+ pMx1->m[2][1]*pMx2->m[1][3]
-				+ pMx1->m[2][2]*pMx2->m[2][3]
-				+ pMx1->m[2][3]*pMx2->m[3][3];
-	pDest->m[3][3] = pMx1->m[3][0]*pMx2->m[0][3]
-				+ pMx1->m[3][1]*pMx2->m[1][3]
-				+ pMx1->m[3][2]*pMx2->m[2][3]
-				+ pMx1->m[3][3]*pMx2->m[3][3];
+	pDest->m[0][3] = pMx2->m[0][0]*pMx1->m[0][3]
+                   + pMx2->m[0][1]*pMx1->m[1][3]
+                   + pMx2->m[0][2]*pMx1->m[2][3]
+                   + pMx2->m[0][3]*pMx1->m[3][3];
+	pDest->m[1][3] = pMx2->m[1][0]*pMx1->m[0][3]
+                   + pMx2->m[1][1]*pMx1->m[1][3]
+                   + pMx2->m[1][2]*pMx1->m[2][3]
+                   + pMx2->m[1][3]*pMx1->m[3][3];
+	pDest->m[2][3] = pMx2->m[2][0]*pMx1->m[0][3]
+                   + pMx2->m[2][1]*pMx1->m[1][3]
+                   + pMx2->m[2][2]*pMx1->m[2][3]
+                   + pMx2->m[2][3]*pMx1->m[3][3];
+	pDest->m[3][3] = pMx2->m[3][0]*pMx1->m[0][3]
+                   + pMx2->m[3][1]*pMx1->m[1][3]
+                   + pMx2->m[3][2]*pMx1->m[2][3]
+                   + pMx2->m[3][3]*pMx1->m[3][3];
 }
 
 void matrix_t::SetTransform(const vec3_t* position, const vec3_t* angles)
@@ -502,6 +503,28 @@ void matrix_t::SetCamTransform(const vec3_t* pos, const vec3_t* angles)
 	m[3][0] = - (pos->x * m[0][0] + pos->y * m[1][0] + pos->z * m[2][0]);
 	m[3][1] = - (pos->x * m[0][1] + pos->y * m[1][1] + pos->z * m[2][1]);
 	m[3][2] = - (pos->x * m[0][2] + pos->y * m[1][2] + pos->z * m[2][2]);
+
+	m[0][3] = m[1][3] = m[2][3] = 0.0f;
+	m[3][3] = 1.0f;
+}
+
+void matrix_t::SetCamTransform(const vec3_t& pos, const quaternion_t& q)
+{
+	m[0][0] = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
+	m[1][0] = 2.0f * (q.x*q.y + q.w*q.z);
+	m[2][0] = 2.0f * (q.x*q.z - q.w*q.y);
+
+	m[0][1] = 2.0f * (q.x*q.y - q.w*q.z);
+	m[1][1] = 1.0f - 2.0f * (q.x*q.x + q.z*q.z);
+	m[2][1] = 2.0f * (q.y*q.z + q.w*q.x);
+
+	m[0][2] = 2.0f * (q.x*q.z + q.w*q.y);
+	m[1][2] = 2.0f * (q.y*q.z - q.w*q.x);
+	m[2][2] = 1.0f - 2.0f * (q.x*q.x + q.y*q.y);
+
+	m[3][0] = - (pos.x * m[0][0] + pos.y * m[1][0] + pos.z * m[2][0]);
+	m[3][1] = - (pos.x * m[0][1] + pos.y * m[1][1] + pos.z * m[2][1]);
+	m[3][2] = - (pos.x * m[0][2] + pos.y * m[1][2] + pos.z * m[2][2]);
 
 	m[0][3] = m[1][3] = m[2][3] = 0.0f;
 	m[3][3] = 1.0f;

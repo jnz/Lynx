@@ -4,6 +4,7 @@ class CObj;
 struct obj_state_t;
 #include "math/vec3.h"
 #include "math/matrix.h"
+#include "math/quaternion.h"
 #include "Stream.h"
 #include <string>
 #include "World.h"
@@ -12,6 +13,11 @@ struct obj_state_t;
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
+                  const DWORD flagparam, 
+                  DWORD* updateflags,
+                  CStream* stream);
+int DeltaDiffQuat(const quaternion_t* newstate,
+                  const quaternion_t* oldstate,
                   const DWORD flagparam, 
                   DWORD* updateflags,
                   CStream* stream);
@@ -34,17 +40,17 @@ int DeltaDiffDWORD(const DWORD* newstate,
 // If you change this, update the Serialize function
 struct obj_state_t
 {
-	vec3_t	    origin;			// Position
-	vec3_t	    vel;     		// Direction/Velocity
-	vec3_t	    rot;			// Rotation (x = pitch, y = yaw, z = roll)
+	vec3_t	        origin;			// Position
+	vec3_t	        vel;     		// Direction/Velocity
+	quaternion_t    rot;			// Rotation (x = pitch, y = yaw, z = roll)
 
-	float		fov;
-	float		radius;
-	std::string resource;
-	std::string animation;
-	vec3_t		min;
-	vec3_t		max;
-    vec3_t		eyepos;
+	float		    fov;
+	float		    radius;
+	std::string     resource;
+	std::string     animation;
+	vec3_t		    min;
+	vec3_t		    max;
+    vec3_t		    eyepos;
 };
 
 
@@ -69,8 +75,8 @@ public:
     void        SetOrigin(const vec3_t& origin) { state.origin = origin; }
     const vec3_t GetVel() const { return state.vel; }
     void        SetVel(const vec3_t& velocity) { state.vel = velocity; }
-    const vec3_t GetRot() const { return state.rot; }
-    void        SetRot(const vec3_t& rotation) { state.rot = rotation; }
+    const quaternion_t GetRot() const { return state.rot; }
+    void        SetRot(const quaternion_t& rotation) { state.rot = rotation; }
 
 	float		GetFOV(); // Field of View. X-Axis. Altgrad
 	void		SetFOV(float fov); // Field of View. X-Axis. Altgrad
