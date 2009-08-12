@@ -1,5 +1,6 @@
 #include "NetMsg.h"
 #include "Server.h"
+#include "ServerClient.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -7,7 +8,6 @@
 #endif
 
 #define MAXCLIENTS				8
-#define SERVER_UPDATETIME		50
 #define SERVER_MAX_WORLD_AGE	5000				// wie viele ms heben wir für den client eine welt auf
 #define MAX_WORLD_BACKLOG		(10*MAXCLIENTS)		// wie viele welten werden gespeichert
 
@@ -150,7 +150,7 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             stream->ReadVec3(&origin);
             stream->ReadVec3(&vel);
             stream->ReadVec3(&rot);
-            if((origin - obj->GetOrigin()).AbsSquared() < 100.0f)
+            if((origin - obj->GetOrigin()).AbsSquared() < MAX_SV_CL_POS_DIFF)
             {
                 obj->SetOrigin(origin);
             }
@@ -266,7 +266,7 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 	if(!packet)
 		return false;
 
-	//fprintf(stderr, "SV: Complete World: %i bytes\n", stream.GetBytesWritten());
+	//fprintf(stderr, "SV: Complete World: %i bytes\n", m_stream.GetBytesWritten());
 	client->m_state = S1_CLIENT_SENDING_WORLD;
 	return enet_peer_send(client->GetPeer(), 0, packet) == 0;
 }

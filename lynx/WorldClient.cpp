@@ -1,4 +1,5 @@
 #include "WorldClient.h"
+#include "ServerClient.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -6,13 +7,12 @@
 #endif
 
 #define MAX_CLIENT_HISTORY          500
-#define RENDER_DELAY                100
 
 #pragma warning(disable: 4355)
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
 {
 	m_localobj = &m_ghostobj;
-	m_ghostobj.SetOrigin(vec3_t(0,500.0f,0));
+	m_ghostobj.SetOrigin(vec3_t(0,1000.0f,0));
 	m_pinterpworld = this;
 }
 
@@ -40,7 +40,7 @@ void CWorldClient::SetLocalObj(int id)
         if(m_localobj->GetID() != id)
         {
             m_ghostobj.CopyObjStateFrom(obj);
-        }else if((m_ghostobj.GetOrigin()-m_localobj->GetOrigin()).AbsSquared() >= 100.0f)
+        }else if((m_ghostobj.GetOrigin()-m_localobj->GetOrigin()).AbsSquared() >= MAX_SV_CL_POS_DIFF)
         {
             fprintf(stderr, "CL: Reset position\n");
             m_ghostobj.SetOrigin(m_localobj->GetOrigin());
@@ -128,8 +128,8 @@ void CWorldClient::CreateClientInterp()
 
     if(dtupdate > RENDER_DELAY)
     {
-        if(m_history.size() > 2)
-			fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
+        //if(m_history.size() > 2)
+		//	fprintf(stderr, "CWorldClient: Server lag, no update since %i ms.\n", dtupdate);
         return;
     }
 

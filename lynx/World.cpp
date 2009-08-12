@@ -75,19 +75,20 @@ void CWorld::Update(const float dt, const DWORD ticks)
 }
 
 #define GRAVITY             (1.81f) // Physikalisches Modell ist erbärmlich schlecht und kommt ohne Beschleunigung aus
-#define STOP_EPSILON		(0.05f)
+#define STOP_EPSILON		(0.01f)
 void CWorld::ObjMove(CObj* obj, float dt)
 {
     bsp_sphere_trace_t trace;
     vec3_t p1 = obj->GetOrigin();
     vec3_t vel = obj->GetVel();
+    vel.y -= GRAVITY;
     vec3_t p2 = p1 + vel*dt;
     vec3_t q;
     vec3_t p3;
     trace.radius = obj->GetRadius();
-    bool bhit = false;
+    bool groundhit = false;
 
-    for(int i=0;(p2 - p1)!=vec3_t::origin; i++)
+    for(int i=0;(p2 - p1) != vec3_t::origin; i++)
     {
         assert(i < 8);
 
@@ -98,12 +99,14 @@ void CWorld::ObjMove(CObj* obj, float dt)
         assert(trace.f > 0.0f);
         if(trace.f < 1.0f)
         {
-            bhit = true;
             q = trace.start + trace.f*trace.dir + 
                 trace.p.m_n * STOP_EPSILON;
             p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
 
-            if((p3-q).Abs()<STOP_EPSILON)
+            if(trace.p.m_n * vec3_t(0,1,0) > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
+                groundhit = true;
+
+            if((p3-q).Abs()<10*STOP_EPSILON)
             {
                 p2 = q;
                 break;
@@ -116,15 +119,13 @@ void CWorld::ObjMove(CObj* obj, float dt)
             break;
     }
  
-    if(bhit)
-    {/*
-        if(trace.p.m_n * vec3_t(0,1,0) > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
-        {
-            // hit floor
-        }
-      */
+    if(groundhit)
+    {
+        vel.y = 0;
+        //p2.y += GRAVITY*dt;
     }
     obj->SetOrigin(p2);
+    obj->SetVel(vel);
 }
 
 void CWorld::UpdatePendingObjs()

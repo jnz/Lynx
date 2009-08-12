@@ -293,6 +293,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ServerClient.h"
+				>
+			</File>
+			<File
 				RelativePath=".\World.h"
 				>
 			</File>

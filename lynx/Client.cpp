@@ -205,7 +205,10 @@ void CClient::InputCalcDir()
 	newdir -= (float)m_backward * dir;
 	newdir -= (float)m_strafe_left * side;
 	newdir += (float)m_strafe_right * side;
-	GetLocalController()->SetVel(newdir*25.0f);
+    newdir.y = 0;
+    newdir.SetLength(25.0f);
+    newdir.y = velocity.y;
+	GetLocalController()->SetVel(newdir);
 }
 
 CObj* CClient::GetLocalController()

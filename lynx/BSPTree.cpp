@@ -233,7 +233,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
         vec3_t normal;
 		for(int i=0;i<size;i++)
 		{
-            if(node->polylist[i].plane.m_n * trace->dir > 0.0f) // backface culling
+            if(node->polylist[i].plane.m_n * trace->dir > BSP_EPSILON) // backface culling
 				continue;
 
             // - Prüfen ob Polygonfläche getroffen wird
@@ -773,7 +773,7 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, fl
     plane.m_d -= offset; // Plane shift
     const bool hit = plane.GetIntersection(&cf, start, dir);
     plane.m_d += offset;
-	if(!hit || cf > 1.0f || cf < 0)
+	if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
 		return false;
 	tmpintersect = start + dir*cf - plane.m_n*offset;
     *f = cf;
@@ -815,7 +815,7 @@ bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& dir,
 		b = tree->m_vertices[vertices[(i+1)%size]];
         if(!vec3_t::RayCylinderIntersect(start, dir, a, b, radius, &cf))
             continue;
-        if(cf < minf && cf >= 0.0f)
+        if(cf < minf && cf >= -BSP_EPSILON)
         {
             minf = cf;
             minindex = i;
@@ -850,7 +850,7 @@ bool bsp_poly_t::GetVertexIntersection(const vec3_t& start, const vec3_t& dir,
         if(!vec3_t::RaySphereIntersect(start, dir,
                                        tree->m_vertices[vertices[i]], radius, &cf))
             continue;
-        if(cf < minf && cf >= 0.0f)
+        if(cf < minf && cf >= -BSP_EPSILON)
         {
             minindex = i;
             minf = cf;
