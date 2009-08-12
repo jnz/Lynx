@@ -59,8 +59,8 @@ void quaternion_t::GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side)
 
 void quaternion_t::RotationAxis(vec3_t v, float a)
 {
-	float s = (float)sin(a/2);
-	float c = (float)cos(a/2);
+	const float s = (float)sin(a/2);
+	const float c = (float)cos(a/2);
 	
 	v.Normalize();
 	x = s * v.x;

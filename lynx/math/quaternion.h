@@ -18,6 +18,11 @@ struct quaternion_t
 	    x=_x; y=_y; z=_z; w=_w;
     }
 
+    quaternion_t(vec3_t v, float a) // v = axis, a = angle (rad)
+    {
+        RotationAxis(v, a);
+    }
+
 	void FromMatrix(const matrix_t &mx);
 	void ToMatrix(matrix_t& m) const;
     void GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side);

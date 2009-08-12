@@ -268,8 +268,8 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
 
 	fseek(f, header.ofs_frames, SEEK_SET);
 	curanim.name[0] = NULL;
-	m_min = vec3_t(0,0,0);
-	m_max = vec3_t(0,0,0);
+    m_min = vec3_t::origin;
+    m_max = vec3_t::origin;
 	for(i=0;i<header.num_frames;i++) // iterating through every frame
 	{
 		m_frames[i].num_xyz = header.num_xyz;

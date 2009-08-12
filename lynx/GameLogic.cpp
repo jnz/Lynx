@@ -38,7 +38,7 @@ void CGameLogic::Notify(EventNewClientConnected e)
 	CObj* obj;
 	obj = new CObj(m_world);
 	obj->SetOrigin(vec3_t(0.0f, 45.0f, 0));
-	obj->SetVel(vec3_t(0.0f, 0, 0.0f));
+	obj->SetVel(vec3_t(0.0f, 0.0f, 0.0f));
 	//obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
     obj->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
 	obj->SetAnimation("default");

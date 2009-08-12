@@ -9,6 +9,9 @@
 #endif
 
 const vec3_t vec3_t::origin(0,0,0);
+const vec3_t vec3_t::xAxis(1.0f, 0.0f, 0.0f);
+const vec3_t vec3_t::yAxis(0.0f, 1.0f, 0.0f);
+const vec3_t vec3_t::zAxis(0.0f, 0.0f, 1.0f);
 
 vec3_t::vec3_t()
 {

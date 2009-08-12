@@ -103,7 +103,7 @@ void CWorld::ObjMove(CObj* obj, float dt)
                 trace.p.m_n * STOP_EPSILON;
             p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
 
-            if(trace.p.m_n * vec3_t(0,1,0) > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
+            if(trace.p.m_n * vec3_t::yAxis > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
                 groundhit = true;
 
             if(fabsf(q.y-p1.y)<STOP_EPSILON)

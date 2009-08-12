@@ -56,6 +56,9 @@ struct vec3_t
                                    float* f);
 
 	static const vec3_t origin;
+    static const vec3_t xAxis; // 1,0,0
+    static const vec3_t yAxis; // 0,1,0
+    static const vec3_t zAxis; // 0,0,1
 
 #ifdef _DEBUG
 	void Print();

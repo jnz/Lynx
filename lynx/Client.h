@@ -32,7 +32,8 @@ protected:
 	void InputMouseMove(int dx, int dy);
 	void InputCalcDir();
 	void SendClientState();
-	CObj* GetLocalController();
+	CObj* GetLocalController(); // Geist Objekt, das nur auf Client Seite existiert. Sozusagen die virtuelle Kamera
+    CObj* GetLocalObj(); // Tatsächliches Objekt mit dem der Client verknüpft ist
 
 private:
 	ENetHost* m_client;

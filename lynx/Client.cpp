@@ -141,7 +141,7 @@ void CClient::SendClientState()
 		stream.WriteDWORD(m_world->GetWorldID());
         stream.WriteVec3(localctrl->GetOrigin());
         stream.WriteVec3(localctrl->GetVel());
-        stream.WriteQuat(localctrl->GetRot());
+        stream.WriteQuat(quaternion_t(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD));
         
     	packet = enet_packet_create(stream.GetBuffer(), 
 								    stream.GetBytesWritten(), 0);
@@ -190,11 +190,9 @@ void CClient::InputMouseMove(int dx, int dy)
 	m_lon -= (float)dx * sensitivity;
 	m_lon = CLynx::AngleMod(m_lon);
 
-    quaternion_t qlat, qlon, rot;
-    qlat.RotationAxis(vec3_t(1.0f,0.0f,0.0f), m_lat*lynxmath::DEGTORAD);
-    qlon.RotationAxis(vec3_t(0.0f,1.0f,0.0f), m_lon*lynxmath::DEGTORAD);
-    rot = qlon*qlat;
-    obj->SetRot(rot);
+    quaternion_t qlat(vec3_t::xAxis, m_lat*lynxmath::DEGTORAD);
+    quaternion_t qlon(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD);
+    obj->SetRot(qlon*qlat);
 }
 
 void CClient::InputCalcDir()
@@ -225,4 +223,9 @@ void CClient::InputCalcDir()
 CObj* CClient::GetLocalController()
 {
 	return m_world->GetLocalController();
+}
+
+CObj* CClient::GetLocalObj()
+{
+    return m_world->GetLocalObj();
 }
