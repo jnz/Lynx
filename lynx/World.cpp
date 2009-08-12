@@ -74,24 +74,7 @@ void CWorld::Update(const float dt, const DWORD ticks)
 	m_bsptree.ClearMarks(m_bsptree.m_root);
 }
 
-#define STOP_EPSILON		(0.1f)
-void ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t* out, float overbounce)
-{
-	float backoff;
-	float change;
-	
-	backoff = (in * normal) * overbounce;
-
-	for(int i=0;i<3;i++)
-	{
-		change = normal.v[i] * backoff;
-		out->v[i] = in.v[i] - change;
-		if(out->v[i] > -STOP_EPSILON && out->v[i] < STOP_EPSILON)
-			out->v[i] = 0.0f;
-	}
-}
-
-#define MAX_CLIP_PLANES		8
+#define STOP_EPSILON		(0.05f)
 void CWorld::ObjMove(CObj* obj, float dt)
 {
     bsp_sphere_trace_t trace;
@@ -99,23 +82,29 @@ void CWorld::ObjMove(CObj* obj, float dt)
     vec3_t p2 = obj->GetOrigin() + obj->GetVel() * dt;
     vec3_t q;
     vec3_t p3;
-    vec3_t vel = obj->GetVel();
     trace.radius = obj->GetRadius();
 
-    for(int i=0;(p2 - p1).AbsSquared()>lynxmath::EPSILON && i < MAX_CLIP_PLANES; i++)
+    for(int i=0;(p2 - p1)!=vec3_t::origin; i++)
     {
+        assert(i < 8);
+
         trace.start = p1;
-        trace.end = p2;
-        trace.dir = trace.end - trace.start;
+        trace.dir = p2 - p1;
         trace.f = MAX_TRACE_DIST;
         GetBSP()->TraceSphere(&trace);
         assert(trace.f > 0.0f);
         if(trace.f < 1.0f)
         {
             q = trace.start + trace.f*trace.dir + 
-                trace.p.m_n * 1000 * lynxmath::EPSILON;
+                trace.p.m_n * STOP_EPSILON;
             p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
-            vel = vel - 2*(vel*trace.p.m_n)*trace.p.m_n;
+
+            if((p3-q).Abs()<STOP_EPSILON)
+            {
+                p2 = q;
+                break;
+            }
+
             p1 = q;
             p2 = p3;
         }
@@ -124,35 +113,6 @@ void CWorld::ObjMove(CObj* obj, float dt)
     }
 
     obj->SetOrigin(p2);
-    obj->SetVel(vel); // bounce
-
-/*
-    const bool moved = obj->GetVel() != vec3_t::origin;
-    if(moved && m_bsptree.m_root)
-    {
-        vec3_t q;
-        bsp_sphere_trace_t trace;
-
-        trace.start = obj->GetOrigin();
-        trace.radius = obj->GetRadius();
-//        do
-//        {
-            trace.end = p2;
-            trace.dir = trace.end - trace.start;
-            trace.f = MAX_TRACE_DIST;
-            m_bsptree.TraceSphere(&trace, m_bsptree.m_root);
-            assert(trace.f > 0.0f);
-            if(trace.f < 1.0f)
-            {
-                q = trace.start + trace.f*trace.dir + trace.p.m_n * lynxmath::EPSILON;
-                //p2 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
-                p2 = q;
-            }
-
-//        }while(trace.f > lynxmath::EPSILON && trace.f < 1.0f);
-    }
-    obj->SetOrigin(p2);
-    */
 }
 
 void CWorld::UpdatePendingObjs()
@@ -245,8 +205,8 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
                 if(indexiter != oldstate->objindex.end())
                     obj_oldstate = (obj_state_t*)&oldstate->objstates[(*indexiter).second];
             }
-            stream->WriteWORD(obj->GetID()); // FIXME wird damit doppelt geschrieben
-            if(obj->Serialize(true, stream, obj_oldstate))
+            stream->WriteWORD(obj->GetID());
+            if(obj->Serialize(true, stream, obj->GetID(), obj_oldstate))
 				changes++;
 		}
 	}
@@ -301,11 +261,12 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             if(!obj)
             {
                 obj = new CObj(this);
-				changes += obj->Serialize(false, stream) ? 1 : 0;
+				changes += obj->Serialize(false, stream, objid) ? 1 : 0;
                 AddObj(obj);
             }
             else
-				changes += obj->Serialize(false, stream) ? 1 : 0;
+				changes += obj->Serialize(false, stream, objid) ? 1 : 0;
+            assert(objread.find(objid) == objread.end()); // darf nicht schon im stream sein
             objread[obj->GetID()] = obj->GetID();
         }
         // Alle Objekte löschen, die in dem neuen State nicht mehr vorhanden sind
@@ -324,7 +285,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 	return changes > 0;
 }
 
-world_state_t CWorld::GenerateWorldState()
+world_state_t CWorld::GetWorldState()
 {
 	world_state_t worldstate = state;
 

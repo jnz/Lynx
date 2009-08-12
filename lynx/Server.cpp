@@ -126,7 +126,7 @@ void CServer::Update(const float dt, const DWORD ticks)
 		
 		m_lastupdate = ticks;
 		if(sent > 0)
-			m_history[m_world->GetWorldID()] = m_world->GenerateWorldState();
+			m_history[m_world->GetWorldID()] = m_world->GetWorldState();
 		UpdateHistoryBuffer();
 	}
 }
@@ -234,7 +234,7 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     m_stream.ResetWritePosition();
 
 	CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
-	m_stream.WriteDWORD(localobj); // FIXME DWORD ist zu groﬂ, WORD reicht
+	m_stream.WriteWORD((WORD)localobj);
 
 	std::map<DWORD, world_state_t>::iterator iter;
 	iter = m_history.find(client->worldidACK);

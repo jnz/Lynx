@@ -153,7 +153,7 @@ void CClient::SendClientState()
 void CClient::OnReceive(CStream* stream)
 {
 	BYTE type;
-	DWORD localobj;
+	WORD localobj;
 
 	// fprintf(stderr, "%i Client Incoming data: %i bytes\n", CLynx::GetTicks()&255, stream->GetBytesToRead());
 
@@ -161,7 +161,7 @@ void CClient::OnReceive(CStream* stream)
 	switch(type)
 	{
 	case NET_MSG_SERIALIZE_WORLD:
-		stream->ReadDWORD(&localobj);
+		stream->ReadWORD(&localobj);
 		m_world->Serialize(false, stream);
     	m_world->SetLocalObj(localobj);
 		break;
@@ -202,7 +202,8 @@ void CClient::InputCalcDir()
 	newdir -= (float)m_backward * dir;
 	newdir -= (float)m_strafe_left * side;
 	newdir += (float)m_strafe_right * side;
-	GetLocalController()->SetVel(newdir);
+    //newdir.z = 0.0f;
+	GetLocalController()->SetVel(newdir*25.0f);
 }
 
 CObj* CClient::GetLocalController()

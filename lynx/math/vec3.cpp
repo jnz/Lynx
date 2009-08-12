@@ -292,23 +292,22 @@ vec3_t vec3_t::Lerp(const vec3_t& p1, const vec3_t& p2, const float f)
     return (1-f)*p1 + f*p2;
 }
 
-bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd, 
+bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir, 
                                   const vec3_t& edgeStart, const vec3_t& edgeEnd,
                                   const float radius,
                                   float* f)
 {
     // math. for 3d game programming 2nd ed. page 270
-    const vec3_t pv = pEnd - pStart;
     const vec3_t pa = edgeEnd - edgeStart;
     const vec3_t s0 = pStart - edgeStart;
     const float pa_squared = pa.AbsSquared();
     
     // a
-    const float pva = pv * pa;
-    const float a = pv.AbsSquared() - pva*pva/pa_squared;
+    const float pva = pDir * pa;
+    const float a = pDir.AbsSquared() - pva*pva/pa_squared;
 
     // b
-    const float b = s0*pv - (s0*pa)*(pva)/pa_squared;
+    const float b = s0*pDir - (s0*pa)*(pva)/pa_squared;
 
     // c
     const float ps0a = s0*pa;
@@ -319,27 +318,26 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd,
         return false;
 
     *f = (-b - sqrt(dis))/a;
-    const float collision = (pStart + *f*pv - edgeStart)*pa;
-
+    const float collision = (pStart + *f*pDir - edgeStart)*pa;
     return collision >= 0 && collision <= pa_squared;
 }
 
-bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pEnd,
+bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pDir,
                                 const vec3_t& pSphere, const float radius,
                                 float* f)
 {
-    const float rsquared = radius*radius;
+    // calculate in world space
+    const vec3_t pEnd = pStart + pDir;
 	const float a = (pEnd.x - pStart.x)*(pEnd.x - pStart.x) + (pEnd.y - pStart.y)*(pEnd.y - pStart.y) + (pEnd.z - pStart.z)*(pEnd.z - pStart.z);
 	const float b = 2*( (pEnd.x - pStart.x)*(pStart.x - pSphere.x) + (pEnd.y - pStart.y)*(pStart.y - pSphere.y) + (pEnd.z - pStart.z)*(pStart.z - pSphere.z) );
-	const float c = pSphere.x*pSphere.x + pSphere.y*pSphere.y + pSphere.z*pSphere.z + pStart.x*pStart.x + pStart.y*pStart.y + pStart.z*pStart.z - 2*(pSphere.x*pStart.x + pSphere.y*pStart.y + pSphere.z*pStart.z) - rsquared;
+	const float c = pSphere.x*pSphere.x + pSphere.y*pSphere.y + pSphere.z*pSphere.z + pStart.x*pStart.x + pStart.y*pStart.y + pStart.z*pStart.z - 2*(pSphere.x*pStart.x + pSphere.y*pStart.y + pSphere.z*pStart.z) - radius*radius;
 	const float discrsquare = b*b - 4*a*c;
-
 	if(discrsquare <= 0)
 		return false;
 
 	const float discr = sqrt(discrsquare);
 	const float u1 = (-b + discr)/(2*a);
 	const float u2 = -(b + discr)/(2*a);
-	*f = u1 < u2 ? u1 : u2;
-	return *f > 0.0f && *f < 1.0f;
+    *f = u1 < u2 ? u1 : u2;
+	return true;
 }

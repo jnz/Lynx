@@ -27,7 +27,7 @@ static void BSP_RenderTree(const CBSPTree* tree,
 
 static void RenderCube();
 
-#define COLORLEAFS
+//#define COLORLEAFS
 
 #ifdef COLORLEAFS
 vec3_t g_colortable[] = 
@@ -249,15 +249,8 @@ void BSP_RenderPolygons(const CBSPTree* tree,
 	{
 		poly = (bsp_poly_t*)&polylist[c];
 		tcount = (int)poly->vertices.size();
-/*
-#ifdef COLORLEAFS
-		if(poly->colormarker)
-			glColor3fv(g_colortable[(unsigned int)poly%sizeof(g_colortable)/sizeof(g_colortable[0])].v);
-		else
-			glColor3f(1,1,1);
-#endif
-*/
-		glBegin(GL_POLYGON);
+
+        glBegin(GL_POLYGON);
 		for(t=0;t<tcount;t++)
 		{
 			vi = poly->vertices[t];
@@ -285,6 +278,7 @@ void BSP_RenderNode(const CBSPTree* tree,
 
 	if(node->IsLeaf())
 	{
+#ifdef COLORLEAFS
 		if(node->marker)
 		{
 			int index = node->marker%(sizeof(g_colortable)/sizeof(g_colortable[0]));
@@ -293,6 +287,7 @@ void BSP_RenderNode(const CBSPTree* tree,
 		}
 		else
 			glColor3f(1,1,1);
+#endif
 		BSP_RenderPolygons(tree, node->polylist);
         (*leafs_visited)++;
 		return;

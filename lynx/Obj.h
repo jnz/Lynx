@@ -38,7 +38,6 @@ struct obj_state_t
 	vec3_t	    vel;     		// Direction/Velocity
 	vec3_t	    rot;			// Rotation (x = pitch, y = yaw, z = roll)
 
-    float		speed;
 	float		fov;
 	float		radius;
 	std::string resource;
@@ -60,7 +59,7 @@ public:
 
 	int			GetID() { return m_id; }
 
-	bool		Serialize(bool write, CStream* stream, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
+	bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
     void        GetObjState(obj_state_t* objstate) { *objstate = state; }
 	void		SetObjState(const obj_state_t* objstate, int id);
@@ -72,11 +71,10 @@ public:
     const vec3_t GetRot() const { return state.rot; }
     void        SetRot(const vec3_t& rotation) { state.rot = rotation; }
 
-	float		GetSpeed();
-	void		SetSpeed(float speed);
 	float		GetFOV(); // Field of View. X-Axis. Altgrad
 	void		SetFOV(float fov); // Field of View. X-Axis. Altgrad
 	float		GetRadius(); // Max. Object sphere size
+    void        SetRadius(float radius);
 	void		SetAABB(const vec3_t& min, const vec3_t& max);
 	void		GetAABB(vec3_t* min, vec3_t* max);
 	std::string GetResource();

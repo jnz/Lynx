@@ -3,6 +3,14 @@
 #include <enet/enet.h>
 #include "WorldClient.h"
 
+/*
+    CClient kümmert sich um die Netzwerk-Verwaltung auf Client-Seite.
+    CClient stellt die Daten für CWorldClient bereit.
+
+    Aktuell kümmert sich CClient auch im den User-Input. Das soll
+    allerdings noch in eine eigene Klasse ausgelagert werden.
+ */
+
 class CClient
 {
 public:

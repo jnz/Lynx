@@ -71,17 +71,6 @@ bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const
 	return true;
 }
 
-bool plane_t::GetIntersectionSphere(float* f, const vec3_t& p, const vec3_t& v, float radius) const
-{
-	float q = m_n * v;
-	if(fabs(q) < lynxmath::EPSILON)
-		return false;
-	if(q < 0.0f) // FIXME make me faster
-		radius = -radius;
-	*f = -(m_n*m_n*radius + p*m_n + m_d)/q;
-	return true;
-}
-
 float plane_t::GetDistFromPlane(const vec3_t& p) const
 {
 	return p*m_n + m_d;

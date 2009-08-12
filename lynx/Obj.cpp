@@ -11,16 +11,15 @@
 #define OBJ_STATE_ORIGIN         (1 <<  0)
 #define OBJ_STATE_VEL            (1 <<  1)
 #define OBJ_STATE_ROT            (1 <<  2)
-#define OBJ_STATE_SPEED          (1 <<  3)
-#define OBJ_STATE_FOV            (1 <<  4)
-#define OBJ_STATE_RADIUS         (1 <<  5)
-#define OBJ_STATE_RESOURCE       (1 <<  6)
-#define OBJ_STATE_ANIMATION      (1 <<  7)
-#define OBJ_STATE_MIN            (1 <<  8)
-#define OBJ_STATE_MAX            (1 <<  9)
-#define OBJ_STATE_EYEPOS         (1 << 10)
+#define OBJ_STATE_FOV            (1 <<  3)
+#define OBJ_STATE_RADIUS         (1 <<  4)
+#define OBJ_STATE_RESOURCE       (1 <<  5)
+#define OBJ_STATE_ANIMATION      (1 <<  6)
+#define OBJ_STATE_MIN            (1 <<  7)
+#define OBJ_STATE_MAX            (1 <<  8)
+#define OBJ_STATE_EYEPOS         (1 <<  9)
 
-#define OBJ_STATE_FULLUPDATE    ((1 << 11)-1)
+#define OBJ_STATE_FULLUPDATE    ((1 << 10)-1)
 
 #define DEFAULT_FOV		90.0f
 
@@ -30,9 +29,9 @@ CObj::CObj(CWorld* world)
 {
 	assert(world);
 	m_id = ++m_idpool;
-	state.speed = 0.0f;
+    assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als WORD übertragen
 	//state.radius = lynxmath::SQRT_2;
-    state.radius = 10*lynxmath::SQRT_2;
+    state.radius = 2*lynxmath::SQRT_2;
 	state.min = vec3_t(-1,-1,-1);
 	state.max = vec3_t(1,1,1);
 	state.fov = DEFAULT_FOV;
@@ -52,28 +51,18 @@ void CObj::UpdateMatrix()
 	m.SetTransform(NULL, &state.rot);
 }
 
-float CObj::GetSpeed()
-{
-	return state.speed;
-}
-
-void CObj::SetSpeed(float speed)
-{
-    state.speed = speed;
-}
-
 float CObj::GetRadius()
 {
 	return state.radius;
 }
 
+void CObj::SetRadius(float radius)
+{
+    state.radius = radius;
+}
+
 void CObj::SetAABB(const vec3_t& min, const vec3_t& max)
 {
-/*
-	float length1 = min.AbsSquared();
-	float length2 = max.AbsSquared();
-	state.radius = length1 > length2 ? sqrt(length1) : sqrt(length2);
-	*/
 	state.min = min;
 	state.max = max;
 }
@@ -205,7 +194,7 @@ int DeltaDiffDWORD(const DWORD* newstate,
     return 0;
 }
 
-bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
+bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate)
 {
     assert(!(!write && oldstate));
     assert(stream);
@@ -213,14 +202,13 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
 
 	if(write)
 	{
-		assert(GetID() < USHRT_MAX);
+        assert(GetID() == id);
+		assert(id < USHRT_MAX);
 		m_stream.ResetWritePosition();
 
-        stream->WriteWORD((WORD)GetID()); // FIXME muss die id in den obj serialize stream?
 		DeltaDiffVec3(&state.origin,      oldstate ? &oldstate->origin : NULL,    OBJ_STATE_ORIGIN,     &updateflags, &m_stream);
         DeltaDiffVec3(&state.vel,         oldstate ? &oldstate->vel : NULL,       OBJ_STATE_VEL,        &updateflags, &m_stream);
         DeltaDiffVec3(&state.rot,         oldstate ? &oldstate->rot : NULL,       OBJ_STATE_ROT,        &updateflags, &m_stream);
-		DeltaDiffFloat(&state.speed,      oldstate ? &oldstate->speed : NULL,     OBJ_STATE_SPEED,      &updateflags, &m_stream);
         DeltaDiffFloat(&state.fov,        oldstate ? &oldstate->fov : NULL,       OBJ_STATE_FOV,        &updateflags, &m_stream);
         DeltaDiffFloat(&state.radius,     oldstate ? &oldstate->radius : NULL,    OBJ_STATE_RADIUS,     &updateflags, &m_stream);
         DeltaDiffString(&state.resource,  oldstate ? &oldstate->resource : NULL,  OBJ_STATE_RESOURCE,   &updateflags, &m_stream);
@@ -235,9 +223,6 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
 	}
 	else
 	{
-		WORD id;
-
-		stream->ReadWORD(&id);
         stream->ReadDWORD(&updateflags);
 
         if(updateflags & OBJ_STATE_ORIGIN)
@@ -249,8 +234,6 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
             stream->ReadVec3(&state.rot);
             UpdateMatrix();
         }
-        if(updateflags & OBJ_STATE_SPEED)
-            stream->ReadFloat(&state.speed);
         if(updateflags & OBJ_STATE_FOV)
             stream->ReadFloat(&state.fov);
         if(updateflags & OBJ_STATE_RADIUS)
@@ -279,8 +262,8 @@ bool CObj::Serialize(bool write, CStream* stream, const obj_state_t* oldstate)
 void CObj::SetObjState(const obj_state_t* objstate, int id)
 {
 	m_id = id;
-    bool resourcechange =   objstate->resource != state.resource || 
-                            objstate->animation != state.animation;
+    bool resourcechange = objstate->resource != state.resource || 
+                          objstate->animation != state.animation;
 	state = *objstate;
     if(resourcechange)
 	    UpdateProperties();

@@ -12,8 +12,7 @@
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
 {
 	m_localobj = &m_ghostobj;
-	m_ghostobj.SetOrigin(vec3_t(0,8.0f,0));
-	m_ghostobj.SetSpeed(50.0f);
+	m_ghostobj.SetOrigin(vec3_t(0,1.0f,0));
 	m_pinterpworld = this;
 }
 
@@ -21,7 +20,7 @@ CWorldClient::~CWorldClient(void)
 {
 }
 
-CObj* CWorldClient::GetLocalObj()
+CObj* CWorldClient::GetLocalObj() const
 {
 	return m_localobj;
 }
@@ -58,21 +57,8 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 		vec3_t::AngleVec3(obj->GetRot(), &forward, NULL, NULL);
 		forward *= 1000.0f;
 		m_bsptree.ClearMarks(m_bsptree.m_root);
-
-		/*
-		m_bsptree.TraceBBox(obj->GetOrigin(), 
-							obj->GetOrigin() + forward, vec3_t(-1,-1,-1),
-							vec3_t(1,1,1), &trace);
-		*/
         vec3_t start = obj->GetOrigin()+obj->GetEyePos();
 		m_bsptree.TraceRay(start, start + forward, &f, m_bsptree.m_root);
-		/*
-		if(!trace.allsolid)
-		{
-			location = trace.endpoint;
-			pressed = 1;
-		}
-		*/
 	}
 	else
 	{
@@ -87,16 +73,13 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 	}
 
     CObj* controller = GetLocalController();
-    vec3_t vel = controller->GetVel();
-    vel.SetLength(controller->GetSpeed());
-    controller->SetVel(vel);
 	ObjMove(controller, dt);
 
 	if(m_pinterpworld == &m_interpworld)
 	{
-		m_interpworld.Update(dt, ticks);
 		if(m_interpworld.f >= 1.0)
 			CreateClientInterp();
+		m_interpworld.Update(dt, ticks);
 	}
 }
 
@@ -106,7 +89,7 @@ bool CWorldClient::Serialize(bool write, CStream* stream, const world_state_t* o
     if(changed && !write)
 	{
 		worldclient_state_t clstate;
-		clstate.state = GenerateWorldState();
+		clstate.state = GetWorldState();
 		clstate.localtime = CLynx::GetTicks();
 		m_history.push_front(clstate);
 		assert(m_history.size() < 80);

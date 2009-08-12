@@ -32,6 +32,7 @@ struct vec3_t
     static vec3_t Lerp(const vec3_t& p1, const vec3_t& p2, const float f); // Lineare Interpolation zw. p1 und p2. Bei f=0 ist das Ergebnis p1, bei f=1 wird p2 zurückgegeben
 
 	/*
+        AngleVec3
 		angles x = pitch, y = yaw, z = roll
 		bei 0/0/0 zeigt forward nach (0,0,-1)
 		AngleVec3 entspricht den Drehungen einer YXZ Rotationsmatrix
@@ -43,14 +44,14 @@ struct vec3_t
 		Helferfunktion: Schnittpunkt Ray mit Zylinder. 
 		Rückgabe: true, in f steht der Skalierungsfaktor zum Schnittpunkt pStart + f*(pEnd-pStart)
 	*/
-	static bool RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pEnd, 
+	static bool RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir, 
 									 const vec3_t& edgeStart, const vec3_t& edgeEnd,
 									 const float radius,
 									 float* f);
     /*
         Helferfunktion: Schnittpunkt Ray mit Sphere
      */
-    static bool RaySphereIntersect(const vec3_t& pStart, const vec3_t& pEnd,
+    static bool RaySphereIntersect(const vec3_t& pStart, const vec3_t& pDir,
                                    const vec3_t& pSphere, const float radius,
                                    float* f);
 

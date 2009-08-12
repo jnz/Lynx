@@ -8,7 +8,6 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define	DIST_EPSILON			(0.003125f)
 #define BSP_EPSILON				(0.003125f)
 
 CBSPTree::CBSPTree(void)
@@ -170,8 +169,7 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 				continue;
 
 			if(node->polylist[i].GetIntersectionPoint(start, dir, &cf, this))
-				if(cf < minf && 
-					cf > lynxmath::EPSILON)
+				if(cf < minf)
 				{
 					minf = cf;
 					minindex = i;
@@ -189,12 +187,12 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 	pointplane_t locstart = node->plane.Classify(start, BSP_EPSILON);
 	pointplane_t locend = node->plane.Classify(start+dir, BSP_EPSILON);
 
-	if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
+	if(node->front && locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
 	{
 		TraceRay(start, dir, f, node->front);
 		return;
 	}
-	if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
+	if(node->back && locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
 	{
 		TraceRay(start, dir, f, node->back);
 		return;
@@ -214,9 +212,9 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 
 void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace) const
 {
-    assert(trace->dir == (trace->end - trace->start));
     if(m_root == NULL)
     {
+        assert(0);
         trace->f = MAX_TRACE_DIST;
         return;
     }
@@ -227,53 +225,47 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
 {
 	if(node->IsLeaf())
 	{
+		const int size = (int)node->polylist.size();
 		float cf;
 		float minf = MAX_TRACE_DIST;
 		int minindex = -1;
-		int size = (int)node->polylist.size();
         plane_t hitplane;
+        vec3_t hitpoint;
         vec3_t normal;
 		for(int i=0;i<size;i++)
 		{
-    //        if(node->polylist[i].plane.m_n * trace->dir > 0.0f)
-    //        {
-	//			continue;
-    //        }
+            if(node->polylist[i].plane.m_n * trace->dir > 0.0f) // backface culling
+				continue;
 
-            // Prüfen ob Polygonfläche getroffen wird
+            // - Prüfen ob Polygonfläche getroffen wird
+            // - Prüfen ob Polygon Edge getroffen wird
+            // - Prüfen ob Polygon Vertex getroffen wird
 			if(node->polylist[i].GetIntersectionPoint(trace->start, 
-                                                      trace->dir, &cf, this, trace->radius))
+                                                      trace->dir, &cf, 
+                                                      this, trace->radius))
             {
-				if(cf < minf && 
-					cf > 0.0f)
+				if(cf < minf)
 				{
 					minf = cf;
 					minindex = i;
                     hitplane = node->polylist[minindex].plane;
 				}
-                if(cf >= 0 && cf <= 1)
-                    continue;
             }
-
-            // Prüfen ob Polygon Edge getroffen wird
-            // Prüfen ob Polygon Vertex getroffen wird
-            if(node->polylist[i].GetEdgeIntersection(trace->start,
-                                                     trace->end,
-                                                     &cf, trace->radius, &normal, this) || 
+            else if(node->polylist[i].GetEdgeIntersection(trace->start,
+                                                          trace->dir,
+                                                          &cf, trace->radius, 
+                                                          &normal, &hitpoint, this) || 
                node->polylist[i].GetVertexIntersection(trace->start,
-                                                       trace->end,
-                                                       &cf, trace->radius, &normal, this))
+                                                       trace->dir,
+                                                       &cf, trace->radius, 
+                                                       &normal, &hitpoint, this))
             {
-				if(cf < minf && 
-					cf > 0)
+				if(cf < minf)
 				{
 					minf = cf;
 					minindex = i;
-                    vec3_t phit = trace->start + cf*trace->end;
-                    hitplane.SetupPlane(phit, normal);
+                    hitplane.SetupPlane(hitpoint, normal);
 				}
-                if(cf >= 0 && cf <= 1)
-                    continue;
             }
 		}
 		trace->f = minf;
@@ -292,7 +284,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
     // Prüfen, ob alles vor der Splitplane liegt
     node->plane.m_d -= trace->radius;
 	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
-	locend = node->plane.Classify(trace->end, BSP_EPSILON);
+	locend = node->plane.Classify(trace->start + trace->dir, BSP_EPSILON);
     node->plane.m_d += trace->radius;
 	if(node->front && locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
 	{
@@ -303,7 +295,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
     // Prüfen, ob alles hinter der Splitplane liegt
     node->plane.m_d += trace->radius;
 	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
-	locend = node->plane.Classify(trace->end, BSP_EPSILON);
+	locend = node->plane.Classify(trace->start + trace->dir, BSP_EPSILON);
     node->plane.m_d -= trace->radius;
 	if(node->back && locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
 	{
@@ -773,17 +765,19 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 	return true;
 }
 
-bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CBSPTree* tree, const float offset)
+bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, float* f, const CBSPTree* tree, const float offset)
 {
 	vec3_t tmpintersect;
 	const int size = (int)planes.size();
+    float cf;
 
-    plane.m_d -= offset;
-    const bool hit = plane.GetIntersection(f, p, v);
+    plane.m_d -= offset; // Plane shift
+    const bool hit = plane.GetIntersection(&cf, start, dir);
     plane.m_d += offset;
-	if(!hit)
+	if(!hit || cf > 1.0f || cf < 0)
 		return false;
-	tmpintersect = p + v * (*f) - plane.m_n * offset;
+	tmpintersect = start + dir*cf - plane.m_n*offset;
+    *f = cf;
 
     // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
     assert(vertices.size() == 3);
@@ -796,9 +790,8 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f
     const float Q1Q2 = Q1*Q2;
     const float Q1_sqr = Q1.AbsSquared();
     const float Q2_sqr = Q2.AbsSquared();
-    const float det = Q1_sqr*Q2_sqr - Q1Q2*Q1Q2;
-    assert(fabsf(det) > lynxmath::EPSILON);
-    const float invdet = 1/det;
+    assert(fabsf(Q1_sqr*Q2_sqr - Q1Q2*Q1Q2) > lynxmath::EPSILON);
+    const float invdet = 1/(Q1_sqr*Q2_sqr - Q1Q2*Q1Q2);
     const float RQ1 = R * Q1;
     const float RQ2 = R * Q2;
     
@@ -806,50 +799,35 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f
     const float w2 = invdet*(-Q1Q2*RQ1  + Q1_sqr*RQ2);
 
     return w1 >= 0 && w2 >= 0 && (w1 + w2 <= 1);
-
-    /*
-	for(int i=0;i<size;i++)
-	{
-		switch(planes[i].Classify(tmpintersect))
-		{
-		case POINTPLANE_FRONT:
-		case POINT_ON_PLANE:
-			continue;
-		default:
-			return false;
-		}
-	}
-	return true;
-    */
 }
 
-bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& end,
-                                     float* f, const float radius, vec3_t* normal, const CBSPTree* tree)
+bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& dir,
+                                     float* f, const float radius, vec3_t* normal,
+                                     vec3_t* hitpoint, const CBSPTree* tree)
 {
+	const int size = (int)vertices.size();
     float minf = MAX_TRACE_DIST;
     float cf;
-	const int size = (int)vertices.size();
 	vec3_t a, b;
     int minindex = -1;
 	for(int i=0;i<size;i++)
 	{
 		a = tree->m_vertices[vertices[i]];
 		b = tree->m_vertices[vertices[(i+1)%size]];
-
-        if(!vec3_t::RayCylinderIntersect(start, end, a, b, radius, &cf))
+        if(!vec3_t::RayCylinderIntersect(start, dir, a, b, radius, &cf))
             continue;
-        if(cf < minf)
+        if(cf < minf && cf >= 0.0f)
         {
             minf = cf;
             minindex = i;
         }
     }
-    if(minf < 1.0f)
+    if(minf <= 1.0f)
     {
-        const vec3_t hitpoint = start + minf*(end-start);
+        *hitpoint = start + minf*dir;
 		a = tree->m_vertices[vertices[minindex]];
 		b = tree->m_vertices[vertices[(minindex+1)%size]];
-        *normal = ((a-hitpoint)^(b-hitpoint)) ^ (b-a);
+        *normal = ((a-*hitpoint)^(b-*hitpoint)) ^ (b-a);
         normal->Normalize();
         *f = minf;
         return true;
@@ -860,28 +838,29 @@ bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& end,
 	}
 }
 
-bool bsp_poly_t::GetVertexIntersection(const vec3_t& start, const vec3_t& end,
-                                       float* f, const float radius, vec3_t* normal, const CBSPTree* tree)
+bool bsp_poly_t::GetVertexIntersection(const vec3_t& start, const vec3_t& dir,
+                                       float* f, const float radius, vec3_t* normal, 
+                                       vec3_t* hitpoint, const CBSPTree* tree)
 {
+    const int vertexcount = vertices.size();
     float minf = MAX_TRACE_DIST;
     float cf;
-    const int vertexcount = vertices.size();
     int minindex = -1;
     for(int i=0;i<vertexcount;i++)
     {
-        if(!vec3_t::RaySphereIntersect(start, end,
+        if(!vec3_t::RaySphereIntersect(start, dir,
                                        tree->m_vertices[vertices[i]], radius, &cf))
             continue;
-        if(cf < minf)
+        if(cf < minf && cf >= 0.0f)
         {
             minindex = i;
             minf = cf;
         }
     }
-    if(minf < 1.0f)
+    if(minf <= 1.0f)
     {
-        const vec3_t hitpoint = start + minf*(end-start);
-        *normal = hitpoint - tree->m_vertices[vertices[minindex]];
+        *hitpoint = start + minf*dir;
+        *normal = *hitpoint - tree->m_vertices[vertices[minindex]];
         normal->Normalize();
         *f = minf;
         return true;
