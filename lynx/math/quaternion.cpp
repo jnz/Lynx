@@ -106,20 +106,18 @@ quaternion_t quaternion_t::operator =(const quaternion_t &q)
 
 bool operator == (const quaternion_t& a, const quaternion_t& b)
 {
-	if(fabs(a.x-b.x) < lynxmath::EPSILON)
-		if(fabs(a.y-b.y) < lynxmath::EPSILON)
-			if(fabs(a.z-b.z) < lynxmath::EPSILON)
-                if(fabs(a.w-b.w) < lynxmath::EPSILON)
-				    return true;
-	return false;
+	return (fabs(a.x-b.x) < lynxmath::EPSILON) &&
+		   (fabs(a.y-b.y) < lynxmath::EPSILON) &&
+		   (fabs(a.z-b.z) < lynxmath::EPSILON) &&
+           (fabs(a.w-b.w) < lynxmath::EPSILON);
 }
 
 bool operator != (const quaternion_t& a, const quaternion_t& b)
 {
-	return  (fabs(a.x-b.x) > lynxmath::EPSILON) ||
-			(fabs(a.y-b.y) > lynxmath::EPSILON) ||
-			(fabs(a.z-b.z) > lynxmath::EPSILON) ||
-			(fabs(a.w-b.w) > lynxmath::EPSILON);
+	return (fabs(a.x-b.x) >= lynxmath::EPSILON) ||
+           (fabs(a.y-b.y) >= lynxmath::EPSILON) ||
+           (fabs(a.z-b.z) >= lynxmath::EPSILON) ||
+           (fabs(a.w-b.w) >= lynxmath::EPSILON);
 }
 
 

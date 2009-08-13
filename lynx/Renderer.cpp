@@ -170,8 +170,6 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 	stat_obj_visible = 0;
     stat_bsp_leafs_visited = 0;
 
-	glBindTexture(GL_TEXTURE_2D, 
-		world->GetResourceManager()->GetTexture(CLynx::GetBaseDirLevel() + "testlvl/wall.tga")); // FIXME
 #ifdef DRAWFRUSTUM
 	BSP_RenderTree(&world->m_bsptree, &lastpos.origin, &frustum, &stat_bsp_leafs_visited);
 #else
@@ -252,6 +250,7 @@ void BSP_RenderPolygons(const CBSPTree* tree,
 		poly = (bsp_poly_t*)&polylist[c];
 		tcount = (int)poly->vertices.size();
 
+        glBindTexture(GL_TEXTURE_2D, poly->texture);
         glBegin(GL_POLYGON);
 		for(t=0;t<tcount;t++)
 		{

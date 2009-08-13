@@ -22,7 +22,7 @@ CBSPTree::~CBSPTree(void)
 }
 
 #pragma warning(disable: 4244)
-bool CBSPTree::Load(std::string file) // Ugly loader code :-(
+bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader code :-(
 {
 	const char* DELIM = " \t\r\n";
 	FILE* f;
@@ -31,8 +31,10 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 	char* sv[3];
 	int i;
 	int vi, ti, ni;
+    int texture=0;
 	bsp_poly_t polygon;
 	int nonplanar = 0; // anzahl der nicht-ebenen polygone zählen
+    std::string dir = CLynx::GetDirectory(file);
 
 	f = fopen(file.c_str(), "rb");
 	if(!f)
@@ -69,6 +71,16 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
                 sv[2] = "0.0";
 			m_texcoords.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
 		}
+        else if(strcmp(tok, "usemtl")==0 && resman)
+        {
+            tok = strtok(NULL, DELIM);
+            texture = resman->GetTexture(dir + tok);
+            if(texture == 0)
+            {
+                fprintf(stderr, "BSP: Texture not found: %s\n", tok);
+                return false;
+            }
+        }
 		else if(strcmp(tok, "f")==0) // face
 		{
 			for(i=0;i<3;i++)
@@ -76,6 +88,7 @@ bool CBSPTree::Load(std::string file) // Ugly loader code :-(
 			if(!sv[0] || !sv[1] || !sv[2])
 				continue;
 			polygon.Clear();
+            polygon.texture = texture;
 			for(i=0;i<3;i++)
 			{
 				sscanf(sv[i], "%i/%i/%i", &vi, &ti, &ni);
@@ -498,6 +511,9 @@ void CBSPTree::SplitPolygon(bsp_poly_t& polyin, plane_t& plane,
 	assert(polycount > 2);
 	assert(polyin.IsPlanar(this));
 
+    polyfront.texture = polyin.texture;
+    polyback.texture = polyin.texture;
+
 	from = polycount-1;
 	fromloc = plane.Classify(m_vertices[polyin.vertices[from]], BSP_EPSILON);
 	
@@ -767,7 +783,6 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, float* f, const CBSPTree* tree, const float offset)
 {
 	vec3_t tmpintersect;
-	const int size = (int)planes.size();
     float cf;
 
     plane.m_d -= offset; // Plane shift
@@ -900,7 +915,6 @@ void CBSPTree::GetLeftRightScore(int* left, int* right, CBSPNode* node) const
 		GetLeftRightScore(left, right, node->back);
 	}
 }
-
 void bsp_poly_t::GeneratePlanes(CBSPTree* tree)
 {
 	int size = (int)vertices.size();
@@ -911,14 +925,4 @@ void bsp_poly_t::GeneratePlanes(CBSPTree* tree)
 					 tree->m_vertices[vertices[1]],
 					 tree->m_vertices[vertices[0]]);
 
-	n = plane.m_n;
-	for(int i=0;i<size;i++)
-	{
-		a = tree->m_vertices[vertices[i]];
-		b = tree->m_vertices[vertices[(i+1)%size]];
-		p.m_n = n ^ (b-a);
-		p.m_n.Normalize();
-		p.m_d = -a * p.m_n;
-		planes.push_back(p);
-	}
 }

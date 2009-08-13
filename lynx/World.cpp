@@ -163,7 +163,8 @@ void CWorld::UpdatePendingObjs()
 
 bool CWorld::LoadLevel(const std::string path)
 {
-    bool success = m_bsptree.Load(path);
+    bool success = m_bsptree.Load(path, 
+                                  IsClient() ? GetResourceManager() : NULL);
     if(success)
         state.level = path;
     return success;
@@ -256,7 +257,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             assert(level.size() > 0);
             if(level != m_bsptree.GetFilename())
             {
-                if(m_bsptree.Load(level)==false)
+                if(LoadLevel(level)==false)
 			    {
     				// FIXME error handling
 					assert(0);

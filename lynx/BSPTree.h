@@ -4,6 +4,7 @@
 #include "math/vec3.h"
 #include "math/plane.h"
 #include <vector>
+#include "ResourceManager.h"
 
 class CBSPTree;
 
@@ -25,7 +26,7 @@ struct bsp_poly_t
 	std::vector<int> normals;
 	std::vector<int> texcoords;
 	plane_t	plane;
-	std::vector<plane_t> planes; // Perpendicular Planes
+    int texture;
 	bool splitmarker; // true if this poly was used to split the space
 	int colormarker;
 
@@ -60,7 +61,7 @@ public:
 	CBSPTree(void);
 	~CBSPTree(void);
 
-	bool		Load(std::string file);
+	bool		Load(std::string file, CResourceManager* resman);
 	void		Unload();
 	std::string GetFilename() const;
 	void		GetLeftRightScore(int* left, int* right) const;
