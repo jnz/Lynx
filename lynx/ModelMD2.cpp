@@ -15,7 +15,7 @@
 #pragma warning(disable: 4305)
 #define NUMVERTEXNORMALS 162
 typedef float vec3array[3];
-vec3array g_bytedirs[NUMVERTEXNORMALS] =
+vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal lookup table
 {
 	#include "anorms.h"
 };

@@ -18,19 +18,16 @@ CGameLogic::~CGameLogic(void)
 
 void CGameLogic::InitGame()
 {
+    // 1 Testobjekt erstellen
 	CObj* obj;
 	obj = new CObj(m_world);
-	obj->SetOrigin(vec3_t(0.0f, 45.0f, -10.0f));
-	//obj->SetVel(vec3_t(0.4f, 0.5f, 0.3f)*1);
-    obj->SetVel(vec3_t::origin);
+	obj->SetOrigin(vec3_t(0.0f, 9.0f, -10.0f));
 	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
-    //obj->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
 	obj->SetAnimation("default");
 	m_world->AddObj(obj);
 
+    // Level laden
     m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
-    //m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/boxlvl.obj");
-    //m_world->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/polygon.obj");
 }
 
 void CGameLogic::Notify(EventNewClientConnected e)
@@ -38,17 +35,16 @@ void CGameLogic::Notify(EventNewClientConnected e)
 	CObj* obj;
 	obj = new CObj(m_world);
 	obj->SetOrigin(vec3_t(0.0f, 45.0f, 0));
-	obj->SetVel(vec3_t(0.0f, 0.0f, 0.0f));
-	//obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
     obj->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
 	obj->SetAnimation("default");
 	m_world->AddObj(obj, true); // In diesem Frame, weil die Welt umgehend vom CServer serialized wird
-	e.client->m_obj = obj->GetID();
+	e.client->m_obj = obj->GetID(); // Mit Client verknüpfen
 }
 
 void CGameLogic::Notify(EventClientDisconnected e)
 {
 	m_world->DelObj(e.client->m_obj);
+    e.client->m_obj = 0;
 }
 
 void CGameLogic::Update(const float dt, const DWORD ticks)
