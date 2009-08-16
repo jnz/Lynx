@@ -119,12 +119,12 @@ CModelMD2::~CModelMD2(void)
 	Unload();
 }
 
-void CModelMD2::Render(md2_state_t* state)
+void CModelMD2::Render(const md2_state_t* state) const
 {
 	assert(m_frames);
 	
 	vertex_t* cur_vertices  = m_frames[state->cur_frame].vertices;
-	vertex_t* next_vertices = m_frames[GetNextFrameInAnim(state)].vertices;
+	vertex_t* next_vertices = m_frames[GetNextFrameInAnim(state, 1)].vertices;
 	vertex_t* cur_vertex;
 	vertex_t* next_vertex;
 	vec3_t inter_xyz, inter_n; // interpolated
@@ -363,7 +363,7 @@ loaderr:
 	return false;
 }
 
-void CModelMD2::GetCenter(vec3_t* center)
+void CModelMD2::GetCenter(vec3_t* center) const
 {
 	*center = m_center;
 }
@@ -402,24 +402,49 @@ void CModelMD2::Unload()
 	m_tex = 0;
 }
 
-void CModelMD2::Animate(md2_state_t* state, float dt)
+void CModelMD2::Animate(md2_state_t* state, float dt) const
 {
+    if(state->stop_anim)
+        return;
+
 	state->step += dt;
 	if(state->step >= m_invfps)
 	{
-		state->cur_frame = GetNextFrameInAnim(state);
+        state->cur_frame++;
 		state->step = 0.0f;
+
+        if(state->cur_frame >= m_anims[state->cur_anim].end) // animation ist 1x durchgelaufen
+        {
+            if(state->next_anim != state->cur_anim) // soll keine schleife gespielt werden?
+            {
+                if(state->next_anim >= 0) // es soll die nächste animation 1x gespielt werden
+                {
+                    SetAnimation(state, state->next_anim);
+                    return;
+                }
+                else
+                {
+                    state->cur_frame = m_anims[state->cur_anim].end;
+                    StopAnimation(state);
+                    return;
+                }
+            }
+            state->cur_frame = GetNextFrameInAnim(state, 0); // wieder auf anfang zurücksetzen
+        }
 	}
 }
 
-int	CModelMD2::GetNextFrameInAnim(md2_state_t* state)
+int	CModelMD2::GetNextFrameInAnim(const md2_state_t* state, int increment) const
 {
+    if(state->stop_anim)
+        return state->cur_anim; // Angehalten
+
 	int size = m_anims[state->cur_anim].end - m_anims[state->cur_anim].start + 1;
-	int step = state->cur_frame - m_anims[state->cur_anim].start + 1;
+	int step = state->cur_frame - m_anims[state->cur_anim].start + increment;
 	return m_anims[state->cur_anim].start + (step % size);
 }
 
-bool CModelMD2::SetAnimation(md2_state_t* state, int i)
+bool CModelMD2::SetAnimation(md2_state_t* state, int i) const
 {
 	if(i < 0 || i >= m_animcount)
 	{
@@ -430,16 +455,29 @@ bool CModelMD2::SetAnimation(md2_state_t* state, int i)
 	state->cur_anim = i;
 	state->cur_frame = m_anims[i].start;
 	state->step = 0.0f;
+    state->stop_anim = 0;
 	return true;
 }
 
-bool CModelMD2::SetAnimationByName(md2_state_t* state, char* name)
+bool CModelMD2::SetNextAnimation(md2_state_t* state, int i) const
+{
+    state->next_anim = i;
+    return true;
+}
+
+bool CModelMD2::SetAnimationByName(md2_state_t* state, const char* name) const
 {
 	int i = FindAnimation(name);
 	return SetAnimation(state, i);
 }
 
-int CModelMD2::FindAnimation(char* name)
+bool CModelMD2::SetNextAnimationByName(md2_state_t* state, const char* name) const
+{
+	int i = FindAnimation(name);
+	return SetNextAnimation(state, i);
+}
+
+int CModelMD2::FindAnimation(const char* name) const
 {
 	if(strcmp(name, "default")==0)
 		return 0;
@@ -452,12 +490,12 @@ int CModelMD2::FindAnimation(char* name)
 	return -1;
 }
 
-float CModelMD2::GetSphere()
+float CModelMD2::GetSphere() const
 {
 	return m_sphere;
 }
 
-void CModelMD2::GetAABB(vec3_t* min, vec3_t* max)
+void CModelMD2::GetAABB(vec3_t* min, vec3_t* max) const
 {
 	*min = m_min;
 	*max = m_max;
@@ -469,7 +507,7 @@ void CModelMD2::SetFPS(float fps)
 	m_invfps = 1/fps;
 }
 
-float CModelMD2::GetFPS()
+float CModelMD2::GetFPS() const
 {
 	return m_fps;
 }

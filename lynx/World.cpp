@@ -83,6 +83,7 @@ void CWorld::ObjMove(CObj* obj, float dt)
     vec3_t p1 = obj->GetOrigin();
     vec3_t vel = obj->GetVel();
     vel += gravity*dt;
+    assert(fabsf(vel.y) < 9999.9f);
     vec3_t p2 = p1 + vel*dt + 0.5f*dt*dt*gravity;
     vec3_t q;
     vec3_t p3;

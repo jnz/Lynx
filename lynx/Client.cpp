@@ -11,7 +11,7 @@
 
 #define CLIENT_UPDATERATE   50
 
-CClient::CClient(CWorldClient* world)
+CClient::CClient(CWorldClient* world, CGameLogic* gamelogic)
 {
 	m_world = world;
 	enet_initialize();
@@ -19,11 +19,8 @@ CClient::CClient(CWorldClient* world)
 	m_server = NULL;
 	m_isconnecting = false;
 
-	m_forward = 0;
-	m_backward = 0;
-	m_strafe_left = 0;
-	m_strafe_right = 0;
-    m_jump = 0;
+    m_gamelogic = gamelogic;
+
     m_lat = 0;
     m_lon = 0;
 
@@ -113,35 +110,35 @@ void CClient::Update(const float dt, const DWORD ticks)
 		}
 	}
 
-	// FIXME: no SDL code here
-	int dx, dy;
-	BYTE* keystate = CLynx::GetKeyState();
-	CLynx::GetMouseDelta(&dx, &dy);
-	m_forward = !!(keystate[SDLK_UP] | keystate[SDLK_w]);
-	m_backward = !!(keystate[SDLK_DOWN] | keystate[SDLK_s]);
-    m_strafe_left = !!(keystate[SDLK_LEFT] | keystate[SDLK_a]);
-    m_strafe_right = !!(keystate[SDLK_RIGHT] | keystate[SDLK_d]);
-    m_jump = !!(keystate[SDLK_SPACE]);
-    InputMouseMove(dx, dy);
-    InputCalcDir();
-
-	SendClientState();
+    // Eingabe und Steuerung
+    std::vector<std::string> clcmdlist;
+    InputGetCmdList(&clcmdlist);
+    InputMouseMove();
+    m_gamelogic->ClientMove(GetLocalController(), clcmdlist);
+	
+    // Sende Eingabe an Server
+    SendClientState(clcmdlist);
 }
 
-void CClient::SendClientState()
+void CClient::SendClientState(const std::vector<std::string>& clcmdlist)
 {
     DWORD ticks = CLynx::GetTicks();
     if(ticks - m_lastupdate > CLIENT_UPDATERATE && IsConnected() &&
         m_world->GetBSP()->GetFilename() != "")
     {
         ENetPacket* packet;
+        std::vector<std::string>::iterator iter;
         CObj* localctrl = GetLocalController();
-        CStream stream(128);
+        CStream stream(1024);
         CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
 		stream.WriteDWORD(m_world->GetWorldID());
         stream.WriteVec3(localctrl->GetOrigin());
         stream.WriteVec3(localctrl->GetVel());
         stream.WriteQuat(quaternion_t(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD));
+        assert(clcmdlist.size() < USHRT_MAX);
+        stream.WriteWORD((WORD)clcmdlist.size());
+        for(size_t i=0;i<clcmdlist.size();i++)
+            stream.WriteString(clcmdlist[i]);
         
     	packet = enet_packet_create(stream.GetBuffer(), 
 								    stream.GetBytesWritten(), 0);
@@ -176,10 +173,12 @@ void CClient::OnReceive(CStream* stream)
 	}
 }
 
-void CClient::InputMouseMove(int dx, int dy)
+void CClient::InputMouseMove()
 {
 	CObj* obj = GetLocalController();
 	const float sensitivity = 0.5f; // FIXME
+	int dx, dy;
+	CLynx::GetMouseDelta(&dx, &dy);
 
 	m_lat += (float)dy * sensitivity;
 	if(m_lat >= 89)
@@ -195,29 +194,21 @@ void CClient::InputMouseMove(int dx, int dy)
     obj->SetRot(qlon*qlat);
 }
 
-void CClient::InputCalcDir()
+void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist)
 {
-	vec3_t velocity;
-    quaternion_t rot;
-	vec3_t dir, side;
-	vec3_t newdir(0,0,0);
+	// FIXME: no SDL code here
+	BYTE* keystate = CLynx::GetKeyState();
 
-    velocity = GetLocalController()->GetVel();
-    rot = GetLocalController()->GetRot();
-    rot.GetVec3(&dir, NULL, &side);
-    dir = -dir;
-
-    newdir += (float)m_forward * dir;
-	newdir -= (float)m_backward * dir;
-	newdir -= (float)m_strafe_left * side;
-	newdir += (float)m_strafe_right * side;
-    newdir.y = 0;
-    newdir.SetLength(25.0f);
-    newdir.y = velocity.y;
-    if(m_jump && GetLocalController()->locGetIsOnGround()) // FIXME
-        newdir.y += (float)m_jump * 50.5f;
-
-	GetLocalController()->SetVel(newdir);
+    if(keystate[SDLK_UP] | keystate[SDLK_w])
+        clcmdlist->push_back("+mf");
+	if(keystate[SDLK_DOWN] | keystate[SDLK_s])
+        clcmdlist->push_back("+mb");
+    if(keystate[SDLK_LEFT] | keystate[SDLK_a])
+        clcmdlist->push_back("+ml");
+    if(keystate[SDLK_RIGHT] | keystate[SDLK_d])
+        clcmdlist->push_back("+mr");
+    if(keystate[SDLK_SPACE])
+        clcmdlist->push_back("+jmp");
 }
 
 CObj* CClient::GetLocalController()

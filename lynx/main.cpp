@@ -6,7 +6,7 @@
 #include "Server.h"
 #include "Client.h"
 #include "WorldClient.h"
-#include "GameLogic.h"
+#include "GameZombie.h"
 
 // <memory leak detection>
 #ifdef _DEBUG
@@ -45,10 +45,12 @@ int main(int argc, char** argv)
 	// Game Modules
 	CWorldClient worldcl; // Model
 	CRenderer renderer(&worldcl); // View
-	CClient client(&worldcl); // Controller
-	CWorld worldsv; // Model
+	CGameZombie clgame(&worldcl, NULL); // Controller
+    CClient client(&worldcl, &clgame); // Controller
+	
+    CWorld worldsv; // Model
 	CServer server(&worldsv); // Controller
-	CGameLogic svgame(&worldsv); // Controller
+	CGameZombie svgame(&worldsv, &server); // Controller
 
 	if(startserver)
 	{

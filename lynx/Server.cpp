@@ -54,6 +54,20 @@ void CServer::Shutdown()
 	m_clientlist.clear();
 }
 
+CClientInfo* CServer::GetClient(int id)
+{
+	CLIENTITER iter;
+	iter = m_clientlist.find(id);
+	if(iter == GetClientEnd())
+		return NULL;
+	return (*iter).second;
+}
+
+int CServer::GetClientCount() const
+{
+    return (int)m_clientlist.size();
+}
+
 void CServer::Update(const float dt, const DWORD ticks)
 {
     ENetEvent event;
@@ -161,6 +175,17 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             }
             obj->SetVel(vel);
             obj->SetRot(rot);
+
+            WORD cmdcount;
+            stream->ReadWORD(&cmdcount);
+            client->clcmdlist.clear();
+            for(int i=0;i<cmdcount;i++)
+            {
+                std::string cmd;
+                stream->ReadString(&cmd);
+                client->clcmdlist.push_back(cmd);
+            }
+
         }
         break;
 	case NET_MSG_INVALID:

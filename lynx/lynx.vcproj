@@ -203,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GameZombie.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -266,6 +270,10 @@
 			</File>
 			<File
 				RelativePath=".\GameLogic.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameZombie.h"
 				>
 			</File>
 			<File

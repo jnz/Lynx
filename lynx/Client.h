@@ -2,6 +2,7 @@
 
 #include <enet/enet.h>
 #include "WorldClient.h"
+#include "GameLogic.h"
 
 /*
     CClient kümmert sich um die Netzwerk-Verwaltung auf Client-Seite.
@@ -14,7 +15,7 @@
 class CClient
 {
 public:
-	CClient(CWorldClient* world);
+	CClient(CWorldClient* world, CGameLogic* gamelogic);
 	~CClient(void);
 
 	bool Connect(char* server, int port);
@@ -29,9 +30,9 @@ public:
 protected:
 	void OnReceive(CStream* stream);
 
-	void InputMouseMove(int dx, int dy);
-	void InputCalcDir();
-	void SendClientState();
+	void InputMouseMove();
+	void InputGetCmdList(std::vector<std::string>* clcmdlist);
+    void SendClientState(const std::vector<std::string>& clcmdlist);
 	CObj* GetLocalController(); // Geist Objekt, das nur auf Client Seite existiert. Sozusagen die virtuelle Kamera
     CObj* GetLocalObj(); // Tatsächliches Objekt mit dem der Client verknüpft ist
 
@@ -50,6 +51,7 @@ private:
     float m_lon; // mouse dy
 
 	CWorldClient* m_world;
+    CGameLogic* m_gamelogic;
 
     DWORD m_lastupdate;
 };

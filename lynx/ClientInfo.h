@@ -1,5 +1,7 @@
 #pragma once
 #include <enet/enet.h>
+#include <vector>
+#include <string>
 
 enum clientstate_t {
 		S0_CLIENT_CONNECTED=0, 
@@ -24,6 +26,7 @@ public:
 	clientstate_t m_state;
 	int m_obj; // Objekt in Welt, das diesen Client repräsentiert
 	DWORD worldidACK; // Letztes Weltupdate, das der Client bestätigt hat
+    std::vector<std::string> clcmdlist;
 
 private:
 	int m_id;

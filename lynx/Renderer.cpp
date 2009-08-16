@@ -13,6 +13,7 @@
 
 #define PLANE_NEAR		0.1f
 #define PLANE_FAR		10000.0f
+#define RENDERER_FOV    90.0f
 
 //#define DRAWFRUSTUM
 
@@ -160,7 +161,7 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 				  PLANE_FAR);
 #else
 	frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
-				  localctrl->GetFOV(), (float)m_width/(float)m_height,
+				  RENDERER_FOV, (float)m_width/(float)m_height,
 				  PLANE_NEAR, 
 				  PLANE_FAR); 
 #endif
@@ -194,10 +195,10 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
 		glMultMatrixf(obj->m.pm);
-		if(obj->m_mesh)
+        if(obj->GetMesh())
 		{
-			obj->m_mesh->Render(&obj->m_mesh_state);
-			obj->m_mesh->Animate(&obj->m_mesh_state, dt);
+			obj->GetMesh()->Render(obj->GetMeshState());
+			obj->GetMesh()->Animate(obj->GetMeshState(), dt);
 		}
 		else
 			RenderCube();
@@ -225,7 +226,7 @@ void CRenderer::UpdatePerspective()
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(m_world->GetLocalObj()->GetFOV(), 
+	gluPerspective(RENDERER_FOV, 
 					(float)m_width/(float)m_height, 
 					PLANE_NEAR, 
 					PLANE_FAR);

@@ -10,6 +10,13 @@ struct obj_state_t;
 #include "World.h"
 #include "ModelMD2.h"
 
+class CObjOpaque // User-Daten von CObj (werden nicht über das Netzwerk übertragen)
+{
+public:
+    CObjOpaque() {}
+    virtual ~CObjOpaque() {}
+};
+
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
@@ -23,6 +30,11 @@ int DeltaDiffQuat(const quaternion_t* newstate,
                   CStream* stream);
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
+                   const DWORD flagparam, 
+                   DWORD* updateflags,
+                   CStream* stream);
+int DeltaDiffInt16(const INT16* newstate,
+                   const INT16* oldstate,
                    const DWORD flagparam, 
                    DWORD* updateflags,
                    CStream* stream);
@@ -44,12 +56,10 @@ struct obj_state_t
 	vec3_t	        vel;     		// Direction/Velocity
 	quaternion_t    rot;			// Rotation (x = pitch, y = yaw, z = roll)
 
-	float		    fov;
 	float		    radius;
 	std::string     resource;
-	std::string     animation;
-	vec3_t		    min;
-	vec3_t		    max;
+    INT16           animation;
+    INT16           nextanimation;
     vec3_t		    eyepos;
 };
 
@@ -72,34 +82,39 @@ public:
     void        CopyObjStateFrom(const CObj* source);
 
     const vec3_t GetOrigin() const { return state.origin; }
-    void        SetOrigin(const vec3_t& origin) { state.origin = origin; }
+    void         SetOrigin(const vec3_t& origin) { state.origin = origin; }
     const vec3_t GetVel() const { return state.vel; }
-    void        SetVel(const vec3_t& velocity) { state.vel = velocity; }
+    void         SetVel(const vec3_t& velocity) { state.vel = velocity; }
     const quaternion_t GetRot() const { return state.rot; }
     void        SetRot(const quaternion_t& rotation) { state.rot = rotation; }
 
-	float		GetFOV(); // Field of View. X-Axis. Altgrad
-	void		SetFOV(float fov); // Field of View. X-Axis. Altgrad
 	float		GetRadius(); // Max. Object sphere size
     void        SetRadius(float radius);
-	void		SetAABB(const vec3_t& min, const vec3_t& max);
-	void		GetAABB(vec3_t* min, vec3_t* max);
 	std::string GetResource();
 	void		SetResource(std::string resource);
-	std::string GetAnimation();
-	void		SetAnimation(std::string animation);
+	INT16       GetAnimation();
+	void		SetAnimation(INT16 animation);
+	INT16       GetNextAnimation();
+	void		SetNextAnimation(INT16 animation);
 	vec3_t		GetEyePos();
 	void		SetEyePos(const vec3_t& eyepos);
 
     // Local Attributes
     bool        locGetIsOnGround() const { return m_locIsOnGround; }
 
+    int         GetAnimationFromName(const char* name) const;
+
+    // Opaque Data
+    CObjOpaque* GetOpaque() { return m_opaque; }
+    void        SetOpaque(CObjOpaque* opaque);
+
+    // Model Data
+    const CModelMD2* GetMesh() const { return m_mesh; }
+    md2_state_t*     GetMeshState() { return &m_mesh_state; }
 
 protected:
-	// Direct Access for Renderer
 	CModelMD2*	m_mesh;
     md2_state_t m_mesh_state;
-	friend class CRenderer;
     
 	void		UpdateProperties();
     obj_state_t state;
@@ -108,6 +123,7 @@ protected:
     // Local Attributes
     bool        m_locIsOnGround;
     friend class CWorld;
+    CObjOpaque* m_opaque;
 
 private:
     // Don't touch these

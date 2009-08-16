@@ -3,21 +3,23 @@
 #include "Subject.h"
 #include "Events.h"
 #include "World.h"
+#include "Server.h"
 
 class CGameLogic : public CObserver<EventNewClientConnected>,
 	               public CObserver<EventClientDisconnected>
 {
 public:
-	CGameLogic(CWorld* world);
-	~CGameLogic(void);
+	CGameLogic(CWorld* world, CServer* server); // Wenn CClient diese Klasse nutzt, server auf NULL setzen
+	virtual ~CGameLogic(void);
 
-	void InitGame();
-	void Update(const float dt, const DWORD ticks);
+	virtual void InitGame();
+	virtual void Update(const float dt, const DWORD ticks);
+
+    virtual void ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist); // Wird von CClient mitgenutzt
 
 protected:
-	void Notify(EventNewClientConnected);
-	void Notify(EventClientDisconnected);
-
-private:
+	virtual void Notify(EventNewClientConnected);
+	virtual void Notify(EventClientDisconnected);
 	CWorld* m_world;
+    CServer* m_server;
 };

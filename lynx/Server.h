@@ -8,6 +8,8 @@
 #include "Events.h"
 #include "Stream.h"
 
+#define CLIENTITER		std::map<int, CClientInfo*>::iterator
+
 class CServer : public CSubject<EventNewClientConnected>,
                 public CSubject<EventClientDisconnected>
 {
@@ -15,10 +17,15 @@ public:
 	CServer(CWorld* world);
 	~CServer(void);
 
-	bool Create(int port); // Server an Port starten
-	void Shutdown(); // Server herunterfahren
+	bool            Create(int port); // Server an Port starten
+	void            Shutdown(); // Server herunterfahren
 
-	void Update(const float dt, const DWORD ticks);
+	void            Update(const float dt, const DWORD ticks);
+
+    CClientInfo*    GetClient(int id);
+    int             GetClientCount() const;
+    CLIENTITER      GetClientBegin() { return m_clientlist.begin(); }
+    CLIENTITER      GetClientEnd() { return m_clientlist.end(); }
 
 protected:
 	bool SendWorldToClient(CClientInfo* client);
