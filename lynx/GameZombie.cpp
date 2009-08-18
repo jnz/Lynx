@@ -34,9 +34,10 @@ void CGameZombie::InitGame()
     // 1 Testobjekt erstellen
 	CObj* obj;
 	obj = new CObj(m_world);
-	obj->SetOrigin(vec3_t(30.0f, 9.0f, -10.0f));
+	obj->SetOrigin(vec3_t(30.0f, 45.0f, -10.0f));
 	obj->SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
 	obj->SetAnimation(0);
+    obj->AddFlags(OBJ_FLAGS_ELASTIC);
     obj->SetOpaque(new CObjInfo());
 	m_world->AddObj(obj);
 
@@ -48,7 +49,7 @@ void CGameZombie::Notify(EventNewClientConnected e)
 {
 	CObj* obj;
 	obj = new CObj(m_world);
-	obj->SetOrigin(vec3_t(0.0f, 45.0f, 0));
+	obj->SetOrigin(vec3_t(0.0f, 2.0f, 0));
     obj->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
 	obj->SetAnimation(0);
     obj->SetOpaque(new CObjInfo());
@@ -73,11 +74,11 @@ void CGameZombie::Update(const float dt, const DWORD ticks)
 	{
 		obj = (*iter).second;
 		m_world->ObjMove(obj, dt);
-        if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() > 
-           100*lynxmath::EPSILON)
-            obj->SetNextAnimation(obj->GetAnimationFromName("run"));
-        else
-            obj->SetNextAnimation(0);
+        //if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() > 
+        //   100*lynxmath::EPSILON)
+        //    obj->SetNextAnimation(obj->GetAnimationFromName("run"));
+        //else
+        //    obj->SetNextAnimation(0);
 
         clientid = ((CObjInfo*)obj->GetOpaque())->clientid;
         if(clientid >= 0)
@@ -92,12 +93,30 @@ void CGameZombie::ProcessClientCmds(CObj* obj, int clientid)
     if(!client)
         return;
 
+    CObj* clientobj = m_world->GetObj(client->m_obj);
+
     std::vector<std::string>::iterator iter;
     for(iter = client->clcmdlist.begin();iter != client->clcmdlist.end();iter++)
     {
         if((*iter) == "+fire")
         {
-            m_world->GetBSP()->TraceRay(
+            fprintf(stderr, "boom!\n");
+            world_obj_trace_t trace;
+            vec3_t dir;
+            clientobj->GetDir(&dir, NULL, NULL); // richtung holen
+            trace.dir = -dir;
+            trace.start = clientobj->GetOrigin();
+            trace.excludeobj = client->m_obj;
+            if(m_world->TraceObj(&trace))
+            {
+                CObj* hitobj = m_world->GetObj(trace.objid);
+                assert(hitobj);
+                hitobj->SetVel(trace.dir*20.0f + vec3_t(0,20.0f,0));
+                hitobj->SetAnimation(hitobj->GetMesh()->FindAnimation("crpain"));
+                hitobj->SetNextAnimation(0);
+            }
         }
     }
+
+    client->clcmdlist.clear();
 }

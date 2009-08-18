@@ -40,6 +40,9 @@ CStream::~CStream(void)
 
 void CStream::SetBuffer(BYTE* buffer, int size, int used)
 {
+    if(m_buffer && !m_foreign)
+        delete[] m_buffer;
+
 	m_buffer = buffer;
 	m_size = size;
 	m_position = 0;
@@ -53,6 +56,7 @@ bool CStream::Resize(int newsize)
 	assert(newsize != m_size);
 
 	newbuf = new BYTE[newsize];
+    assert(newbuf);
 	if(!newbuf)
 		return false;
 
@@ -113,6 +117,16 @@ int CStream::GetBytesToRead()
 int CStream::GetBytesRead()
 {
 	return m_position;
+}
+
+CStream CStream::GetStream()
+{
+    return CStream(m_buffer, m_size, m_used);;
+}
+
+void CStream::WriteAdvance(int bytes)
+{
+    m_used += bytes;
 }
 
 void CStream::WriteDWORD(DWORD value)

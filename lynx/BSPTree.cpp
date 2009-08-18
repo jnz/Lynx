@@ -168,7 +168,12 @@ std::string CBSPTree::GetFilename() const
 	return m_filename;
 }
 
-void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNode* node)
+void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f) const
+{
+    TraceRay(start, dir, f, m_root);
+}
+
+void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CBSPNode* node) const
 {
 	if(node->IsLeaf())
 	{
@@ -189,11 +194,6 @@ void CBSPTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNo
 				}
 		}
 		*f = minf;
-		if(minindex != -1)
-		{
-			node->polylist[minindex].colormarker++;
-			node->marker++;
-		}
 		return;
 	}
 
@@ -233,7 +233,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, m_root);
 }
 
-void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
+void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) const
 {
 	if(node->IsLeaf())
 	{
@@ -284,8 +284,6 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
 		if(minindex != -1)
 		{
             trace->p = hitplane;
-			node->polylist[minindex].colormarker++;
-			node->marker++;
 		}
 		return;
 	}
@@ -294,10 +292,10 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
     pointplane_t locend;
 
     // Prüfen, ob alles vor der Splitplane liegt
-    node->plane.m_d -= trace->radius;
-	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
-	locend = node->plane.Classify(trace->start + trace->dir, BSP_EPSILON);
-    node->plane.m_d += trace->radius;
+    plane_t tmpplane = node->plane;
+    tmpplane.m_d -= trace->radius;
+	locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
+	locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
 	if(node->front && locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
 	{
 		TraceSphere(trace, node->front);
@@ -305,10 +303,10 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const
 	}
 
     // Prüfen, ob alles hinter der Splitplane liegt
-    node->plane.m_d += trace->radius;
-	locstart = node->plane.Classify(trace->start, BSP_EPSILON);
-	locend = node->plane.Classify(trace->start + trace->dir, BSP_EPSILON);
-    node->plane.m_d -= trace->radius;
+    tmpplane = node->plane;
+    tmpplane.m_d += trace->radius;
+	locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
+	locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
 	if(node->back && locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
 	{
 		TraceSphere(trace, node->back);
@@ -780,14 +778,14 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 	return true;
 }
 
-bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, float* f, const CBSPTree* tree, const float offset)
+bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, float* f, const CBSPTree* tree, const float offset) const
 {
 	vec3_t tmpintersect;
     float cf;
 
-    plane.m_d -= offset; // Plane shift
-    const bool hit = plane.GetIntersection(&cf, start, dir);
-    plane.m_d += offset;
+    plane_t ptmp = plane;
+    ptmp.m_d -= offset; // Plane shift
+    const bool hit = ptmp.GetIntersection(&cf, start, dir);
 	if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
 		return false;
 	tmpintersect = start + dir*cf - plane.m_n*offset;
@@ -817,7 +815,7 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, fl
 
 bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& dir,
                                      float* f, const float radius, vec3_t* normal,
-                                     vec3_t* hitpoint, const CBSPTree* tree)
+                                     vec3_t* hitpoint, const CBSPTree* tree) const
 {
 	const int size = (int)vertices.size();
     float minf = MAX_TRACE_DIST;
@@ -854,7 +852,7 @@ bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& dir,
 
 bool bsp_poly_t::GetVertexIntersection(const vec3_t& start, const vec3_t& dir,
                                        float* f, const float radius, vec3_t* normal, 
-                                       vec3_t* hitpoint, const CBSPTree* tree)
+                                       vec3_t* hitpoint, const CBSPTree* tree) const
 {
     const int vertexcount = vertices.size();
     float minf = MAX_TRACE_DIST;

@@ -36,6 +36,20 @@ struct world_state_t
     std::map<int,int> objindex; // ID zu objstates index tabelle
 };
 
+struct world_obj_trace_t
+{
+    // Input
+	vec3_t	start; // start point
+    vec3_t  dir; // end point = start + dir
+    int     excludeobj; // welche objekt wird vom strahl ignoriert
+
+    // Output
+	float	f; // impact = start + f*dir
+	vec3_t  hitpoint;
+    vec3_t  hitnormal;
+    int     objid;
+};
+
 class CWorld
 {
 public:
@@ -65,7 +79,10 @@ public:
 
 	virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
-	void	ObjMove(CObj* obj, float dt); // Objekt bewegen + Kollisionserkennung
+	void	ObjMove(CObj* obj, const float dt) const; // Objekt bewegen + Kollisionserkennung
+
+    bool    TraceObj(world_obj_trace_t* trace);
+
 
 protected:
 	

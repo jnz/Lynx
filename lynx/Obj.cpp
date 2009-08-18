@@ -16,8 +16,9 @@
 #define OBJ_STATE_ANIMATION      (1 <<  5)
 #define OBJ_STATE_NEXTANIMATION  (1 <<  6)
 #define OBJ_STATE_EYEPOS         (1 <<  7)
+#define OBJ_STATE_FLAGS          (1 <<  8)
 
-#define OBJ_STATE_FULLUPDATE     ((1 << 8)-1)
+#define OBJ_STATE_FULLUPDATE     ((1 << 9)-1)
 
 int CObj::m_idpool = 0;
 
@@ -30,10 +31,10 @@ CObj::CObj(CWorld* world)
 	state.eyepos = vec3_t(0,0.5f,0);
     state.animation = 0;
     state.nextanimation = 0;
+    state.flags = 0;
 	m_mesh = NULL;
 	m_world = world;
     UpdateMatrix();
-	m_stream.Resize(512);
 
     // Local Attributes
     m_locIsOnGround = false;
@@ -44,6 +45,11 @@ CObj::~CObj(void)
 {
     if(m_opaque)
         delete m_opaque;
+}
+
+void CObj::GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const
+{
+    state.rot.GetVec3(dir, up, side);
 }
 
 void CObj::SetOpaque(CObjOpaque* opaque)
@@ -129,6 +135,26 @@ vec3_t CObj::GetEyePos()
 void CObj::SetEyePos(const vec3_t& eyepos)
 {
     state.eyepos = eyepos;
+}
+
+OBJFLAGTYPE CObj::GetFlags()
+{
+    return state.flags;
+}
+
+void CObj::SetFlags(OBJFLAGTYPE flags)
+{
+    state.flags = flags;
+}
+
+void CObj::AddFlags(OBJFLAGTYPE flags)
+{
+    state.flags |= flags;
+}
+
+void CObj::RemoveFlags(OBJFLAGTYPE flags)
+{
+    state.flags = state.flags & ~flags;
 }
 
 int CObj::GetAnimationFromName(const char* name) const
@@ -226,6 +252,26 @@ int DeltaDiffDWORD(const DWORD* newstate,
     return 0;
 }
 
+int DeltaDiffBytes(const BYTE* newstate,
+                   const BYTE* oldstate,
+                   const DWORD flagparam, 
+                   DWORD* updateflags,
+                   CStream* stream,
+                   const int size)
+{
+    int cmp;
+    if(oldstate)
+        cmp = memcmp(newstate, oldstate, size);
+    else
+        cmp = 0;
+    if(!oldstate || cmp != 0) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteBytes(newstate, size);
+        return size;
+    }
+    return 0;
+}
+
 bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate)
 {
     assert(!(!write && oldstate));
@@ -236,18 +282,20 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
 	{
         assert(GetID() == id);
 		assert(id < USHRT_MAX);
-		m_stream.ResetWritePosition();
+        CStream tempstream = stream->GetStream(); // wir merken uns die stelle, an die die updateflags kommen
+        stream->WriteAdvance(sizeof(DWORD)); // wir gehen sizeof(DWORD) vor
 
-		DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, &m_stream);
-        DeltaDiffVec3(&state.vel,               oldstate ? &oldstate->vel : NULL,           OBJ_STATE_VEL,          &updateflags, &m_stream);
-        DeltaDiffQuat(&state.rot,               oldstate ? &oldstate->rot : NULL,           OBJ_STATE_ROT,          &updateflags, &m_stream);
-        DeltaDiffFloat(&state.radius,           oldstate ? &oldstate->radius : NULL,        OBJ_STATE_RADIUS,       &updateflags, &m_stream);
-        DeltaDiffString(&state.resource,        oldstate ? &oldstate->resource : NULL,      OBJ_STATE_RESOURCE,     &updateflags, &m_stream);
-        DeltaDiffInt16(&state.animation,        oldstate ? &oldstate->animation : NULL,     OBJ_STATE_ANIMATION,    &updateflags, &m_stream);
-        DeltaDiffInt16(&state.nextanimation,    oldstate ? &oldstate->nextanimation : NULL, OBJ_STATE_NEXTANIMATION,&updateflags, &m_stream);
-        DeltaDiffVec3(&state.eyepos,            oldstate ? &oldstate->eyepos : NULL,        OBJ_STATE_EYEPOS,       &updateflags, &m_stream);
-        stream->WriteDWORD(updateflags);
-        stream->WriteStream(m_stream);
+		DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, stream);
+        DeltaDiffVec3(&state.vel,               oldstate ? &oldstate->vel : NULL,           OBJ_STATE_VEL,          &updateflags, stream);
+        DeltaDiffQuat(&state.rot,               oldstate ? &oldstate->rot : NULL,           OBJ_STATE_ROT,          &updateflags, stream);
+        DeltaDiffFloat(&state.radius,           oldstate ? &oldstate->radius : NULL,        OBJ_STATE_RADIUS,       &updateflags, stream);
+        DeltaDiffString(&state.resource,        oldstate ? &oldstate->resource : NULL,      OBJ_STATE_RESOURCE,     &updateflags, stream);
+        DeltaDiffInt16(&state.animation,        oldstate ? &oldstate->animation : NULL,     OBJ_STATE_ANIMATION,    &updateflags, stream);
+        DeltaDiffInt16(&state.nextanimation,    oldstate ? &oldstate->nextanimation : NULL, OBJ_STATE_NEXTANIMATION,&updateflags, stream);
+        DeltaDiffVec3(&state.eyepos,            oldstate ? &oldstate->eyepos : NULL,        OBJ_STATE_EYEPOS,       &updateflags, stream);
+        DeltaDiffBytes(&state.flags,            oldstate ? &oldstate->flags : NULL,         OBJ_STATE_FLAGS,        &updateflags, stream, sizeof(state.flags));
+
+        tempstream.WriteDWORD(updateflags); // jetzt können wir die updateflags vor den eigentlichen daten schreiben
 
         assert(oldstate ? 1 : (updateflags == OBJ_STATE_FULLUPDATE));
 	}
@@ -274,6 +322,8 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             stream->ReadInt16(&state.nextanimation);
         if(updateflags & OBJ_STATE_EYEPOS)
             stream->ReadVec3(&state.eyepos);
+        if(updateflags & OBJ_STATE_FLAGS)
+            stream->ReadBytes(&state.flags, sizeof(state.flags));
 
         m_id = id;
         if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION ||

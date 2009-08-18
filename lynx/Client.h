@@ -31,8 +31,8 @@ protected:
 	void OnReceive(CStream* stream);
 
 	void InputMouseMove();
-	void InputGetCmdList(std::vector<std::string>* clcmdlist);
-    void SendClientState(const std::vector<std::string>& clcmdlist);
+	void InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend); // forcesend: gibt es cmds, die unbedingt sofort abgeschickt werden müssen
+    void SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend);
 	CObj* GetLocalController(); // Geist Objekt, das nur auf Client Seite existiert. Sozusagen die virtuelle Kamera
     CObj* GetLocalObj(); // Tatsächliches Objekt mit dem der Client verknüpft ist
 

@@ -77,7 +77,7 @@ void CWorld::Update(const float dt, const DWORD ticks)
 #define GRAVITY             (100.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON		(0.01f)
-void CWorld::ObjMove(CObj* obj, float dt)
+void CWorld::ObjMove(CObj* obj, const float dt) const
 {
     bsp_sphere_trace_t trace;
     vec3_t p1 = obj->GetOrigin();
@@ -102,15 +102,23 @@ void CWorld::ObjMove(CObj* obj, float dt)
         {
             q = trace.start + trace.f*trace.dir + 
                 trace.p.m_n * STOP_EPSILON;
-            p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
+            if(obj->GetFlags() & OBJ_FLAGS_ELASTIC) // bounce
+            {
+                vel = 0.6f*(vel - 2.0f*(vel*trace.p.m_n)*trace.p.m_n);
+                p3 = q;
+            }
+            else // slide
+            {
+                p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
 
-            if(trace.p.m_n * vec3_t::yAxis > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
-                groundhit = true;
+                if(trace.p.m_n * vec3_t::yAxis > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
+                    groundhit = true;
+            }
 
-            if(fabsf(q.y-p1.y)<STOP_EPSILON)
+            if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
                 q.y = p1.y;
 
-            if((p3-q).Abs()<10*STOP_EPSILON)
+            if((p3-q).Abs()<10*STOP_EPSILON*100*dt)
             {
                 p2 = q;
                 break;
@@ -131,6 +139,70 @@ void CWorld::ObjMove(CObj* obj, float dt)
 
     obj->SetOrigin(p2);
     obj->SetVel(vel);
+}
+
+bool CWorld::TraceObj(world_obj_trace_t* trace)
+{
+    OBJITER iter;
+    float minf = MAX_TRACE_DIST;
+    float cf;
+    CObj* obj;
+    CObj* ignore = GetObj(trace->excludeobj);
+    const float radius = ignore->GetRadius();
+    vec3_t origin;
+    int objhit = -1;
+
+    for(iter = ObjBegin(); iter != ObjEnd(); iter++)
+    {
+        obj = (*iter).second;
+        if(obj->GetID() == ignore->GetID())
+            continue;
+        origin = obj->GetOrigin();
+        if(!vec3_t::RaySphereIntersect(trace->start, trace->dir,
+                                   origin, obj->GetRadius(),
+                                   &cf))
+        {
+            continue;
+        }
+        
+        if(cf >= -radius && cf < minf)
+        {
+            objhit = obj->GetID();
+            minf = cf;
+        }
+    }
+    
+    if(objhit == -1)
+    {
+        trace->objid = -1;
+        trace->f = MAX_TRACE_DIST;
+        return false;
+    }
+
+    bsp_sphere_trace_t spheretrace;
+    spheretrace.start = trace->start;
+    spheretrace.dir = trace->dir * minf;
+    spheretrace.radius = 0.01f;
+    GetBSP()->TraceSphere(&spheretrace);
+    if(spheretrace.f <= 1.0f)
+    {
+        trace->f = spheretrace.f;
+        trace->hitpoint = spheretrace.start + spheretrace.f*spheretrace.dir;
+        trace->hitnormal = spheretrace.p.m_n;
+        trace->objid = -1;
+
+        return false;
+    }
+    else
+    {
+        obj = GetObj(objhit);
+        trace->f = minf;
+        trace->hitpoint = trace->start + minf*trace->dir;
+        trace->hitnormal = (trace->hitpoint - obj->GetOrigin()).Normalized();
+        trace->objid = objhit;
+
+        return true;
+    }
 }
 
 void CWorld::UpdatePendingObjs()
@@ -191,21 +263,20 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 	if(write)
 	{
         DWORD updateflags = 0;
-        CStream tempstream(16384); // FIXME, das geht eleganter, ohne den tempstream. würde ein memcpy sparen wenn man den platz für die updateflags spart und hinterher mit dem korrekten wert füllt
+        CStream tempstream = stream->GetStream();
+        stream->WriteAdvance(sizeof(DWORD)); // An dieser Stelle sollten als DWORD die Updateflags stehen, diese kennen wir erst, nachdem wir sie geschrieben haben
 
         // Zuerst in tempstream schreiben um gleichzeitig die updateflags zu erkennen
-        DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, &tempstream);
-        DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, &tempstream);
-        DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, &tempstream);
+        DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, stream);
+        DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, stream);
+        DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, stream);
 		// [NEUE ATTRIBUTE HIER]
 
 		if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
 			changes++;
 		
-        stream->WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
-        stream->WriteStream(tempstream);
-
         assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // muss zwingend eingehalten werden
+        tempstream.WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
 
         // Alle Objekte schreiben
         assert(GetObjCount() < USHRT_MAX);

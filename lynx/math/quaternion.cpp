@@ -33,7 +33,7 @@ void quaternion_t::ToMatrix(matrix_t& mx) const
 	mx.m[2][2] = 1.0f - 2.0f * (x*x + y*y);
 }
 
-void quaternion_t::GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side)
+void quaternion_t::GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const
 {
     if(side)
     {

@@ -112,44 +112,47 @@ void CClient::Update(const float dt, const DWORD ticks)
 
     // Eingabe und Steuerung
     std::vector<std::string> clcmdlist;
-    InputGetCmdList(&clcmdlist);
+    bool forcesend = false;
+    InputGetCmdList(&clcmdlist, &forcesend);
     InputMouseMove();
     m_gamelogic->ClientMove(GetLocalController(), clcmdlist);
 	
     // Sende Eingabe an Server
-    SendClientState(clcmdlist);
+    SendClientState(clcmdlist, forcesend);
 }
 
-void CClient::SendClientState(const std::vector<std::string>& clcmdlist)
+void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend)
 {
     DWORD ticks = CLynx::GetTicks();
-    if(ticks - m_lastupdate > CLIENT_UPDATERATE && IsConnected() &&
-        m_world->GetBSP()->GetFilename() != "")
+    if(!IsConnected() || m_world->GetBSP()->GetFilename() == "")
+        return;
+
+    if(ticks - m_lastupdate < CLIENT_UPDATERATE && !forcesend)
+        return;
+
+    ENetPacket* packet;
+    std::vector<std::string>::iterator iter;
+    CObj* localctrl = GetLocalController();
+    CStream stream(1024);
+    CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
+	stream.WriteDWORD(m_world->GetWorldID());
+    stream.WriteVec3(localctrl->GetOrigin());
+    stream.WriteVec3(localctrl->GetVel());
+    stream.WriteQuat(quaternion_t(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD));
+    assert(clcmdlist.size() < USHRT_MAX);
+    stream.WriteWORD((WORD)clcmdlist.size());
+    for(size_t i=0;i<clcmdlist.size();i++)
+        stream.WriteString(clcmdlist[i]);
+    
+	packet = enet_packet_create(stream.GetBuffer(), 
+							    stream.GetBytesWritten(), 0);
+    assert(packet);
+    if(packet)
     {
-        ENetPacket* packet;
-        std::vector<std::string>::iterator iter;
-        CObj* localctrl = GetLocalController();
-        CStream stream(1024);
-        CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
-		stream.WriteDWORD(m_world->GetWorldID());
-        stream.WriteVec3(localctrl->GetOrigin());
-        stream.WriteVec3(localctrl->GetVel());
-        stream.WriteQuat(quaternion_t(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD));
-        assert(clcmdlist.size() < USHRT_MAX);
-        stream.WriteWORD((WORD)clcmdlist.size());
-        for(size_t i=0;i<clcmdlist.size();i++)
-            stream.WriteString(clcmdlist[i]);
-        
-    	packet = enet_packet_create(stream.GetBuffer(), 
-								    stream.GetBytesWritten(), 0);
-	    assert(packet);
-	    if(packet)
-        {
-	        int success = enet_peer_send(m_server, 0, packet);
-            assert(success == 0);
-        }
-        m_lastupdate = ticks;
+        int success = enet_peer_send(m_server, 0, packet);
+        assert(success == 0);
     }
+    m_lastupdate = ticks;
 }
 
 void CClient::OnReceive(CStream* stream)
@@ -194,21 +197,27 @@ void CClient::InputMouseMove()
     obj->SetRot(qlon*qlat);
 }
 
-void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist)
+void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)
 {
 	// FIXME: no SDL code here
 	BYTE* keystate = CLynx::GetKeyState();
+    *forcesend = false;
 
-    if(keystate[SDLK_UP] | keystate[SDLK_w])
+    if(keystate[SDLK_UP] || keystate[SDLK_w])
         clcmdlist->push_back("+mf");
-	if(keystate[SDLK_DOWN] | keystate[SDLK_s])
+	if(keystate[SDLK_DOWN] || keystate[SDLK_s])
         clcmdlist->push_back("+mb");
-    if(keystate[SDLK_LEFT] | keystate[SDLK_a])
+    if(keystate[SDLK_LEFT] || keystate[SDLK_a])
         clcmdlist->push_back("+ml");
-    if(keystate[SDLK_RIGHT] | keystate[SDLK_d])
+    if(keystate[SDLK_RIGHT] || keystate[SDLK_d])
         clcmdlist->push_back("+mr");
     if(keystate[SDLK_SPACE])
         clcmdlist->push_back("+jmp");
+    if(keystate[SDLK_f])
+    {
+        *forcesend = true;
+        clcmdlist->push_back("+fire");
+    }
 }
 
 CObj* CClient::GetLocalController()

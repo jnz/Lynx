@@ -25,7 +25,7 @@ struct quaternion_t
 
 	void FromMatrix(const matrix_t &mx);
 	void ToMatrix(matrix_t& m) const;
-    void GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side);
+    void GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const;
 
     void RotationAxis(vec3_t v, float a);
 

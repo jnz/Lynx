@@ -10,6 +10,10 @@ struct obj_state_t;
 #include "World.h"
 #include "ModelMD2.h"
 
+#define OBJ_FLAGS_ELASTIC       (1 << 0)
+
+#define OBJFLAGTYPE             BYTE
+
 class CObjOpaque // User-Daten von CObj (werden nicht über das Netzwerk übertragen)
 {
 public:
@@ -48,6 +52,13 @@ int DeltaDiffDWORD(const DWORD* newstate,
                    const DWORD flagparam, 
                    DWORD* updateflags,
                    CStream* stream);
+int DeltaDiffBytes(const BYTE* newstate,
+                   const BYTE* oldstate,
+                   const DWORD flagparam, 
+                   DWORD* updateflags,
+                   CStream* stream,
+                   const int size);
+
 
 // If you change this, update the Serialize function
 struct obj_state_t
@@ -61,6 +72,7 @@ struct obj_state_t
     INT16           animation;
     INT16           nextanimation;
     vec3_t		    eyepos;
+    OBJFLAGTYPE     flags;
 };
 
 
@@ -87,6 +99,7 @@ public:
     void         SetVel(const vec3_t& velocity) { state.vel = velocity; }
     const quaternion_t GetRot() const { return state.rot; }
     void        SetRot(const quaternion_t& rotation) { state.rot = rotation; }
+    void        GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const;
 
 	float		GetRadius(); // Max. Object sphere size
     void        SetRadius(float radius);
@@ -98,6 +111,10 @@ public:
 	void		SetNextAnimation(INT16 animation);
 	vec3_t		GetEyePos();
 	void		SetEyePos(const vec3_t& eyepos);
+    OBJFLAGTYPE GetFlags();
+    void        SetFlags(OBJFLAGTYPE flags);
+    void        AddFlags(OBJFLAGTYPE flags);
+    void        RemoveFlags(OBJFLAGTYPE flags);
 
     // Local Attributes
     bool        locGetIsOnGround() const { return m_locIsOnGround; }
@@ -118,7 +135,6 @@ protected:
     
 	void		UpdateProperties();
     obj_state_t state;
-	CStream		m_stream;
 
     // Local Attributes
     bool        m_locIsOnGround;

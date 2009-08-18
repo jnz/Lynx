@@ -52,9 +52,9 @@ struct bsp_poly_t
 		texcoords.clear();
     }
     // Hilfsfunktionen zum Prüfen Geradenschnitten mit der Polygon Geometrie
-	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CBSPTree* tree, const float offset = 0); // offset = plane offset
-    bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, vec3_t* hitpoint, const CBSPTree* tree); // radius = edge radius
-    bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, vec3_t* hitpoint, const CBSPTree* tree);
+	bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CBSPTree* tree, const float offset = 0) const; // offset = plane offset
+    bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, vec3_t* hitpoint, const CBSPTree* tree) const; // radius = edge radius
+    bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, vec3_t* hitpoint, const CBSPTree* tree) const;
 
     vec3_t GetNormal(CBSPTree* tree); // not unit length
 	bool IsPlanar(CBSPTree* tree); // Prüfen ob Polygon eben ist
@@ -111,7 +111,7 @@ public:
 	std::vector<bsp_poly_t>     m_polylist; // Vektor für Polygone
 	CBSPNode*				    m_root; // Anfangsknoten
 
-	void		TraceRay(const vec3_t& start, const vec3_t& dir, float* f, CBSPNode* node); // Prüfen, wo ein Strahl die Levelgeometrie trifft.
+    void		TraceRay(const vec3_t& start, const vec3_t& dir, float* f) const;
     void		TraceSphere(bsp_sphere_trace_t* trace) const;
 	void		ClearMarks(CBSPNode* node);
 	void		MarkLeaf(const vec3_t& pos, float radius, CBSPNode* node);
@@ -119,7 +119,8 @@ public:
 	int			GetLeafCount() const { return m_leafcount; }
 
 protected:
-    void		TraceSphere(bsp_sphere_trace_t* trace, CBSPNode* node) const;
+    void		TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) const;
+	void		TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CBSPNode* node) const; // Prüfen, wo ein Strahl die Levelgeometrie trifft.
 
 private:
 	int			m_nodecount; // increased by every CBSPNode constructor

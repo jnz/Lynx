@@ -548,9 +548,9 @@ void matrix_t::GetVec3Cam(vec3_t* dir, vec3_t* up, vec3_t* side)
 
 	if(dir)
 	{
-		dir->x = -m[0][2];
-		dir->y = -m[1][2];
-		dir->z = -m[2][2];
+		dir->x = m[0][2];
+		dir->y = m[1][2];
+		dir->z = m[2][2];
 	}
 }
 

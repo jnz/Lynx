@@ -145,6 +145,7 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 					   localctrl->GetRot());
 	
     m.GetVec3Cam(&dir, &up, &side);
+    dir = -dir;
 	glLoadMatrixf(m.pm);
 
 /* <Frust drawing> */
@@ -155,6 +156,7 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 	matrix_t tmp;
 	tmp.SetCamTransform(&(lastpos.origin), &lastpos.rot);
 	tmp.GetVec3Cam(&dir, &up, &side);
+    dir = -dir;
 	frustum.Setup(lastpos.origin+vec3_t(0,1,0), dir, up, side, 
 				  obj->GetFOV(), (float)m_width/(float)m_height,
 				  PLANE_NEAR, 

@@ -17,10 +17,13 @@ public:
 	BYTE* GetBuffer(); // pointer to raw bytes
 	int GetBufferSize(); // total buffer size
 
+    CStream GetStream(); // Stream Objekt von aktueller Position holen
+
 	// WRITE FUNCTIONS
 	void ResetWritePosition(); // Reset write pointer to start
 	int GetSpaceLeft(); // Bytes left to write
 	int GetBytesWritten() const; // written bytes
+    void WriteAdvance(int bytes);
 	void WriteDWORD(DWORD value);
 	void WriteInt32(INT32 value);
 	void WriteInt16(INT16 value);
@@ -69,3 +72,4 @@ protected:
 #define STREAM_SIZE_POS6		6
 #define STREAM_SIZE_VEC3		(sizeof(float)*3)
 #define STREAM_SIZE_FLOAT2		2
+#define STREAM_SIZE_QUAT        (sizeof(float)*4)
