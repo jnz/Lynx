@@ -79,39 +79,36 @@ struct obj_state_t
 class CObj
 {
 public:
-	CObj(CWorld* world);
-	virtual ~CObj(void);
+    CObj(CWorld* world);
+    virtual ~CObj(void);
 
-	void	    UpdateMatrix();
-	matrix_t    m;
+    int			GetID() { return m_id; }
 
-	int			GetID() { return m_id; }
-
-	bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
+    bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
     obj_state_t GetObjState() const { return state; }
-	void		SetObjState(const obj_state_t* objstate, int id);
-    void        CopyObjStateFrom(const CObj* source);
+    void		SetObjState(const obj_state_t* objstate, int id);
+    void        CopyObjStateFrom(const CObj* source); // Eigenschaften von anderem Objekt kopieren
 
     const vec3_t GetOrigin() const { return state.origin; }
     void         SetOrigin(const vec3_t& origin) { state.origin = origin; }
     const vec3_t GetVel() const { return state.vel; }
     void         SetVel(const vec3_t& velocity) { state.vel = velocity; }
     const quaternion_t GetRot() const { return state.rot; }
-    void        SetRot(const quaternion_t& rotation) { state.rot = rotation; }
+    void        SetRot(const quaternion_t& rotation);
     void        GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const;
 
-	float		GetRadius(); // Max. Object sphere size
+    float		GetRadius() const; // Max. Object sphere size
     void        SetRadius(float radius);
-	std::string GetResource();
-	void		SetResource(std::string resource);
-	INT16       GetAnimation();
-	void		SetAnimation(INT16 animation);
-	INT16       GetNextAnimation();
-	void		SetNextAnimation(INT16 animation);
-	vec3_t		GetEyePos();
-	void		SetEyePos(const vec3_t& eyepos);
-    OBJFLAGTYPE GetFlags();
+    std::string GetResource() const;
+    void		SetResource(std::string resource);
+    INT16       GetAnimation() const;
+    void		SetAnimation(INT16 animation);
+    INT16       GetNextAnimation() const;
+    void		SetNextAnimation(INT16 animation);
+    vec3_t		GetEyePos() const;
+    void		SetEyePos(const vec3_t& eyepos);
+    OBJFLAGTYPE GetFlags() const;
     void        SetFlags(OBJFLAGTYPE flags);
     void        AddFlags(OBJFLAGTYPE flags);
     void        RemoveFlags(OBJFLAGTYPE flags);
@@ -129,11 +126,16 @@ public:
     const CModelMD2* GetMesh() const { return m_mesh; }
     md2_state_t*     GetMeshState() { return &m_mesh_state; }
 
+    const matrix_t* GetRotMatrix() const { return &m; }
+
+
 protected:
-	CModelMD2*	m_mesh;
+    CModelMD2*	m_mesh;
     md2_state_t m_mesh_state;
-    
-	void		UpdateProperties();
+    void	    UpdateMatrix();
+    matrix_t    m;
+
+    void		UpdateProperties();
     obj_state_t state;
 
     // Local Attributes
@@ -143,8 +145,8 @@ protected:
 
 private:
     // Don't touch these
-	int			m_id;
-	CWorld*		m_world;
+    int			m_id;
+    CWorld*		m_world;
 
-	static int m_idpool;
+    static int m_idpool;
 };

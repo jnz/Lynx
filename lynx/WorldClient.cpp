@@ -167,7 +167,7 @@ void CWorldClient::CreateClientInterp()
 	worldclient_state_t w1 = (*state1);
 	worldclient_state_t w2 = (*state2);
 	assert(w1.localtime < rendertime && w2.localtime >= rendertime);
-	
+
 	m_interpworld.state1 = w1;
 	m_interpworld.state2 = w2;
 
@@ -248,6 +248,5 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 
         obj->SetOrigin(origin);
 		obj->SetRot(rot);
-		obj->UpdateMatrix();
 	}
 }

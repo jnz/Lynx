@@ -69,12 +69,11 @@ void quaternion_t::RotationAxis(vec3_t v, float a)
 	w = c;
 }
 
-quaternion_t quaternion_t::Invert()
+void quaternion_t::Invert()
 {
 	x=-x;
 	y=-y;
 	z=-z;
-	return *this;
 }
 
 quaternion_t quaternion_t::Inverse() const
@@ -83,6 +82,24 @@ quaternion_t quaternion_t::Inverse() const
 	q = *this;
 	q.Invert();
 	return q;
+}
+
+void quaternion_t::Normalize()
+{
+    const float abssqr = x*x + y*y* + z*z + w*w;
+    if(fabs(abssqr - 1.0f) > lynxmath::EPSILON ||
+       fabs(abssqr) < lynxmath::EPSILON)
+        return;
+    const float invabs = 1/sqrt(abssqr);
+    x *= invabs;
+    y *= invabs;
+    z *= invabs;
+    w *= invabs;
+}
+
+bool quaternion_t::IsNormalized() const
+{
+    return (fabs(x*x + y*y* + z*z + w*w - 1.0f) < lynxmath::EPSILON);
 }
 
 quaternion_t quaternion_t::operator *(const quaternion_t &q) const
@@ -120,10 +137,15 @@ bool operator != (const quaternion_t& a, const quaternion_t& b)
            (fabs(a.w-b.w) >= lynxmath::EPSILON);
 }
 
-
 float quaternion_t::ScalarMultiply(const quaternion_t &q1, const quaternion_t &q2)
 {
 	return q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
+}
+
+void quaternion_t::Vec3Multiply(const vec3_t vin, vec3_t* vout) const
+{
+    quaternion_t result = *this * quaternion_t(vin.x, vin.y, vin.z, 0) * Inverse();
+    *vout = vec3_t(result.x, result.y, result.z);
 }
 
 void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t)

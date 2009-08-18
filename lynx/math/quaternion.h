@@ -29,11 +29,16 @@ struct quaternion_t
 
     void RotationAxis(vec3_t v, float a);
 
-    quaternion_t Invert();
+    void Invert();
 	quaternion_t Inverse() const;
+
+    void Normalize();
+    bool IsNormalized() const;
 
 	quaternion_t operator *(const quaternion_t& q) const;
 	quaternion_t operator =(const quaternion_t& q);
+
+    void Vec3Multiply(const vec3_t vin, vec3_t* vout) const;
 
     static float ScalarMultiply(const quaternion_t &q1, const quaternion_t &q2);
 	static void Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t);

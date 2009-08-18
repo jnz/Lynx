@@ -47,6 +47,16 @@ CObj::~CObj(void)
         delete m_opaque;
 }
 
+void CObj::SetRot(const quaternion_t& rotation)
+{
+    bool bupdate = state.rot != rotation;
+    if(bupdate)
+    {
+        state.rot = rotation;
+        UpdateMatrix();
+    }
+}
+
 void CObj::GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const
 {
     state.rot.GetVec3(dir, up, side);
@@ -64,7 +74,7 @@ void CObj::UpdateMatrix()
     state.rot.ToMatrix(m);
 }
 
-float CObj::GetRadius()
+float CObj::GetRadius() const
 {
 	return state.radius;
 }
@@ -74,7 +84,7 @@ void CObj::SetRadius(float radius)
     state.radius = radius;
 }
 
-std::string CObj::GetResource()
+std::string CObj::GetResource() const
 {
 	return state.resource;
 }
@@ -96,7 +106,7 @@ void CObj::SetResource(std::string resource)
 	}
 }
 
-INT16 CObj::GetAnimation()
+INT16 CObj::GetAnimation() const
 {
 	return state.animation;
 }
@@ -111,7 +121,7 @@ void CObj::SetAnimation(INT16 animation)
 	}
 }
 
-INT16 CObj::GetNextAnimation()
+INT16 CObj::GetNextAnimation() const
 {
 	return state.nextanimation;
 }
@@ -127,7 +137,7 @@ void CObj::SetNextAnimation(INT16 animation)
 	}
 }
 
-vec3_t CObj::GetEyePos()
+vec3_t CObj::GetEyePos() const
 {
 	return state.eyepos;
 }
@@ -137,7 +147,7 @@ void CObj::SetEyePos(const vec3_t& eyepos)
     state.eyepos = eyepos;
 }
 
-OBJFLAGTYPE CObj::GetFlags()
+OBJFLAGTYPE CObj::GetFlags() const
 {
     return state.flags;
 }

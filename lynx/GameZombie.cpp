@@ -111,7 +111,7 @@ void CGameZombie::ProcessClientCmds(CObj* obj, int clientid)
             {
                 CObj* hitobj = m_world->GetObj(trace.objid);
                 assert(hitobj);
-                hitobj->SetVel(trace.dir*20.0f + vec3_t(0,20.0f,0));
+                hitobj->SetVel(trace.dir*20.0f + vec3_t(0,150.0f,0));
                 hitobj->SetAnimation(hitobj->GetMesh()->FindAnimation("crpain"));
                 hitobj->SetNextAnimation(0);
             }
