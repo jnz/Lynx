@@ -290,10 +290,9 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             p_obj_oldstate = NULL;
             if(oldstate) // Delta Compression
             {
-                const std::map<int,int>::const_iterator indexiter = oldstate->objindex.find(obj->GetID());
-                if(indexiter != oldstate->objindex.end())
+                if(oldstate->ObjStateExists(obj->GetID()))
                 {
-                    obj_oldstate = oldstate->objstates[(*indexiter).second];
+                    oldstate->GetObjState(obj->GetID(), obj_oldstate);
                     p_obj_oldstate = &obj_oldstate;
                 }
             }
@@ -345,7 +344,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
         stream->ReadWORD(&objcount);
         assert(objcount < USHRT_MAX);
-        std::map<int,int> objread; // objekte die gelesen wurden, was hier nicht steht, muss gelöscht werden
+        std::map<int,int> objread; // objekte die gelesen wurden, was hier nicht steht, muss gelöscht werden FIXME: hash_map verwenden?
         for(int i=0;i<objcount;i++)
         {
             stream->ReadWORD(&objid);
@@ -385,9 +384,32 @@ world_state_t CWorld::GetWorldState()
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 	{
 		CObj* obj = (*iter).second;
-        worldstate.objstates.push_back(obj->GetObjState());
-        worldstate.objindex[obj->GetID()] = (int)worldstate.objstates.size()-1;
+        worldstate.AddObjState(obj->GetObjState(), obj->GetID());
     }
 
 	return worldstate;
+}
+
+// world_state_t Struktur Methoden (für sicheren Zugriff auf Objekt Vektor in world_state_t)
+
+void world_state_t::AddObjState(obj_state_t objstate, const int id)
+{
+    assert(!ObjStateExists(id));
+    objstates.push_back(objstate);
+    objindex[id] = (int)objstates.size()-1;    
+}
+
+bool world_state_t::ObjStateExists(const int id) const
+{
+    WORLD_STATE_CONSTOBJITER indexiter = objindex.find(id);
+    return indexiter != objindex.end();
+}
+
+bool world_state_t::GetObjState(const int id, obj_state_t& objstate) const
+{
+    WORLD_STATE_CONSTOBJITER indexiter = objindex.find(id);
+    if(indexiter == objindex.end())
+        return false;
+    objstate = objstates[indexiter->second];
+    return true;
 }

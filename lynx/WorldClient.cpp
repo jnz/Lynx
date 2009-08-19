@@ -172,21 +172,22 @@ void CWorldClient::CreateClientInterp()
 	m_interpworld.state2 = w2;
 
 	CObj* obj;
-	std::map<int, int>::iterator objiter;
-	for(objiter =  w1.state.objindex.begin();
-		objiter != w1.state.objindex.end(); objiter++)
+	WORLD_STATE_OBJITER objiter;
+	for(objiter =  w1.state.ObjBegin();
+		objiter != w1.state.ObjEnd(); objiter++)
     {
 		int id = (*objiter).first;
 
 		// Prüfen, ob Obj auch in w2 vorkommt
-		if(w2.state.objindex.find(id) == w2.state.objindex.end())
+        if(!w2.state.ObjStateExists(id))
 		{
 			//assert(0); // OK soweit?
             // Könnte man hier gleich löschen und die Schleife am Ende sparen?
 			continue;
 		}
 
-		const obj_state_t objstate = w1.state.objstates[(*objiter).second];
+        obj_state_t objstate;
+        w1.state.GetObjState(objiter->second, objstate);
         obj = m_interpworld.GetObj(id);
         if(!obj)
         {
@@ -204,7 +205,7 @@ void CWorldClient::CreateClientInterp()
     for(deliter = m_interpworld.ObjBegin();deliter != m_interpworld.ObjEnd(); deliter++)
     {
         obj = (*deliter).second;
-        if(w1.state.objindex.find(obj->GetID()) == w1.state.objindex.end())
+        if(!w1.state.ObjStateExists(obj->GetID()))
             m_interpworld.DelObj(obj->GetID());
     }
 
@@ -233,15 +234,19 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 	CObj* obj;
 	vec3_t origin1, origin2, origin;
 	quaternion_t rot1, rot2, rot;
+    obj_state_t obj1, obj2;
 	for(iter = ObjBegin();iter != ObjEnd(); iter++)
 	{
 		obj = (*iter).second;
-		iter1 = state1.state.objindex.find(obj->GetID());
-		iter2 = state2.state.objindex.find(obj->GetID());
-		origin1 = state1.state.objstates[(*iter1).second].origin;
-		origin2 = state2.state.objstates[(*iter2).second].origin;
-		rot1 = state1.state.objstates[(*iter1).second].rot;
-		rot2 = state2.state.objstates[(*iter2).second].rot;
+        assert(state1.state.ObjStateExists(obj->GetID()));
+        assert(state2.state.ObjStateExists(obj->GetID())); // wenn das schief geht, muss geprüft werden, ob das objekt richtig in die interp world eingefügt wurde
+        state1.state.GetObjState(obj->GetID(), obj1);
+        state2.state.GetObjState(obj->GetID(), obj2);
+
+		origin1 = obj1.origin;
+		origin2 = obj2.origin;
+		rot1 = obj1.rot;
+		rot2 = obj2.rot;
 		
 		origin = vec3_t::Lerp(origin1, origin2, f);
         quaternion_t::Slerp(&rot, rot1, rot2, f);

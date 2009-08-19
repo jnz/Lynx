@@ -2,6 +2,7 @@
 
 class CWorld;
 #include <map>
+#include <hash_map>
 #include <list>
 #include "Obj.h"
 #include "BSPTree.h"
@@ -18,25 +19,41 @@ class CWorld;
 
  */
 
-#define OBJMAPTYPE	std::map<int, CObj*>
-#define OBJITER		std::map<int, CObj*>::iterator
-
 /*
+    world_state_t fasst die internen Daten von CWorld zusammen und ist nach außen hin nicht interessant
+    world_state_t speichert alle Daten über die Welt ab, inklusive ihrer Objekte.
+    Intern repräsentiert world_state_t damit den Zustand der Welt zu einem bestimmten Zeitpunkt.
+
     if you change world_state_t, change:
     - GenerateWorldState
     - Serialize
  */
+
+#define WORLD_STATE_OBJMAPTYPE      stdext::hash_map<int, int>
+#define WORLD_STATE_OBJITER         stdext::hash_map<int, int>::iterator
+#define WORLD_STATE_CONSTOBJITER    stdext::hash_map<int, int>::const_iterator
+
 struct world_state_t
 {
     DWORD   leveltime; // in ms
     DWORD   worldid; // fortlaufende nummer
     std::string level; // Pfad zu Level
 
-	std::vector<obj_state_t> objstates;
-    std::map<int,int> objindex; // ID zu objstates index tabelle
+    // Im Prinzip ist nur der objstate Vektor interessant, aber um schnellen
+    // Zugriff auf die Objekt-States mit Hilfe einer Hash-Tabelle zu ermöglichen,
+    // sind folgende Hilfsfunktionen nützlich, bzw. erforderlich (früher war objstates public)
+    void        AddObjState(obj_state_t objstate, const int id);
+    bool        ObjStateExists(const int id) const;
+    bool        GetObjState(const int id, obj_state_t& objstate) const;
+    WORLD_STATE_OBJITER ObjBegin() { return objindex.begin(); }
+    WORLD_STATE_OBJITER ObjEnd() { return objindex.end(); }
+
+protected:
+	std::vector<obj_state_t> objstates; // Liste mit allen Objekten
+    WORLD_STATE_OBJMAPTYPE objindex; // ID zu objstates Index Tabelle. Key = obj id, Value = Index in objstates Tabelle
 };
 
-struct world_obj_trace_t
+struct world_obj_trace_t // Zum Suchen von Objekten die von Strahl getroffen werden
 {
     // Input
 	vec3_t	start; // start point
@@ -49,6 +66,10 @@ struct world_obj_trace_t
     vec3_t  hitnormal;
     int     objid;
 };
+
+// Diese beiden Macros geben an, wie CObj von CWorld verwaltet wird (welcher STL map Typ)
+#define OBJMAPTYPE	stdext::hash_map<int, CObj*>
+#define OBJITER		stdext::hash_map<int, CObj*>::iterator
 
 class CWorld
 {
@@ -75,7 +96,6 @@ public:
     const virtual CBSPTree* GetBSP() const { return &m_bsptree; }
     DWORD   GetLeveltime() const { return state.leveltime; } // Levelzeit, beginnt bei 0
     DWORD   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
-    world_state_t GetWorldState(); // 
 
 	virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
@@ -83,10 +103,10 @@ public:
 
     bool    TraceObj(world_obj_trace_t* trace);
 
+    world_state_t GetWorldState();
 
 protected:
-	
-	CResourceManager m_resman;
+    CResourceManager m_resman;
 	world_state_t state;
     DWORD    m_leveltimestart;
     CBSPTree m_bsptree;
@@ -98,3 +118,4 @@ protected:
 	std::list<CObj*> m_addobj; // Liste von Objekten die im nächsten Frame hinzugefügt werden
 	std::list<int> m_removeobj; // Liste von Objekten die im nächsten Frame gelöscht werden
 };
+
