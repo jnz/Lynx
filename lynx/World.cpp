@@ -282,21 +282,23 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         assert(GetObjCount() < USHRT_MAX);
         stream->WriteWORD((WORD)GetObjCount());
 
-        obj_state_t* obj_oldstate;
+        obj_state_t obj_oldstate;
+        obj_state_t* p_obj_oldstate;
 		for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
 		{
 			obj = (*iter).second;
-            obj_oldstate = NULL;
+            p_obj_oldstate = NULL;
             if(oldstate) // Delta Compression
             {
-                std::map<int,int>::iterator indexiter;
-				std::map<int, int>* pmap = (std::map<int, int>*)&oldstate->objindex;
-				indexiter = pmap->find(obj->GetID());
+                const std::map<int,int>::const_iterator indexiter = oldstate->objindex.find(obj->GetID());
                 if(indexiter != oldstate->objindex.end())
-                    obj_oldstate = (obj_state_t*)&oldstate->objstates[(*indexiter).second];
+                {
+                    obj_oldstate = oldstate->objstates[(*indexiter).second];
+                    p_obj_oldstate = &obj_oldstate;
+                }
             }
             stream->WriteWORD(obj->GetID());
-            if(obj->Serialize(true, stream, obj->GetID(), obj_oldstate))
+            if(obj->Serialize(true, stream, obj->GetID(), p_obj_oldstate))
 				changes++;
 		}
 	}

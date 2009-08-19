@@ -277,7 +277,8 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 	}
 	else
 	{
-		if(!m_world->Serialize(true, &m_stream, &(*iter).second))
+        world_state_t diffstate = (*iter).second;
+		if(!m_world->Serialize(true, &m_stream, &diffstate))
 		{
 			// Seit dem letzten bestätigtem Update vom Client hat sich nichts getan.
 			client->worldidACK = m_world->GetWorldID();
