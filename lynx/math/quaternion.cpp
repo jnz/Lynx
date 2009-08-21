@@ -3,11 +3,44 @@
 #include "mathconst.h"
 #include <assert.h>
 
-const quaternion_t quaternion_t::identity = quaternion_t(0, 0, 0, 1);
+const quaternion_t quaternion_t::identity = quaternion_t(0, 0, 0, 1.0f);
 
 void quaternion_t::FromMatrix(const matrix_t &mx)
 {
-    assert(0); // nicht implementiert
+    const float tr = mx.m[0][0] + mx.m[1][1] + mx.m[2][2];
+
+    if(tr > 0)
+    { 
+        const float S = sqrt(tr+1.0f) * 2.0f; // S=4*qw 
+        w = 0.25f * S;
+        x = (mx.m[1][2] - mx.m[2][1]) / S;
+        y = (mx.m[2][0] - mx.m[0][2]) / S; 
+        z = (mx.m[0][1] - mx.m[1][0]) / S; 
+    }
+    else if((mx.m[0][0] > mx.m[1][1])&&(mx.m[0][0] > mx.m[2][2]))
+    { 
+        const float S = sqrt(1.0f + mx.m[0][0] - mx.m[1][1] - mx.m[2][2]) * 2.0f; // S=4*qx 
+        w = (mx.m[1][2] - mx.m[2][1]) / S;
+        x = 0.25f * S;
+        y = (mx.m[1][0] + mx.m[0][1]) / S; 
+        z = (mx.m[2][0] + mx.m[0][2]) / S; 
+    }
+    else if (mx.m[1][1] > mx.m[2][2])
+    { 
+        const float S = sqrt(1.0f + mx.m[1][1] - mx.m[0][0] - mx.m[2][2]) * 2.0f; // S=4*qy
+        w = (mx.m[2][0] - mx.m[0][2]) / S;
+        x = (mx.m[1][0] + mx.m[0][1]) / S; 
+        y = 0.25f * S;
+        z = (mx.m[2][1] + mx.m[1][2]) / S; 
+    }
+    else
+    { 
+        const float S = sqrt(1.0f + mx.m[2][2] - mx.m[0][0] - mx.m[1][1]) * 2.0f; // S=4*qz
+        w = (mx.m[0][1] - mx.m[1][0]) / S;
+        x = (mx.m[2][0] + mx.m[0][2]) / S;
+        y = (mx.m[2][1] + mx.m[1][2]) / S;
+        z = 0.25f * S;
+    }
 }
 
 void quaternion_t::ToMatrix(matrix_t& mx) const
@@ -55,6 +88,30 @@ void quaternion_t::GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const
         dir->y = 2.0f * (y*z - w*x);
         dir->z = 1.0f - 2.0f * (x*x + y*y);
     }
+}
+
+void quaternion_t::LookAt(const vec3_t& pFrom, const vec3_t& pAt, const vec3_t& pUp)
+{
+    assert(0); // Is this function OK?
+
+    assert(pUp.IsNormalized());
+    const vec3_t dir = (pAt - pFrom).Normalized();
+    const vec3_t side = (dir ^ pUp).Normalized();
+    const vec3_t up = (side ^ dir).Normalized();
+
+    matrix_t m;
+    m.SetIdentity();
+    m.m[0][0] = side.x;
+    m.m[0][1] = side.y;
+    m.m[0][2] = side.z;
+    m.m[1][0] = pUp.x;
+    m.m[1][1] = pUp.y;
+    m.m[1][2] = pUp.z;
+    m.m[2][0] = -dir.x;
+    m.m[2][1] = -dir.y;
+    m.m[2][2] = -dir.z;
+
+    FromMatrix(m);
 }
 
 void quaternion_t::RotationAxis(vec3_t v, float a)
@@ -142,7 +199,7 @@ float quaternion_t::ScalarMultiply(const quaternion_t &q1, const quaternion_t &q
 	return q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
 }
 
-void quaternion_t::Vec3Multiply(const vec3_t vin, vec3_t* vout) const
+void quaternion_t::Vec3Multiply(const vec3_t& vin, vec3_t* vout) const
 {
     quaternion_t result = *this * quaternion_t(vin.x, vin.y, vin.z, 0) * Inverse();
     *vout = vec3_t(result.x, result.y, result.z);

@@ -22,7 +22,7 @@ void CGameObjZombie::DealDamage(int damage, vec3_t dir)
 {
     CGameObj::DealDamage(damage, dir);
 
-    SetAnimation(GetMesh()->FindAnimation("crpain"));
+    SetAnimation(GetMesh()->FindAnimation("pain"));
     SetNextAnimation(0);
 
     if(GetHealth() > 0)
@@ -32,6 +32,7 @@ void CGameObjZombie::DealDamage(int damage, vec3_t dir)
     SetAnimation(GetMesh()->FindAnimation("crdeath"));
     SetNextAnimation(-1);
     AddFlags(OBJ_FLAGS_ELASTIC);
+    m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
                     GetWorld()->GetLeveltime() + 5000,
                     GetWorld(),
