@@ -36,12 +36,13 @@ void CThink::DoThink(DWORD leveltime)
             {
                 iter = m_think.erase(iter);
                 delete func;
+                func = NULL;
             }
             else
             {
                 iter++;
+                assert(func->GetThinktime() >= leveltime);
             }
-            assert(func->GetThinktime() >= leveltime);
         }
         else
         {
