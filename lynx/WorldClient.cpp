@@ -58,32 +58,6 @@ void CWorldClient::Update(const float dt, const DWORD ticks)
 {
 	CWorld::Update(dt, ticks);
     
-	static int pressed = 0;
-	static vec3_t location;
-/*
-	if(CLynx::GetKeyState()[102])
-	{
-		float f = 999.9f;
-		vec3_t forward;
-		CObj* obj = GetLocalController();
-		vec3_t::AngleVec3(obj->GetRot(), &forward, NULL, NULL);
-		forward *= 1000.0f;
-		m_bsptree.ClearMarks(m_bsptree.m_root);
-        vec3_t start = obj->GetOrigin()+obj->GetEyePos();
-		m_bsptree.TraceRay(start, start + forward, &f, m_bsptree.m_root);
-	}
-	else
-	{
-		if(pressed)
-		{
-			pressed = 0;
-			CObj* obj = new CObj(this);
-			obj->SetOrigin(location);
-			obj->UpdateMatrix();
-			AddObj(obj);
-		}
-	}
-*/
     CObj* controller = GetLocalController();
 	ObjMove(controller, dt);
 
@@ -187,7 +161,7 @@ void CWorldClient::CreateClientInterp()
 		}
 
         obj_state_t objstate;
-        w1.state.GetObjState(objiter->second, objstate);
+        w1.state.GetObjState(id, objstate);
         obj = m_interpworld.GetObj(id);
         if(!obj)
         {
@@ -205,11 +179,15 @@ void CWorldClient::CreateClientInterp()
     for(deliter = m_interpworld.ObjBegin();deliter != m_interpworld.ObjEnd(); deliter++)
     {
         obj = (*deliter).second;
-        if(!w1.state.ObjStateExists(obj->GetID()))
+        if(!w1.state.ObjStateExists(obj->GetID()) ||
+           !w2.state.ObjStateExists(obj->GetID()))
             m_interpworld.DelObj(obj->GetID());
     }
 
 	m_interpworld.UpdatePendingObjs();
+
+    assert(m_interpworld.state1.state.GetObjCount() ==
+           m_interpworld.state2.state.GetObjCount());
 }
 
 void CWorldInterp::Update(const float dt, const DWORD ticks)
