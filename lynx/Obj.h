@@ -14,12 +14,6 @@ struct obj_state_t;
 
 #define OBJFLAGTYPE             BYTE
 
-class CObjOpaque // User-Daten von CObj (werden nicht über das Netzwerk übertragen)
-{
-public:
-    CObjOpaque() {}
-    virtual ~CObjOpaque() {}
-};
 
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
 int DeltaDiffVec3(const vec3_t* newstate,
@@ -82,7 +76,7 @@ public:
     CObj(CWorld* world);
     virtual ~CObj(void);
 
-    int			GetID() { return m_id; }
+    int			GetID() const { return m_id; }
 
     bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
@@ -118,10 +112,6 @@ public:
 
     int         GetAnimationFromName(const char* name) const;
 
-    // Opaque Data
-    CObjOpaque* GetOpaque() { return m_opaque; }
-    void        SetOpaque(CObjOpaque* opaque);
-
     // Model Data
     const CModelMD2* GetMesh() const { return m_mesh; }
     md2_state_t*     GetMeshState() { return &m_mesh_state; }
@@ -141,7 +131,8 @@ protected:
     // Local Attributes
     bool        m_locIsOnGround;
     friend class CWorld;
-    CObjOpaque* m_opaque;
+
+    CWorld*     GetWorld() { return m_world; }
 
 private:
     // Don't touch these

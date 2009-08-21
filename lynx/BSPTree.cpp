@@ -36,6 +36,8 @@ bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader c
 	int nonplanar = 0; // anzahl der nicht-ebenen polygone zählen
     std::string dir = CLynx::GetDirectory(file);
 
+    Unload();
+
 	f = fopen(file.c_str(), "rb");
 	if(!f)
 		return false;
@@ -80,6 +82,16 @@ bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader c
                 fprintf(stderr, "BSP: Texture not found: %s\n", tok);
                 return false;
             }
+        }
+        else if(strcmp(tok, "spawn")==0)
+        {
+			for(i=0;i<3;i++)
+				sv[i] = strtok(NULL, DELIM);
+			if(!sv[0] || !sv[1] || !sv[2])
+				continue;
+            spawn_point_t spawn;
+            spawn.origin = vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2]));
+            m_spawnpoints.push_back(spawn);
         }
 		else if(strcmp(tok, "f")==0) // face
 		{
@@ -161,6 +173,15 @@ void CBSPTree::Unload()
 		m_root = NULL;
 	}
 	m_filename = "";
+    m_spawnpoints.clear();
+}
+
+static const spawn_point_t s_spawn_default;
+spawn_point_t CBSPTree::GetRandomSpawnPoint() const
+{
+    if(m_spawnpoints.size() < 1)
+        return s_spawn_default;
+    return m_spawnpoints[rand()%(m_spawnpoints.size())];
 }
 
 std::string CBSPTree::GetFilename() const

@@ -3,6 +3,7 @@
 #include "lynx.h"
 #include "math/vec3.h"
 #include "math/plane.h"
+#include "math/quaternion.h"
 #include <vector>
 #include "ResourceManager.h"
 
@@ -59,6 +60,12 @@ struct bsp_poly_t
     vec3_t GetNormal(CBSPTree* tree); // not unit length
 	bool IsPlanar(CBSPTree* tree); // Prüfen ob Polygon eben ist
 	void GeneratePlanes(CBSPTree* tree); // Erzeugt den Normalenvektor der Fläche
+};
+
+struct spawn_point_t
+{
+    vec3_t origin;
+    quaternion_t rot;
 };
 
 enum polyplane_t {	POLYPLANE_SPLIT = 0,
@@ -118,6 +125,8 @@ public:
 	CBSPNode*	GetLeaf(const vec3_t& pos);
 	int			GetLeafCount() const { return m_leafcount; }
 
+    spawn_point_t GetRandomSpawnPoint() const;
+
 protected:
     void		TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) const;
 	void		TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CBSPNode* node) const; // Prüfen, wo ein Strahl die Levelgeometrie trifft.
@@ -127,6 +136,9 @@ private:
 	int			m_leafcount;
 	bool		m_outofmem; // set to true by CBSPNode constructor, if no memory for further child nodes is available
 	std::string m_filename;
+
+    // Spawn Point
+    std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level
 
 	// Helper functions for the CBSPNode constructor to create the BSP tree
 	polyplane_t TestPolygon(bsp_poly_t& poly, plane_t& plane);

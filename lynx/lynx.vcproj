@@ -116,14 +116,17 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				ExceptionHandling="1"
 				RuntimeLibrary="2"
-				BufferSecurityCheck="false"
+				BufferSecurityCheck="true"
+				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="0"
+				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
@@ -203,10 +206,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\GameZombie.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -232,6 +231,10 @@
 			</File>
 			<File
 				RelativePath=".\Server.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Think.cpp"
 				>
 			</File>
 			<File
@@ -273,10 +276,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\GameZombie.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ModelMD2.h"
 				>
 			</File>
@@ -302,6 +301,10 @@
 			</File>
 			<File
 				RelativePath=".\ServerClient.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Think.h"
 				>
 			</File>
 			<File
@@ -384,6 +387,42 @@
 			>
 			<File
 				RelativePath=".\Subject.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="GameZombie"
+			>
+			<File
+				RelativePath=".\GameObj.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameObj.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameObjPlayer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameObjPlayer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameObjZombie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameObjZombie.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameZombie.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameZombie.h"
 				>
 			</File>
 		</Filter>

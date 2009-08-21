@@ -1,6 +1,8 @@
 #pragma once
 
 #include "GameLogic.h"
+#include "GameObj.h"
+#include "GameObjPlayer.h"
 
 class CGameZombie : public CGameLogic
 {
@@ -15,5 +17,5 @@ protected:
 	virtual void Notify(EventNewClientConnected);
 	virtual void Notify(EventClientDisconnected);
 
-    virtual void ProcessClientCmds(CObj* obj, int clientid);
+    virtual void ProcessClientCmds(CGameObjPlayer* obj, int clientid);
 };

@@ -214,9 +214,12 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     if(keystate[SDLK_SPACE])
         clcmdlist->push_back("+jmp");
     if(keystate[SDLK_f])
-    {
-        *forcesend = true;
         clcmdlist->push_back("+fire");
+    if(keystate[SDLK_e])
+    {
+        // FIXME temp hack
+        vec3_t pos = GetLocalController()->GetOrigin();
+        fprintf(stderr, "[%.2f,%.2f,%.2f]\n", pos.x, pos.y, pos.z);
     }
 }
 

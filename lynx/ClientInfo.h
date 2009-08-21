@@ -20,7 +20,7 @@ public:
 		worldidACK = 0;
 	}
 
-	int GetID() { return m_id; }
+	int GetID() const { return m_id; }
 	ENetPeer* GetPeer() { return m_peer; }
 
 	clientstate_t m_state;

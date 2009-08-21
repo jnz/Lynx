@@ -20,6 +20,11 @@ public:
 protected:
 	virtual void Notify(EventNewClientConnected);
 	virtual void Notify(EventClientDisconnected);
-	CWorld* m_world;
+
+    CWorld* GetWorld() { return m_world; }
+    CServer* GetServer() { return m_server; }
+
+private:
+    CWorld* m_world;
     CServer* m_server;
 };

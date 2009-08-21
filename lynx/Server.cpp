@@ -176,7 +176,7 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             obj->SetVel(vel);
             obj->SetRot(rot);
 
-            assert(client->clcmdlist.size() == 0);
+            assert(client->clcmdlist.size() < 30);
             WORD cmdcount;
             stream->ReadWORD(&cmdcount);
             client->clcmdlist.clear();

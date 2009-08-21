@@ -38,13 +38,11 @@ CObj::CObj(CWorld* world)
 
     // Local Attributes
     m_locIsOnGround = false;
-    m_opaque = NULL;
 }
 
 CObj::~CObj(void)
 {
-    if(m_opaque)
-        delete m_opaque;
+
 }
 
 void CObj::SetRot(const quaternion_t& rotation)
@@ -60,13 +58,6 @@ void CObj::SetRot(const quaternion_t& rotation)
 void CObj::GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const
 {
     state.rot.GetVec3(dir, up, side);
-}
-
-void CObj::SetOpaque(CObjOpaque* opaque)
-{
-    if(m_opaque)
-        delete m_opaque;
-    m_opaque = opaque;
 }
 
 void CObj::UpdateMatrix()

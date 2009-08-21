@@ -53,10 +53,26 @@ void CWorld::DeleteAllObjs()
 {
 	OBJITER iter;
 
-	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
+	for(iter = ObjBegin();iter!=ObjEnd();iter++)
 		delete (*iter).second;
 	m_objlist.clear();
 }
+
+const std::vector<CObj*> CWorld::GetNearObj(const vec3_t origin, const float radius, const int exclude) const
+{
+    std::vector<CObj*> objlist;
+    const float radius2 = radius * radius;
+    CObj* obj;
+	OBJITERCONST iter;
+	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
+    {
+        obj = (*iter).second;
+        if(obj->GetID() != exclude && (obj->GetOrigin() - origin).AbsSquared() < radius2)
+            objlist.push_back(obj);
+    }
+    return objlist;
+}
+
 
 void CWorld::Update(const float dt, const DWORD ticks)
 {
@@ -118,7 +134,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
                 q.y = p1.y;
 
-            if((p3-q).Abs()<10*STOP_EPSILON*100*dt)
+            if((p3-q).Abs()<STOP_EPSILON*1000*dt)
             {
                 p2 = q;
                 break;
@@ -379,6 +395,8 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 world_state_t CWorld::GetWorldState()
 {
 	world_state_t worldstate = state;
+
+    assert(worldstate.GetObjCount() == 0);
 
     OBJITER iter;
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)

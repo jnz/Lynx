@@ -47,6 +47,7 @@ struct world_state_t
     bool        GetObjState(const int id, obj_state_t& objstate) const;
     WORLD_STATE_OBJITER ObjBegin() { return objindex.begin(); }
     WORLD_STATE_OBJITER ObjEnd() { return objindex.end(); }
+    int         GetObjCount() const { return (int)objstates.size(); }
 
 protected:
 	std::vector<obj_state_t> objstates; // Liste mit allen Objekten
@@ -68,8 +69,9 @@ struct world_obj_trace_t // Zum Suchen von Objekten die von Strahl getroffen wer
 };
 
 // Diese beiden Macros geben an, wie CObj von CWorld verwaltet wird (welcher STL map Typ)
-#define OBJMAPTYPE	stdext::hash_map<int, CObj*>
-#define OBJITER		stdext::hash_map<int, CObj*>::iterator
+#define OBJMAPTYPE   stdext::hash_map<int, CObj*>
+#define OBJITER      stdext::hash_map<int, CObj*>::iterator
+#define OBJITERCONST stdext::hash_map<int, CObj*>::const_iterator
 
 class CWorld
 {
@@ -89,6 +91,8 @@ public:
 	int		GetObjCount() const { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
 	OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
 	OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
+
+    const std::vector<CObj*> GetNearObj(const vec3_t origin, const float radius, const int exclude) const; // List is only valid for this frame!
 
 	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
 
