@@ -29,7 +29,9 @@ CStream::CStream(int size)
 
 CStream::CStream(BYTE* foreign, int size, int used)
 {
-	SetBuffer(foreign, size, used);
+    m_buffer = NULL;
+    m_foreign = true;
+    SetBuffer(foreign, size, used);
 }
 
 CStream::~CStream(void)
@@ -121,7 +123,7 @@ int CStream::GetBytesRead()
 
 CStream CStream::GetStream()
 {
-    return CStream(m_buffer, m_size, m_used);;
+    return CStream(m_buffer, m_size, m_used);
 }
 
 void CStream::WriteAdvance(int bytes)

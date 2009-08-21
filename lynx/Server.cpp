@@ -140,7 +140,10 @@ void CServer::Update(const float dt, const DWORD ticks)
 		
 		m_lastupdate = ticks;
 		if(sent > 0)
+        {
+            assert(m_history.find(m_world->GetWorldID()) == m_history.end());
 			m_history[m_world->GetWorldID()] = m_world->GetWorldState();
+        }
 		UpdateHistoryBuffer();
 	}
 }

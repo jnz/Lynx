@@ -54,7 +54,7 @@ void CGameObjZombie::LookAtNearestPlayer()
 {
 }
 
-bool CThinkFuncRespawnZombie::DoThink()
+bool CThinkFuncRespawnZombie::DoThink(DWORD leveltime)
 {
     GetWorld()->DelObj(GetObj()->GetID());
 
@@ -68,7 +68,7 @@ bool CThinkFuncRespawnZombie::DoThink()
     return true;
 }
 
-bool CThinkFuncZombie::DoThink()
+bool CThinkFuncZombie::DoThink(DWORD leveltime)
 {
     CGameObjZombie* zombie = (CGameObjZombie*)GetObj();
     if(zombie->GetHealth() < 1)
@@ -79,7 +79,7 @@ bool CThinkFuncZombie::DoThink()
     if(target == NULL)
     {
         zombie->FindVictim();
-        SetThinktime(GetThinktime() + 500);
+        SetThinktime(leveltime + 500);
         GetObj()->SetVel(vec3_t::origin);
         return false;
     }
@@ -89,12 +89,12 @@ bool CThinkFuncZombie::DoThink()
     {
         dir = dir.Normalized()*20.0f;
         GetObj()->SetVel(dir);
-        SetThinktime(GetThinktime() + 40);
+        SetThinktime(leveltime + 40);
     }
     else
     {
         GetObj()->SetVel(vec3_t::origin);
-        SetThinktime(GetThinktime() + 1200);
+        SetThinktime(leveltime + 1200);
     }
 
     return false;

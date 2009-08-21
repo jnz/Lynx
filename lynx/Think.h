@@ -13,7 +13,7 @@ public:
     }
     DWORD GetThinktime() { return thinktime; }
     void SetThinktime(DWORD newtime) { thinktime = newtime; }
-    virtual bool DoThink() = 0; // bei rückgabe von true wird diese thinkfunc entfernt
+    virtual bool DoThink(DWORD leveltime) = 0; // bei rückgabe von true wird diese thinkfunc entfernt
 
 protected:
     CWorld* GetWorld() { return m_world; }
