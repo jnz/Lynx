@@ -210,7 +210,7 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 	std::map<int, int>::iterator iter1, iter2;
 	OBJITER iter;
 	CObj* obj;
-	vec3_t origin1, origin2, origin;
+	vec3_t origin1, origin2, origin, vel1, vel2;
 	quaternion_t rot1, rot2, rot;
     obj_state_t obj1, obj2;
 	for(iter = ObjBegin();iter != ObjEnd(); iter++)
@@ -223,10 +223,13 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 
 		origin1 = obj1.origin;
 		origin2 = obj2.origin;
+        vel1 = obj1.vel;
+        vel2 = obj2.vel;
 		rot1 = obj1.rot;
 		rot2 = obj2.rot;
 		
-		origin = vec3_t::Lerp(origin1, origin2, f);
+		//origin = vec3_t::Lerp(origin1, origin2, f);
+        origin = vec3_t::Hermite(origin1, origin2, vel1, vel2, f);
         quaternion_t::Slerp(&rot, rot1, rot2, f);
 
         obj->SetOrigin(origin);

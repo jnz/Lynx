@@ -295,6 +295,13 @@ vec3_t vec3_t::Lerp(const vec3_t& p1, const vec3_t& p2, const float f)
     return (1-f)*p1 + f*p2;
 }
 
+vec3_t vec3_t::Hermite(const vec3_t& p1, const vec3_t& p2, const vec3_t& T1, const vec3_t& T2, const float t)
+{
+    const float t2 = t*t;
+    const float t3 = t2 * t;
+    return (1 - 3*t2 + 2*t3)*p1 + t2*(3-2*t)*p2 + t*(t-1)*(t-1)*T1 + t2*(t-1)*T2;
+}
+
 bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir, 
                                   const vec3_t& edgeStart, const vec3_t& edgeEnd,
                                   const float radius,

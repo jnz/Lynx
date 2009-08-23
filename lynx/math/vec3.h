@@ -31,6 +31,8 @@ struct vec3_t
 
     static vec3_t Lerp(const vec3_t& p1, const vec3_t& p2, const float f); // Lineare Interpolation zw. p1 und p2. Bei f=0 ist das Ergebnis p1, bei f=1 wird p2 zurückgegeben
 
+    static vec3_t Hermite(const vec3_t& p1, const vec3_t& p2, const vec3_t& t1, const vec3_t& t2, const float t); // Hermite Curve (3D Game Programming S. 457)
+
 	/*
         AngleVec3
 		angles x = pitch, y = yaw, z = roll
