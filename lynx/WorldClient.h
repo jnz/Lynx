@@ -34,6 +34,9 @@ class CWorldInterp : public CWorld
 public:
 	CWorldInterp() { f = 1.0f; }
 	~CWorldInterp() {}
+
+    virtual bool    IsClient() const { return true; }
+
 	const virtual CBSPTree* GetBSP() const { return m_pbsp; }
 	virtual CResourceManager* GetResourceManager() { return m_presman; }
 

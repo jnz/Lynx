@@ -34,6 +34,7 @@ void CGameZombie::Notify(EventNewClientConnected e)
 	player->SetOrigin(vec3_t(0.0f, 2.0f, 0));
     player->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
 	player->SetAnimation(0);
+    player->SetEyePos(vec3_t(0,0.65f,0));
     player->SetClientID(e.client->GetID());
 
 	GetWorld()->AddObj(player, true); // In diesem Frame, weil die Welt umgehend vom CServer serialized wird

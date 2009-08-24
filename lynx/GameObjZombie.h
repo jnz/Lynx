@@ -8,7 +8,7 @@ public:
     CGameObjZombie(CWorld* world);
     ~CGameObjZombie(void);
 
-    void DealDamage(int damage, vec3_t dir);
+    void DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir);
 
     void LookAtNearestPlayer();
     void FindVictim();

@@ -134,16 +134,9 @@ vec3_t &vec3_t::operator /=(const float &f)
 
 vec3_t vec3_t::rand(float mx, float my, float mz)
 {
-	x = (float)(::rand()%1000);
-	x*=.001f;
-	y = (float)(::rand()%1000);
-	y*=.001f;
-	z = (float)(::rand()%1000);
-	z*=.001f;
-	x*=mx;
-	y*=my;
-	z*=mz;
-	return *this;
+	return vec3_t( mx * ( (float)(::rand()%20000)*0.0001f - 1.0f ),
+	               my * ( (float)(::rand()%20000)*0.0001f - 1.0f ),
+	               mz * ( (float)(::rand()%20000)*0.0001f - 1.0f ) );
 }
 
 vec3_t vec3_t::operator -(void) const

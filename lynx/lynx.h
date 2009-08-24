@@ -21,10 +21,16 @@ public:
 	static std::string GetBaseDir() { return "baselynx/"; }
 	static std::string GetBaseDirLevel() { return "baselynx/level/"; }
 	static std::string GetBaseDirModel() { return "baselynx/model/"; }
+	static std::string GetBaseDirFX() { return "baselynx/fx/"; }
 
 	static std::string StripFileExtension(std::string path);
 	static std::string ChangeFileExtension(std::string path, std::string newext);
 	static std::string GetDirectory(std::string path);
+
+    static std::string FloatToString(float f, int precision);
+
+    static float randf() { return (rand()%20000)*0.0001f-1.0f; }
+    static float randfabs() { return (rand()%10000)*0.0001f; }
 };
 
 union intfloat_u

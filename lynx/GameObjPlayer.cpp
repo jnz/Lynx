@@ -25,11 +25,9 @@ void CGameObjPlayer::CmdFire(bool active)
 
 void CGameObjPlayer::OnCmdFire()
 {
-    if(GetWorld()->GetLeveltime() - m_prim_triggered_time < 800)
+    if(GetWorld()->GetLeveltime() - m_prim_triggered_time < 50)
         return;
     m_prim_triggered_time = GetWorld()->GetLeveltime();
-
-    fprintf(stderr, "Fire!\n");
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -43,14 +41,7 @@ void CGameObjPlayer::OnCmdFire()
         assert(hitobj);
         if(!hitobj->IsClient())
         {
-            if(hitobj->GetHealth() > 0)
-            {
-                hitobj->DealDamage(50, trace.dir);
-            }
-            else
-            {
-                hitobj->SetVel(trace.dir*5.0f + vec3_t(0,5.0f,0));
-            }
+            hitobj->DealDamage(20, trace.hitpoint, trace.dir);
         }
     }
 }

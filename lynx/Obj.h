@@ -9,8 +9,11 @@ struct obj_state_t;
 #include <string>
 #include "World.h"
 #include "ModelMD2.h"
+#include <memory>
+#include "ParticleSystem.h"
 
 #define OBJ_FLAGS_ELASTIC       (1 << 0)
+#define OBJ_FLAGS_NOGRAVITY     (1 << 1)
 
 #define OBJFLAGTYPE             BYTE
 
@@ -59,7 +62,7 @@ struct obj_state_t
 {
 	vec3_t	        origin;			// Position
 	vec3_t	        vel;     		// Direction/Velocity
-	quaternion_t    rot;			// Rotation (x = pitch, y = yaw, z = roll)
+	quaternion_t    rot;			// Rotation
 
 	float		    radius;
 	std::string     resource;
@@ -67,8 +70,8 @@ struct obj_state_t
     INT16           nextanimation;
     vec3_t		    eyepos;
     OBJFLAGTYPE     flags;
+    std::string     particles;      // Partikelsystem, das an dieses Objekt gebunden ist. Config String in der Form: "blood|dx=0.1,dy=0.6,dz=23".
 };
-
 
 class CObj
 {
@@ -106,27 +109,38 @@ public:
     void        SetFlags(OBJFLAGTYPE flags);
     void        AddFlags(OBJFLAGTYPE flags);
     void        RemoveFlags(OBJFLAGTYPE flags);
+    void        SetParticleSystem(const std::string psystem);
+    std::string GetParticleSystemName() const;
 
     // Local Attributes
-    bool        locGetIsOnGround() const { return m_locIsOnGround; }
+    bool        locGetIsOnGround() const { return m_locIsOnGround; } // Berüht das Objekt den Boden? Wird von World::ObjMove gesetzt
 
-    int         GetAnimationFromName(const char* name) const;
+    // Rotation
+    const matrix_t* GetRotMatrix() const { return &m; } // Direkter Zugriff auf die Rotationsmatrix
 
     // Model Data
     const CModelMD2* GetMesh() const { return m_mesh; }
     md2_state_t*     GetMeshState() { return &m_mesh_state; }
+    int              GetAnimationFromName(const char* name) const;
 
-    const matrix_t* GetRotMatrix() const { return &m; }
-
+    // Particle Systems
+    CParticleSystem* GetParticleSystem() { return m_particlesys.get(); }
 
 protected:
+    obj_state_t state; // obj_state
+
+    // Animation extension
     CModelMD2*	m_mesh;
     md2_state_t m_mesh_state;
+    void		UpdateAnimation();
+
+    // Rotation extension
     void	    UpdateMatrix();
     matrix_t    m;
 
-    void		UpdateProperties();
-    obj_state_t state;
+    // Particle extension
+    void        UpdateParticles();
+    std::auto_ptr<CParticleSystem> m_particlesys;
 
     // Local Attributes
     bool        m_locIsOnGround;

@@ -1,4 +1,5 @@
 #include "GameObjZombie.h"
+#include "ParticleSystemBlood.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -18,14 +19,28 @@ CGameObjZombie::~CGameObjZombie(void)
 {
 }
 
-void CGameObjZombie::DealDamage(int damage, vec3_t dir)
+void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir)
 {
-    CGameObj::DealDamage(damage, dir);
-
-    SetAnimation(GetMesh()->FindAnimation("pain"));
-    SetNextAnimation(0);
+    CGameObj::DealDamage(damage, hitpoint, dir);
 
     if(GetHealth() > 0)
+    {
+        SetVel(dir*5.0f);
+
+        CGameObj* blood = new CGameObj(GetWorld());
+        blood->SetRadius(0.0f);
+        blood->SetOrigin(hitpoint);
+        blood->SetParticleSystem("blood|" + CParticleSystemBlood::GetConfigString(dir));
+        blood->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 1000, GetWorld(), blood));
+        blood->AddFlags(OBJ_FLAGS_NOGRAVITY);
+        GetWorld()->AddObj(blood);
+
+        SetAnimation(GetMesh()->FindAnimation("pain"));
+        SetNextAnimation(0);
+        return;
+    }
+
+    if(GetFlags() & OBJ_FLAGS_ELASTIC) // zombie ist schon tot
         return;
 
     SetVel(dir*18.0f + vec3_t(0,20.0f,0));

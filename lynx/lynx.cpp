@@ -1,6 +1,10 @@
 #include "lynx.h"
 #include "SDL.h"
-
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <stdexcept>
+ 
 #ifdef _DEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
@@ -55,4 +59,16 @@ std::string CLynx::GetDirectory(std::string path)
 		return path;
 
 	return path.substr(0, pos+1);
+}
+
+std::string CLynx::FloatToString(float f, int precision)
+{
+   std::ostringstream o;
+   o.precision(precision);
+   if(!(o << f))
+   {
+       assert(0);
+       return "";
+   }  
+   return o.str();
 }

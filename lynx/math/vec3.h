@@ -15,7 +15,7 @@ struct vec3_t
 	vec3_t(float nx, float ny, float nz);
 	vec3_t(float all);
 
-	vec3_t rand(float mx, float my, float mz);
+	static vec3_t rand(float mx, float my, float mz);
 
 	float Abs(void) const;
 	float AbsSquared(void) const;

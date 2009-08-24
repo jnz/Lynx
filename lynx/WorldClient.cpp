@@ -164,7 +164,7 @@ void CWorldClient::CreateClientInterp()
         if(!obj)
         {
             obj = new CObj(&m_interpworld);
-		    obj->SetObjState(&objstate, id);
+            obj->SetObjState(&objstate, id);
 		    m_interpworld.AddObj(obj);
         }
         else
@@ -183,15 +183,11 @@ void CWorldClient::CreateClientInterp()
     }
 
 	m_interpworld.UpdatePendingObjs();
-
-    assert(m_interpworld.state1.state.GetObjCount() ==
-           m_interpworld.state2.state.GetObjCount());
 }
 
-void CWorldInterp::Update(const float dt, const DWORD ticks)
+void CWorldInterp::Update(const float dt, const DWORD ticks) // Interpoliert zwischen versch. world_state_ts
 {
-	const DWORD tlocal = ticks;
-    const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
+    const DWORD rendertime = ticks - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
 	const DWORD updategap = state2.localtime - state1.localtime;
 
     if(updategap < 1)
@@ -226,8 +222,8 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
 		rot1 = obj1.rot;
 		rot2 = obj2.rot;
 
-        const float dist = (origin1 - origin2).AbsSquared();
-        if(dist > 0.01f) // bei kurzen abständen linear, sonst mit hermite raumkurve
+        const float dist_sqr = (origin1 - origin2).AbsSquared();
+        if(dist_sqr > 0.1f*0.1f) // bei kurzen abständen linear, sonst mit hermite raumkurve
             origin = vec3_t::Hermite(origin1, origin2, vel1.Normalized(), vel2.Normalized(), f);
         else
             origin = vec3_t::Lerp(origin1, origin2, f);

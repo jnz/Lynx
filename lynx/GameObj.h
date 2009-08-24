@@ -27,11 +27,23 @@ public:
     void SetHealth(int health) { m_health = health; }
     void AddHealth(int health) { m_health += health; }
 
-    virtual void DealDamage(int damage, vec3_t dir) { AddHealth(-damage); };
+    virtual void DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir) { AddHealth(-damage); };
 
     CThink m_think;
 
 private:
     int m_health;
     int m_clientid;
+};
+
+class CThinkFuncRemoveMe : public CThinkFunc
+{
+public:
+    CThinkFuncRemoveMe(DWORD time, CWorld* world, CObj* obj) : 
+      CThinkFunc(time, world, obj) {}
+    virtual bool DoThink(DWORD leveltime)
+    {
+        GetWorld()->DelObj(GetObj()->GetID());
+        return true;
+    }
 };

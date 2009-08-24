@@ -96,13 +96,25 @@ const static vec3_t gravity(0, -GRAVITY, 0);
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
     bsp_sphere_trace_t trace;
-    vec3_t p1 = obj->GetOrigin();
+    vec3_t p1 = obj->GetOrigin(); // Startpunkt
+    vec3_t p2 = p1; // Gewünschter Endpunkt
     vec3_t vel = obj->GetVel();
-    vel += gravity*dt;
+    vec3_t q; // Schnittpunkt mit Levelgeometrie
+    vec3_t p3; // Endpunkt nach "slide"
+
     assert(fabsf(vel.y) < 9999.9f);
-    vec3_t p2 = p1 + vel*dt + 0.5f*dt*dt*gravity;
-    vec3_t q;
-    vec3_t p3;
+
+    if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
+    {
+        vel += gravity*dt;
+        p2  += 0.5f*dt*dt*gravity;
+    }
+    else
+    {
+        int i = 0;
+    }
+    
+    p2 += vel*dt;
     trace.radius = obj->GetRadius();
     bool groundhit = false;
 

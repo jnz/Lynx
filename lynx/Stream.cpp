@@ -339,8 +339,8 @@ void CStream::ReadBytes(BYTE* values, int len)
 
 void CStream::ReadString(std::string* value)
 {
-	assert(GetBytesToRead() >= sizeof(WORD)+1);
-	if(GetBytesToRead() < sizeof(WORD)+1)
+	assert(GetBytesToRead() >= sizeof(WORD));
+	if(GetBytesToRead() < sizeof(WORD))
 		return;
 	WORD len;
 	ReadWORD(&len);

@@ -1,7 +1,8 @@
-#include <string.h>
+#include <string>
 #include "lynx.h"
 #include "Obj.h"
 #include <math.h>
+#include <sstream> // Particle Tokenizer
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -17,8 +18,9 @@
 #define OBJ_STATE_NEXTANIMATION  (1 <<  6)
 #define OBJ_STATE_EYEPOS         (1 <<  7)
 #define OBJ_STATE_FLAGS          (1 <<  8)
+#define OBJ_STATE_PARTICLES      (1 <<  9)
 
-#define OBJ_STATE_FULLUPDATE     ((1 << 9)-1)
+#define OBJ_STATE_FULLUPDATE     ((1 <<10)-1)
 
 int CObj::m_idpool = 0;
 
@@ -89,7 +91,7 @@ void CObj::SetResource(std::string resource)
 	if(state.resource != resource)
 	{
 		state.resource = resource;
-		UpdateProperties();
+		UpdateAnimation();
 		if(m_mesh)
 		{
 			state.radius = m_mesh->GetSphere();
@@ -108,7 +110,7 @@ void CObj::SetAnimation(INT16 animation)
 	{
 		state.animation = animation;
         state.nextanimation = animation;
-		UpdateProperties();
+		UpdateAnimation();
 	}
 }
 
@@ -165,6 +167,48 @@ int CObj::GetAnimationFromName(const char* name) const
         return m_mesh->FindAnimation(name);
     else
         return -1;
+}
+
+void CObj::UpdateParticles()
+{
+    if(!GetWorld()->IsClient())
+        return;
+
+    if(state.particles.size() < 1)
+    {
+        m_particlesys = std::auto_ptr<CParticleSystem>(NULL);
+        return;
+    }
+
+    std::istringstream iss(state.particles);
+    std::string psystem, pconfig;
+    if(getline(iss, psystem, '|') && getline(iss, pconfig, '|'))
+    {
+        PROPERTYMAP properties;
+        CParticleSystem::SetPropertyMap(pconfig, properties);
+        m_particlesys = std::auto_ptr<CParticleSystem>(
+                                        CParticleSystem::CreateSystem(
+                                        psystem, 
+                                        properties, 
+                                        GetWorld()->GetResourceManager()
+                                        ));
+    }
+    else
+    {
+        assert(0);
+    }
+}
+
+void CObj::SetParticleSystem(const std::string psystem)
+{
+    bool update = psystem != state.particles;
+    state.particles = psystem;
+    UpdateParticles();
+}
+
+std::string CObj::GetParticleSystemName() const
+{
+    return state.particles;
 }
 
 // DELTA COMPRESSION CODE (ugly) ------------------------------------
@@ -295,6 +339,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         DeltaDiffInt16(&state.nextanimation,    oldstate ? &oldstate->nextanimation : NULL, OBJ_STATE_NEXTANIMATION,&updateflags, stream);
         DeltaDiffVec3(&state.eyepos,            oldstate ? &oldstate->eyepos : NULL,        OBJ_STATE_EYEPOS,       &updateflags, stream);
         DeltaDiffBytes(&state.flags,            oldstate ? &oldstate->flags : NULL,         OBJ_STATE_FLAGS,        &updateflags, stream, sizeof(state.flags));
+        DeltaDiffString(&state.particles,       oldstate ? &oldstate->particles : NULL,     OBJ_STATE_PARTICLES,    &updateflags, stream);
 
         tempstream.WriteDWORD(updateflags); // jetzt können wir die updateflags vor den eigentlichen daten schreiben
 
@@ -325,13 +370,15 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             stream->ReadVec3(&state.eyepos);
         if(updateflags & OBJ_STATE_FLAGS)
             stream->ReadBytes(&state.flags, sizeof(state.flags));
+        if(updateflags & OBJ_STATE_PARTICLES)
+            stream->ReadString(&state.particles);
 
         m_id = id;
         if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION ||
             updateflags & OBJ_STATE_NEXTANIMATION)
-		{
-			UpdateProperties();
-		}
+			UpdateAnimation();
+        if(updateflags & OBJ_STATE_PARTICLES)
+            UpdateParticles();
 	}
 
 	return updateflags != 0;
@@ -343,9 +390,16 @@ void CObj::SetObjState(const obj_state_t* objstate, int id)
     bool resourcechange = objstate->resource != state.resource || 
                           objstate->animation != state.animation ||
                           objstate->nextanimation != state.nextanimation;
+    bool rotationchange = objstate->rot != state.rot;
+    bool particlechange = objstate->particles != state.particles;
+
 	state = *objstate;
     if(resourcechange)
-	    UpdateProperties();
+	    UpdateAnimation();
+    if(rotationchange)
+        UpdateMatrix();
+    if(particlechange)
+        UpdateParticles();
 }
 
 void CObj::CopyObjStateFrom(const CObj* source)
@@ -353,13 +407,18 @@ void CObj::CopyObjStateFrom(const CObj* source)
     SetObjState(&source->state, m_id);
 }
 
-void CObj::UpdateProperties()
+void CObj::UpdateAnimation()
 {
+    if(state.resource == "")
+    {
+        m_mesh = NULL;
+        return;
+    }
+
 	m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
 	if(state.animation >= 0)
         m_mesh->SetAnimation(&m_mesh_state, state.animation);
 	else
 		m_mesh->SetAnimation(&m_mesh_state, 0);
     m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
-	UpdateMatrix();
 }

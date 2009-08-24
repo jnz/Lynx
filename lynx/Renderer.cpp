@@ -101,6 +101,8 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_CULL_FACE);
 	glShadeModel(GL_SMOOTH);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	UpdatePerspective();
 /**/
 	// Vertex Light
@@ -119,6 +121,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 
 	glEnable(GL_LIGHT0);
 /**/
+
 	return true;
 }
 
@@ -196,17 +199,44 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 		glPushMatrix();
 		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
-		glMultMatrixf(obj->GetRotMatrix()->pm);
+
+        glMultMatrixf(obj->GetRotMatrix()->pm);
         if(obj->GetMesh())
 		{
 			obj->GetMesh()->Render(obj->GetMeshState());
 			obj->GetMesh()->Animate(obj->GetMeshState(), dt);
 		}
-		else
-			RenderCube();
 		glPopMatrix();
 	}
 	glDisable(GL_LIGHTING);
+
+    // Particle Draw
+    //glEnable(GL_ALPHA_TEST);
+    glEnable(GL_BLEND);
+    glDepthMask(false);
+	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+	{
+		obj = (*iter).second;
+        if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
+            continue;
+
+        obj->GetParticleSystem()->Update(dt, ticks);
+
+        // FIXME frustum test for particle system!
+		//if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+		//{
+		//	stat_obj_hidden++;
+		//	continue;
+		//}
+		glPushMatrix();
+		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        obj->GetParticleSystem()->Render(side, up, dir);
+		glPopMatrix();
+	}
+    glDepthMask(true);
+    glDisable(GL_BLEND);
+    //glDisable(GL_ALPHA_TEST);
+    glColor4f(1,1,1,1);
 
 #ifdef DRAWFRUSTUM
 	RenderFrustum(&frustum);
