@@ -6,8 +6,6 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAX_CLIENT_HISTORY          500
-
 #pragma warning(disable: 4355)
 CWorldClient::CWorldClient(void) : m_ghostobj(this)
 {
@@ -227,9 +225,12 @@ void CWorldInterp::Update(const float dt, const DWORD ticks)
         vel2 = obj2.vel;
 		rot1 = obj1.rot;
 		rot2 = obj2.rot;
-		
-		//origin = vec3_t::Lerp(origin1, origin2, f);
-        origin = vec3_t::Hermite(origin1, origin2, vel1, vel2, f);
+
+        const float dist = (origin1 - origin2).AbsSquared();
+        if(dist > 0.01f) // bei kurzen abständen linear, sonst mit hermite raumkurve
+            origin = vec3_t::Hermite(origin1, origin2, vel1.Normalized(), vel2.Normalized(), f);
+        else
+            origin = vec3_t::Lerp(origin1, origin2, f);
         quaternion_t::Slerp(&rot, rot1, rot2, f);
 
         obj->SetOrigin(origin);

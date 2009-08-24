@@ -7,10 +7,6 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAXCLIENTS				8
-#define SERVER_MAX_WORLD_AGE	5000				// wie viele ms heben wir für den client eine welt auf
-#define MAX_WORLD_BACKLOG		(10*MAXCLIENTS)		// wie viele welten werden gespeichert
-
 CServer::CServer(CWorld* world)
 {
 	enet_initialize();

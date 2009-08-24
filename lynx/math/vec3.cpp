@@ -298,7 +298,7 @@ vec3_t vec3_t::Lerp(const vec3_t& p1, const vec3_t& p2, const float f)
 vec3_t vec3_t::Hermite(const vec3_t& p1, const vec3_t& p2, const vec3_t& T1, const vec3_t& T2, const float t)
 {
     const float t2 = t*t;
-    const float t3 = t2 * t;
+    const float t3 = t2*t;
     return (1 - 3*t2 + 2*t3)*p1 + t2*(3-2*t)*p2 + t*(t-1)*(t-1)*T1 + t2*(t-1)*T2;
 }
 
