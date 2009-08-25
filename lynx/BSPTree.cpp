@@ -80,6 +80,7 @@ bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader c
             if(texture == 0)
             {
                 fprintf(stderr, "BSP: Texture not found: %s\n", tok);
+                assert(0);
                 return false;
             }
         }

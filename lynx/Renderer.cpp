@@ -1,4 +1,6 @@
 #include "SDL.h"
+#include "GL/glew.h"
+#define NO_SDL_GLEXT
 #include "SDL_opengl.h"
 #include "lynx.h"
 #include "Renderer.h"
@@ -121,6 +123,22 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 
 	glEnable(GL_LIGHT0);
 /**/
+
+    GLenum err = glewInit();
+    if(GLEW_OK != err)
+    {
+        fprintf(stderr, "glew error: %s\n", glewGetErrorString(err));
+        return false;
+    }
+
+    if(GLEW_VERSION_1_5)
+    {
+        fprintf(stderr, "OpenGL 1.5 support\n");
+    }
+    else
+    {
+        return false;
+    }
 
 	return true;
 }

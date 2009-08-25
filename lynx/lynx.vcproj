@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib OpenGL32.lib glu32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib OpenGL32.lib glu32.lib glew32.lib ws2_32.lib winmm.lib"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -143,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib OpenGL32.lib glu32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib OpenGL32.lib glu32.lib ws2_32.lib winmm.lib glew.lib "
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
