@@ -92,6 +92,13 @@ bool vec3_t::IsNull() const
 	return x==0.0f && y==0.0f && z==0.0f;
 }
 
+bool vec3_t::Equals(const vec3_t& cmp, const float epsilon) const
+{
+    return (fabs(x-cmp.x) < epsilon) &&
+           (fabs(y-cmp.y) < epsilon) &&
+           (fabs(z-cmp.z) < epsilon);
+}
+
 bool vec3_t::IsInArea(const vec3_t& min, const vec3_t& max) const
 {
 	return	x >= min.x && x <= max.x && 

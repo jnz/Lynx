@@ -448,6 +448,7 @@ int CBSPTree::SearchSplitPolygon(std::vector<bsp_poly_t>& polygons)
 	int i, j;
 	int polycount = (int)polygons.size();
 	int maxtest;
+    int tests=0;
 	plane_t curplane;
 	vec3_t polynormal;
 	int bestscore = INT_MAX;
@@ -463,12 +464,12 @@ int CBSPTree::SearchSplitPolygon(std::vector<bsp_poly_t>& polygons)
 		return -1;
 	if(polycount == 1)
 		return 0;
-	if(polycount > 200)
-		maxtest = 200;
+	if(polycount > 30)
+		maxtest = 30;
 	else
 		maxtest = polycount;
 
-	for(i=0;i<maxtest;i++)
+	for(i=0;i<polycount;i++)
 	{
 		if(polygons[i].splitmarker) // do not use as split plane again
 		{
@@ -477,13 +478,21 @@ int CBSPTree::SearchSplitPolygon(std::vector<bsp_poly_t>& polygons)
 #endif
 			continue;
 		}
+        tests++;
+        if(tests >= maxtest && bestpoly != -1)
+            break;
 
 		front = back = split = coplanar = 0;
 	
 		curplane.SetupPlane(m_vertices[polygons[i].vertices[2]],
 						 m_vertices[polygons[i].vertices[1]],
 						 m_vertices[polygons[i].vertices[0]]);
-		assert(curplane.m_n == m_normals[polygons[i].normals[0]]);
+#ifdef _DEBUG
+        bsp_poly_t curpoly = polygons[i];
+		vec3_t curplane_m_n = curplane.m_n;
+        vec3_t m_norm = m_normals[polygons[i].normals[0]];
+        assert(curplane_m_n.Equals(m_norm, 0.1f));
+#endif
 
 		for(j=0;j<polycount;j++)
 		{
@@ -535,8 +544,11 @@ void CBSPTree::SplitPolygon(bsp_poly_t& polyin, plane_t& plane,
 	int newindex; // for new vertices/texcoords
 
 	assert(polycount > 2);
-	assert(polyin.IsPlanar(this));
-
+	//assert(polyin.IsPlanar(this));
+#ifdef _DEBUG
+    bool planar = polyin.IsPlanar(this);
+    assert(planar);
+#endif
     polyfront.texture = polyin.texture;
     polyback.texture = polyin.texture;
 
@@ -868,7 +880,7 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 	tree->m_nodecount++;
 	CalculateSphere(tree, polygons);
 
-	if(tree->IsConvexSet(polygons))
+	if(tree->IsConvexSet(polygons) || polygons.size() < 200)
 	{
 		fprintf(stderr, "BSP: Convex subspace with %i polygons formed\n", polygons.size());
 		polylist = polygons;
@@ -887,6 +899,8 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 	if(split < 0)
 	{
 		assert(0);
+        fprintf(stderr, "BSP: Weird problem\n");
+        // Im Endeffekt ist das hier dann auf ein neues Leaf. Sollte so nie vorkommen
 		polylist = polygons;
 		for(i=0;i<(int)polylist.size();i++)
 			polylist[i].GeneratePlanes(tree);
@@ -920,11 +934,49 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 			break;
 		case POLYPLANE_SPLIT:
 			tree->SplitPolygon(polygons[i], plane, polyfront, polyback);
-			if(polyfront.Size() > 2)
+
+            // Wir akzeptieren nur Dreiecke als Eingangspolygone und wenn jetzt nach einem
+            // Split ein Quad entsteht teilen wir das wieder in 
+            if(polyfront.Size() > 3)
+            {
+                bsp_poly_t poly1 = polyfront;
+                bsp_poly_t poly2 = polyfront;
+                poly1.vertices.pop_back();
+                poly1.texcoords.pop_back();
+                poly1.normals.pop_back();
+                poly2.vertices.erase(poly2.vertices.begin() + 1);
+                poly2.texcoords.erase(poly2.texcoords.begin() + 1);
+                poly2.normals.erase(poly2.normals.begin() + 1);
+                if(poly1.IsPlanar(tree))
+                    frontlist.push_back(poly1);
+                if(poly2.IsPlanar(tree))
+                    frontlist.push_back(poly2);
+            }
+            else if(polyfront.Size() > 2 && polyfront.IsPlanar(tree))
+            {
 				frontlist.push_back(polyfront);
-			if(polyback.Size() > 2)
+            }
+            if(polyback.Size() > 3) // FIXME copy and paste code
+            {
+                bsp_poly_t poly1 = polyback;
+                bsp_poly_t poly2 = polyback;
+                poly1.vertices.pop_back();
+                poly1.texcoords.pop_back();
+                poly1.normals.pop_back();
+                poly2.vertices.erase(poly2.vertices.begin() + 1);
+                poly2.texcoords.erase(poly2.texcoords.begin() + 1);
+                poly2.normals.erase(poly2.normals.begin() + 1);
+                if(poly1.IsPlanar(tree))
+                    backlist.push_back(poly1);
+                if(poly2.IsPlanar(tree))
+                    backlist.push_back(poly2);
+            }
+            else if(polyback.Size() > 2 && polyback.IsPlanar(tree))
+            {
 				backlist.push_back(polyback);
-			polyfront.Clear();
+            }
+
+            polyfront.Clear();
 			polyback.Clear();
 			break;
 		}
@@ -989,8 +1041,16 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 	testplane.SetupPlane(tree->m_vertices[vertices[2]],
 						 tree->m_vertices[vertices[1]],
 						 tree->m_vertices[vertices[0]]);
-	if(!testplane.m_n.IsNormalized()) // funny vertices make the plane cry
+	if(!testplane.m_n.IsNormalized())
+    {
+//#ifdef _DEBUG
+//        vec3_t v1 = tree->m_vertices[vertices[2]];
+//        vec3_t v2 = tree->m_vertices[vertices[1]];
+//		vec3_t v3 = tree->m_vertices[vertices[0]];
+//        assert(0);
+//#endif
 		return false;
+    }
 	int polysize = Size();
 	assert(polysize > 2);
 	if(polysize > 3)
@@ -1005,7 +1065,7 @@ bool bsp_poly_t::IsPlanar(CBSPTree* tree)
 				fprintf(stderr, "BSP: Nonplanar polygon. Dist: %f\n",
 					testplane.GetDistFromPlane(v));
 				testplane.Classify(v, BSP_EPSILON);
-		//		assert(0);
+				assert(0);
 #endif
 				return false;
 			}

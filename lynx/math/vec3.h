@@ -26,6 +26,7 @@ struct vec3_t
 	void SetLength(float length);
 
 	bool IsNull() const; // Exakt auf 0,0,0 testen (ohne Epsilon)
+    bool Equals(const vec3_t& cmp, const float epsilon) const;
 
 	bool IsInArea(const vec3_t& min, const vec3_t& max) const;
 
