@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "math/mathconst.h"
+#include "BSPBIN.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -22,7 +23,7 @@ CBSPTree::~CBSPTree(void)
 }
 
 #pragma warning(disable: 4244)
-bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader code :-(
+bool CBSPTree::Load(std::string file)
 {
 	const char* DELIM = " \t\r\n";
 	FILE* f;
@@ -34,7 +35,7 @@ bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader c
     int texture=0;
 	bsp_poly_t polygon;
 	int nonplanar = 0; // anzahl der nicht-ebenen polygone zählen
-    std::string dir = CLynx::GetDirectory(file);
+    std::string texpath;
 
     Unload();
 
@@ -73,16 +74,20 @@ bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader c
                 sv[2] = "0.0";
 			m_texcoords.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
 		}
-        else if(strcmp(tok, "usemtl")==0 && resman)
+        else if(strcmp(tok, "usemtl")==0)
         {
             tok = strtok(NULL, DELIM);
-            texture = resman->GetTexture(dir + tok);
-            if(texture == 0)
-            {
-                fprintf(stderr, "BSP: Texture not found: %s\n", tok);
-                assert(0);
-                return false;
-            }
+            texpath = tok;
+            //if(resman)
+            //{
+            //    texture = resman->GetTexture(dir + tok);
+            //    if(texture == 0)
+            //    {
+            //        fprintf(stderr, "BSP: Texture not found: %s\n", tok);
+            //        assert(0);
+            //        return false;
+            //    }
+            //}
         }
         else if(strcmp(tok, "spawn")==0)
         {
@@ -102,6 +107,7 @@ bool CBSPTree::Load(std::string file, CResourceManager* resman) // Ugly loader c
 				continue;
 			polygon.Clear();
             polygon.texture = texture;
+            polygon.texturepath = texpath;
 			for(i=0;i<3;i++)
 			{
 				sscanf(sv[i], "%i/%i/%i", &vi, &ti, &ni);
@@ -631,6 +637,213 @@ bool CBSPTree::IsConvexSet(std::vector<bsp_poly_t>& polygons)
 		}
 	}
 	return true;
+}
+
+// WriteToBinary Helper Functions
+
+int bspbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpath)
+{
+    int i=0;
+    std::vector<bspbin_texture_t>::const_iterator iter;
+    for(iter = textures.begin(); iter != textures.end(); iter++)
+    {
+        if(strcmp(iter->name, texpath) == 0)
+        {
+            return i;
+        }
+        i++;
+    }
+    bspbin_texture_t thistexture;
+    memset(&thistexture, 0, sizeof(thistexture));
+    strcpy(thistexture.name, texpath);
+    textures.push_back(thistexture);
+    return textures.size()-1;
+}
+
+int bspbin_pushleaf(const CBSPTree& tree,
+                    const CBSPTree::CBSPNode* leaf, 
+                        std::vector<bspbin_texture_t>& textures,
+                        std::vector<bspbin_leaf_t>& leafs,
+                        std::vector<bspbin_poly_t>& poly,
+                        std::vector<bspbin_vertex_t>& vertices)
+{
+    std::vector<bsp_poly_t>::const_iterator iter;
+    std::vector<int>::const_iterator intiter;
+
+    const int firstpoly = poly.size();
+    int polycount = 0;
+
+    for(iter = leaf->polylist.begin(); iter != leaf->polylist.end(); iter++)
+    {
+        const int firstvertex = vertices.size();
+        int vertexcount = 0;
+
+        assert(iter->vertices.size() == iter->normals.size());
+        assert(iter->normals.size() == iter->texcoords.size());
+
+        // vertices von polygon hinzufügen
+        for(unsigned int index = 0; index < iter->vertices.size(); index++)
+        {
+            bspbin_vertex_t nv;
+            memset(&nv, 0, sizeof(nv));
+
+            const int vindex = iter->vertices[index];
+            nv.v = tree.m_vertices[vindex];
+            
+            const int nindex = iter->normals[index];
+            nv.n = tree.m_normals[nindex];
+            
+            const int tindex = iter->texcoords[index];
+            nv.tu = tree.m_texcoords[tindex].x;
+            nv.tv = tree.m_texcoords[tindex].y;
+
+            vertices.push_back(nv);
+            vertexcount++;
+        }
+
+        // Textur hinzufügen
+        int texturenum = bspbin_addtexture(textures, iter->texturepath.c_str());
+
+        bspbin_poly_t thispoly;
+        memset(&thispoly, 0, sizeof(thispoly));
+        thispoly.tex = texturenum;
+        thispoly.firstvertex = firstvertex;
+        thispoly.vertexcount = vertexcount;
+        poly.push_back(thispoly);
+        polycount++;
+    }
+
+    bspbin_leaf_t thisleaf;
+    memset(&thisleaf, 0, sizeof(thisleaf));
+    thisleaf.firstpoly = firstpoly;
+    thisleaf.polycount = polycount;
+    leafs.push_back(thisleaf);
+
+    return -(int)leafs.size(); // um 1 erhöht
+}
+
+int bspbin_getnodes(const CBSPTree& tree,
+                    const CBSPTree::CBSPNode* node, 
+                        std::vector<bspbin_plane_t>& planes,
+                        std::vector<bspbin_texture_t>& textures,
+                        std::vector<bspbin_node_t>& nodes,
+                        std::vector<bspbin_leaf_t>& leafs,
+                        std::vector<bspbin_poly_t>& poly,
+                        std::vector<bspbin_vertex_t>& vertices)
+{
+    if(node->IsLeaf())
+    {
+        return bspbin_pushleaf(tree, node, textures, leafs, poly, vertices);
+    }
+
+    bspbin_plane_t bspplane;
+    bspplane.p = node->plane;
+    planes.push_back(bspplane);
+
+    bspbin_node_t thisnode;
+    const int curpos = nodes.size();
+    thisnode.plane = planes.size()-1;
+    thisnode.radius = node->sphere;
+    thisnode.sphere_origin = node->sphere_origin;
+    nodes.push_back(thisnode);
+
+    assert(node->front && node->back);
+    nodes[curpos].children[0] = bspbin_getnodes(tree,
+                                                node->front, 
+                                                planes, 
+                                                textures,
+                                                nodes,
+                                                leafs,
+                                                poly,
+                                                vertices);
+    nodes[curpos].children[1] = bspbin_getnodes(tree,
+                                                node->back, 
+                                                planes, 
+                                                textures,
+                                                nodes,
+                                                leafs,
+                                                poly,
+                                                vertices);
+    return curpos;
+}
+
+template<typename Lump>
+void WriteLump(FILE*f, std::vector<Lump> l)
+{
+    std::vector<Lump>::const_iterator iter;
+    for(iter = l.begin();iter != l.end();iter++)
+    {
+        Lump tl = (*iter);
+        fwrite(&tl, sizeof(tl), 1, f);
+    }
+}
+
+
+bool CBSPTree::WriteToBinary(const std::string filepath)
+{
+    FILE* f = fopen(filepath.c_str(), "wb");
+    assert(f);
+    if(!f)
+        return false;
+
+    std::vector<bspbin_plane_t> planes;
+    std::vector<bspbin_texture_t> textures;
+    std::vector<bspbin_node_t> nodes;
+    std::vector<bspbin_leaf_t> leafs;
+    std::vector<bspbin_poly_t> poly;
+    std::vector<bspbin_vertex_t> vertices;
+
+    bspbin_getnodes(*this,
+                    m_root, 
+                    planes, 
+                    textures,
+                    nodes,
+                    leafs,
+                    poly,
+                    vertices);
+
+    bspbin_direntry_t dirplane;
+    bspbin_direntry_t dirtextures;
+    bspbin_direntry_t dirnodes;
+    bspbin_direntry_t dirleafs;
+    bspbin_direntry_t dirpoly;
+    bspbin_direntry_t dirvertices;
+
+    bspbin_header_t header;
+    header.magic = 0xBEAFBEAF;
+    header.version = 1;
+
+    dirplane.offset = sizeof(bspbin_header_t);
+    dirplane.length = planes.size() * sizeof(bspbin_plane_t);
+    dirtextures.offset = dirplane.length + dirplane.offset;
+    dirtextures.length = textures.size() * sizeof(bspbin_texture_t);
+    dirnodes.offset = dirtextures.length + dirtextures.offset;
+    dirnodes.length = nodes.size() * sizeof(bspbin_node_t);
+    dirleafs.offset = dirnodes.length + dirnodes.offset;
+    dirleafs.length = leafs.size() * sizeof(bspbin_leaf_t);
+    dirpoly.offset = dirleafs.length + dirleafs.offset;
+    dirpoly.length = poly.size() * sizeof(bspbin_poly_t);
+    dirvertices.offset = dirpoly.length + dirpoly.offset;
+    dirvertices.length = vertices.size() * sizeof(bspbin_vertex_t);
+    
+    fwrite(&header, sizeof(header), 1, f);
+    fwrite(&dirplane, sizeof(dirplane), 1, f);
+    fwrite(&dirtextures, sizeof(dirtextures), 1, f);
+    fwrite(&dirnodes, sizeof(dirnodes), 1, f);
+    fwrite(&dirleafs, sizeof(dirleafs), 1, f);
+    fwrite(&dirpoly, sizeof(dirpoly), 1, f);
+    fwrite(&dirvertices, sizeof(dirvertices), 1, f);
+
+    WriteLump(f, planes);
+    WriteLump(f, textures);
+    WriteLump(f, nodes);
+    WriteLump(f, leafs);
+    WriteLump(f, poly);
+    WriteLump(f, vertices);
+
+    fclose(f);
+
+    return true;
 }
 
 CBSPTree::CBSPNode::~CBSPNode()

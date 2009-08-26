@@ -5,7 +5,6 @@
 #include "math/plane.h"
 #include "math/quaternion.h"
 #include <vector>
-#include "ResourceManager.h"
 
 /*
     CBSPTree verwaltet die Level Geometrie und wird
@@ -40,6 +39,7 @@ struct bsp_poly_t
     int texture; // Aktuelle Textur auf Polygon
 	bool splitmarker; // true if this poly was used to split the space
 	int colormarker; // Zu Testzwecken, ob das Polygon eingefärbt werden soll. FIXME: entfernen, wenn alles klappt
+    std::string texturepath;
 
 	int Size() // vertex count
 	{
@@ -80,7 +80,7 @@ public:
 	CBSPTree(void);
 	~CBSPTree(void);
 
-	bool		Load(std::string file, CResourceManager* resman); // Lädt den Level aus Wavefront .obj Dateien. Texturen werden über den ResourceManager geladen
+	bool		Load(std::string file); // Lädt den Level aus Wavefront .obj Dateien. Texturen werden über den ResourceManager geladen
 	void		Unload();
 	std::string GetFilename() const; // Aktuell geladener Pfad zu Level
 	void		GetLeftRightScore(int* left, int* right) const; // Anzahl der Knoten im linken und rechten Bereich. Nützlich um zu sehen, ob der Baum gut balanciert ist
@@ -126,6 +126,8 @@ public:
 	int			GetLeafCount() const { return m_leafcount; }
 
     spawn_point_t GetRandomSpawnPoint() const;
+
+    bool        WriteToBinary(const std::string filepath);
 
 protected:
     void		TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) const;

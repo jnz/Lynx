@@ -10,22 +10,6 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-
-DWORD CLynx::GetTicks()
-{
-	return SDL_GetTicks();
-}
-
-void CLynx::GetMouseDelta(int* dx, int* dy)
-{
-	SDL_GetRelativeMouseState(dx, dy);
-}
-
-BYTE* CLynx::GetKeyState()
-{
-	return SDL_GetKeyState(NULL);
-}
-
 #pragma warning(disable: 4244)
 
 float CLynx::AngleMod(float a)

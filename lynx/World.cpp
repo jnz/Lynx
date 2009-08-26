@@ -3,6 +3,7 @@
 #include "World.h"
 #include <math.h>
 #include <list>
+#include "lynxsys.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -13,7 +14,7 @@
 CWorld::CWorld(void) : m_resman(this)
 {
     state.worldid = 0;
-    m_leveltimestart = CLynx::GetTicks();
+    m_leveltimestart = CLynxSys::GetTicks();
     state.leveltime = 0;
 }
 
@@ -264,8 +265,7 @@ void CWorld::UpdatePendingObjs()
 
 bool CWorld::LoadLevel(const std::string path)
 {
-    bool success = m_bsptree.Load(path, 
-                                  IsClient() ? GetResourceManager() : NULL);
+    bool success = m_bsptree.Load(path);
     if(success)
         state.level = path;
     return success;

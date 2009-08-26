@@ -3,6 +3,7 @@
 #include "math/mathconst.h"
 #include <math.h>
 #include "SDL.h"
+#include "lynxsys.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -24,7 +25,7 @@ CClient::CClient(CWorldClient* world, CGameLogic* gamelogic)
     m_lat = 0;
     m_lon = 0;
 
-    m_lastupdate = CLynx::GetTicks();
+    m_lastupdate = CLynxSys::GetTicks();
 }
 
 CClient::~CClient(void)
@@ -123,7 +124,7 @@ void CClient::Update(const float dt, const DWORD ticks)
 
 void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend)
 {
-    DWORD ticks = CLynx::GetTicks();
+    DWORD ticks = CLynxSys::GetTicks();
     if(!IsConnected() || m_world->GetBSP()->GetFilename() == "")
         return;
 
@@ -181,7 +182,7 @@ void CClient::InputMouseMove()
 	CObj* obj = GetLocalController();
 	const float sensitivity = 0.5f; // FIXME
 	int dx, dy;
-	CLynx::GetMouseDelta(&dx, &dy);
+	CLynxSys::GetMouseDelta(&dx, &dy);
 
 	m_lat += (float)dy * sensitivity;
 	if(m_lat >= 89)
@@ -200,7 +201,7 @@ void CClient::InputMouseMove()
 void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)
 {
 	// FIXME: no SDL code here
-	BYTE* keystate = CLynx::GetKeyState();
+	BYTE* keystate = CLynxSys::GetKeyState();
     *forcesend = false;
 
     if(keystate[SDLK_UP] || keystate[SDLK_w])

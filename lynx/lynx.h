@@ -12,10 +12,6 @@ typedef unsigned char	BYTE;
 class CLynx
 {
 public:
-	CLynx();
-	static DWORD GetTicks();
-	static void GetMouseDelta(int* dx, int* dy);
-	static BYTE* GetKeyState();
 	static float AngleMod(float a);
 
 	static std::string GetBaseDir() { return "baselynx/"; }
@@ -29,7 +25,7 @@ public:
 
     static std::string FloatToString(float f, int precision);
 
-    static float randf() { return (rand()%20000)*0.0001f-1.0f; }
+    static float randf() { return (rand()%20000)*0.0001f-1.0f; } // FIXME srand aufruf sicherstellen
     static float randfabs() { return (rand()%10000)*0.0001f; }
 };
 

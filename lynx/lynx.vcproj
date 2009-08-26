@@ -252,6 +252,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\BSPBIN.h"
+				>
+			</File>
+			<File
 				RelativePath=".\BSPTree.h"
 				>
 			</File>
@@ -371,6 +375,14 @@
 			</File>
 			<File
 				RelativePath=".\lynx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lynxsys.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\lynxsys.h"
 				>
 			</File>
 			<File

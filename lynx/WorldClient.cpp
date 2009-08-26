@@ -1,5 +1,6 @@
 #include "WorldClient.h"
 #include "ServerClient.h"
+#include "lynxsys.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -77,7 +78,7 @@ void CWorldClient::AddWorldToHistory()
 {
 	worldclient_state_t clstate;
 	clstate.state = GetWorldState();
-	clstate.localtime = CLynx::GetTicks();
+	clstate.localtime = CLynxSys::GetTicks();
 	m_history.push_front(clstate);
 	assert(m_history.size() < 80);
 	while(clstate.localtime - m_history.back().localtime > MAX_CLIENT_HISTORY)
@@ -95,7 +96,7 @@ void CWorldClient::CreateClientInterp()
         return;
 
     std::list<worldclient_state_t>::iterator iter = m_history.begin();
-    const DWORD tlocal = CLynx::GetTicks(); // aktuelle zeit
+    const DWORD tlocal = CLynxSys::GetTicks(); // aktuelle zeit
     const DWORD tlocal_n = (*iter).localtime; // zeit von letztem packet
     const DWORD dtupdate = tlocal - tlocal_n; // zeit seit letztem update
     const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll

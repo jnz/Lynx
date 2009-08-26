@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "SDL.h"
+#include "lynxsys.h"
 #include <time.h>
 #include "Renderer.h"
 #include "Server.h"
@@ -82,10 +83,10 @@ int main(int argc, char** argv)
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_WM_GrabInput(SDL_GRAB_ON);
 	run = 1;
-	oldtime = fpstimer = CLynx::GetTicks();
+	oldtime = fpstimer = CLynxSys::GetTicks();
 	while(run)
 	{
-		time = CLynx::GetTicks();
+		time = CLynxSys::GetTicks();
 		dt = 0.001f * (float)(time-oldtime);
 		oldtime = time;
 		fpscounter++;
