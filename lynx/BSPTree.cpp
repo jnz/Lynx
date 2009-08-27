@@ -780,7 +780,7 @@ int bspbin_getnodes(const CBSPTree& tree,
 }
 
 template<typename Lump>
-void WriteLump(FILE*f, std::vector<Lump> l)
+void WriteLump(FILE*f, const std::vector<Lump>& l)
 {
     std::vector<Lump>::const_iterator iter;
     for(iter = l.begin();iter != l.end();iter++)
@@ -789,7 +789,6 @@ void WriteLump(FILE*f, std::vector<Lump> l)
         fwrite(&tl, sizeof(tl), 1, f);
     }
 }
-
 
 bool CBSPTree::WriteToBinary(const std::string filepath)
 {
@@ -822,10 +821,12 @@ bool CBSPTree::WriteToBinary(const std::string filepath)
     bspbin_direntry_t dirvertices;
 
     bspbin_header_t header;
-    header.magic = 0xBEAFBEAF;
-    header.version = 1;
+    header.magic = BSPBIN_MAGIC;
+    header.version = BSPBIN_VERSION;
 
-    dirplane.offset = sizeof(bspbin_header_t);
+    unsigned int headeroffset = BSPBIN_HEADER_LEN;
+
+    dirplane.offset = headeroffset;
     dirplane.length = planes.size() * sizeof(bspbin_plane_t);
     dirtextures.offset = dirplane.length + dirplane.offset;
     dirtextures.length = textures.size() * sizeof(bspbin_texture_t);
@@ -880,7 +881,7 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 	tree->m_nodecount++;
 	CalculateSphere(tree, polygons);
 
-	if(tree->IsConvexSet(polygons) || polygons.size() < 200)
+	if(tree->IsConvexSet(polygons) || polygons.size() < 2)
 	{
 		fprintf(stderr, "BSP: Convex subspace with %i polygons formed\n", polygons.size());
 		polylist = polygons;

@@ -24,7 +24,8 @@ void CGameZombie::InitGame()
     GetWorld()->AddObj(zombie);
 
     // Level laden
-    GetWorld()->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.obj");
+    bool success = GetWorld()->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.lbsp");
+    assert(success);
 }
 
 void CGameZombie::Notify(EventNewClientConnected e)

@@ -9,6 +9,9 @@ typedef short			INT16;
 typedef unsigned short	WORD;
 typedef unsigned char	BYTE;
 
+#define SAFE_RELEASE(x) if(x) { delete x; x = NULL; }
+#define SAFE_RELEASE_ARRAY(x) if(x) { delete[] x; x = NULL; }
+
 class CLynx
 {
 public:

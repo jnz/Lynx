@@ -5,7 +5,7 @@ class CWorld;
 #include <hash_map>
 #include <list>
 #include "Obj.h"
-#include "BSPTree.h"
+#include "BSPLevel.h"
 #include "ResourceManager.h"
 
 /*
@@ -97,7 +97,7 @@ public:
 	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
 
     bool    LoadLevel(const std::string path); // Level laden und BSP Tree vorbereiten
-    const virtual CBSPTree* GetBSP() const { return &m_bsptree; }
+    const virtual CBSPLevel* GetBSP() const { return &m_bsptree; }
     DWORD   GetLeveltime() const { return state.leveltime; } // Levelzeit, beginnt bei 0
     DWORD   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
 
@@ -113,7 +113,7 @@ protected:
     CResourceManager m_resman;
 	world_state_t state;
     DWORD    m_leveltimestart;
-    CBSPTree m_bsptree;
+    CBSPLevel m_bsptree;
 
 	OBJMAPTYPE m_objlist;
 	void	UpdatePendingObjs(); // Entfernt zu löschende Objekte und fügt neue hinzu (siehe m_addobj und removeobj)

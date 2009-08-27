@@ -85,13 +85,11 @@ void CWorld::Update(const float dt, const DWORD ticks)
 
 	UpdatePendingObjs();
 
-	if(!m_bsptree.m_root)
+    if(!m_bsptree.IsLoaded())
 		return;
-
-	m_bsptree.ClearMarks(m_bsptree.m_root);
 }
 
-#define GRAVITY             (100.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
+#define GRAVITY             (0.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON		(0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const
@@ -265,9 +263,9 @@ void CWorld::UpdatePendingObjs()
 
 bool CWorld::LoadLevel(const std::string path)
 {
-    bool success = m_bsptree.Load(path);
+    bool success = m_bsptree.Load(path, IsClient() ? GetResourceManager() : NULL);
     if(success)
-        state.level = path;
+        state.level = m_bsptree.GetFilename();
     return success;
 }
 

@@ -1,8 +1,21 @@
 #pragma once
 
 #include "lynx.h"
+#include "math/plane.h"
+#include "math/quaternion.h"
 
 // #pragma pack(push, 1) // manual padding
+
+#define BSPBIN_MAGIC    0xBEAFBEAF
+#define BSPBIN_VERSION  1
+
+#define BSPBIN_HEADER_LEN   (sizeof(bspbin_header_t) + 6*sizeof(bspbin_direntry_t))
+
+struct spawn_point_t
+{
+    vec3_t origin;
+    quaternion_t rot;
+};
 
 struct bspbin_header_t
 {

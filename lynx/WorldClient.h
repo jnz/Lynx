@@ -37,13 +37,13 @@ public:
 
     virtual bool    IsClient() const { return true; }
 
-	const virtual CBSPTree* GetBSP() const { return m_pbsp; }
+	const virtual CBSPLevel* GetBSP() const { return m_pbsp; }
 	virtual CResourceManager* GetResourceManager() { return m_presman; }
 
 	void Update(const float dt, const DWORD ticks); // Lineare Interpolation um Schrittweite dt weiter laufen lassen
 
 protected:
-	CBSPTree* m_pbsp;
+	CBSPLevel* m_pbsp;
 	CResourceManager* m_presman;
 	worldclient_state_t state1;
 	worldclient_state_t state2;

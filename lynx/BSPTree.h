@@ -5,6 +5,7 @@
 #include "math/plane.h"
 #include "math/quaternion.h"
 #include <vector>
+#include "BSPBIN.h"
 
 /*
     CBSPTree verwaltet die Level Geometrie und wird
@@ -19,15 +20,6 @@
 class CBSPTree;
 
 #define MAX_TRACE_DIST      99999.999f
-
-struct bsp_sphere_trace_t
-{
-	vec3_t	start; // start point
-    vec3_t  dir; // end point = start + dir
-    float   radius;
-	float	f; // impact = start + f*dir
-	plane_t	p; // impact plane
-};
 
 struct bsp_poly_t
 {
@@ -62,17 +54,20 @@ struct bsp_poly_t
 	void GeneratePlanes(CBSPTree* tree); // Erzeugt den Normalenvektor der Fläche
 };
 
-struct spawn_point_t
-{
-    vec3_t origin;
-    quaternion_t rot;
-};
-
 enum polyplane_t {	POLYPLANE_SPLIT = 0,
 					POLYPLANE_BACK = 1, 
 					POLYPLANE_FRONT = 2, 
 					POLYPLANE_COPLANAR = 3
 					}; // if you change the order, change TestPolygon too
+
+struct bsp_sphere_trace_t
+{
+	vec3_t	start; // start point
+    vec3_t  dir; // end point = start + dir
+    float   radius;
+	float	f; // impact = start + f*dir
+	plane_t	p; // impact plane
+};
 
 class CBSPTree
 {
