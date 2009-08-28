@@ -122,7 +122,7 @@ unsigned int CResourceManager::LoadTGA(std::string path)
 	if(!f)
 	{
 		fprintf(stderr, "Could not open texture file: %s\n", path.c_str());
-        assert(0);
+        //assert(0);
 		return 0;
 	}
 

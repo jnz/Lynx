@@ -89,7 +89,7 @@ void CWorld::Update(const float dt, const DWORD ticks)
 		return;
 }
 
-#define GRAVITY             (0.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
+#define GRAVITY             (100.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON		(0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const
@@ -119,7 +119,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     for(int i=0;(p2 - p1) != vec3_t::origin && i < 10; i++)
     {
-        assert(i < 9); // sollte nicht passieren
+        //assert(i < 9); // sollte nicht passieren
 
         trace.start = p1;
         trace.dir = p2 - p1;

@@ -17,16 +17,10 @@
 #define PLANE_FAR		10000.0f
 #define RENDERER_FOV    90.0f
 
-//#define DRAWFRUSTUM
-
 // Local Render Functions
-#ifdef DRAWFRUSTUM
-static void RenderFrustum(void* frustum);
-#endif
 static void BSP_RenderTree(const CBSPLevel* tree, 
 						   const vec3_t* origin, 
-						   CFrustum* frustum,
-                           int* leafs_visited);
+						   CFrustum* frustum);
 
 static void RenderCube();
 
@@ -169,36 +163,15 @@ void CRenderer::Update(const float dt, const DWORD ticks)
     dir = -dir;
 	glLoadMatrixf(m.pm);
 
-/* <Frust drawing> */
-#ifdef DRAWFRUSTUM
-	static CPosition lastpos;
-	if(CLynx::GetKeyState()[SDLK_f])
-		lastpos = obj->pos;
-	matrix_t tmp;
-	tmp.SetCamTransform(&(lastpos.origin), &lastpos.rot);
-	tmp.GetVec3Cam(&dir, &up, &side);
-    dir = -dir;
-	frustum.Setup(lastpos.origin+vec3_t(0,1,0), dir, up, side, 
-				  obj->GetFOV(), (float)m_width/(float)m_height,
-				  PLANE_NEAR, 
-				  PLANE_FAR);
-#else
 	frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
 				  RENDERER_FOV, (float)m_width/(float)m_height,
 				  PLANE_NEAR, 
 				  PLANE_FAR); 
-#endif
-/* </Frust drawing> */
 
 	stat_obj_hidden = 0;
 	stat_obj_visible = 0;
-    stat_bsp_leafs_visited = 0;
 
-#ifdef DRAWFRUSTUM
-	BSP_RenderTree(&world->m_bsptree, &lastpos.origin, &frustum, &stat_bsp_leafs_visited);
-#else
-	BSP_RenderTree(world->GetBSP(), &localctrl->GetOrigin(), &frustum, &stat_bsp_leafs_visited);
-#endif
+	BSP_RenderTree(world->GetBSP(), &localctrl->GetOrigin(), &frustum);
 
 	glEnable(GL_LIGHTING);
 	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
@@ -256,10 +229,6 @@ void CRenderer::Update(const float dt, const DWORD ticks)
     //glDisable(GL_ALPHA_TEST);
     glColor4f(1,1,1,1);
 
-#ifdef DRAWFRUSTUM
-	RenderFrustum(&frustum);
-#endif
-
 	/*
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
@@ -284,86 +253,7 @@ void CRenderer::UpdatePerspective()
 	glLoadIdentity();
 }
 
-//void BSP_RenderPolygons(const CBSPTree* tree, 
-//						const std::vector<bsp_poly_t>& polylist)
-//{
-//	int c;
-//	int t;
-//	int tcount;
-//	int polycount = (int)polylist.size();
-//	bsp_poly_t* poly;
-//	int vi, ni, ti;
-//
-//	assert(polycount > 0);
-//
-//	for(c=0;c<polycount;c++)
-//	{
-//		poly = (bsp_poly_t*)&polylist[c];
-//		tcount = (int)poly->vertices.size();
-//
-//        glBindTexture(GL_TEXTURE_2D, poly->texture);
-//        glBegin(GL_POLYGON);
-//		for(t=0;t<tcount;t++)
-//		{
-//			vi = poly->vertices[t];
-//			ni = poly->normals[t];
-//			ti = poly->texcoords[t];
-//			glTexCoord2f(tree->m_texcoords[ti].x, tree->m_texcoords[ti].y);
-//			glNormal3fv(tree->m_normals[ni].v);
-//			glVertex3fv(tree->m_vertices[vi].v);
-//		}
-//		glEnd();
-//	}
-//}
-
-/*
-	In-order BSP Tree walking
-*/
-//void BSP_RenderNode(const CBSPTree* tree, 
-//					const CBSPTree::CBSPNode* node, 
-//					const vec3_t* pos, 
-//					CFrustum* frustum,
-//                    int* leafs_visited)
-//{
-//	if(!frustum->TestSphere(node->sphere_origin, node->sphere))
-//		return;
-//
-//	if(node->IsLeaf())
-//	{
-//#ifdef COLORLEAFS
-//		if(node->marker)
-//		{
-//			int index = node->marker%(sizeof(g_colortable)/sizeof(g_colortable[0]));
-//			vec3_t color = g_colortable[index];
-//			glColor3fv(color.v);
-//		}
-//		else
-//			glColor3f(1,1,1);
-//#endif
-//		BSP_RenderPolygons(tree, node->polylist);
-//        (*leafs_visited)++;
-//		return;
-//	}
-//
-//	switch(node->plane.Classify(*pos))
-//	{
-//	case POINTPLANE_FRONT:
-//		if(node->back)
-//			BSP_RenderNode(tree, node->back, pos, frustum, leafs_visited);
-//		if(node->front)
-//			BSP_RenderNode(tree, node->front, pos, frustum, leafs_visited);
-//		break;
-//	case POINTPLANE_BACK:
-//	case POINT_ON_PLANE:
-//		if(node->front)
-//			BSP_RenderNode(tree, node->front, pos, frustum, leafs_visited);
-//		if(node->back)
-//			BSP_RenderNode(tree, node->back, pos, frustum, leafs_visited);
-//		break;
-//	}
-//}
-
-void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, CFrustum* frustum, int* leafs_visited)
+void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, CFrustum* frustum)
 {
 	if(!tree)
 		return;
@@ -406,49 +296,6 @@ void RenderCube() // this is handy sometimes
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
 	glEnd();
 }
-
-#ifdef DRAWFRUSTUM
-void RenderFrustum(void* frustum)
-{
-	CFrustum* frust = (CFrustum*)frustum;
-
-	glColor3f(1,1,1);
-
-	glBegin(GL_LINES);
-		glVertex3fv(frust->ntl.v);
-		glVertex3fv(frust->ftl.v);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3fv(frust->ntr.v);
-		glVertex3fv(frust->ftr.v);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3fv(frust->nbr.v);
-		glVertex3fv(frust->fbr.v);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3fv(frust->nbl.v);
-		glVertex3fv(frust->fbl.v);
-	glEnd();
-
-	glColor3f(1,0,0);
-	glBegin(GL_LINE_LOOP);
-		glVertex3fv(frust->nbl.v);
-		glVertex3fv(frust->ntl.v);
-		glVertex3fv(frust->ntr.v);
-		glVertex3fv(frust->nbr.v);
-	glEnd();
-	glColor3f(0,0,1);
-	glBegin(GL_LINE_LOOP);
-		glVertex3fv(frust->fbl.v);
-		glVertex3fv(frust->ftl.v);
-		glVertex3fv(frust->ftr.v);
-		glVertex3fv(frust->fbr.v);
-	glEnd();
-	
-	glColor3f(1,1,1);
-}
-#endif
 
 #ifdef DRAW_BBOX
 void DrawBBox(const vec3_t& min, const vec3_t& max)
@@ -493,4 +340,4 @@ void DrawBBox(const vec3_t& min, const vec3_t& max)
 
 /*
 	glGetFloatv(GL_MODELVIEW_MATRIX, &m.m[0][0]);
-*/
+ */

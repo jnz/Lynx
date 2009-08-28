@@ -9,6 +9,7 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+#define MAX_POLY_PER_LEAF       0
 #define BSP_EPSILON				(0.003125f)
 
 CBSPTree::CBSPTree(void)
@@ -491,7 +492,7 @@ int CBSPTree::SearchSplitPolygon(std::vector<bsp_poly_t>& polygons)
         bsp_poly_t curpoly = polygons[i];
 		vec3_t curplane_m_n = curplane.m_n;
         vec3_t m_norm = m_normals[polygons[i].normals[0]];
-        assert(curplane_m_n.Equals(m_norm, 0.1f));
+        //assert(curplane_m_n.Equals(m_norm, 0.1f));
 #endif
 
 		for(j=0;j<polycount;j++)
@@ -527,7 +528,7 @@ int CBSPTree::SearchSplitPolygon(std::vector<bsp_poly_t>& polygons)
 		}
 	}
 
-	assert(splitpolycount != maxtest);
+	//assert(splitpolycount != maxtest);
 	assert(bestpoly != -1);
 	return bestpoly;
 }
@@ -813,6 +814,26 @@ bool CBSPTree::WriteToBinary(const std::string filepath)
                     poly,
                     vertices);
 
+    if(leafs.size() < 1)
+    {
+        fprintf(stderr, "BSP: Leaf count < 1\n");
+        return false;
+    }
+
+    if(nodes.size() == 0)
+    {
+        bspbin_node_t nullnode;
+        nullnode.children[0] = -1;
+        nullnode.children[1] = -1;
+        nullnode.radius = MAX_TRACE_DIST;
+        nullnode.sphere_origin = vec3_t::origin;
+        nullnode.plane = 0;
+        nodes.push_back(nullnode);
+        bspbin_plane_t nullplane;
+        nullplane.p = plane_t(vec3_t::origin, vec3_t::yAxis);
+        planes.push_back(nullplane);
+    }
+
     bspbin_direntry_t dirplane;
     bspbin_direntry_t dirtextures;
     bspbin_direntry_t dirnodes;
@@ -849,6 +870,9 @@ bool CBSPTree::WriteToBinary(const std::string filepath)
 
     WriteLump(f, planes);
     WriteLump(f, textures);
+
+    int offsetx = ftell(f);
+
     WriteLump(f, nodes);
     WriteLump(f, leafs);
     WriteLump(f, poly);
@@ -881,7 +905,20 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 	tree->m_nodecount++;
 	CalculateSphere(tree, polygons);
 
-	if(tree->IsConvexSet(polygons) || polygons.size() < 2)
+    if(polygons.size() < MAX_POLY_PER_LEAF)
+    {
+		fprintf(stderr, "BSP: subspace with %i polygons formed\n", polygons.size());
+		polylist = polygons;
+		for(i=0;i<(int)polylist.size();i++)
+			polylist[i].GeneratePlanes(tree);
+		front = NULL;
+		back = NULL;
+		tree->m_leafcount++;
+		marker = tree->m_leafcount;
+		return;
+    }
+
+	if(tree->IsConvexSet(polygons))
 	{
 		fprintf(stderr, "BSP: Convex subspace with %i polygons formed\n", polygons.size());
 		polylist = polygons;

@@ -19,9 +19,17 @@ int main(int argc, char** argv)
     path_out = argv[2];
 
     cout << "Loading polygon soup from " << path_in << endl;
-    tree.Load(path_in);
+    if(!tree.Load(path_in))
+    {
+        cout << "Failed to open input file" << endl;
+        return -1;
+    }
     cout << endl << "Writing binary output to " << path_out << endl;
-    tree.WriteToBinary(path_out);
+    if(!tree.WriteToBinary(path_out))
+    {
+        cout << "Failed to open output file" << endl;
+        return -1;
+    }
 
     return 0;
 }
