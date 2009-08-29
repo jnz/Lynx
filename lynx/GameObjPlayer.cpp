@@ -1,5 +1,6 @@
 #include "GameObjPlayer.h"
 #include "GameObjZombie.h"
+#include "ParticleSystemBlood.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -39,9 +40,20 @@ void CGameObjPlayer::OnCmdFire()
     {
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
         assert(hitobj);
-        if(!hitobj->IsClient())
-        {
-            hitobj->DealDamage(20, trace.hitpoint, trace.dir);
-        }
+        //if(!hitobj->IsClient())
+        hitobj->DealDamage(20, trace.hitpoint, trace.dir);
     }
+}
+
+void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir)
+{
+    CGameObj::DealDamage(0, hitpoint, dir);
+
+    CGameObj* blood = new CGameObj(GetWorld());
+    blood->SetRadius(0.0f);
+    blood->SetOrigin(hitpoint);
+    blood->SetParticleSystem("blood|" + CParticleSystemBlood::GetConfigString(dir));
+    blood->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 1000, GetWorld(), blood));
+    blood->AddFlags(OBJ_FLAGS_NOGRAVITY);
+    GetWorld()->AddObj(blood);
 }

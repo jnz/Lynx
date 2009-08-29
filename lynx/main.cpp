@@ -93,8 +93,8 @@ int main(int argc, char** argv)
 		if(time - fpstimer > 1000.0f)
 		{
 			char title[128];
-			sprintf(title, "lynx (FPS: %i) vis: %i/%i bsp-leafes: %i/%i", 
-                fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden, renderer.stat_bsp_leafs_visited, worldcl.GetBSP()->GetLeafCount());
+			sprintf(title, "lynx (FPS: %i) vis: %i/%i", 
+                fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden);
 			SDL_WM_SetCaption(title, NULL);
 			fpscounter = 0;
 			fpstimer = time;

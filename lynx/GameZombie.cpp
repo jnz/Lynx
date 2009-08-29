@@ -76,7 +76,9 @@ void CGameZombie::Update(const float dt, const DWORD ticks)
 void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, int clientid)
 {
     CClientInfo* client = GetServer()->GetClient(clientid);
-    assert(client);
+    if(!client) // client disconnected, clientobj wird im nächsten frame automatisch entfernt
+        return;
+
     bool bFire = false;
 
     std::vector<std::string>::iterator iter;
