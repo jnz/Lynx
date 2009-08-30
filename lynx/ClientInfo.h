@@ -3,11 +3,6 @@
 #include <vector>
 #include <string>
 
-enum clientstate_t {
-		S0_CLIENT_CONNECTED=0, 
-		S1_CLIENT_SENDING_WORLD
-		};
-
 class CClientInfo
 {
 public:
@@ -15,18 +10,20 @@ public:
 	{
 		m_id = ++m_idpool;
 		m_peer = peer;
-		m_state = S0_CLIENT_CONNECTED;
 		m_obj = 0;
 		worldidACK = 0;
+        lat = lon = 0.0f;
 	}
 
 	int GetID() const { return m_id; }
 	ENetPeer* GetPeer() { return m_peer; }
+	
+    int m_obj; // client obj in world	
+    DWORD worldidACK; // Last ACK'd world from client (build diffs to this world)
 
-	clientstate_t m_state;
-	int m_obj; // Objekt in Welt, das diesen Client repräsentiert
-	DWORD worldidACK; // Letztes Weltupdate, das der Client bestätigt hat
+    // Client Input
     std::vector<std::string> clcmdlist;
+    float lat, lon; // mouse lat and lon
 
 private:
 	int m_id;

@@ -17,5 +17,5 @@ protected:
 	virtual void Notify(EventNewClientConnected);
 	virtual void Notify(EventClientDisconnected);
 
-    virtual void ProcessClientCmds(CGameObjPlayer* obj, int clientid);
+    virtual void ProcessClientCmds(CGameObjPlayer* clientobj, CClientInfo* client);
 };

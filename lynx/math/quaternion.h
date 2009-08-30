@@ -23,6 +23,11 @@ struct quaternion_t
         RotationAxis(v, a);
     }
 
+    quaternion_t(const quaternion_t& q1, const quaternion_t& q2, const float t) // slerp constructor
+    {
+        Slerp(this, q1, q2, t);
+    }
+
 	void FromMatrix(const matrix_t &mx);
 	void ToMatrix(matrix_t& m) const;
     void GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const;

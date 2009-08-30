@@ -1,6 +1,5 @@
 #include "GameObjPlayer.h"
 #include "GameObjZombie.h"
-#include "ParticleSystemBlood.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -32,8 +31,9 @@ void CGameObjPlayer::OnCmdFire()
 
     world_obj_trace_t trace;
     vec3_t dir;
-    GetDir(&dir, NULL, NULL); // richtung holen
-    trace.dir = -dir;
+    GetLookDir().GetVec3(&dir, NULL, NULL);
+    dir = -dir;
+    trace.dir = dir;
     trace.start = GetOrigin();
     trace.excludeobj = GetID();
     if(GetWorld()->TraceObj(&trace))
@@ -41,19 +41,27 @@ void CGameObjPlayer::OnCmdFire()
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
         assert(hitobj);
         //if(!hitobj->IsClient())
-        hitobj->DealDamage(20, trace.hitpoint, trace.dir);
+        hitobj->DealDamage(20, trace.hitpoint, trace.dir, this);
+    }
+    else
+    {
+        // Kein Objekt getroffen, mit Levelgeometrie testen
+        bsp_sphere_trace_t spheretrace;
+        spheretrace.start = trace.start;
+        spheretrace.dir = dir * 800.0f;
+        spheretrace.radius = 0.01f;
+        GetWorld()->GetBSP()->TraceSphere(&spheretrace);
+        if(spheretrace.f < 1.0f)
+        {
+            vec3_t hitpoint = spheretrace.start + spheretrace.f * spheretrace.dir;
+            SpawnParticleDust(hitpoint, spheretrace.p.m_n);
+        }
     }
 }
 
-void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir)
+void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer)
 {
-    CGameObj::DealDamage(0, hitpoint, dir);
+    CGameObj::DealDamage(0, hitpoint, dir, dealer);
 
-    CGameObj* blood = new CGameObj(GetWorld());
-    blood->SetRadius(0.0f);
-    blood->SetOrigin(hitpoint);
-    blood->SetParticleSystem("blood|" + CParticleSystemBlood::GetConfigString(dir));
-    blood->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 1000, GetWorld(), blood));
-    blood->AddFlags(OBJ_FLAGS_NOGRAVITY);
-    GetWorld()->AddObj(blood);
+    SpawnParticleBlood(hitpoint, dir);
 }

@@ -160,10 +160,10 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             CObj* obj = m_world->GetObj(client->m_obj);
             assert(obj);
             vec3_t origin, vel;
-            quaternion_t rot;
             stream->ReadVec3(&origin);
             stream->ReadVec3(&vel);
-            stream->ReadQuat(&rot);
+            stream->ReadFloat(&client->lat);
+            stream->ReadFloat(&client->lon);
             if((origin - obj->GetOrigin()).AbsSquared() < MAX_SV_CL_POS_DIFF)
             {
                 obj->SetOrigin(origin);
@@ -173,7 +173,6 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
                 fprintf(stderr, "SV: Reset client position\n");
             }
             obj->SetVel(vel);
-            obj->SetRot(rot);
 
             assert(client->clcmdlist.size() < 30);
             WORD cmdcount;
@@ -294,6 +293,5 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 		return false;
 
 	//fprintf(stderr, "SV: Complete World: %i bytes\n", m_stream.GetBytesWritten());
-	client->m_state = S1_CLIENT_SENDING_WORLD;
 	return enet_peer_send(client->GetPeer(), 0, packet) == 0;
 }

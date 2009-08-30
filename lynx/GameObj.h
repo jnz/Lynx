@@ -27,9 +27,14 @@ public:
     void SetHealth(int health) { m_health = health; }
     void AddHealth(int health) { m_health += health; }
 
-    virtual void DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir) { AddHealth(-damage); };
+    quaternion_t TurnTo(const vec3_t& location) const; // rotation along yAxis.
+
+    virtual void DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer) { AddHealth(-damage); };
 
     CThink m_think;
+
+    void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir);
+    void SpawnParticleDust(const vec3_t& location, const vec3_t& dir);
 
 private:
     int m_health;

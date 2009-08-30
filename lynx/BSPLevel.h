@@ -30,7 +30,7 @@ public:
     std::string GetFilename() const { return m_filename; }
     int         GetLeafCount() const { return 0; }
 
-    spawn_point_t GetRandomSpawnPoint() const;
+    bspbin_spawn_t GetRandomSpawnPoint() const;
 
     void		TraceSphere(bsp_sphere_trace_t* trace) const;
 
@@ -72,6 +72,7 @@ protected:
     bspbin_leaf_t*      m_leaf;
     bspbin_poly_t*      m_poly;
     bspbin_vertex_t*    m_vertex;
+    bspbin_spawn_t*     m_spawnpoint;
 
     unsigned short*     m_indices;
 
@@ -81,6 +82,8 @@ protected:
     int m_leafcount;
     int m_polycount;
     int m_vertexcount;
+    int m_vertexindexcount;
+    int m_spawnpointcount;
 
     std::string m_filename;
 

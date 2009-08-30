@@ -21,6 +21,12 @@ class CBSPTree;
 
 #define MAX_TRACE_DIST      99999.999f
 
+struct spawn_point_t
+{
+    vec3_t origin;
+    quaternion_t rot;
+};
+
 struct bsp_poly_t
 {
 	bsp_poly_t() { splitmarker = false; colormarker = 0; }

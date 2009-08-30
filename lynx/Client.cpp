@@ -115,9 +115,9 @@ void CClient::Update(const float dt, const DWORD ticks)
     std::vector<std::string> clcmdlist;
     bool forcesend = false;
     InputGetCmdList(&clcmdlist, &forcesend);
-    InputMouseMove();
+    InputMouseMove(); // update m_lat and m_lon
     m_gamelogic->ClientMove(GetLocalController(), clcmdlist);
-	
+
     // Sende Eingabe an Server
     SendClientState(clcmdlist, forcesend);
 }
@@ -135,11 +135,14 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     std::vector<std::string>::iterator iter;
     CObj* localctrl = GetLocalController();
     CStream stream(1024);
+
     CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
 	stream.WriteDWORD(m_world->GetWorldID());
     stream.WriteVec3(localctrl->GetOrigin());
     stream.WriteVec3(localctrl->GetVel());
-    stream.WriteQuat(quaternion_t(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD));
+    stream.WriteFloat(m_lat);
+    stream.WriteFloat(m_lon);
+
     assert(clcmdlist.size() < USHRT_MAX);
     stream.WriteWORD((WORD)clcmdlist.size());
     for(size_t i=0;i<clcmdlist.size();i++)
@@ -195,12 +198,11 @@ void CClient::InputMouseMove()
 
     quaternion_t qlat(vec3_t::xAxis, m_lat*lynxmath::DEGTORAD);
     quaternion_t qlon(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD);
-    obj->SetRot(qlon*qlat);
+    GetLocalController()->SetRot(qlon*qlat);
 }
 
 void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)
 {
-	// FIXME: no SDL code here
 	BYTE* keystate = CLynxSys::GetKeyState();
     *forcesend = false;
 
@@ -214,7 +216,7 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         clcmdlist->push_back("+mr");
     if(keystate[SDLK_SPACE])
         clcmdlist->push_back("+jmp");
-    if(keystate[SDLK_f])
+    if(keystate[SDLK_f] || CLynxSys::MouseLeftDown())
         clcmdlist->push_back("+fire");
     if(keystate[SDLK_e])
     {

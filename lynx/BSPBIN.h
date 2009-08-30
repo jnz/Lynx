@@ -6,16 +6,10 @@
 
 // #pragma pack(push, 1) // manual padding
 
-#define BSPBIN_MAGIC    0xBEAFBEAF
-#define BSPBIN_VERSION  1
+#define BSPBIN_MAGIC            0x12051982
+#define BSPBIN_VERSION          3
 
-#define BSPBIN_HEADER_LEN   (sizeof(bspbin_header_t) + 6*sizeof(bspbin_direntry_t))
-
-struct spawn_point_t
-{
-    vec3_t origin;
-    quaternion_t rot;
-};
+#define BSPBIN_HEADER_LEN   (sizeof(bspbin_header_t) + 8*sizeof(bspbin_direntry_t))
 
 struct bspbin_header_t
 {
@@ -60,11 +54,22 @@ struct bspbin_poly_t
     int vertexcount;
 };
 
+struct bspbin_vertexindex_t
+{
+    int vertex;
+};
+
 struct bspbin_vertex_t
 {
     vec3_t v;
     vec3_t n;
     float tu, tv;
+};
+
+struct bspbin_spawn_t
+{
+    vec3_t point;
+    quaternion_t rot;
 };
 
 // #pragma pack(pop)

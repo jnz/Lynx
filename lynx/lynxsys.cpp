@@ -17,6 +17,24 @@ void CLynxSys::GetMouseDelta(int* dx, int* dy)
 	SDL_GetRelativeMouseState(dx, dy);
 }
 
+bool CLynxSys::MouseLeftDown()
+{
+    Uint8 s = SDL_GetMouseState(NULL, NULL);
+    return SDL_BUTTON(s) == SDL_BUTTON_LEFT;
+}
+
+bool CLynxSys::MouseRightDown()
+{
+    Uint8 s = SDL_GetMouseState(NULL, NULL);
+    return SDL_BUTTON(s) == SDL_BUTTON_RIGHT;
+}
+
+bool CLynxSys::MouseMiddleDown()
+{
+    Uint8 s = SDL_GetMouseState(NULL, NULL);
+    return SDL_BUTTON(s) == SDL_BUTTON_MIDDLE;
+}
+
 BYTE* CLynxSys::GetKeyState()
 {
 	return SDL_GetKeyState(NULL);

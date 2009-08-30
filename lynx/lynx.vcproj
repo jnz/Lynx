@@ -457,6 +457,14 @@
 				RelativePath=".\ParticleSystemBlood.h"
 				>
 			</File>
+			<File
+				RelativePath=".\ParticleSystemDust.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ParticleSystemDust.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

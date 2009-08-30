@@ -52,6 +52,7 @@ void CGameZombie::Update(const float dt, const DWORD ticks)
 {
 	CGameObj* obj;
 	OBJITER iter;
+    CClientInfo* client;
 
 	for(iter = GetWorld()->ObjBegin();iter!=GetWorld()->ObjEnd();iter++)
 	{
@@ -63,22 +64,28 @@ void CGameZombie::Update(const float dt, const DWORD ticks)
         if(obj->IsClient())
         {
             if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() > 
-               100*lynxmath::EPSILON)
+               1*lynxmath::EPSILON)
                 obj->SetNextAnimation(obj->GetAnimationFromName("run"));
             else
                 obj->SetNextAnimation(0);
 
-            ProcessClientCmds((CGameObjPlayer*)obj, obj->GetClientID());
+            client = GetServer()->GetClient(obj->GetClientID());
+            if(client) // client evtl. disconnected, clientobj wird im nächsten frame automatisch entfernt
+            { 
+                ProcessClientCmds((CGameObjPlayer*)obj, client);
+                ClientMouse(obj, client->lat, client->lon);
+
+                // Tatsächliche Client Blickrichtung Berechnen und merken
+                quaternion_t qlat(vec3_t::xAxis, client->lat*lynxmath::DEGTORAD);
+                quaternion_t qlon(vec3_t::yAxis, client->lon*lynxmath::DEGTORAD);
+                ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);
+            }
         }
 	}
 }
 
-void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, int clientid)
+void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, CClientInfo* client)
 {
-    CClientInfo* client = GetServer()->GetClient(clientid);
-    if(!client) // client disconnected, clientobj wird im nächsten frame automatisch entfernt
-        return;
-
     bool bFire = false;
 
     std::vector<std::string>::iterator iter;

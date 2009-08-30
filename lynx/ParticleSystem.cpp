@@ -1,5 +1,6 @@
 #include "ParticleSystem.h"
 #include "ParticleSystemBlood.h"
+#include "ParticleSystemDust.h"
 #include "GL/glew.h"
 #define NO_SDL_GLEXT
 #include "SDL_opengl.h"
@@ -15,7 +16,6 @@
 CParticleSystem::CParticleSystem(void)
 {
     m_texture = 0;
-    m_particles.reserve(50);
 }
 
 CParticleSystem::~CParticleSystem(void)
@@ -32,17 +32,13 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         if(iter->lifetime < 0.0f)
             continue;
         
-        glPushMatrix();
-
-        glTranslatef(iter->origin.x, iter->origin.y, iter->origin.z);
-        
         const vec3_t X = iter->size*0.5f*side;
         const vec3_t Y = iter->size*0.5f*up;
-        const vec3_t Q1 =  X + Y;
-        const vec3_t Q2 = -X + Y;
-        const vec3_t Q3 = -X - Y;
-        const vec3_t Q4 =  X - Y;
-        
+        const vec3_t Q1 =  X + Y + iter->origin;
+        const vec3_t Q2 = -X + Y + iter->origin;
+        const vec3_t Q3 = -X - Y + iter->origin;
+        const vec3_t Q4 =  X - Y + iter->origin;
+
         glBegin(GL_QUADS);
 
         glColor4f(iter->color.x, iter->color.y, iter->color.z, iter->alpha);
@@ -57,8 +53,6 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         glVertex3fv(Q4.v);
 
         glEnd();
-
-        glPopMatrix();
     }
 }
 
@@ -89,6 +83,10 @@ CParticleSystem* CParticleSystem::CreateSystem(std::string systemname,
     if(systemname == "blood")
     {
         return new CParticleSystemBlood(properties, resman);
+    }
+    else if(systemname == "dust")
+    {
+        return new CParticleSystemDust(properties, resman);
     }
     assert(0);
     return NULL;

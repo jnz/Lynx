@@ -30,7 +30,7 @@ public:
 protected:
 	void OnReceive(CStream* stream);
 
-	void InputMouseMove();
+	void InputMouseMove(); // update m_lat and m_lon
 	void InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend); // forcesend: gibt es cmds, die unbedingt sofort abgeschickt werden müssen
     void SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend);
 	CObj* GetLocalController(); // Geist Objekt, das nur auf Client Seite existiert. Sozusagen die virtuelle Kamera

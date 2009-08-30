@@ -5,6 +5,7 @@
 #include "GL/glew.h"
 #define NO_SDL_GLEXT
 #include "SDL_opengl.h"
+#include <memory>
 
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
 
@@ -25,6 +26,7 @@ CBSPLevel::CBSPLevel(void)
     m_poly = NULL;
     m_vertex = NULL;
     m_indices = NULL;
+    m_spawnpoint = NULL;
 
     m_planecount = 0;
     m_texcount = 0;
@@ -32,6 +34,8 @@ CBSPLevel::CBSPLevel(void)
     m_leafcount = 0;
     m_polycount = 0;
     m_vertexcount = 0;
+    m_vertexindexcount = 0;
+    m_spawnpointcount = 0;
 
     m_vbo = 0;
     m_vboindex = 0;
@@ -71,6 +75,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     bspbin_direntry_t dirleafs;
     bspbin_direntry_t dirpoly;
     bspbin_direntry_t dirvertices;
+    bspbin_direntry_t dirvertexindices;
+    bspbin_direntry_t dirspawnpoints;
 
     fread(&dirplane, sizeof(dirplane), 1, f);
     fread(&dirtextures, sizeof(dirtextures), 1, f);
@@ -78,6 +84,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     fread(&dirleafs, sizeof(dirleafs), 1, f);
     fread(&dirpoly, sizeof(dirpoly), 1, f);
     fread(&dirvertices, sizeof(dirvertices), 1, f);
+    fread(&dirvertexindices, sizeof(dirvertexindices), 1, f);
+    fread(&dirspawnpoints, sizeof(dirspawnpoints), 1, f);
     if(ftell(f) != BSPBIN_HEADER_LEN)
     {
         fprintf(stderr, "BSP: Error reading header\n");
@@ -90,6 +98,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     m_leafcount = dirleafs.length / sizeof(bspbin_leaf_t);
     m_polycount = dirpoly.length / sizeof(bspbin_poly_t);
     m_vertexcount = dirvertices.length / sizeof(bspbin_vertex_t);
+    m_vertexindexcount = dirvertexindices.length / sizeof(bspbin_vertexindex_t);
+    m_spawnpointcount = dirspawnpoints.length / sizeof(bspbin_spawn_t);
 
     m_plane = new bspbin_plane_t[ m_planecount ];
     m_tex = new bspbin_texture_t[ m_texcount ];
@@ -98,8 +108,11 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     m_leaf = new bspbin_leaf_t[ m_leafcount ];
     m_poly = new bspbin_poly_t[ m_polycount ];
     m_vertex = new bspbin_vertex_t[ m_vertexcount ];
+    m_spawnpoint = new bspbin_spawn_t[ m_spawnpointcount ];
+    std::auto_ptr<bspbin_vertexindex_t> tmpindex =
+        std::auto_ptr<bspbin_vertexindex_t>( new bspbin_vertexindex_t[ m_vertexindexcount ] ); // temp. vertex index buffer
 
-    if(!m_plane || !m_tex || !m_texid || !m_node || !m_leaf || !m_poly || !m_vertex)
+    if(!m_plane || !m_tex || !m_texid || !m_node || !m_leaf || !m_poly || !m_vertex || !m_spawnpoint)
     {
         Unload();
         fprintf(stderr, "BSP: Not enough memory to load Lynx BSP\n");
@@ -124,7 +137,13 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     fseek(f, dirvertices.offset, SEEK_SET);
     fread(m_vertex, sizeof(bspbin_vertex_t), m_vertexcount, f);
 
-    if(ftell(f) != dirvertices.offset + dirvertices.length)
+    fseek(f, dirvertexindices.offset, SEEK_SET);
+    fread(tmpindex.get(), sizeof(bspbin_vertexindex_t), m_vertexindexcount, f);
+
+    fseek(f, dirspawnpoints.offset, SEEK_SET);
+    fread(m_spawnpoint, sizeof(bspbin_spawn_t), m_spawnpointcount, f);
+
+    if(ftell(f) != (dirspawnpoints.offset + dirspawnpoints.length))
     {
         Unload();
         fprintf(stderr, "BSP: Error reading lumps from BSP file\n");
@@ -156,17 +175,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
     m_filename = file;
 
-    // Rendering Stuff
-    if(!resman)
-    {
-        m_vbo = 0;
-        m_vboindex = 0;
-        m_indices = NULL;
-        return true;
-    }
-
     // Setup Indices
-    m_indices = new unsigned short[ m_vertexcount ];
+    m_indices = new unsigned short[ m_vertexindexcount ];
     if(!m_indices)
     {
         Unload();
@@ -174,16 +184,25 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
+    for(i=0;i<m_vertexindexcount;i++) // convert bspbin_vertexindex_t indices in unsigned short
+    {
+        m_indices[i] = (unsigned short)tmpindex.get()[i].vertex;
+    }
+
+    // Rendering Stuff
+    if(!resman)
+    {
+        m_vbo = 0;
+        m_vboindex = 0;
+        return true;
+    }
+
+    // load textures
     for(i=0;i<m_polycount;i++)
     {
         const int runto = m_poly[i].firstvertex+m_poly[i].vertexcount;
         const std::string texpath = CLynx::GetDirectory(file) + m_tex[m_poly[i].tex].name;
         m_texid[m_poly[i].tex] = resman->GetTexture(texpath); // könnte das direkt in m_poly[i].tex gehen?
-
-        for(int j=m_poly[i].firstvertex;j<runto;j++)
-        {
-            m_indices[j] = j;
-        }
     }
 
     // Setup OpenGL Vertex Buffer Objects
@@ -275,6 +294,7 @@ void CBSPLevel::Unload()
     SAFE_RELEASE_ARRAY(m_poly);
     SAFE_RELEASE_ARRAY(m_vertex);
     SAFE_RELEASE_ARRAY(m_indices);
+    SAFE_RELEASE_ARRAY(m_spawnpoint);
 
     m_filename = "";
 
@@ -284,6 +304,8 @@ void CBSPLevel::Unload()
     m_leafcount = 0;
     m_polycount = 0;
     m_vertexcount = 0;
+    m_vertexindexcount = 0;
+    m_spawnpointcount = 0;
 
     if(m_vbo > 0)
         glDeleteBuffers(1, &m_vbo);
@@ -294,11 +316,12 @@ void CBSPLevel::Unload()
     m_vboindex = 0;
 }
 
-spawn_point_t CBSPLevel::GetRandomSpawnPoint() const
+static const bspbin_spawn_t s_spawn_default;
+bspbin_spawn_t CBSPLevel::GetRandomSpawnPoint() const
 {
-    spawn_point_t p;
-    p.origin = vec3_t(0, 10.0f, 0); // FIXME
-    return p;
+    if(m_spawnpointcount < 1)
+        return s_spawn_default;
+    return m_spawnpoint[rand()%m_spawnpointcount];
 }
 
 void CBSPLevel::RenderNodeGL(const int node, const vec3_t& origin, const CFrustum& frustum) const
@@ -316,7 +339,7 @@ void CBSPLevel::RenderNodeGL(const int node, const vec3_t& origin, const CFrustu
             glDrawElements(GL_TRIANGLES, 
                            m_poly[i].vertexcount, 
                            GL_UNSIGNED_SHORT, 
-                           BUFFER_OFFSET(m_poly[i].firstvertex * 2));
+                           BUFFER_OFFSET(m_poly[i].firstvertex * sizeof(unsigned short)));
         }
 
 		return;
@@ -357,11 +380,7 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
 
 	// glDepthFunc(GL_ALWAYS); // We do this, because the tree is already sorted, but we need the z-buffer info for the models
-
     RenderNodeGL(0, origin, frustum);
-    //glBindTexture(GL_TEXTURE_2D, m_texid[0]);
-    //glDrawElements(GL_TRIANGLES, m_vertexcount, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
-
     // glDepthFunc(GL_LEQUAL);
 
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -388,9 +407,9 @@ bool CBSPLevel::GetTriIntersection(const int polyindex,
 {
     float cf;
     const int vertexindex = m_poly[polyindex].firstvertex;
-    const vec3_t& P0 = m_vertex[vertexindex + 0].v;
-    const vec3_t& P1 = m_vertex[vertexindex + 1].v;
-    const vec3_t& P2 = m_vertex[vertexindex + 2].v;
+    const vec3_t& P0 = m_vertex[m_indices[vertexindex + 0]].v;
+    const vec3_t& P1 = m_vertex[m_indices[vertexindex + 1]].v;
+    const vec3_t& P2 = m_vertex[m_indices[vertexindex + 2]].v;
     plane_t polyplane(P2, P1, P0); // Polygon Ebene
     polyplane.m_d -= offset; // Plane shift
 
@@ -441,8 +460,8 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
 	{
         if(!vec3_t::RayCylinderIntersect(start, 
                                          dir, 
-                                         m_vertex[firstvertex + i].v, 
-                                         m_vertex[firstvertex + ((i+1)%vertexcount)].v, 
+                                         m_vertex[m_indices[firstvertex + i]].v, 
+                                         m_vertex[m_indices[firstvertex + ((i+1)%vertexcount)]].v, 
                                          radius, 
                                          &cf))
             continue;
@@ -455,8 +474,8 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     if(minf <= 1.0f)
     {
         *hitpoint = start + minf*dir;
-		const vec3_t* a = &m_vertex[firstvertex + minindex].v;
-		const vec3_t* b = &m_vertex[firstvertex + ((minindex+1)%vertexcount)].v;
+		const vec3_t* a = &m_vertex[m_indices[firstvertex + minindex]].v;
+		const vec3_t* b = &m_vertex[m_indices[firstvertex + ((minindex+1)%vertexcount)]].v;
 
         *normal = ((*a-*hitpoint)^(*b-*hitpoint)) ^ (*b-*a);
         normal->Normalize();
@@ -485,7 +504,7 @@ bool CBSPLevel::GetVertexIntersection(const int firstvertex,
     {
         if(!vec3_t::RaySphereIntersect(start, 
                                        dir,
-                                       m_vertex[firstvertex + i].v, 
+                                       m_vertex[m_indices[firstvertex + i]].v, 
                                        radius, 
                                        &cf))
         {
@@ -500,7 +519,7 @@ bool CBSPLevel::GetVertexIntersection(const int firstvertex,
     if(minf <= 1.0f)
     {
         *hitpoint = start + minf*dir;
-        *normal = *hitpoint - m_vertex[firstvertex + minindex].v;
+        *normal = *hitpoint - m_vertex[m_indices[firstvertex + minindex]].v;
         normal->Normalize();
         *f = minf;
         return true;

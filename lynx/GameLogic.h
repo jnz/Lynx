@@ -16,6 +16,7 @@ public:
 	virtual void Update(const float dt, const DWORD ticks);
 
     virtual void ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist); // Wird von CClient mitgenutzt
+    virtual void ClientMouse(CObj* clientobj, float lat, float lon);
 
 protected:
 	virtual void Notify(EventNewClientConnected);

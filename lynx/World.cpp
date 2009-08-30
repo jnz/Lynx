@@ -198,7 +198,7 @@ bool CWorld::TraceObj(world_obj_trace_t* trace)
             minf = cf;
         }
     }
-    
+
     if(objhit == -1)
     {
         trace->objid = -1;

@@ -82,3 +82,11 @@ void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clc
 
 	clientobj->SetVel(newdir);
 }
+
+void CGameLogic::ClientMouse(CObj* clientobj, float lat, float lon)
+{
+    // Welt sichtbare Rotation nur entlang der y-Achse anhand von lat und lon berechnen
+    //quaternion_t qlat(vec3_t::xAxis, lat*lynxmath::DEGTORAD);
+    quaternion_t qlon(vec3_t::yAxis, lon*lynxmath::DEGTORAD);
+    clientobj->SetRot(qlon/**qlat*/);
+}
