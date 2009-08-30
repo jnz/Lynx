@@ -20,6 +20,13 @@ public:
 protected:
 	void UpdatePerspective();
 
+    bool InitShader();
+
+    // Shader
+    unsigned int m_vshader;
+    unsigned int m_fshader;
+    unsigned int m_program;
+
 private:
 	int m_width, m_height;
 	CWorldClient* m_world;

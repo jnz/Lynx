@@ -55,10 +55,21 @@ vec3_t g_colortable[] =
 CRenderer::CRenderer(CWorldClient* world)
 {
 	m_world = world;
+    m_vshader = 0;
+    m_fshader = 0;
+    m_program = 0;
 }
 
 CRenderer::~CRenderer(void)
 {
+    glDetachShader(m_program, m_vshader);
+    glDeleteShader(m_vshader);
+    m_vshader = 0;
+    glDetachShader(m_program, m_fshader);
+    glDeleteShader(m_fshader);
+    m_fshader = 0;
+    glDeleteProgram(m_program);
+
 	Shutdown();
 }
 
@@ -125,12 +136,20 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         return false;
     }
 
-    if(GLEW_VERSION_1_5)
+    if(glewIsSupported("GL_VERSION_2_0"))
     {
-        fprintf(stderr, "OpenGL 1.5 support\n");
+        fprintf(stderr, "OpenGL 2.0 support\n");
     }
     else
     {
+        fprintf(stderr, "Error: No OpenGL 2.0 support\n");
+        return false;
+    }
+
+    bool shader = InitShader();
+    if(!shader)
+    {
+        fprintf(stderr, "Init shader failed\n");
         return false;
     }
 
@@ -251,6 +270,82 @@ void CRenderer::UpdatePerspective()
 					PLANE_FAR);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+}
+
+std::string ReadShader(std::string path)
+{
+    FILE* f = fopen(path.c_str(), "rb");
+    if(!f)
+        return "";
+
+    fseek(f, 0, SEEK_END);
+    unsigned int fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char* buff = new char[fsize+10];
+    if(!buff)
+        return "";
+
+    fread(buff, fsize, 1, f);
+    buff[fsize] = NULL;
+    std::string shader(buff);
+
+    delete[] buff;
+    fclose(f);
+
+    return shader;
+}
+
+GLuint LoadAndCompileShader(unsigned int type, std::string path)
+{
+    unsigned int shader = glCreateShader(type);
+    if(shader < 1)
+        return shader;
+
+    std::string shadersrc = ReadShader(path);
+    if(shadersrc == "")
+    {
+        fprintf(stderr, "Failed to load shader\n");
+        return 0;
+    }
+
+    const char* strarray[] = { shadersrc.c_str(), NULL };
+    glShaderSource(shader, 1, strarray, NULL);
+    glCompileShader(shader);
+
+    int status;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    if(status != GL_TRUE)
+    {
+        char logbuffer[1024];
+        int usedlogbuffer;
+        glGetShaderInfoLog(shader, sizeof(logbuffer), &usedlogbuffer, logbuffer);
+        fprintf(stderr, "GL Compile Shader Error: %s\n", logbuffer);
+        return 0;
+    }
+
+    return shader;
+}
+
+bool CRenderer::InitShader()
+{
+    m_vshader = LoadAndCompileShader(GL_VERTEX_SHADER, CLynx::GetBaseDirFX() + "vshader.txt");
+    if(m_vshader < 1)
+        return false;
+
+    m_fshader = LoadAndCompileShader(GL_FRAGMENT_SHADER, CLynx::GetBaseDirFX() + "fshader.txt");
+    if(m_fshader < 1)
+        return false;
+
+    m_program = glCreateProgram();
+
+    glAttachShader(m_program, m_vshader);
+    glAttachShader(m_program, m_fshader);
+
+    glLinkProgram(m_program);
+
+    glUseProgram(m_program);
+
+    return true;
 }
 
 void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, CFrustum* frustum)
