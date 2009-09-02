@@ -194,6 +194,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ClientHUD.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ClientInfo.cpp"
 				>
 			</File>
@@ -261,6 +265,10 @@
 			</File>
 			<File
 				RelativePath=".\Client.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ClientHUD.h"
 				>
 			</File>
 			<File

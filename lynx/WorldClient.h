@@ -1,5 +1,6 @@
 #pragma once
 #include "world.h"
+#include "ClientHUD.h"
 
 /*
     CWorldClient ist dafür zuständig, den neuesten Zustand
@@ -35,19 +36,19 @@ public:
 	CWorldInterp() { f = 1.0f; }
 	~CWorldInterp() {}
 
-    virtual bool    IsClient() const { return true; }
+    virtual bool                IsClient() const { return true; }
 
-	const virtual CBSPLevel* GetBSP() const { return m_pbsp; }
-	virtual CResourceManager* GetResourceManager() { return m_presman; }
+	const virtual CBSPLevel*    GetBSP() const { return m_pbsp; }
+	virtual CResourceManager*   GetResourceManager() { return m_presman; }
 
-	void Update(const float dt, const DWORD ticks); // Lineare Interpolation um Schrittweite dt weiter laufen lassen
+	void                        Update(const float dt, const DWORD ticks); // Lineare Interpolation um Schrittweite dt weiter laufen lassen
 
 protected:
-	CBSPLevel* m_pbsp;
-	CResourceManager* m_presman;
-	worldclient_state_t state1;
-	worldclient_state_t state2;
-	float f; // Current scale factor
+	CBSPLevel*                  m_pbsp;
+	CResourceManager*           m_presman;
+	worldclient_state_t         state1;
+	worldclient_state_t         state2;
+	float                       f; // Current scale factor (0..1)
 
 	friend CWorldClient;
 };
@@ -70,6 +71,8 @@ public:
 	virtual bool    Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
 
 	CWorld*         GetInterpWorld() { return &m_interpworld; } // Interpolierte Welt
+
+    CClientHUD      m_hud;
 
 protected:
     void            AddWorldToHistory(); // Aktuelle Welt in den History Buffer schieben

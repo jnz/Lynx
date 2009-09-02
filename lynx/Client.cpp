@@ -166,18 +166,19 @@ void CClient::OnReceive(CStream* stream)
 
 	// fprintf(stderr, "%i Client Incoming data: %i bytes\n", CLynx::GetTicks()&255, stream->GetBytesToRead());
 
-	type = CNetMsg::ReadHeader(stream);
-	switch(type)
-	{
-	case NET_MSG_SERIALIZE_WORLD:
-		stream->ReadWORD(&localobj);
-		m_world->Serialize(false, stream);
-    	m_world->SetLocalObj(localobj);
-		break;
-	case NET_MSG_INVALID:
-	default:
-		assert(0);
-	}
+    type = CNetMsg::ReadHeader(stream);
+    switch(type)
+    {
+    case NET_MSG_SERIALIZE_WORLD:
+        stream->ReadWORD(&localobj);
+        m_world->m_hud.Serialize(false, stream, m_world->GetResourceManager());
+        m_world->Serialize(false, stream);
+        m_world->SetLocalObj(localobj);
+        break;
+    case NET_MSG_INVALID:
+    default:
+        assert(0);
+    }
 }
 
 void CClient::InputMouseMove()
@@ -203,8 +204,13 @@ void CClient::InputMouseMove()
 
 void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)
 {
-	BYTE* keystate = CLynxSys::GetKeyState();
+	BYTE* keystate = CLynxSys::GetKeyState();    
     *forcesend = false;
+
+    // Client fire animation prediction
+    bool firedown = false;
+    CModelMD2* model;
+    md2_state_t* model_state;
 
     if(keystate[SDLK_UP] || keystate[SDLK_w])
         clcmdlist->push_back("+mf");
@@ -217,12 +223,36 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     if(keystate[SDLK_SPACE])
         clcmdlist->push_back("+jmp");
     if(keystate[SDLK_f] || CLynxSys::MouseLeftDown())
+    {
+        firedown = true;
         clcmdlist->push_back("+fire");
+
+        // Weapon fire animation is client side only. Smells a bit like a hack, but works great
+        m_world->m_hud.GetModel(&model, &model_state);
+        if(model)
+        {
+            if(CModelMD2::GetAnimation(model_state) == HUD_WEAPON_IDLE_ANIMATION)
+            {
+                model->SetAnimation(model_state, HUD_WEAPON_FIRE_ANIMATION);
+                model->SetNextAnimation(model_state, HUD_WEAPON_FIRE_ANIMATION);
+            }
+        }
+    }
     if(keystate[SDLK_e])
     {
         // FIXME temp hack
         vec3_t pos = GetLocalController()->GetOrigin();
         fprintf(stderr, "[%.2f,%.2f,%.2f]\n", pos.x, pos.y, pos.z);
+    }
+
+    if(!firedown)
+    {
+        m_world->m_hud.GetModel(&model, &model_state);
+        if(model && CModelMD2::GetAnimation(model_state) == HUD_WEAPON_FIRE_ANIMATION)
+        {
+            model->SetAnimation(model_state, HUD_WEAPON_IDLE_ANIMATION);
+            model->SetNextAnimation(model_state, HUD_WEAPON_IDLE_ANIMATION);
+        }
     }
 }
 

@@ -59,6 +59,8 @@ public:
     int		FindAnimation(const char* name) const; // -1 on error
 	void	SetFPS(float fps);
 	float	GetFPS() const;
+    static int GetAnimation(const md2_state_t* state) { return state->cur_anim; }
+    static int GetNextAnimation(const md2_state_t* state) { return state->next_anim; }
 
 	float	GetSphere() const;
 	void	GetAABB(vec3_t* min, vec3_t* max) const;

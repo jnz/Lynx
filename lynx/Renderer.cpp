@@ -111,13 +111,13 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	UpdatePerspective();
-/**/
+
 	// Vertex Light
 	float mat_specular[] = {1,1,1,1};
 	float mat_shininess[] = { 50 };
-	float light_pos[] = { 0, 0, 1, 0 };
+	float light_pos[] = { 0, 5, 0, 0 };
 	float white_light[] = {1,1,1,1};
-	float lmodel_ambient[] = { 0.99f, 0.99f, 0.99f, 1.0f };
+	float lmodel_ambient[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 	
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
@@ -127,7 +127,8 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
 	glEnable(GL_LIGHT0);
-/**/
+
+	glEnable(GL_LIGHTING);
 
     GLenum err = glewInit();
     if(GLEW_OK != err)
@@ -171,7 +172,8 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 	CFrustum frustum;
 	CWorld* world;
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
     localctrl = m_world->GetLocalController();
 	localctrlid = m_world->GetLocalObj()->GetID();
 	world = m_world->GetInterpWorld();
@@ -190,9 +192,11 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 	stat_obj_hidden = 0;
 	stat_obj_visible = 0;
 
-	BSP_RenderTree(world->GetBSP(), &localctrl->GetOrigin(), &frustum);
 
-	glEnable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
+	BSP_RenderTree(world->GetBSP(), &localctrl->GetOrigin(), &frustum);
+    glEnable(GL_LIGHTING);
+
 	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
 	{
 		obj = (*iter).second;
@@ -218,7 +222,8 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 		}
 		glPopMatrix();
 	}
-	glDisable(GL_LIGHTING);
+	
+    glDisable(GL_LIGHTING);
 
     // Particle Draw
     //glEnable(GL_ALPHA_TEST);
@@ -248,14 +253,19 @@ void CRenderer::Update(const float dt, const DWORD ticks)
     //glDisable(GL_ALPHA_TEST);
     glColor4f(1,1,1,1);
 
-	/*
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-	glTranslatef(0,0,-2);
-	glScalef(0.1,0.1,0.1);
-	RenderCube();
-	glEnable(GL_DEPTH_TEST);
-	*/
+    CModelMD2* viewmodel;
+    md2_state_t* viewmodelstate;
+    m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
+    if(viewmodel)
+    {
+    	glClear(GL_DEPTH_BUFFER_BIT);
+	    glLoadIdentity();
+	    glTranslatef(0,-2.0f,1.25f);
+
+        viewmodel->Render(viewmodelstate);
+        viewmodel->Animate(viewmodelstate, dt);
+    }
+    glEnable(GL_LIGHTING);
 
 	SDL_GL_SwapBuffers();
 }
@@ -328,10 +338,12 @@ GLuint LoadAndCompileShader(unsigned int type, std::string path)
 
 bool CRenderer::InitShader()
 {
+    fprintf(stderr, "Compiling vertex shader...\n");
     m_vshader = LoadAndCompileShader(GL_VERTEX_SHADER, CLynx::GetBaseDirFX() + "vshader.txt");
     if(m_vshader < 1)
         return false;
 
+    fprintf(stderr, "Compiling fragment shader...\n");
     m_fshader = LoadAndCompileShader(GL_FRAGMENT_SHADER, CLynx::GetBaseDirFX() + "fshader.txt");
     if(m_fshader < 1)
         return false;

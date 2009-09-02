@@ -9,6 +9,4 @@ public:
     ~CParticleSystemDust(void);
 
     static std::string GetConfigString(const vec3_t& dir);
-
-protected:
 };

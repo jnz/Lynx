@@ -266,6 +266,7 @@ bool CServer::SendWorldToClient(CClientInfo* client)
 
 	CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
 	m_stream.WriteWORD((WORD)localobj);
+    client->hud.Serialize(true, &m_stream, NULL);
 
 	std::map<DWORD, world_state_t>::iterator iter;
 	iter = m_history.find(client->worldidACK);

@@ -316,7 +316,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
 					m_max.v[m] = vertex->v.v[m];
 			}
 
-			vertex->n.z = -g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][0];
+			vertex->n.z = -(g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][0]);
 			vertex->n.x = g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][1];
 			vertex->n.y = g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][2];
 			if(framehead->v[j].n >= NUMVERTEXNORMALS)
@@ -489,7 +489,7 @@ int CModelMD2::FindAnimation(const char* name) const
 			return i;
 	}
 	assert(0);
-	return -1;
+	return 0;
 }
 
 float CModelMD2::GetSphere() const

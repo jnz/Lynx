@@ -39,12 +39,14 @@ void CGameZombie::Notify(EventNewClientConnected e)
     player->SetClientID(e.client->GetID());
 
 	GetWorld()->AddObj(player, true); // In diesem Frame, weil die Welt umgehend vom CServer serialized wird
-	e.client->m_obj = player->GetID(); // Mit Client verknüpfen
+    e.client->m_obj = player->GetID(); // Mit Client verknüpfen
+    e.client->hud.weapon = "weapon/tris.md2";
+    e.client->hud.animation = HUD_WEAPON_IDLE_ANIMATION;
 }
 
 void CGameZombie::Notify(EventClientDisconnected e)
 {
-	GetWorld()->DelObj(e.client->m_obj);
+    GetWorld()->DelObj(e.client->m_obj);
     e.client->m_obj = 0;
 }
 
