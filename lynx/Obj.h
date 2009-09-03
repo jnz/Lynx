@@ -80,6 +80,7 @@ public:
     virtual ~CObj(void);
 
     int			GetID() const { return m_id; }
+    virtual int GetType() { return 0; } // poor man's rtti
 
     bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 

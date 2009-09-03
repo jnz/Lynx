@@ -92,7 +92,7 @@ public:
 	OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
 	OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
 
-    const std::vector<CObj*> GetNearObj(const vec3_t origin, const float radius, const int exclude) const; // List is only valid for this frame!
+    const std::vector<CObj*> GetNearObj(const vec3_t origin, const float radius, const int exclude, const int type) const; // List is only valid for this frame!
 
 	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
 

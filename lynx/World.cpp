@@ -59,7 +59,7 @@ void CWorld::DeleteAllObjs()
 	m_objlist.clear();
 }
 
-const std::vector<CObj*> CWorld::GetNearObj(const vec3_t origin, const float radius, const int exclude) const
+const std::vector<CObj*> CWorld::GetNearObj(const vec3_t origin, const float radius, const int exclude, const int type) const
 {
     std::vector<CObj*> objlist;
     const float radius2 = radius * radius;
@@ -68,7 +68,8 @@ const std::vector<CObj*> CWorld::GetNearObj(const vec3_t origin, const float rad
 	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
     {
         obj = (*iter).second;
-        if(obj->GetID() != exclude && (obj->GetOrigin() - origin).AbsSquared() < radius2)
+        if(obj->GetID() != exclude && (obj->GetOrigin() - origin).AbsSquared() < radius2 &&
+            ((obj->GetType() == type) || type < 0 ))
             objlist.push_back(obj);
     }
     return objlist;
@@ -101,16 +102,18 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     vec3_t q; // Schnittpunkt mit Levelgeometrie
     vec3_t p3; // Endpunkt nach "slide"
 
-    assert(fabsf(vel.y) < 9999.9f);
+    if(fabsf(vel.y) > 999.9f)
+    {
+        fprintf(stderr, "World error: obj in free fall\n");
+        vel.y = 0;
+        assert(0);
+        return;
+    }
 
     if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
     {
         vel += gravity*dt;
         p2  += 0.5f*dt*dt*gravity;
-    }
-    else
-    {
-        int i = 0;
     }
     
     p2 += vel*dt;
@@ -182,7 +185,7 @@ bool CWorld::TraceObj(world_obj_trace_t* trace)
     for(iter = ObjBegin(); iter != ObjEnd(); iter++)
     {
         obj = (*iter).second;
-        if(obj->GetID() == ignore->GetID())
+        if(obj->GetID() == ignore->GetID() || obj->GetRadius() < lynxmath::EPSILON)
             continue;
         origin = obj->GetOrigin();
         if(!vec3_t::RaySphereIntersect(trace->start, trace->dir,

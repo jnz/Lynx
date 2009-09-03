@@ -8,6 +8,10 @@
     der CObj Klasse. Attribute werden nicht über das Netzwerk übertragen
  */
 
+#define GAME_OBJ_TYPE_OBJ           1
+#define GAME_OBJ_TYPE_ZOMBIE        2
+#define GAME_OBJ_TYPE_PLAYER        3
+
 class CGameObj :
     public CObj
 {
@@ -18,6 +22,8 @@ public:
         m_clientid = -1;
     }
     virtual ~CGameObj(void);
+
+    virtual int GetType() { return GAME_OBJ_TYPE_OBJ; }
 
     void SetClientID(int clientid) { m_clientid = clientid; }
     int GetClientID() { return m_clientid; }

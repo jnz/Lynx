@@ -8,6 +8,7 @@ public:
     CGameObjPlayer(CWorld* world);
     ~CGameObjPlayer(void);
 
+    virtual int GetType() { return GAME_OBJ_TYPE_PLAYER; }
 
     void CmdFire(bool active); // Is cmd active?
     void OnCmdFire(); // Called if +fire is activated

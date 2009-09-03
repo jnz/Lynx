@@ -18,14 +18,22 @@ CGameZombie::~CGameZombie(void)
 
 void CGameZombie::InitGame()
 {
-    // 1 Testobjekt erstellen
-	CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
-    zombie->SetOrigin(vec3_t(0.0, 9.0f, 5.0f));
-    GetWorld()->AddObj(zombie);
-
     // Level laden
     bool success = GetWorld()->LoadLevel(CLynx::GetBaseDirLevel() + "testlvl/level1.lbsp");
     assert(success);
+    if(!success)
+        return;
+
+    // n Testobjekte erstellen
+    for(int i=0;i<7;i++)
+    {
+        bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
+        CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
+
+        zombie->SetOrigin(point.point);
+        zombie->SetRot(point.rot);
+        GetWorld()->AddObj(zombie);
+    }
 }
 
 void CGameZombie::Notify(EventNewClientConnected e)

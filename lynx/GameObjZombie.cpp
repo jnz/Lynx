@@ -41,20 +41,21 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
     AddFlags(OBJ_FLAGS_ELASTIC); // zombie ist damit tot
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
-                    GetWorld()->GetLeveltime() + 5000,
+                    GetWorld()->GetLeveltime() + 9000,
                     GetWorld(),
                     this));
 }
 
 void CGameObjZombie::FindVictim()
 {
-    const std::vector<CObj*> objlist = GetWorld()->GetNearObj(GetOrigin(), 50.0f, GetID());
+    CObj* victim;
+    const std::vector<CObj*> objlist = 
+        GetWorld()->GetNearObj(GetOrigin(), 50.0f, GetID(), GAME_OBJ_TYPE_PLAYER);
     if(objlist.size() > 0)
     {
         int randid = rand()%(objlist.size());
-        CObj* victim = objlist[randid];
+        victim = objlist[randid];
         currenttarget = victim->GetID();
-        fprintf(stderr, "Zombie found victim!\n");
     }
 }
 

@@ -8,11 +8,12 @@ public:
     CGameObjZombie(CWorld* world);
     ~CGameObjZombie(void);
 
-    void DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer);
+    virtual int     GetType() { return GAME_OBJ_TYPE_ZOMBIE; }
 
-    void FindVictim();
+    void            DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer);
 
-    int currenttarget;
+    void            FindVictim();
+    int             currenttarget;
 };
 
 class CThinkFuncRespawnZombie : public CThinkFunc

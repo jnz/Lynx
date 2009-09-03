@@ -40,7 +40,6 @@ void CGameObjPlayer::OnCmdFire()
     {
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
         assert(hitobj);
-        //if(!hitobj->IsClient())
         hitobj->DealDamage(20, trace.hitpoint, trace.dir, this);
     }
     else
