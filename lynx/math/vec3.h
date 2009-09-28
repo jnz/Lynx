@@ -12,7 +12,7 @@ struct vec3_t
 	};
 
 	vec3_t();
-	vec3_t(float nx, float ny, float nz);
+    vec3_t(float nx, float ny, float nz) : x(nx), y(ny), z(nz) {}
 	vec3_t(float all);
 
 	static vec3_t rand(float mx, float my, float mz);
@@ -20,7 +20,7 @@ struct vec3_t
 	float Abs(void) const;
 	float AbsSquared(void) const;
 
-	float Normalize(void);
+	void Normalize(void);
 	vec3_t Normalized(void) const;
 	bool IsNormalized() const;
 	void SetLength(float length);

@@ -56,3 +56,4 @@ std::string CLynx::FloatToString(float f, int precision)
    }  
    return o.str();
 }
+

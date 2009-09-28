@@ -59,7 +59,7 @@ void CWorld::DeleteAllObjs()
 	m_objlist.clear();
 }
 
-const std::vector<CObj*> CWorld::GetNearObj(const vec3_t origin, const float radius, const int exclude, const int type) const
+const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const
 {
     std::vector<CObj*> objlist;
     const float radius2 = radius * radius;

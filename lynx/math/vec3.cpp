@@ -18,13 +18,6 @@ vec3_t::vec3_t()
 	x=y=z=0;
 }
 
-vec3_t::vec3_t(float nx, float ny, float nz)
-{
-	x=nx;
-	y=ny;
-	z=nz;
-}
-
 vec3_t::vec3_t(float all)
 {
 	x = y = z = all;
@@ -32,7 +25,7 @@ vec3_t::vec3_t(float all)
 
 float vec3_t::Abs(void) const
 {
-	return (float)sqrt(x*x+y*y+z*z);
+	return lynxmath::Sqrt(x*x+y*y+z*z);
 }
 
 float vec3_t::AbsSquared(void) const
@@ -40,22 +33,17 @@ float vec3_t::AbsSquared(void) const
 	return x*x+y*y+z*z;
 }
 
-float vec3_t::Normalize(void)
+void vec3_t::Normalize(void)
 {
-	float length, ilength;
+	const float abssqr = x*x+y*y+z*z;
 
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrtf(length);
-
-	if(length > lynxmath::EPSILON)
+	if(abssqr > lynxmath::EPSILON)
 	{
-		ilength = 1/length;
+		const float ilength = lynxmath::InvSqrt(abssqr);
 		v[0] *= ilength;
 		v[1] *= ilength;
 		v[2] *= ilength;
 	}
-		
-	return length;
 }
 
 void vec3_t::SetLength(float scalelen)
@@ -328,7 +316,7 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir,
     if(dis < 0)
         return false;
 
-    *f = (-b - sqrt(dis))/a;
+    *f = (-b - lynxmath::Sqrt(dis))/a;
     const float collision = (pStart + *f*pDir - edgeStart)*pa;
     return collision >= 0 && collision <= pa_squared;
 }
@@ -346,7 +334,7 @@ bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pDir,
 	if(discrsquare <= 0)
 		return false;
 
-	const float discr = sqrt(discrsquare);
+    const float discr = lynxmath::Sqrt(discrsquare);
 	const float u1 = (-b + discr)/(2*a);
 	const float u2 = -(b + discr)/(2*a);
     *f = u1 < u2 ? u1 : u2;
