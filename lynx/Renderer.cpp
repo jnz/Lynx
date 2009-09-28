@@ -203,6 +203,9 @@ void CRenderer::Update(const float dt, const DWORD ticks)
         if(obj->GetID() == localctrlid)
             continue;
 
+        if(!obj->GetMesh())
+            continue;
+
 		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
 		{
 			stat_obj_hidden++;
@@ -215,11 +218,8 @@ void CRenderer::Update(const float dt, const DWORD ticks)
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
 
         glMultMatrixf(obj->GetRotMatrix()->pm);
-        if(obj->GetMesh())
-		{
-			obj->GetMesh()->Render(obj->GetMeshState());
-			obj->GetMesh()->Animate(obj->GetMeshState(), dt);
-		}
+		obj->GetMesh()->Render(obj->GetMeshState());
+		obj->GetMesh()->Animate(obj->GetMeshState(), dt);
 		glPopMatrix();
 	}
 	

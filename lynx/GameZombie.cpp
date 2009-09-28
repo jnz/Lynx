@@ -86,8 +86,8 @@ void CGameZombie::Update(const float dt, const DWORD ticks)
                 ClientMouse(obj, client->lat, client->lon);
 
                 // Tatsächliche Client Blickrichtung Berechnen und merken
-                quaternion_t qlat(vec3_t::xAxis, client->lat*lynxmath::DEGTORAD);
-                quaternion_t qlon(vec3_t::yAxis, client->lon*lynxmath::DEGTORAD);
+                const quaternion_t qlat(vec3_t::xAxis, client->lat*lynxmath::DEGTORAD);
+                const quaternion_t qlon(vec3_t::yAxis, client->lon*lynxmath::DEGTORAD);
                 ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);
             }
         }

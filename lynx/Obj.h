@@ -19,6 +19,7 @@ struct obj_state_t;
 
 
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
+// FIXME: use template function
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
                   const DWORD flagparam, 

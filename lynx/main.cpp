@@ -28,14 +28,17 @@ int main(int argc, char** argv)
 	int svport = 9999;
 	bool startserver = true;
 
-	if(argc > 1)
+	if(argc > 1) // connect to this server, disable local server
+    {
 		serveraddress = argv[1];
-	if(argc > 2)
+        startserver = false;
+    }
+	if(argc > 2) // port
+    {
 		svport = atoi(argv[2]);
-	if(argc > 3)
-		startserver = atoi(argv[3]) > 0;
-
+    }
 	srand((unsigned int)time(NULL));
+
 	{ // for dumpmemleak
 	int run;
 	float dt;
