@@ -431,6 +431,13 @@ void MatrixMultiply(matrix_t *pDest, const matrix_t *pMx1, const matrix_t *pMx2)
                    + pMx2->m[3][3]*pMx1->m[3][3];
 }
 
+const matrix_t operator*(const matrix_t& m1, const matrix_t& m2)
+{
+    matrix_t m;
+    MatrixMultiply(&m, &m1, &m2);
+    return m;
+}
+
 void matrix_t::SetTransform(const vec3_t* position, const vec3_t* angles)
 {
 	float sx, sy, sz, cx, cy, cz;
@@ -552,6 +559,20 @@ void matrix_t::GetVec3Cam(vec3_t* dir, vec3_t* up, vec3_t* side)
 		dir->y = m[1][2];
 		dir->z = m[2][2];
 	}
+}
+
+void matrix_t::GetRow(int row, float* f4) const
+{
+    assert(row >= 0 && row <= 3);
+
+    f4[0] = pm[ 0 + row];
+    f4[1] = pm[ 4 + row];
+    f4[2] = pm[ 8 + row];
+    f4[3] = pm[12 + row];
+    //f4[0] = pm[ 0 + 4*row];
+    //f4[1] = pm[ 1 + 4*row];
+    //f4[2] = pm[ 2 + 4*row];
+    //f4[3] = pm[ 3 + 4*row];
 }
 
 // Graveyard

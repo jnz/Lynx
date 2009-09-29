@@ -13,16 +13,6 @@ const vec3_t vec3_t::xAxis(1.0f, 0.0f, 0.0f);
 const vec3_t vec3_t::yAxis(0.0f, 1.0f, 0.0f);
 const vec3_t vec3_t::zAxis(0.0f, 0.0f, 1.0f);
 
-vec3_t::vec3_t()
-{
-	x=y=z=0;
-}
-
-vec3_t::vec3_t(float all)
-{
-	x = y = z = all;
-}
-
 float vec3_t::Abs(void) const
 {
 	return lynxmath::Sqrt(x*x+y*y+z*z);

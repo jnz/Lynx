@@ -7,7 +7,7 @@ enum pointplane_t { POINTPLANE_BACK=0, POINT_ON_PLANE, POINTPLANE_FRONT }; // do
 
 struct plane_t
 {
-	plane_t(void);
+    plane_t(void);
 	plane_t(vec3_t p1, vec3_t p2, vec3_t p3);
 	plane_t(vec3_t p, vec3_t n);
 	plane_t(float a, float b, float c, float d);

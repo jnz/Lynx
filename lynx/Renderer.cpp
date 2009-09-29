@@ -20,7 +20,7 @@
 // Local Render Functions
 static void BSP_RenderTree(const CBSPLevel* tree, 
 						   const vec3_t* origin, 
-						   CFrustum* frustum);
+						   const CFrustum* frustum);
 
 static void RenderCube();
 
@@ -109,11 +109,12 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 	glEnable(GL_CULL_FACE);
 	glShadeModel(GL_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	UpdatePerspective();
 
-	// Vertex Light
-	float mat_specular[] = {1,1,1,1};
+	// Vertex Lighting
+    float mat_specular[] = {1,1,1,1};
 	float mat_shininess[] = { 50 };
 	float light_pos[] = { 0, 5, 0, 0 };
 	float white_light[] = {1,1,1,1};
@@ -127,7 +128,6 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
 	glEnable(GL_LIGHT0);
-
 	glEnable(GL_LIGHTING);
 
     GLenum err = glewInit();
@@ -154,6 +154,8 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         return false;
     }
 
+    InitShadow();
+
 	return true;
 }
 
@@ -162,39 +164,13 @@ void CRenderer::Shutdown()
 
 }
 
-void CRenderer::Update(const float dt, const DWORD ticks)
+void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrlid)
 {
-	CObj* obj, *localctrl;
-	int localctrlid;
-	OBJITER iter;
-	matrix_t m;
-	vec3_t dir, up, side;
-	CFrustum frustum;
-	CWorld* world;
-
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    localctrl = m_world->GetLocalController();
-	localctrlid = m_world->GetLocalObj()->GetID();
-	world = m_world->GetInterpWorld();
-	m.SetCamTransform((localctrl->GetOrigin()+localctrl->GetEyePos()), 
-					   localctrl->GetRot());
-	
-    m.GetVec3Cam(&dir, &up, &side);
-    dir = -dir;
-	glLoadMatrixf(m.pm);
-
-	frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
-				  RENDERER_FOV, (float)m_width/(float)m_height,
-				  PLANE_NEAR, 
-				  PLANE_FAR); 
-
-	stat_obj_hidden = 0;
-	stat_obj_visible = 0;
-
+    CObj* obj;
+    OBJITER iter;
 
     glDisable(GL_LIGHTING);
-	BSP_RenderTree(world->GetBSP(), &localctrl->GetOrigin(), &frustum);
+	BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
     glEnable(GL_LIGHTING);
 
 	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
@@ -219,19 +195,57 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 
         glMultMatrixf(obj->GetRotMatrix()->pm);
 		obj->GetMesh()->Render(obj->GetMeshState());
-		obj->GetMesh()->Animate(obj->GetMeshState(), dt);
 		glPopMatrix();
 	}
-	
-    glDisable(GL_LIGHTING);
+}
 
+void CRenderer::Update(const float dt, const DWORD ticks)
+{
+	CObj* obj, *localctrl;
+	int localctrlid;
+	OBJITER iter;
+	matrix_t m;
+	vec3_t dir, up, side;
+	CFrustum frustum;
+	CWorld* world;
+
+    localctrl = m_world->GetLocalController();
+	localctrlid = m_world->GetLocalObj()->GetID();
+	world = m_world->GetInterpWorld();
+
+	m.SetCamTransform((localctrl->GetOrigin()+localctrl->GetEyePos()), 
+					   localctrl->GetRot());
+	
+    m.GetVec3Cam(&dir, &up, &side);
+    dir = -dir;
+
+	frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
+				  RENDERER_FOV, (float)m_width/(float)m_height,
+				  PLANE_NEAR, 
+				  PLANE_FAR); 
+
+	stat_obj_hidden = 0;
+	stat_obj_visible = 0;
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(m.pm);
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    DrawScene(frustum, world, localctrlid);
+	
     // Particle Draw
-    //glEnable(GL_ALPHA_TEST);
+    glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glDepthMask(false);
 	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
 	{
 		obj = (*iter).second;
+
+        if(obj->GetMesh())
+        {
+    		obj->GetMesh()->Animate(obj->GetMeshState(), dt);
+        }
+
         if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
             continue;
 
@@ -250,9 +264,9 @@ void CRenderer::Update(const float dt, const DWORD ticks)
 	}
     glDepthMask(true);
     glDisable(GL_BLEND);
-    //glDisable(GL_ALPHA_TEST);
     glColor4f(1,1,1,1);
 
+    // Draw weapon
     CModelMD2* viewmodel;
     md2_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
@@ -360,7 +374,12 @@ bool CRenderer::InitShader()
     return true;
 }
 
-void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, CFrustum* frustum)
+bool CRenderer::InitShadow()
+{
+    return true;
+}
+
+void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum* frustum)
 {
 	if(!tree)
 		return;

@@ -44,6 +44,8 @@ public:
 	bool Inverse(matrix_t* out); // *out can be the matrix itself. this method is btw. not that expensive.
 	float Det() const;
 
+    void GetRow(int row, float* f4) const;
+
 	void SetZeroMatrix();
 	void SetIdentity();
 	void SetTranslation(float dx, float dy, float dz);
@@ -69,3 +71,5 @@ public:
 };
 
 void MatrixMultiply(matrix_t *pDest, const matrix_t *pMx1, const matrix_t *pMx2);
+
+const matrix_t operator*(const matrix_t& m1, const matrix_t& m2);

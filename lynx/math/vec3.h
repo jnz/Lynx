@@ -11,9 +11,9 @@ struct vec3_t
 		float v[3];
 	};
 
-	vec3_t();
+    vec3_t() : x(0.0f), y(0.0f), z(0.0f) {}
     vec3_t(float nx, float ny, float nz) : x(nx), y(ny), z(nz) {}
-	vec3_t(float all);
+    vec3_t(float all) : x(all), y(all), z(all) {}
 
 	static vec3_t rand(float mx, float my, float mz);
 

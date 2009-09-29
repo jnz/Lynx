@@ -68,6 +68,8 @@ struct bspbin_vertex_t
 
 struct bspbin_spawn_t
 {
+    bspbin_spawn_t() : point(0,0,0), rot(0,0,0,1.0f) { }
+
     vec3_t point;
     quaternion_t rot;
 };
