@@ -27,9 +27,6 @@ protected:
     unsigned int m_fshader;
     unsigned int m_program;
 
-    // Shadow Mapping
-    bool InitShadow(); 
-
 private:
 	int m_width, m_height;
 	CWorldClient* m_world;

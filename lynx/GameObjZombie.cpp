@@ -15,6 +15,7 @@ CGameObjZombie::CGameObjZombie(CWorld* world) : CGameObj(world)
 
 CGameObjZombie::~CGameObjZombie(void)
 {
+
 }
 
 void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer)

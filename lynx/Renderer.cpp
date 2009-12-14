@@ -116,12 +116,14 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 	// Vertex Lighting
     float mat_specular[] = {1,1,1,1};
 	float mat_shininess[] = { 50 };
-	float light_pos[] = { 0, 5, 0, 0 };
+	float mat_diff[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+	float light_pos[] = { 0, 1, 1, 1 };
 	float white_light[] = {1,1,1,1};
 	float lmodel_ambient[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 	
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diff);
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
@@ -154,8 +156,6 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         return false;
     }
 
-    InitShadow();
-
 	return true;
 }
 
@@ -172,6 +172,8 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
     glDisable(GL_LIGHTING);
 	BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
     glEnable(GL_LIGHTING);
+
+    //glUseProgram(m_program); // Object Shader 
 
 	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
 	{
@@ -197,6 +199,8 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
 		obj->GetMesh()->Render(obj->GetMeshState());
 		glPopMatrix();
 	}
+
+    //glUseProgram(0);
 }
 
 void CRenderer::Update(const float dt, const DWORD ticks)
@@ -369,13 +373,8 @@ bool CRenderer::InitShader()
 
     glLinkProgram(m_program);
 
-    glUseProgram(m_program);
+    // glUseProgram(m_program);
 
-    return true;
-}
-
-bool CRenderer::InitShadow()
-{
     return true;
 }
 
