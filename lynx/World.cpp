@@ -20,43 +20,43 @@ CWorld::CWorld(void) : m_resman(this)
 
 CWorld::~CWorld(void)
 {
-	DeleteAllObjs();
+    DeleteAllObjs();
 }
 
 void CWorld::AddObj(CObj* obj, bool inthisframe)
 {
-	assert(obj && !GetObj(obj->GetID()));
-	assert(GetObjCount() < USHRT_MAX);
+    assert(obj && !GetObj(obj->GetID()));
+    assert(GetObjCount() < USHRT_MAX);
 
-	if(inthisframe)
-		m_objlist[obj->GetID()] = obj;
-	else
-		m_addobj.push_back(obj);
+    if(inthisframe)
+        m_objlist[obj->GetID()] = obj;
+    else
+        m_addobj.push_back(obj);
 }
 
 void CWorld::DelObj(int objid)
 {
-	assert(GetObj(objid));
-	if(GetObj(objid))
-		m_removeobj.push_back(objid);
+    assert(GetObj(objid));
+    if(GetObj(objid))
+        m_removeobj.push_back(objid);
 }
 
 CObj* CWorld::GetObj(int objid)
 {
-	OBJITER iter;
-	iter = m_objlist.find(objid);
-	if(iter == m_objlist.end())
-		return NULL;
-	return (*iter).second;
+    OBJITER iter;
+    iter = m_objlist.find(objid);
+    if(iter == m_objlist.end())
+        return NULL;
+    return (*iter).second;
 }
 
 void CWorld::DeleteAllObjs()
 {
-	OBJITER iter;
+    OBJITER iter;
 
-	for(iter = ObjBegin();iter!=ObjEnd();iter++)
-		delete (*iter).second;
-	m_objlist.clear();
+    for(iter = ObjBegin();iter!=ObjEnd();iter++)
+        delete (*iter).second;
+    m_objlist.clear();
 }
 
 const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const
@@ -64,8 +64,8 @@ const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float ra
     std::vector<CObj*> objlist;
     const float radius2 = radius * radius;
     CObj* obj;
-	OBJITERCONST iter;
-	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
+    OBJITERCONST iter;
+    for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
     {
         obj = (*iter).second;
         if(obj->GetID() != exclude && (obj->GetOrigin() - origin).AbsSquared() < radius2 &&
@@ -84,15 +84,15 @@ void CWorld::Update(const float dt, const DWORD ticks)
         state.worldid++;
     }
 
-	UpdatePendingObjs();
+    UpdatePendingObjs();
 
     if(!m_bsptree.IsLoaded())
-		return;
+        return;
 }
 
 #define GRAVITY             (100.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
 const static vec3_t gravity(0, -GRAVITY, 0);
-#define STOP_EPSILON		(0.01f)
+#define STOP_EPSILON        (0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
     bsp_sphere_trace_t trace;
@@ -237,31 +237,31 @@ bool CWorld::TraceObj(world_obj_trace_t* trace)
 
 void CWorld::UpdatePendingObjs()
 {
-	if(m_removeobj.size() > 0)
-	{
-		// Zu löschende Objekte entfernen
-		std::list<int>::iterator remiter;
-		OBJITER iter;
-		for(remiter=m_removeobj.begin();remiter!=m_removeobj.end();remiter++)
-		{
-			iter = m_objlist.find((*remiter));
-			assert(iter != m_objlist.end());
-			delete (*iter).second;
-			m_objlist.erase(iter);
-		}
-		m_removeobj.clear();
-	}
+    if(m_removeobj.size() > 0)
+    {
+        // Zu löschende Objekte entfernen
+        std::list<int>::iterator remiter;
+        OBJITER iter;
+        for(remiter=m_removeobj.begin();remiter!=m_removeobj.end();remiter++)
+        {
+            iter = m_objlist.find((*remiter));
+            assert(iter != m_objlist.end());
+            delete (*iter).second;
+            m_objlist.erase(iter);
+        }
+        m_removeobj.clear();
+    }
 
-	if(m_addobj.size() > 0)
-	{
-		// Objekte für das Frame hinzufügen
-		std::list<CObj*>::iterator additer;
-		for(additer=m_addobj.begin();additer!=m_addobj.end();additer++)
-		{
-			m_objlist[(*additer)->GetID()] = (*additer);
-		}
-		m_addobj.clear();
-	}
+    if(m_addobj.size() > 0)
+    {
+        // Objekte für das Frame hinzufügen
+        std::list<CObj*>::iterator additer;
+        for(additer=m_addobj.begin();additer!=m_addobj.end();additer++)
+        {
+            m_objlist[(*additer)->GetID()] = (*additer);
+        }
+        m_addobj.clear();
+    }
 }
 
 bool CWorld::LoadLevel(const std::string path)
@@ -274,23 +274,23 @@ bool CWorld::LoadLevel(const std::string path)
 
 // DELTA COMPRESSION CODE (ugly atm) ------------------------------------
 
-#define WORLD_STATE_WORLDID			(1 <<  0)
-#define WORLD_STATE_LEVELTIME		(1 <<  1)
-#define WORLD_STATE_LEVEL			(1 <<  2)
+#define WORLD_STATE_WORLDID         (1 <<  0)
+#define WORLD_STATE_LEVELTIME       (1 <<  1)
+#define WORLD_STATE_LEVEL           (1 <<  2)
 
-#define WORLD_STATE_NO_REAL_CHANGE	(WORLD_STATE_WORLDID|WORLD_STATE_LEVELTIME) // worldid und leveltime ändern sich sowieso immer
-#define WORLD_STATE_FULLUPDATE		((1 <<  3)-1)
+#define WORLD_STATE_NO_REAL_CHANGE  (WORLD_STATE_WORLDID|WORLD_STATE_LEVELTIME) // worldid und leveltime ändern sich sowieso immer
+#define WORLD_STATE_FULLUPDATE      ((1 <<  3)-1)
 
 bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
 {
     assert(stream);
-	int size = 0;
-	CObj* obj;
+    int size = 0;
+    CObj* obj;
     OBJITER iter;
-	int changes = 0;
+    int changes = 0;
 
-	if(write)
-	{
+    if(write)
+    {
         DWORD updateflags = 0;
         CStream tempstream = stream->GetStream();
         stream->WriteAdvance(sizeof(DWORD)); // An dieser Stelle sollten als DWORD die Updateflags stehen, diese kennen wir erst, nachdem wir sie geschrieben haben
@@ -299,11 +299,11 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, stream);
         DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, stream);
         DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, stream);
-		// [NEUE ATTRIBUTE HIER]
+        // [NEUE ATTRIBUTE HIER]
 
-		if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
-			changes++;
-		
+        if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
+            changes++;
+        
         assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // muss zwingend eingehalten werden
         tempstream.WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
 
@@ -313,9 +313,9 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
         obj_state_t obj_oldstate;
         obj_state_t* p_obj_oldstate;
-		for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
-		{
-			obj = (*iter).second;
+        for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
+        {
+            obj = (*iter).second;
             p_obj_oldstate = NULL;
             if(oldstate) // Delta Compression
             {
@@ -327,11 +327,11 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             }
             stream->WriteWORD(obj->GetID());
             if(obj->Serialize(true, stream, obj->GetID(), p_obj_oldstate))
-				changes++;
-		}
-	}
-	else
-	{
+                changes++;
+        }
+    }
+    else
+    {
         DWORD updateflags;
         DWORD worldid;
         std::string level;
@@ -343,8 +343,8 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         assert(updateflags & WORLD_STATE_WORLDID);
         if(updateflags & WORLD_STATE_WORLDID)
             stream->ReadDWORD(&worldid);
-		else
-			return false;
+        else
+            return false;
         if(worldid < state.worldid)
         {
             assert(0); // anschauen, ob ok
@@ -360,16 +360,16 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             if(level != m_bsptree.GetFilename())
             {
                 if(LoadLevel(level)==false)
-			    {
-    				// FIXME error handling
-					assert(0);
-				    return false;
-			    }
+                {
+                    // FIXME error handling
+                    assert(0);
+                    return false;
+                }
             }
         }
-		// [NEUE ATTRIBUTE HIER]
-		if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
-			changes++;
+        // [NEUE ATTRIBUTE HIER]
+        if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
+            changes++;
 
         stream->ReadWORD(&objcount);
         assert(objcount < USHRT_MAX);
@@ -381,11 +381,11 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             if(!obj)
             {
                 obj = new CObj(this);
-				changes += obj->Serialize(false, stream, objid) ? 1 : 0;
+                changes += obj->Serialize(false, stream, objid) ? 1 : 0;
                 AddObj(obj);
             }
             else
-				changes += obj->Serialize(false, stream, objid) ? 1 : 0;
+                changes += obj->Serialize(false, stream, objid) ? 1 : 0;
             assert(objread.find(objid) == objread.end()); // darf nicht schon im stream sein
             objread[obj->GetID()] = obj->GetID();
         }
@@ -399,26 +399,26 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             DelObj(obj->GetID());
         }
 
-		UpdatePendingObjs();
-	}
+        UpdatePendingObjs();
+    }
 
-	return changes > 0;
+    return changes > 0;
 }
 
 world_state_t CWorld::GetWorldState()
 {
-	world_state_t worldstate = state;
+    world_state_t worldstate = state;
 
     assert(worldstate.GetObjCount() == 0);
 
     OBJITER iter;
-	for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
-	{
-		CObj* obj = (*iter).second;
+    for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
+    {
+        CObj* obj = (*iter).second;
         worldstate.AddObjState(obj->GetObjState(), obj->GetID());
     }
 
-	return worldstate;
+    return worldstate;
 }
 
 // world_state_t Struktur Methoden (für sicheren Zugriff auf Objekt Vektor in world_state_t)

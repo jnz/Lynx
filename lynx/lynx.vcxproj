@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B468A762-5525-4D19-A009-328762AA3515}</ProjectGuid>
+    <RootNamespace>lynx</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\enet-1.2\include;..\..\glew\include;..\..\SDL-1.2.13\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\enet-1.2\Release;..\..\SDL-1.2.13\lib;..\..\glew\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\enet-1.2\include;..\..\glew\include;..\..\SDL-1.2.13\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\enet-1.2\Release;..\..\SDL-1.2.13\lib;..\..\glew\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>enet.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;glew32.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>enet.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;ws2_32.lib;winmm.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="BSPLevel.cpp" />
+    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="ClientHUD.cpp" />
+    <ClCompile Include="ClientInfo.cpp" />
+    <ClCompile Include="Frustum.cpp" />
+    <ClCompile Include="GameLogic.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ModelMD2.cpp" />
+    <ClCompile Include="NetMsg.cpp" />
+    <ClCompile Include="Obj.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Think.cpp" />
+    <ClCompile Include="World.cpp" />
+    <ClCompile Include="WorldClient.cpp" />
+    <ClCompile Include="math\matrix.cpp" />
+    <ClCompile Include="math\plane.cpp" />
+    <ClCompile Include="math\quaternion.cpp" />
+    <ClCompile Include="math\vec3.cpp" />
+    <ClCompile Include="lynx.cpp" />
+    <ClCompile Include="lynxsys.cpp" />
+    <ClCompile Include="Stream.cpp" />
+    <ClCompile Include="GameObj.cpp" />
+    <ClCompile Include="GameObjPlayer.cpp" />
+    <ClCompile Include="GameObjZombie.cpp" />
+    <ClCompile Include="GameZombie.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
+    <ClCompile Include="ParticleSystemBlood.cpp" />
+    <ClCompile Include="ParticleSystemDust.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BSPBIN.h" />
+    <ClInclude Include="BSPLevel.h" />
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="ClientHUD.h" />
+    <ClInclude Include="ClientInfo.h" />
+    <ClInclude Include="Events.h" />
+    <ClInclude Include="Frustum.h" />
+    <ClInclude Include="GameLogic.h" />
+    <ClInclude Include="ModelMD2.h" />
+    <ClInclude Include="NetMsg.h" />
+    <ClInclude Include="Obj.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="Server.h" />
+    <ClInclude Include="ServerClient.h" />
+    <ClInclude Include="Think.h" />
+    <ClInclude Include="World.h" />
+    <ClInclude Include="WorldClient.h" />
+    <ClInclude Include="math\mathconst.h" />
+    <ClInclude Include="math\matrix.h" />
+    <ClInclude Include="math\plane.h" />
+    <ClInclude Include="math\quaternion.h" />
+    <ClInclude Include="math\vec3.h" />
+    <ClInclude Include="lynx.h" />
+    <ClInclude Include="lynxsys.h" />
+    <ClInclude Include="Stream.h" />
+    <ClInclude Include="Subject.h" />
+    <ClInclude Include="GameObj.h" />
+    <ClInclude Include="GameObjPlayer.h" />
+    <ClInclude Include="GameObjZombie.h" />
+    <ClInclude Include="GameZombie.h" />
+    <ClInclude Include="ParticleSystem.h" />
+    <ClInclude Include="ParticleSystemBlood.h" />
+    <ClInclude Include="ParticleSystemDust.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

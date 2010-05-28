@@ -9,12 +9,12 @@
 
 DWORD CLynxSys::GetTicks()
 {
-	return SDL_GetTicks();
+    return SDL_GetTicks();
 }
 
 void CLynxSys::GetMouseDelta(int* dx, int* dy)
 {
-	SDL_GetRelativeMouseState(dx, dy);
+    SDL_GetRelativeMouseState(dx, dy);
 }
 
 bool CLynxSys::MouseLeftDown()
@@ -37,5 +37,5 @@ bool CLynxSys::MouseMiddleDown()
 
 BYTE* CLynxSys::GetKeyState()
 {
-	return SDL_GetKeyState(NULL);
+    return SDL_GetKeyState(NULL);
 }

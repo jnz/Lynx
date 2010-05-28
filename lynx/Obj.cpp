@@ -26,16 +26,16 @@ int CObj::m_idpool = 0;
 
 CObj::CObj(CWorld* world)
 {
-	assert(world);
-	m_id = ++m_idpool;
+    assert(world);
+    m_id = ++m_idpool;
     assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als WORD übertragen
     state.radius = 2*lynxmath::SQRT_2;
-	state.eyepos = vec3_t(0,0.5f,0);
+    state.eyepos = vec3_t(0,0.5f,0);
     state.animation = 0;
     state.nextanimation = 0;
     state.flags = 0;
-	m_mesh = NULL;
-	m_world = world;
+    m_mesh = NULL;
+    m_world = world;
     UpdateMatrix();
 
     // Local Attributes
@@ -69,7 +69,7 @@ void CObj::UpdateMatrix()
 
 float CObj::GetRadius() const
 {
-	return state.radius;
+    return state.radius;
 }
 
 void CObj::SetRadius(float radius)
@@ -79,60 +79,60 @@ void CObj::SetRadius(float radius)
 
 std::string CObj::GetResource() const
 {
-	return state.resource;
+    return state.resource;
 }
 
 void CObj::SetResource(std::string resource)
 {
-	assert(resource.size() < USHRT_MAX);
-	if(resource.size() >= USHRT_MAX)
-		return;
+    assert(resource.size() < USHRT_MAX);
+    if(resource.size() >= USHRT_MAX)
+        return;
 
-	if(state.resource != resource)
-	{
-		state.resource = resource;
-		UpdateAnimation();
-		if(m_mesh)
-		{
-			state.radius = m_mesh->GetSphere();
-		}
-	}
+    if(state.resource != resource)
+    {
+        state.resource = resource;
+        UpdateAnimation();
+        if(m_mesh)
+        {
+            state.radius = m_mesh->GetSphere();
+        }
+    }
 }
 
 INT16 CObj::GetAnimation() const
 {
-	return state.animation;
+    return state.animation;
 }
 
 void CObj::SetAnimation(INT16 animation)
 {
-	if(animation != state.animation)
-	{
-		state.animation = animation;
+    if(animation != state.animation)
+    {
+        state.animation = animation;
         state.nextanimation = animation;
-		UpdateAnimation();
-	}
+        UpdateAnimation();
+    }
 }
 
 INT16 CObj::GetNextAnimation() const
 {
-	return state.nextanimation;
+    return state.nextanimation;
 }
 
 void CObj::SetNextAnimation(INT16 animation)
 {
-	if(animation != state.nextanimation)
-	{
-		state.nextanimation = animation;
+    if(animation != state.nextanimation)
+    {
+        state.nextanimation = animation;
         assert(m_mesh);
         if(m_mesh)
             m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
-	}
+    }
 }
 
 vec3_t CObj::GetEyePos() const
 {
-	return state.eyepos;
+    return state.eyepos;
 }
 
 void CObj::SetEyePos(const vec3_t& eyepos)
@@ -323,14 +323,14 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
     assert(stream);
     DWORD updateflags = 0;
 
-	if(write)
-	{
+    if(write)
+    {
         assert(GetID() == id);
-		assert(id < USHRT_MAX);
+        assert(id < USHRT_MAX);
         CStream tempstream = stream->GetStream(); // wir merken uns die stelle, an die die updateflags kommen
         stream->WriteAdvance(sizeof(DWORD)); // wir gehen sizeof(DWORD) vor
 
-		DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, stream);
+        DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, stream);
         DeltaDiffVec3(&state.vel,               oldstate ? &oldstate->vel : NULL,           OBJ_STATE_VEL,          &updateflags, stream);
         DeltaDiffQuat(&state.rot,               oldstate ? &oldstate->rot : NULL,           OBJ_STATE_ROT,          &updateflags, stream);
         DeltaDiffFloat(&state.radius,           oldstate ? &oldstate->radius : NULL,        OBJ_STATE_RADIUS,       &updateflags, stream);
@@ -344,9 +344,9 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         tempstream.WriteDWORD(updateflags); // jetzt können wir die updateflags vor den eigentlichen daten schreiben
 
         assert(oldstate ? 1 : (updateflags == OBJ_STATE_FULLUPDATE));
-	}
-	else
-	{
+    }
+    else
+    {
         stream->ReadDWORD(&updateflags);
 
         if(updateflags & OBJ_STATE_ORIGIN)
@@ -376,26 +376,26 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         m_id = id;
         if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION ||
             updateflags & OBJ_STATE_NEXTANIMATION)
-			UpdateAnimation();
+            UpdateAnimation();
         if(updateflags & OBJ_STATE_PARTICLES)
             UpdateParticles();
-	}
+    }
 
-	return updateflags != 0;
+    return updateflags != 0;
 }
 
 void CObj::SetObjState(const obj_state_t* objstate, int id)
 {
-	m_id = id;
+    m_id = id;
     bool resourcechange = objstate->resource != state.resource || 
                           objstate->animation != state.animation ||
                           objstate->nextanimation != state.nextanimation;
     bool rotationchange = objstate->rot != state.rot;
     bool particlechange = objstate->particles != state.particles;
 
-	state = *objstate;
+    state = *objstate;
     if(resourcechange)
-	    UpdateAnimation();
+        UpdateAnimation();
     if(rotationchange)
         UpdateMatrix();
     if(particlechange)
@@ -415,10 +415,10 @@ void CObj::UpdateAnimation()
         return;
     }
 
-	m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
-	if(state.animation >= 0)
+    m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
+    if(state.animation >= 0)
         m_mesh->SetAnimation(&m_mesh_state, state.animation);
-	else
-		m_mesh->SetAnimation(&m_mesh_state, 0);
+    else
+        m_mesh->SetAnimation(&m_mesh_state, 0);
     m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
 }

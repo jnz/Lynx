@@ -38,15 +38,15 @@ void CGameZombie::InitGame()
 
 void CGameZombie::Notify(EventNewClientConnected e)
 {
-	CGameObjPlayer* player;
-	player = new CGameObjPlayer(GetWorld());
-	player->SetOrigin(vec3_t(0.0f, 2.0f, 0));
+    CGameObjPlayer* player;
+    player = new CGameObjPlayer(GetWorld());
+    player->SetOrigin(vec3_t(0.0f, 2.0f, 0));
     player->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
-	player->SetAnimation(0);
+    player->SetAnimation(0);
     player->SetEyePos(vec3_t(0,0.65f,0));
     player->SetClientID(e.client->GetID());
 
-	GetWorld()->AddObj(player, true); // In diesem Frame, weil die Welt umgehend vom CServer serialized wird
+    GetWorld()->AddObj(player, true); // In diesem Frame, weil die Welt umgehend vom CServer serialized wird
     e.client->m_obj = player->GetID(); // Mit Client verknüpfen
     e.client->hud.weapon = "weapon/tris.md2";
     e.client->hud.animation = HUD_WEAPON_IDLE_ANIMATION;
@@ -60,17 +60,17 @@ void CGameZombie::Notify(EventClientDisconnected e)
 
 void CGameZombie::Update(const float dt, const DWORD ticks)
 {
-	CGameObj* obj;
-	OBJITER iter;
+    CGameObj* obj;
+    OBJITER iter;
     CClientInfo* client;
 
-	for(iter = GetWorld()->ObjBegin();iter!=GetWorld()->ObjEnd();iter++)
-	{
-		obj = (CGameObj*)(*iter).second;
+    for(iter = GetWorld()->ObjBegin();iter!=GetWorld()->ObjEnd();iter++)
+    {
+        obj = (CGameObj*)(*iter).second;
 
         obj->m_think.DoThink(GetWorld()->GetLeveltime());
 
-		GetWorld()->ObjMove(obj, dt);
+        GetWorld()->ObjMove(obj, dt);
         if(obj->IsClient())
         {
             if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() > 
@@ -91,7 +91,7 @@ void CGameZombie::Update(const float dt, const DWORD ticks)
                 ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);
             }
         }
-	}
+    }
 }
 
 void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, CClientInfo* client)

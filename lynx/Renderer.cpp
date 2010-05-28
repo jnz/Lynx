@@ -13,14 +13,14 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define PLANE_NEAR		0.1f
-#define PLANE_FAR		10000.0f
+#define PLANE_NEAR      0.1f
+#define PLANE_FAR       10000.0f
 #define RENDERER_FOV    90.0f
 
 // Local Render Functions
 static void BSP_RenderTree(const CBSPLevel* tree, 
-						   const vec3_t* origin, 
-						   const CFrustum* frustum);
+                           const vec3_t* origin, 
+                           const CFrustum* frustum);
 
 static void RenderCube();
 
@@ -29,32 +29,32 @@ static void RenderCube();
 #ifdef COLORLEAFS
 vec3_t g_colortable[] = 
 {
-	vec3_t(0,0,1),
-	vec3_t(0,1,0),
-	vec3_t(0,1,1),
-	vec3_t(0.95f,0,0),
-	vec3_t(1,0,1),
-	vec3_t(1,0.94f,0),
-	vec3_t(0,0,0.6f),
-	vec3_t(0,0.5f,0),
-	vec3_t(0,0.45f,0.55f),
-	vec3_t(0.65f,0,0),
-	vec3_t(0.45f,0,0.75f),
-	vec3_t(0.45f,0.25f,0),
-	vec3_t(0.75f,0.35f,0.65f),
-	vec3_t(0,0,0.65f),
-	vec3_t(0,0.65f,0),
-	vec3_t(0,0.45f,0.65f),
-	vec3_t(0.65f,0,0),
-	vec3_t(0.75f,0,0.35f),
-	vec3_t(0.55f,0.65f,0),
-	vec3_t(0.95f,0.35f,0.65f)
+    vec3_t(0,0,1),
+    vec3_t(0,1,0),
+    vec3_t(0,1,1),
+    vec3_t(0.95f,0,0),
+    vec3_t(1,0,1),
+    vec3_t(1,0.94f,0),
+    vec3_t(0,0,0.6f),
+    vec3_t(0,0.5f,0),
+    vec3_t(0,0.45f,0.55f),
+    vec3_t(0.65f,0,0),
+    vec3_t(0.45f,0,0.75f),
+    vec3_t(0.45f,0.25f,0),
+    vec3_t(0.75f,0.35f,0.65f),
+    vec3_t(0,0,0.65f),
+    vec3_t(0,0.65f,0),
+    vec3_t(0,0.45f,0.65f),
+    vec3_t(0.65f,0,0),
+    vec3_t(0.75f,0,0.35f),
+    vec3_t(0.55f,0.65f,0),
+    vec3_t(0.95f,0.35f,0.65f)
 };
 #endif
 
 CRenderer::CRenderer(CWorldClient* world)
 {
-	m_world = world;
+    m_world = world;
     m_vshader = 0;
     m_fshader = 0;
     m_program = 0;
@@ -70,67 +70,67 @@ CRenderer::~CRenderer(void)
     m_fshader = 0;
     glDeleteProgram(m_program);
 
-	Shutdown();
+    Shutdown();
 }
 
 bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 {
-	int status;
-	SDL_Surface* screen;
+    int status;
+    SDL_Surface* screen;
 
-	fprintf(stderr, "SDL Init... ");
-	status = SDL_InitSubSystem(SDL_INIT_VIDEO);
+    fprintf(stderr, "SDL Init... ");
+    status = SDL_InitSubSystem(SDL_INIT_VIDEO);
     assert(status == 0);
-	if(status)
-	{
-		fprintf(stderr, " failed\n");
-		return false;
-	}
-	fprintf(stderr, " successful\n");
+    if(status)
+    {
+        fprintf(stderr, " failed\n");
+        return false;
+    }
+    fprintf(stderr, " successful\n");
 
-	screen = SDL_SetVideoMode(width, height, bpp, 
-				SDL_HWSURFACE | 
-				SDL_ANYFORMAT | 
-				SDL_DOUBLEBUF | 
-				SDL_OPENGL | 
-				(fullscreen ? SDL_FULLSCREEN : 0));
-	assert(screen);
-	if(!screen)
-		return false;
+    screen = SDL_SetVideoMode(width, height, bpp, 
+                SDL_HWSURFACE | 
+                SDL_ANYFORMAT | 
+                SDL_DOUBLEBUF | 
+                SDL_OPENGL | 
+                (fullscreen ? SDL_FULLSCREEN : 0));
+    assert(screen);
+    if(!screen)
+        return false;
 
-	m_width = width;
-	m_height = height;
+    m_width = width;
+    m_height = height;
 
-	glClearColor(0.48f, 0.58f, 0.72f, 0.0f);
-	glClearDepth(1.0f);
-	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_CULL_FACE);
-	glShadeModel(GL_SMOOTH);
+    glClearColor(0.48f, 0.58f, 0.72f, 0.0f);
+    glClearDepth(1.0f);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_CULL_FACE);
+    glShadeModel(GL_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	UpdatePerspective();
+    UpdatePerspective();
 
-	// Vertex Lighting
+    // Vertex Lighting
     float mat_specular[] = {1,1,1,1};
-	float mat_shininess[] = { 50 };
-	float mat_diff[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	float light_pos[] = { 0, 1, 1, 1 };
-	float white_light[] = {1,1,1,1};
-	float lmodel_ambient[] = { 0.9f, 0.9f, 0.9f, 1.0f };
-	
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diff);
-	glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+    float mat_shininess[] = { 50 };
+    float mat_diff[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+    float light_pos[] = { 0, 1, 1, 1 };
+    float white_light[] = {1,1,1,1};
+    float lmodel_ambient[] = { 0.9f, 0.9f, 0.9f, 1.0f };
+    
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diff);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHTING);
 
     GLenum err = glewInit();
     if(GLEW_OK != err)
@@ -156,7 +156,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         return false;
     }
 
-	return true;
+    return true;
 }
 
 void CRenderer::Shutdown()
@@ -170,84 +170,84 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
     OBJITER iter;
 
     glDisable(GL_LIGHTING);
-	BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
+    BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
     glEnable(GL_LIGHTING);
 
     //glUseProgram(m_program); // Object Shader 
 
-	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
-	{
-		obj = (*iter).second;
+    for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+    {
+        obj = (*iter).second;
         if(obj->GetID() == localctrlid)
             continue;
 
         if(!obj->GetMesh())
             continue;
 
-		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-		{
-			stat_obj_hidden++;
-			continue;
-		}
-		stat_obj_visible++;
+        if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+        {
+            stat_obj_hidden++;
+            continue;
+        }
+        stat_obj_visible++;
 
-		glPushMatrix();
-		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        glPushMatrix();
+        glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
 
         glMultMatrixf(obj->GetRotMatrix()->pm);
-		obj->GetMesh()->Render(obj->GetMeshState());
-		glPopMatrix();
-	}
+        obj->GetMesh()->Render(obj->GetMeshState());
+        glPopMatrix();
+    }
 
     //glUseProgram(0);
 }
 
 void CRenderer::Update(const float dt, const DWORD ticks)
 {
-	CObj* obj, *localctrl;
-	int localctrlid;
-	OBJITER iter;
-	matrix_t m;
-	vec3_t dir, up, side;
-	CFrustum frustum;
-	CWorld* world;
+    CObj* obj, *localctrl;
+    int localctrlid;
+    OBJITER iter;
+    matrix_t m;
+    vec3_t dir, up, side;
+    CFrustum frustum;
+    CWorld* world;
 
     localctrl = m_world->GetLocalController();
-	localctrlid = m_world->GetLocalObj()->GetID();
-	world = m_world->GetInterpWorld();
+    localctrlid = m_world->GetLocalObj()->GetID();
+    world = m_world->GetInterpWorld();
 
-	m.SetCamTransform((localctrl->GetOrigin()+localctrl->GetEyePos()), 
-					   localctrl->GetRot());
-	
+    m.SetCamTransform((localctrl->GetOrigin()+localctrl->GetEyePos()), 
+                       localctrl->GetRot());
+    
     m.GetVec3Cam(&dir, &up, &side);
     dir = -dir;
 
-	frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
-				  RENDERER_FOV, (float)m_width/(float)m_height,
-				  PLANE_NEAR, 
-				  PLANE_FAR); 
+    frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
+                  RENDERER_FOV, (float)m_width/(float)m_height,
+                  PLANE_NEAR, 
+                  PLANE_FAR); 
 
-	stat_obj_hidden = 0;
-	stat_obj_visible = 0;
+    stat_obj_hidden = 0;
+    stat_obj_visible = 0;
 
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(m.pm);
 
     glClear(GL_DEPTH_BUFFER_BIT);
     DrawScene(frustum, world, localctrlid);
-	
+    
     // Particle Draw
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glDepthMask(false);
-	for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
-	{
-		obj = (*iter).second;
+    for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+    {
+        obj = (*iter).second;
 
         if(obj->GetMesh())
         {
-    		obj->GetMesh()->Animate(obj->GetMeshState(), dt);
+            obj->GetMesh()->Animate(obj->GetMeshState(), dt);
         }
 
         if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
@@ -256,16 +256,16 @@ void CRenderer::Update(const float dt, const DWORD ticks)
         obj->GetParticleSystem()->Update(dt, ticks);
 
         // FIXME frustum test for particle system!
-		//if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-		//{
-		//	stat_obj_hidden++;
-		//	continue;
-		//}
-		glPushMatrix();
-		glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        //if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+        //{
+        //  stat_obj_hidden++;
+        //  continue;
+        //}
+        glPushMatrix();
+        glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         obj->GetParticleSystem()->Render(side, up, dir);
-		glPopMatrix();
-	}
+        glPopMatrix();
+    }
     glDepthMask(true);
     glDisable(GL_BLEND);
     glColor4f(1,1,1,1);
@@ -276,28 +276,28 @@ void CRenderer::Update(const float dt, const DWORD ticks)
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
     if(viewmodel)
     {
-    	glClear(GL_DEPTH_BUFFER_BIT);
-	    glLoadIdentity();
-	    glTranslatef(0,-2.0f,1.25f);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
+        glTranslatef(0,-2.0f,1.25f);
 
         viewmodel->Render(viewmodelstate);
         viewmodel->Animate(viewmodelstate, dt);
     }
     glEnable(GL_LIGHTING);
 
-	SDL_GL_SwapBuffers();
+    SDL_GL_SwapBuffers();
 }
 
 void CRenderer::UpdatePerspective()
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(RENDERER_FOV, 
-					(float)m_width/(float)m_height, 
-					PLANE_NEAR, 
-					PLANE_FAR);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(RENDERER_FOV, 
+                    (float)m_width/(float)m_height, 
+                    PLANE_NEAR, 
+                    PLANE_FAR);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
 std::string ReadShader(std::string path)
@@ -380,89 +380,89 @@ bool CRenderer::InitShader()
 
 void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum* frustum)
 {
-	if(!tree)
-		return;
+    if(!tree)
+        return;
 
     tree->RenderGL(*origin, *frustum);
 }
 
 void RenderCube() // this is handy sometimes
 {
-	glBegin(GL_QUADS);
-		// Front Face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
-		// Back Face
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
-		// Top Face
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
-		// Bottom Face
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Top Right Of The Texture and Quad
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Top Left Of The Texture and Quad
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
-		// Right face
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);	// Bottom Right Of The Texture and Quad
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);	// Top Right Of The Texture and Quad
-		glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);	// Top Left Of The Texture and Quad
-		glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);	// Bottom Left Of The Texture and Quad
-		// Left Face
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);	// Bottom Left Of The Texture and Quad
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);	// Bottom Right Of The Texture and Quad
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);	// Top Right Of The Texture and Quad
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);	// Top Left Of The Texture and Quad
-	glEnd();
+    glBegin(GL_QUADS);
+        // Front Face
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);  // Top Left Of The Texture and Quad
+        // Back Face
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);  // Bottom Left Of The Texture and Quad
+        // Top Face
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        // Bottom Face
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        // Right face
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        // Left Face
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
+    glEnd();
 }
 
 #ifdef DRAW_BBOX
 void DrawBBox(const vec3_t& min, const vec3_t& max)
 {
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glColor3f(1,1,1);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING);
+    glColor3f(1,1,1);
 
-	glBegin(GL_LINE_LOOP);
-		glVertex3fv(min.v);
-		glVertex3f(max.x, min.y, min.z);
-		glVertex3f(max.x, max.y, min.z);
-		glVertex3f(min.x, max.y, min.z);
-	glEnd();
-	glBegin(GL_LINE_LOOP);
-		glVertex3fv(max.v);
-		glVertex3f(max.x, min.y, max.z);
-		glVertex3f(min.x, min.y, max.z);
-		glVertex3f(min.x, max.y, max.z);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3f(max.x, max.y, max.z);
-		glVertex3f(max.x, max.y, min.z);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3f(min.x, max.y, max.z);
-		glVertex3f(min.x, max.y, min.z);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3f(max.x, min.y, max.z);
-		glVertex3f(max.x, min.y, min.z);
-	glEnd();
-	glBegin(GL_LINES);
-		glVertex3f(min.x, min.y, max.z);
-		glVertex3f(min.x, min.y, min.z);
-	glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3fv(min.v);
+        glVertex3f(max.x, min.y, min.z);
+        glVertex3f(max.x, max.y, min.z);
+        glVertex3f(min.x, max.y, min.z);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+        glVertex3fv(max.v);
+        glVertex3f(max.x, min.y, max.z);
+        glVertex3f(min.x, min.y, max.z);
+        glVertex3f(min.x, max.y, max.z);
+    glEnd();
+    glBegin(GL_LINES);
+        glVertex3f(max.x, max.y, max.z);
+        glVertex3f(max.x, max.y, min.z);
+    glEnd();
+    glBegin(GL_LINES);
+        glVertex3f(min.x, max.y, max.z);
+        glVertex3f(min.x, max.y, min.z);
+    glEnd();
+    glBegin(GL_LINES);
+        glVertex3f(max.x, min.y, max.z);
+        glVertex3f(max.x, min.y, min.z);
+    glEnd();
+    glBegin(GL_LINES);
+        glVertex3f(min.x, min.y, max.z);
+        glVertex3f(min.x, min.y, min.z);
+    glEnd();
 
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_LIGHTING);
 }
 #endif
 
 /*
-	glGetFloatv(GL_MODELVIEW_MATRIX, &m.m[0][0]);
+    glGetFloatv(GL_MODELVIEW_MATRIX, &m.m[0][0]);
  */

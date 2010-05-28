@@ -7,8 +7,8 @@
 
 CGameObjZombie::CGameObjZombie(CWorld* world) : CGameObj(world)
 {
-	SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
-	SetAnimation(0);
+    SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
+    SetAnimation(0);
     m_think.AddFunc(new CThinkFuncZombie(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
     currenttarget = -1;
 }

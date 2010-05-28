@@ -50,20 +50,20 @@ struct world_state_t
     int         GetObjCount() const { return (int)objstates.size(); }
 
 protected:
-	std::vector<obj_state_t> objstates; // Liste mit allen Objekten
+    std::vector<obj_state_t> objstates; // Liste mit allen Objekten
     WORLD_STATE_OBJMAPTYPE objindex; // ID zu objstates Index Tabelle. Key = obj id, Value = Index in objstates Tabelle
 };
 
 struct world_obj_trace_t // Zum Suchen von Objekten die von Strahl getroffen werden
 {
     // Input
-	vec3_t	start; // start point
+    vec3_t  start; // start point
     vec3_t  dir; // end point = start + dir
     int     excludeobj; // welche objekt wird vom strahl ignoriert
 
     // Output
-	float	f; // impact = start + f*dir
-	vec3_t  hitpoint;
+    float   f; // impact = start + f*dir
+    vec3_t  hitpoint;
     vec3_t  hitnormal;
     int     objid;
 };
@@ -76,34 +76,34 @@ struct world_obj_trace_t // Zum Suchen von Objekten die von Strahl getroffen wer
 class CWorld
 {
 public:
-	CWorld(void);
-	virtual ~CWorld(void);
+    CWorld(void);
+    virtual ~CWorld(void);
 
     virtual bool IsClient() const { return false; } // Hilfsfunktion, um bestimmte Aktionen für einen Server nicht auszuführen (Texturen laden)
 
-	virtual void Update(const float dt, const DWORD ticks); // Neues Frame berechnen
+    virtual void Update(const float dt, const DWORD ticks); // Neues Frame berechnen
 
-	void	AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
-	void	DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht
+    void    AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
+    void    DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht
 
-	CObj*	GetObj(int objid); // Objekt mit dieser ID suchen
+    CObj*   GetObj(int objid); // Objekt mit dieser ID suchen
 
-	int		GetObjCount() const { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
-	OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
-	OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
+    int     GetObjCount() const { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
+    OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
+    OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
 
     const std::vector<CObj*> GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const; // List is only valid for this frame!
 
-	virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
+    virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
 
     bool    LoadLevel(const std::string path); // Level laden und BSP Tree vorbereiten
     const virtual CBSPLevel* GetBSP() const { return &m_bsptree; }
     DWORD   GetLeveltime() const { return state.leveltime; } // Levelzeit, beginnt bei 0
     DWORD   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
 
-	virtual CResourceManager* GetResourceManager() { return &m_resman; }
+    virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
-	void	ObjMove(CObj* obj, const float dt) const; // Objekt bewegen + Kollisionserkennung
+    void    ObjMove(CObj* obj, const float dt) const; // Objekt bewegen + Kollisionserkennung
 
     bool    TraceObj(world_obj_trace_t* trace);
 
@@ -111,15 +111,15 @@ public:
 
 protected:
     CResourceManager m_resman;
-	world_state_t state;
+    world_state_t state;
     DWORD    m_leveltimestart;
     CBSPLevel m_bsptree;
 
-	OBJMAPTYPE m_objlist;
-	void	UpdatePendingObjs(); // Entfernt zu löschende Objekte und fügt neue hinzu (siehe m_addobj und removeobj)
-	void	DeleteAllObjs(); // Löscht alle Objekte aus m_objlist und gibt auch den Speicher frei
+    OBJMAPTYPE m_objlist;
+    void    UpdatePendingObjs(); // Entfernt zu löschende Objekte und fügt neue hinzu (siehe m_addobj und removeobj)
+    void    DeleteAllObjs(); // Löscht alle Objekte aus m_objlist und gibt auch den Speicher frei
 
-	std::list<CObj*> m_addobj; // Liste von Objekten die im nächsten Frame hinzugefügt werden
-	std::list<int> m_removeobj; // Liste von Objekten die im nächsten Frame gelöscht werden
+    std::list<CObj*> m_addobj; // Liste von Objekten die im nächsten Frame hinzugefügt werden
+    std::list<int> m_removeobj; // Liste von Objekten die im nächsten Frame gelöscht werden
 };
 

@@ -28,7 +28,7 @@ public:
     virtual ~CParticleSystem(void);
 
     void Render(const vec3_t& side, const vec3_t& up, const vec3_t& dir);
-	virtual void Update(const float dt, const DWORD ticks);
+    virtual void Update(const float dt, const DWORD ticks);
 
     static CParticleSystem* CreateSystem(const std::string systemname,
                                          const PROPERTYMAP& properties,

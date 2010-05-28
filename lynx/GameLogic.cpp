@@ -8,8 +8,8 @@
 
 CGameLogic::CGameLogic(CWorld* world, CServer* server)
 {
-	assert(m_world);
-	m_world = world;
+    assert(m_world);
+    m_world = world;
     m_server = server;
 }
 
@@ -40,8 +40,8 @@ void CGameLogic::Update(const float dt, const DWORD ticks)
 void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist)
 {
     std::vector<std::string>::iterator iter;
-	vec3_t velocity, dir, side;
-	vec3_t newdir(0,0,0);
+    vec3_t velocity, dir, side;
+    vec3_t newdir(0,0,0);
     vec3_t jump(0,0,0);
     quaternion_t rot;
 
@@ -80,7 +80,7 @@ void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clc
     if(clientobj->locGetIsOnGround())
         newdir += jump * 35.0f;
 
-	clientobj->SetVel(newdir);
+    clientobj->SetVel(newdir);
 }
 
 void CGameLogic::ClientMouse(CObj* clientobj, float lat, float lon)

@@ -326,8 +326,8 @@ bspbin_spawn_t CBSPLevel::GetRandomSpawnPoint() const
 
 void CBSPLevel::RenderNodeGL(const int node, const vec3_t& origin, const CFrustum& frustum) const
 {
-	if(node < 0) // is leaf
-	{
+    if(node < 0) // is leaf
+    {
         const int leafindex = -node-1;
         const int polyindex = m_leaf[leafindex].firstpoly;
         const int maxpolyindex = polyindex + m_leaf[leafindex].polycount;
@@ -342,25 +342,25 @@ void CBSPLevel::RenderNodeGL(const int node, const vec3_t& origin, const CFrustu
                            BUFFER_OFFSET(m_poly[i].firstvertex * sizeof(unsigned short)));
         }
 
-		return;
-	}
+        return;
+    }
 
-	if(!frustum.TestSphere(m_node[node].sphere_origin, m_node[node].radius))
-		return;
+    if(!frustum.TestSphere(m_node[node].sphere_origin, m_node[node].radius))
+        return;
 
     const int planeindex = m_node[node].plane;
-	switch(m_plane[planeindex].p.Classify(origin))
-	{
-	case POINTPLANE_FRONT:
-	    RenderNodeGL(m_node[node].children[1], origin, frustum);
-	    RenderNodeGL(m_node[node].children[0], origin, frustum);
-		break;
-	case POINTPLANE_BACK:
-	case POINT_ON_PLANE:
-	    RenderNodeGL(m_node[node].children[0], origin, frustum);
-	    RenderNodeGL(m_node[node].children[1], origin, frustum);
-		break;
-	}
+    switch(m_plane[planeindex].p.Classify(origin))
+    {
+    case POINTPLANE_FRONT:
+        RenderNodeGL(m_node[node].children[1], origin, frustum);
+        RenderNodeGL(m_node[node].children[0], origin, frustum);
+        break;
+    case POINTPLANE_BACK:
+    case POINT_ON_PLANE:
+        RenderNodeGL(m_node[node].children[0], origin, frustum);
+        RenderNodeGL(m_node[node].children[1], origin, frustum);
+        break;
+    }
 }
 
 void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
@@ -379,7 +379,7 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
     glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
 
-	// glDepthFunc(GL_ALWAYS); // We do this, because the tree is already sorted, but we need the z-buffer info for the models
+    // glDepthFunc(GL_ALWAYS); // We do this, because the tree is already sorted, but we need the z-buffer info for the models
     RenderNodeGL(0, origin, frustum);
     // glDepthFunc(GL_LEQUAL);
 
@@ -417,9 +417,9 @@ bool CBSPLevel::GetTriIntersection(const int polyindex,
     assert(m_poly[polyindex].vertexcount == 3);
 
     bool hit = polyplane.GetIntersection(&cf, start, dir);
-	if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
-		return false;
-	vec3_t tmpintersect = start + dir*cf - polyplane.m_n*offset;
+    if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
+        return false;
+    vec3_t tmpintersect = start + dir*cf - polyplane.m_n*offset;
     *f = cf;
 
     // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
@@ -456,8 +456,8 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     float minf = MAX_TRACE_DIST;
     float cf;
     int minindex = -1;
-	for(int i=0;i<vertexcount;i++)
-	{
+    for(int i=0;i<vertexcount;i++)
+    {
         if(!vec3_t::RayCylinderIntersect(start, 
                                          dir, 
                                          m_vertex[m_indices[firstvertex + i]].v, 
@@ -474,8 +474,8 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     if(minf <= 1.0f)
     {
         *hitpoint = start + minf*dir;
-		const vec3_t* a = &m_vertex[m_indices[firstvertex + minindex]].v;
-		const vec3_t* b = &m_vertex[m_indices[firstvertex + ((minindex+1)%vertexcount)]].v;
+        const vec3_t* a = &m_vertex[m_indices[firstvertex + minindex]].v;
+        const vec3_t* b = &m_vertex[m_indices[firstvertex + ((minindex+1)%vertexcount)]].v;
 
         *normal = ((*a-*hitpoint)^(*b-*hitpoint)) ^ (*b-*a);
         normal->Normalize();
@@ -485,7 +485,7 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     else
     {
         return false;
-	}
+    }
 }
 
 bool CBSPLevel::GetVertexIntersection(const int firstvertex,
@@ -532,18 +532,18 @@ bool CBSPLevel::GetVertexIntersection(const int firstvertex,
 
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
-	if(node < 0) // Sind wir an einem Blatt angelangt?
-	{
+    if(node < 0) // Sind wir an einem Blatt angelangt?
+    {
         const int leafindex = -node-1;
         const int polycount = m_leaf[leafindex].polycount;
-		float cf;
-		float minf = MAX_TRACE_DIST;
-		int minindex = -1;
+        float cf;
+        float minf = MAX_TRACE_DIST;
+        int minindex = -1;
         plane_t hitplane;
         vec3_t hitpoint;
         vec3_t normal;
-		for(int i=0;i<polycount;i++)
-		{
+        for(int i=0;i<polycount;i++)
+        {
             const int polyindex = m_leaf[leafindex].firstpoly + i;
             // - Prüfen ob Polygonfläche getroffen wird
             // - Prüfen ob Polygon Edge getroffen wird
@@ -555,11 +555,11 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                                   trace->radius,
                                   &hitplane))
             {
-				if(cf < minf)
-				{
-					minf = cf;
-					minindex = i;
-				}
+                if(cf < minf)
+                {
+                    minf = cf;
+                    minindex = i;
+                }
             }
             else if(GetEdgeIntersection(m_poly[polyindex].firstvertex,
                                         m_poly[polyindex].vertexcount,
@@ -574,21 +574,21 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                                           &cf, trace->radius, 
                                           &normal, &hitpoint))
             {
-				if(cf < minf)
-				{
-					minf = cf;
-					minindex = i;
+                if(cf < minf)
+                {
+                    minf = cf;
+                    minindex = i;
                     hitplane.SetupPlane(hitpoint, normal);
-				}
+                }
             }
-		}
-		trace->f = minf;
-		if(minindex != -1)
-		{
+        }
+        trace->f = minf;
+        if(minindex != -1)
+        {
             trace->p = hitplane;
-		}
-		return;
-	}
+        }
+        return;
+    }
 
     pointplane_t locstart;
     pointplane_t locend;
@@ -596,32 +596,32 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     // Prüfen, ob alles vor der Splitplane liegt
     plane_t tmpplane = m_plane[m_node[node].plane].p;
     tmpplane.m_d -= trace->radius;
-	locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
-	locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
-	if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
-	{
+    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
+    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
+    if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
+    {
         TraceSphere(trace, m_node[node].children[0]);
-		return;
-	}
+        return;
+    }
 
     // Prüfen, ob alles hinter der Splitplane liegt
     tmpplane.m_d += 2*trace->radius;
-	locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
-	locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
-	if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
-	{
+    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
+    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
+    if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
+    {
         TraceSphere(trace, m_node[node].children[1]);
-		return;
-	}
+        return;
+    }
 
-	bsp_sphere_trace_t trace1 = *trace;
+    bsp_sphere_trace_t trace1 = *trace;
     bsp_sphere_trace_t trace2 = *trace;
 
     TraceSphere(&trace1, m_node[node].children[0]);
     TraceSphere(&trace2, m_node[node].children[1]);
 
-	if(trace1.f < trace2.f)
-		*trace = trace1;
-	else
-		*trace = trace2;
+    if(trace1.f < trace2.f)
+        *trace = trace1;
+    else
+        *trace = trace2;
 }

@@ -61,15 +61,15 @@ int DeltaDiffBytes(const BYTE* newstate,
 // If you change this, update the Serialize function
 struct obj_state_t
 {
-	vec3_t	        origin;			// Position
-	vec3_t	        vel;     		// Direction/Velocity
-	quaternion_t    rot;			// Rotation
+    vec3_t          origin;         // Position
+    vec3_t          vel;            // Direction/Velocity
+    quaternion_t    rot;            // Rotation
 
-	float		    radius;
-	std::string     resource;
+    float           radius;
+    std::string     resource;
     INT16           animation;
     INT16           nextanimation;
-    vec3_t		    eyepos;
+    vec3_t          eyepos;
     OBJFLAGTYPE     flags;
     std::string     particles;      // Partikelsystem, das an dieses Objekt gebunden ist. Config String in der Form: "blood|dx=0.1,dy=0.6,dz=23".
 };
@@ -80,13 +80,13 @@ public:
     CObj(CWorld* world);
     virtual ~CObj(void);
 
-    int			GetID() const { return m_id; }
+    int         GetID() const { return m_id; }
     virtual int GetType() { return 0; } // poor man's rtti
 
-    bool		Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
+    bool        Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
     obj_state_t GetObjState() const { return state; }
-    void		SetObjState(const obj_state_t* objstate, int id);
+    void        SetObjState(const obj_state_t* objstate, int id);
     void        CopyObjStateFrom(const CObj* source); // Eigenschaften von anderem Objekt kopieren
 
     const vec3_t GetOrigin() const { return state.origin; }
@@ -97,16 +97,16 @@ public:
     void        SetRot(const quaternion_t& rotation);
     void        GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const;
 
-    float		GetRadius() const; // Max. Object sphere size
+    float       GetRadius() const; // Max. Object sphere size
     void        SetRadius(float radius);
     std::string GetResource() const;
-    void		SetResource(std::string resource);
+    void        SetResource(std::string resource);
     INT16       GetAnimation() const;
-    void		SetAnimation(INT16 animation);
+    void        SetAnimation(INT16 animation);
     INT16       GetNextAnimation() const;
-    void		SetNextAnimation(INT16 animation);
-    vec3_t		GetEyePos() const;
-    void		SetEyePos(const vec3_t& eyepos);
+    void        SetNextAnimation(INT16 animation);
+    vec3_t      GetEyePos() const;
+    void        SetEyePos(const vec3_t& eyepos);
     OBJFLAGTYPE GetFlags() const;
     void        SetFlags(OBJFLAGTYPE flags);
     void        AddFlags(OBJFLAGTYPE flags);
@@ -132,12 +132,12 @@ protected:
     obj_state_t state; // obj_state
 
     // Animation extension
-    CModelMD2*	m_mesh;
+    CModelMD2*  m_mesh;
     md2_state_t m_mesh_state;
-    void		UpdateAnimation();
+    void        UpdateAnimation();
 
     // Rotation extension
-    void	    UpdateMatrix();
+    void        UpdateMatrix();
     matrix_t    m;
 
     // Particle extension
@@ -152,8 +152,8 @@ protected:
 
 private:
     // Don't touch these
-    int			m_id;
-    CWorld*		m_world;
+    int         m_id;
+    CWorld*     m_world;
 
     static int m_idpool;
 };

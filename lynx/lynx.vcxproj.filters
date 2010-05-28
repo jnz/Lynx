@@ -1,0 +1,228 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{3db3bd3f-3951-4a5c-a554-478ea3114225}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="toolkit">
+      <UniqueIdentifier>{67657c24-bef1-4539-aaba-bd6dd2fb4017}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ObserverPattern">
+      <UniqueIdentifier>{6d2117ac-ba5e-4dc5-b517-a35c84943320}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameZombie">
+      <UniqueIdentifier>{64df0852-e8c9-44ae-a8a3-a5d567280b6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fx">
+      <UniqueIdentifier>{7e42c1c2-8b78-442a-be31-42a78c98d472}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BSPLevel.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Client.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientHUD.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientInfo.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Frustum.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLogic.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelMD2.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="NetMsg.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Obj.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Think.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldClient.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="math\matrix.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="math\plane.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="math\quaternion.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="math\vec3.cpp">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="lynx.cpp">
+      <Filter>toolkit</Filter>
+    </ClCompile>
+    <ClCompile Include="lynxsys.cpp">
+      <Filter>toolkit</Filter>
+    </ClCompile>
+    <ClCompile Include="Stream.cpp">
+      <Filter>toolkit</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObj.cpp">
+      <Filter>GameZombie</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjPlayer.cpp">
+      <Filter>GameZombie</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjZombie.cpp">
+      <Filter>GameZombie</Filter>
+    </ClCompile>
+    <ClCompile Include="GameZombie.cpp">
+      <Filter>GameZombie</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystem.cpp">
+      <Filter>fx</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystemBlood.cpp">
+      <Filter>fx</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystemDust.cpp">
+      <Filter>fx</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BSPBIN.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="BSPLevel.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Client.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientHUD.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientInfo.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Events.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Frustum.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLogic.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelMD2.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="NetMsg.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Obj.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerClient.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Think.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldClient.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="math\mathconst.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\matrix.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\plane.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\quaternion.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\vec3.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="lynx.h">
+      <Filter>toolkit</Filter>
+    </ClInclude>
+    <ClInclude Include="lynxsys.h">
+      <Filter>toolkit</Filter>
+    </ClInclude>
+    <ClInclude Include="Stream.h">
+      <Filter>toolkit</Filter>
+    </ClInclude>
+    <ClInclude Include="Subject.h">
+      <Filter>ObserverPattern</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObj.h">
+      <Filter>GameZombie</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjPlayer.h">
+      <Filter>GameZombie</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjZombie.h">
+      <Filter>GameZombie</Filter>
+    </ClInclude>
+    <ClInclude Include="GameZombie.h">
+      <Filter>GameZombie</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
+      <Filter>fx</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystemBlood.h">
+      <Filter>fx</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystemDust.h">
+      <Filter>fx</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

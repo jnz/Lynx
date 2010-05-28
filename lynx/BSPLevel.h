@@ -9,11 +9,11 @@
 
 struct bsp_sphere_trace_t
 {
-	vec3_t	start; // start point
+    vec3_t  start; // start point
     vec3_t  dir; // end point = start + dir
     float   radius;
-	float	f; // impact = start + f*dir
-	plane_t	p; // impact plane
+    float   f; // impact = start + f*dir
+    plane_t p; // impact plane
 };
 
 class CBSPLevel
@@ -22,8 +22,8 @@ public:
     CBSPLevel(void);
     ~CBSPLevel(void);
 
-	bool		Load(std::string file, CResourceManager* resman);
-	void		Unload();
+    bool        Load(std::string file, CResourceManager* resman);
+    void        Unload();
 
     bool        IsLoaded() const { return m_vertex != NULL; }
 
@@ -32,7 +32,7 @@ public:
 
     bspbin_spawn_t GetRandomSpawnPoint() const;
 
-    void		TraceSphere(bsp_sphere_trace_t* trace) const;
+    void        TraceSphere(bsp_sphere_trace_t* trace) const;
 
     void        RenderGL(const vec3_t& origin, const CFrustum& frustum) const;
 
@@ -40,7 +40,7 @@ protected:
 
     void        RenderNodeGL(const int node, const vec3_t& origin, const CFrustum& frustum) const;
 
-    void		TraceSphere(bsp_sphere_trace_t* trace, const int node) const;
+    void        TraceSphere(bsp_sphere_trace_t* trace, const int node) const;
     inline bool GetTriIntersection(const int polyindex, 
                                    const vec3_t& start, 
                                    const vec3_t& dir, 

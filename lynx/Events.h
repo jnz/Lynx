@@ -4,10 +4,10 @@
 
 struct EventNewClientConnected
 {
-	CClientInfo* client;
+    CClientInfo* client;
 };
 
 struct EventClientDisconnected
 {
-	CClientInfo* client;
+    CClientInfo* client;
 };

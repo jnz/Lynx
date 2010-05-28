@@ -14,35 +14,35 @@
 
 float CLynx::AngleMod(float a)
 {
-	// from quake 2
-	return (360.0/65536) * ((int)(a*(65536/360.0)) & 65535);
+    // from quake 2
+    return (360.0/65536) * ((int)(a*(65536/360.0)) & 65535);
 }
 
 std::string CLynx::StripFileExtension(std::string path)
 {
-	size_t pos;
+    size_t pos;
 
-	pos = path.rfind('.');
-	if(pos == std::string::npos)
-		return path;
+    pos = path.rfind('.');
+    if(pos == std::string::npos)
+        return path;
 
-	return path.substr(0, pos);
+    return path.substr(0, pos);
 }
 
 std::string CLynx::ChangeFileExtension(std::string path, std::string newext)
 {
-	return StripFileExtension(path) + "." + newext;
+    return StripFileExtension(path) + "." + newext;
 }
 
 std::string CLynx::GetDirectory(std::string path)
 {
-	size_t pos;
+    size_t pos;
 
-	pos = path.find_last_of("/\\");
-	if(pos == std::string::npos)
-		return path;
+    pos = path.find_last_of("/\\");
+    if(pos == std::string::npos)
+        return path;
 
-	return path.substr(0, pos+1);
+    return path.substr(0, pos+1);
 }
 
 std::string CLynx::FloatToString(float f, int precision)

@@ -6,21 +6,21 @@
 class CNetMsg
 {
 public:
-	static int MaxHeaderLen() { return 8; }
-	static void WriteHeader(CStream* stream, int msgtype); // prepares stream
+    static int MaxHeaderLen() { return 8; }
+    static void WriteHeader(CStream* stream, int msgtype); // prepares stream
 
-	static int ReadHeader(CStream* stream); // returns msg type
+    static int ReadHeader(CStream* stream); // returns msg type
 };
 
-#define NET_VERSION				30
+#define NET_VERSION             30
 
-#define NET_MAGIC				0x5		// 101 (binary)
+#define NET_MAGIC               0x5     // 101 (binary)
 
-#define NET_MSG_INVALID			0
-#define NET_MSG_SERIALIZE_WORLD	1
+#define NET_MSG_INVALID         0
+#define NET_MSG_SERIALIZE_WORLD 1
 #define NET_MSG_CLIENT_CTRL     2
 
-#define NET_MSG_MAX				3 // make this the largest number
+#define NET_MSG_MAX             3 // make this the largest number
 
 /*
 #pragma pack(push, 1)
@@ -38,21 +38,21 @@ public:
 typedef struct net_s
 {
 public:
-	NET_GETSET_BYTE(magic);
-	NET_GETSET_BYTE(type);
+    NET_GETSET_BYTE(magic);
+    NET_GETSET_BYTE(type);
 
 protected:
-	BYTE magic;
-	BYTE type;
+    BYTE magic;
+    BYTE type;
 } net_t;
 
 typedef struct net_connect_s : public net_t
 {
 public:
-	NET_GETSET_DWORD(version)
+    NET_GETSET_DWORD(version)
 
 private:
-	DWORD version;
+    DWORD version;
 } net_connect_t;
 
 typedef struct net_world_serialize_s : public net_t
