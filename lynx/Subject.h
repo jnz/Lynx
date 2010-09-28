@@ -21,12 +21,13 @@ public:
     }
     void RemoveObserver(CObserver<TObservation>* observer)
     {
-        vector<CObserver<TObservation>*>::iterator iter;
-        for(iter=m_list.begin();iter!=m_list.end();iter++)
+        typename std::vector<CObserver<TObservation>*>::iterator it;
+
+        for(it=m_list.begin();it!=m_list.end();it++)
         {
-            if(*iter==observer)
+            if(*it==observer)
             {
-                m_list.erase(iter);
+                m_list.erase(it);
                 break;
             }
         }
@@ -38,7 +39,7 @@ public:
 
     void NotifyAll(TObservation observation)
     {
-        std::vector<CObserver<TObservation>*>::iterator iter;
+        typename std::vector<CObserver<TObservation>*>::iterator iter;
         for(iter=m_list.begin();iter!=m_list.end();iter++)
             (*iter)->Notify(observation);
     }

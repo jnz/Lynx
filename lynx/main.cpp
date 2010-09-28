@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include "SDL.h"
+#include <SDL/SDL.h>
 #include "lynxsys.h"
 #include <time.h>
 #include "Renderer.h"
@@ -24,7 +24,7 @@
 
 int main(int argc, char** argv)
 {
-    char* serveraddress = "localhost";
+    char* serveraddress = (char*)"localhost";
     int svport = 9999;
     bool startserver = true;
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
         {
             char title[128];
             sprintf(title, "lynx (FPS: %i) vis: %i/%i", 
-                fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden);
+                (int)fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden);
             SDL_WM_SetCaption(title, NULL);
             fpscounter = 0;
             fpstimer = time;
@@ -143,7 +143,9 @@ int main(int argc, char** argv)
         }
     }
     }
+#ifdef _WIN32
     _CrtDumpMemoryLeaks();
+#endif
 
     return 0;
 }

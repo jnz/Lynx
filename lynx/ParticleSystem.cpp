@@ -3,7 +3,7 @@
 #include "ParticleSystemDust.h"
 #include "GL/glew.h"
 #define NO_SDL_GLEXT
-#include "SDL_opengl.h"
+#include <SDL/SDL_opengl.h>
 #include <sstream>
 #include "math/mathconst.h"
 #include <math.h>

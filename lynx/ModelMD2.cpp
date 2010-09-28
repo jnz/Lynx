@@ -5,7 +5,7 @@
 #include <memory.h>
 #include "GL/glew.h"
 #define NO_SDL_GLEXT
-#include "SDL_opengl.h"
+#include "SDL/SDL_opengl.h"
 #include <list>
 
 #ifdef _DEBUG
@@ -32,26 +32,26 @@ vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal lookup table
 
 struct md2header_t // (from quake2 src)
 {
-    int         ident;
-    int         version;
+    int32_t         ident;
+    int32_t         version;
 
-    int         skinwidth;
-    int         skinheight;
-    int         framesize;      // byte size of each frame
+    int32_t         skinwidth;
+    int32_t         skinheight;
+    int32_t         framesize;      // byte size of each frame
 
-    int         num_skins;
-    int         num_xyz;
-    int         num_st;         // greater than num_xyz for seams
-    int         num_tris;
-    int         num_glcmds;     // dwords in strip/fan command list
-    int         num_frames;
+    int32_t         num_skins;
+    int32_t         num_xyz;
+    int32_t         num_st;         // greater than num_xyz for seams
+    int32_t         num_tris;
+    int32_t         num_glcmds;     // dwords in strip/fan command list
+    int32_t         num_frames;
 
-    int         ofs_skins;      // each skin is a MAX_SKINNAME string
-    int         ofs_st;         // byte offset from start for stverts
-    int         ofs_tris;       // offset for dtriangles
-    int         ofs_frames;     // offset for first frame
-    int         ofs_glcmds; 
-    int         ofs_end;        // end of file
+    int32_t         ofs_skins;      // each skin is a MAX_SKINNAME string
+    int32_t         ofs_st;         // byte offset from start for stverts
+    int32_t         ofs_tris;       // offset for dtriangles
+    int32_t         ofs_frames;     // offset for first frame
+    int32_t         ofs_glcmds; 
+    int32_t         ofs_end;        // end of file
 };
 
 struct md2vertex_t
@@ -78,16 +78,16 @@ struct vertex_t
 
 struct frame_t
 {
-    char name[16];
-    int num_xyz;
-    vertex_t* vertices;
+    char        name[16];
+    int32_t     num_xyz;
+    vertex_t*   vertices;
 };
 
 struct anim_t
 {
-    char name[16];
-    int start;
-    int end;
+    char        name[16];
+    int32_t     start;
+    int32_t     end;
 };
 
 /*
@@ -190,6 +190,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     anim_t curanim;
     char* tmpname;
     char skinname[MAX_SKINNAME];
+    int32_t glreadcount;
 
     Unload();
     
@@ -237,8 +238,8 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     m_vertices_per_frame = header.num_xyz;
 
     // glcmds
-    assert(sizeof(int) == 4);
-    m_glcmds = new int[header.num_glcmds];
+    assert(sizeof(int32_t) == 4); // paranoid
+    m_glcmds = new int32_t[header.num_glcmds];
     if(!m_glcmds)
     {
         fprintf(stderr, "MD2: Out of memory for glcmds size: %i\n", header.num_glcmds);
@@ -246,7 +247,8 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     }
     m_glcmdcount = header.num_glcmds;
     fseek(f, header.ofs_glcmds, SEEK_SET);
-    if(fread(m_glcmds, sizeof(DWORD), m_glcmdcount, f) != m_glcmdcount)
+    glreadcount = fread(m_glcmds, sizeof(int32_t), m_glcmdcount, f);
+    if(glreadcount != m_glcmdcount)
     {
         fprintf(stderr, "MD2: Failed to read glcmds from file\n");
         goto loaderr;       
@@ -286,7 +288,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
         {
             if(strcmp(tmpname, curanim.name))
             {
-                if(curanim.name[0] != NULL)
+                if(curanim.name[0] != 0)
                 {
                     curanim.end = i-1;
                     animlist.push_back(curanim);
@@ -323,7 +325,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
                 fprintf(stderr, "MD2: Vertexnormal out of bounds. Frame: %i, vertex: %i\n", i, j);
         }
     }
-    if(curanim.name[0] != NULL)
+    if(curanim.name[0] != 0)
     {
         curanim.end = i-1;
         animlist.push_back(curanim);

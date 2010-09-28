@@ -2,7 +2,7 @@
 #include "Client.h"
 #include "math/mathconst.h"
 #include <math.h>
-#include "SDL.h"
+#include <SDL/SDL.h>
 #include "lynxsys.h"
 
 #ifdef _DEBUG
@@ -41,14 +41,14 @@ bool CClient::Connect(char* server, int port)
     if(IsConnecting() || IsConnected())
         Shutdown();
 
-    m_client = enet_host_create(NULL, 1, 0, 0);
+    m_client = enet_host_create(NULL, 1, 0, 0, 0);
     if(!m_client)
         return false;
 
     enet_address_set_host(&address, server);
     address.port = port;
 
-    m_server = enet_host_connect(m_client, & address, 1);
+    m_server = enet_host_connect(m_client, & address, 1, 0);
     if(m_server == NULL)
     {
         Shutdown();
@@ -107,6 +107,8 @@ void CClient::Update(const float dt, const DWORD ticks)
         case ENET_EVENT_TYPE_DISCONNECT:
             fprintf(stderr, "CL: Disconnected\n");
             Shutdown();
+            break;
+        case ENET_EVENT_TYPE_NONE:
             break;
         }
     }
@@ -199,7 +201,7 @@ void CClient::InputMouseMove()
 
     quaternion_t qlat(vec3_t::xAxis, m_lat*lynxmath::DEGTORAD);
     quaternion_t qlon(vec3_t::yAxis, m_lon*lynxmath::DEGTORAD);
-    GetLocalController()->SetRot(qlon*qlat);
+    obj->SetRot(qlon*qlat);
 }
 
 void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)

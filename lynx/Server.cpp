@@ -1,6 +1,7 @@
 #include "NetMsg.h"
 #include "Server.h"
 #include "ServerClient.h"
+#include <algorithm> // remove and remove_if
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -29,7 +30,7 @@ bool CServer::Create(int port)
     addr.host = ENET_HOST_ANY;
     addr.port = port;
 
-    m_server = enet_host_create(&addr, MAXCLIENTS, 0, 0);
+    m_server = enet_host_create(&addr, MAXCLIENTS, 0, 0, 0);
     if(!m_server)
         return false;
 
@@ -222,7 +223,7 @@ void CServer::UpdateHistoryBuffer()
         worldtime = ((*worlditer).second).leveltime;
         if(curtime - worldtime > SERVER_MAX_WORLD_AGE)
         {
-            fprintf(stderr, "Client world is too old (%i ms)\n", curtime - worldtime);
+            fprintf(stderr, "Client world is too old (%i ms)\n", (int)(curtime - worldtime));
             client->worldidACK = 0;
             continue;
         }
@@ -238,10 +239,13 @@ void CServer::UpdateHistoryBuffer()
         if(curtime - worldtime > SERVER_MAX_WORLD_AGE ||
             ((*worlditer).second).worldid < lowestworldid)
         {
-            worlditer = m_history.erase(worlditer);
-            continue;
+            //worlditer = m_history.erase(worlditer);
+            m_history.erase(worlditer++);
         }
-        worlditer++;
+        else
+        {
+            ++worlditer;
+        }
     }
 
     assert(m_history.size() < MAX_WORLD_BACKLOG);

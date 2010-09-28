@@ -201,7 +201,8 @@ void CObj::UpdateParticles()
 
 void CObj::SetParticleSystem(const std::string psystem)
 {
-    bool update = psystem != state.particles;
+    // FIXME what is update good for?
+    // bool update = psystem != state.particles;
     state.particles = psystem;
     UpdateParticles();
 }

@@ -284,7 +284,6 @@ bool CWorld::LoadLevel(const std::string path)
 bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstate)
 {
     assert(stream);
-    int size = 0;
     CObj* obj;
     OBJITER iter;
     int changes = 0;

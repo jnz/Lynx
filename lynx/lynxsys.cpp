@@ -1,6 +1,6 @@
 #include "lynx.h"
 #include "lynxsys.h"
-#include "SDL.h"
+#include <SDL/SDL.h>
  
 #ifdef _DEBUG
 #include <crtdbg.h>

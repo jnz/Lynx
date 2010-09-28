@@ -1,5 +1,5 @@
 #include "lynx.h"
-#include "SDL.h"
+#include <SDL/SDL.h>
 #include <iostream>
 #include <sstream>
 #include <string>

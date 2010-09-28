@@ -50,7 +50,7 @@ protected:
     worldclient_state_t         state2;
     float                       f; // Current scale factor (0..1)
 
-    friend CWorldClient;
+    friend class CWorldClient;
 };
 
 class CWorldClient :

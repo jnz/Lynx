@@ -35,7 +35,7 @@ bool CBSPTree::Load(std::string file)
     int vi, ti, ni;
     int texture=0;
     bsp_poly_t polygon;
-    int nonplanar = 0; // anzahl der nicht-ebenen polygone zählen
+    int nonplanar = 0; // anzahl der nicht-ebenen polygone zÃ¤hlen
     std::string texpath;
 
     Unload();
@@ -142,8 +142,8 @@ bool CBSPTree::Load(std::string file)
     fclose(f);
 
     fprintf(stderr, "BSP: Building tree from %i vertices in %i faces\n", 
-                    m_vertices.size(), 
-                    m_polylist.size());
+                    (int)m_vertices.size(), 
+                    (int)m_polylist.size());
     fprintf(stderr, "BSP: Ignoring %i non-planar polygons\n", nonplanar);
 
     // Vertices u. faces wurde geladen
@@ -278,9 +278,9 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) cons
             if(node->polylist[i].plane.m_n * trace->dir > BSP_EPSILON) // backface culling
                 continue;
 
-            // - Prüfen ob Polygonfläche getroffen wird
-            // - Prüfen ob Polygon Edge getroffen wird
-            // - Prüfen ob Polygon Vertex getroffen wird
+            // - PrÃ¼fen ob PolygonflÃ¤che getroffen wird
+            // - PrÃ¼fen ob Polygon Edge getroffen wird
+            // - PrÃ¼fen ob Polygon Vertex getroffen wird
             if(node->polylist[i].GetIntersectionPoint(trace->start, 
                                                       trace->dir, &cf, 
                                                       this, trace->radius))
@@ -320,7 +320,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) cons
     pointplane_t locstart;
     pointplane_t locend;
 
-    // Prüfen, ob alles vor der Splitplane liegt
+    // PrÃ¼fen, ob alles vor der Splitplane liegt
     plane_t tmpplane = node->plane;
     tmpplane.m_d -= trace->radius;
     locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
@@ -331,7 +331,7 @@ void CBSPTree::TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) cons
         return;
     }
 
-    // Prüfen, ob alles hinter der Splitplane liegt
+    // PrÃ¼fen, ob alles hinter der Splitplane liegt
     tmpplane = node->plane;
     tmpplane.m_d += trace->radius;
     locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
@@ -695,7 +695,7 @@ int bspbin_pushleaf(const CBSPTree& tree,
         assert(iter->vertices.size() == iter->normals.size());
         assert(iter->normals.size() == iter->texcoords.size());
 
-        // vertices von polygon hinzufügen
+        // vertices von polygon hinzufÃ¼gen
         for(index = 0; index < iter->vertices.size(); index++)
         {
             bspbin_vertexindex_t vindex;
@@ -712,7 +712,7 @@ int bspbin_pushleaf(const CBSPTree& tree,
             vertices.push_back(vertex);
         }
 
-        // Textur hinzufügen
+        // Textur hinzufÃ¼gen
         int texturenum = bspbin_addtexture(textures, iter->texturepath.c_str());
 
         bspbin_poly_t thispoly;
@@ -730,7 +730,7 @@ int bspbin_pushleaf(const CBSPTree& tree,
     thisleaf.polycount = polycount;
     leafs.push_back(thisleaf);
 
-    return -(int)leafs.size(); // um 1 erhöht
+    return -(int)leafs.size(); // um 1 erhÃ¶ht
 }
 
 int bspbin_getnodes(const CBSPTree& tree,
@@ -1149,7 +1149,7 @@ bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, fl
     tmpintersect = start + dir*cf - plane.m_n*offset;
     *f = cf;
 
-    // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
+    // Berechnung Ã¼ber Barycentric coordinates (math for 3d game programming p. 144)
     assert(vertices.size() == 3);
     const vec3_t P0 = tree->m_vertices[vertices[0]];
     const vec3_t P1 = tree->m_vertices[vertices[1]];

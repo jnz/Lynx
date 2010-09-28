@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "lynx.h"
 #include "BSPLevel.h"
-#include "SDL.h"
-#include "GL/glew.h"
+#include <SDL/SDL.h>
+#include <GL/glew.h>
 #define NO_SDL_GLEXT
-#include "SDL_opengl.h"
+#include <SDL/SDL_opengl.h>
 #include <memory>
 
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
@@ -27,7 +27,7 @@ CBSPLevel::CBSPLevel(void)
     m_vertex = NULL;
     m_indices = NULL;
     m_spawnpoint = NULL;
-
+	
     m_planecount = 0;
     m_texcount = 0;
     m_nodecount = 0;
@@ -200,7 +200,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     // load textures
     for(i=0;i<m_polycount;i++)
     {
-        const int runto = m_poly[i].firstvertex+m_poly[i].vertexcount;
+        // const int runto = m_poly[i].firstvertex+m_poly[i].vertexcount;
         const std::string texpath = CLynx::GetDirectory(file) + m_tex[m_poly[i].tex].name;
         m_texid[m_poly[i].tex] = resman->GetTexture(texpath); // könnte das direkt in m_poly[i].tex gehen?
     }

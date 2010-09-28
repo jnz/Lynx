@@ -1,7 +1,7 @@
-#include "SDL.h"
+#include <SDL/SDL.h>
 #include "GL/glew.h"
 #define NO_SDL_GLEXT
-#include "SDL_opengl.h"
+#include <SDL/SDL_opengl.h>
 #include "lynx.h"
 #include "Renderer.h"
 #include "Frustum.h"

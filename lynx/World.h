@@ -2,7 +2,11 @@
 
 class CWorld;
 #include <map>
+#ifdef __GNUC__
+#include <ext/hash_map>
+#else
 #include <hash_map>
+#endif
 #include <list>
 #include "Obj.h"
 #include "BSPLevel.h"
@@ -28,6 +32,13 @@ class CWorld;
     - GenerateWorldState
     - Serialize
  */
+
+#ifdef __GNUC__
+namespace stdext
+{
+    using namespace __gnu_cxx;
+}
+#endif
 
 #define WORLD_STATE_OBJMAPTYPE      stdext::hash_map<int, int>
 #define WORLD_STATE_OBJITER         stdext::hash_map<int, int>::iterator

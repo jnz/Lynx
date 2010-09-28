@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <string>       // Default String Type for Lynx
+#include <stdint.h>
 
 typedef unsigned long   DWORD;
 typedef int             INT32;
