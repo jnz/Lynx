@@ -3,6 +3,7 @@
 #include "Obj.h"
 #include <math.h>
 #include <sstream> // Particle Tokenizer
+#include <string.h>
 
 #ifdef _DEBUG
 #include <crtdbg.h>

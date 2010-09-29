@@ -1,5 +1,5 @@
 #pragma once
-#include "particlesystem.h"
+#include "ParticleSystem.h"
 
 class CParticleSystemDust :
     public CParticleSystem

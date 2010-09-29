@@ -3,11 +3,13 @@
 #include <assert.h>
 #include <string>       // Default String Type for Lynx
 #include <stdint.h>
+#include <cstdlib>
+#include <limits.h>
 
-typedef unsigned long   DWORD;
-typedef int             INT32;
-typedef short           INT16;
-typedef unsigned short  WORD;
+typedef uint32_t        DWORD;
+typedef int32_t         INT32;
+typedef int16_t         INT16;
+typedef uint16_t        WORD;
 typedef unsigned char   BYTE;
 
 #define SAFE_RELEASE(x) if(x) { delete x; x = NULL; }

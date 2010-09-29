@@ -1,5 +1,5 @@
 #pragma once
-#include "gameobj.h"
+#include "GameObj.h"
 
 class CGameObjPlayer :
     public CGameObj
