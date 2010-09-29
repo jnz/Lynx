@@ -1,5 +1,5 @@
 #include <SDL/SDL.h>
-#include "GL/glew.h"
+#include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
 #include "lynx.h"

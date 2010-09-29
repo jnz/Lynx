@@ -5,5 +5,5 @@ project(lynx3d)
 cmake_minimum_required(VERSION 2.6)
  
 add_subdirectory(lynx)
-add_subdirectory(bspcompile)
+#add_subdirectory(bspcompile)
 

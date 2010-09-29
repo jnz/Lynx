@@ -3,9 +3,9 @@
 #include "ModelMD2.h"
 #include <stdio.h>
 #include <memory.h>
-#include "GL/glew.h"
+#include <GL/glew.h>
 #define NO_SDL_GLEXT
-#include "SDL/SDL_opengl.h"
+#include <SDL/SDL_opengl.h>
 #include <list>
 
 #ifdef _DEBUG

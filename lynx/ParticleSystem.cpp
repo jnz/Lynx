@@ -1,7 +1,7 @@
 #include "ParticleSystem.h"
 #include "ParticleSystemBlood.h"
 #include "ParticleSystemDust.h"
-#include "GL/glew.h"
+#include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
 #include <sstream>
