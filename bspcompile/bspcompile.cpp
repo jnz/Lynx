@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../lynx/BSPTree.h"
+#include "../src/BSPTree.h"
 #include <string>
 
 using namespace std;
@@ -9,6 +9,7 @@ int main(int argc, char** argv)
     string path_in, path_out;
     CBSPTree tree;
 
+    cout << "lynx bspcompile\n";
     if(argc < 3)
     {
         cout << "Argumensts: bspcompile input.obj output.lbsp" << endl;

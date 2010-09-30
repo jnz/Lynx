@@ -784,7 +784,7 @@ int bspbin_getnodes(const CBSPTree& tree,
 template<typename Lump>
 void WriteLump(FILE*f, const std::vector<Lump>& l)
 {
-    std::vector<Lump>::const_iterator iter;
+    typename std::vector<Lump>::const_iterator iter;
     for(iter = l.begin();iter != l.end();iter++)
     {
         Lump tl = (*iter);
@@ -932,7 +932,7 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 
     if(polygons.size() < MAX_POLY_PER_LEAF)
     {
-        fprintf(stderr, "BSP: subspace with %i polygons formed\n", polygons.size());
+        fprintf(stderr, "BSP: subspace with %i polygons formed\n", (int)polygons.size());
         polylist = polygons;
         for(i=0;i<(int)polylist.size();i++)
             polylist[i].GeneratePlanes(tree);
@@ -945,7 +945,7 @@ CBSPTree::CBSPNode::CBSPNode(CBSPTree* tree,
 
     if(tree->IsConvexSet(polygons))
     {
-        fprintf(stderr, "BSP: Convex subspace with %i polygons formed\n", polygons.size());
+        fprintf(stderr, "BSP: Convex subspace with %i polygons formed\n", (int)polygons.size());
         polylist = polygons;
         for(i=0;i<(int)polylist.size();i++)
             polylist[i].GeneratePlanes(tree);

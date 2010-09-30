@@ -4,18 +4,16 @@ project(lynx3d)
 # States that CMake required version must be >= 2.6
 cmake_minimum_required(VERSION 2.6)
 
-# Include the directory itself as a path to include directories
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# Mac OS X
+IF(APPLE)
+   INCLUDE_DIRECTORIES("/usr/local/include")
+   LINK_DIRECTORIES("/usr/local/lib")
+ENDIF(APPLE)
 
-IF(WIN32)
-    TARGET_LINK_LIBRARIES(bspcompile winmm)
-ENDIF(WIN32)
+set(lynx3d_MATH ../src/math/matrix.cpp ../src/math/plane.cpp 
+                ../src/math/quaternion.cpp ../src/math/vec3.cpp)
 
-link_libraries (
-)
+set(bspcompile_SOURCES bspcompile.cpp 
+    ../src/BSPTree.cpp ../src/lynx.cpp)
 
-set(bspcompile_SOURCES bspcompile.cpp ../lynx/BSPTree.cpp ../lynx/lynx.cpp ../lynx/math/matrix.cpp ../lynx/math/plane.cpp ../lynx/math/quaternion.cpp ../lynx/math/vec3.cpp)
-
-add_executable(bspcompile ${bspcompile_SOURCES})
-
-
+add_executable(bspcompile ${bspcompile_SOURCES} ${lynx3d_MATH})
