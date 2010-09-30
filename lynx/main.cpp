@@ -27,20 +27,11 @@ int main(int argc, char** argv)
     char* serveraddress = (char*)"localhost";
     int svport = 9999;
     bool startserver = true;
-    bool startclient = true;
 
     if(argc > 1) // connect to this server, disable local server
     {
-        if(strcmp(argv[1], "sv")==0)
-        {
-            startclient = false;
-            fprintf(stderr, "Dedicated server only mode\n");
-        }
-        else
-        {
-            serveraddress = argv[1];
-            startserver = false;
-        }
+        serveraddress = argv[1];
+        startserver = false;
     }
     if(argc > 2) // port
     {
@@ -79,18 +70,6 @@ int main(int argc, char** argv)
         }
         svgame.InitGame();
         fprintf(stderr, "Server running\n");
-    }
-
-    if(startserver && !startclient)
-    {
-        run = 1;
-        while(run)
-        {
-            svgame.Update(dt, time);
-            worldsv.Update(dt, time);
-            server.Update(dt, time);
-            SDL_Delay(50); 
-        }
     }
 
     fprintf(stderr, "Connecting to %s:%i\n", serveraddress, svport);

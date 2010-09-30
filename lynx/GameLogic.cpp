@@ -8,7 +8,6 @@
 
 CGameLogic::CGameLogic(CWorld* world, CServer* server)
 {
-    assert(m_world);
     m_world = world;
     m_server = server;
 }

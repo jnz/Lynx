@@ -44,8 +44,21 @@ link_libraries (
 )
 
 set(lynx3d_MATH math/matrix.cpp math/plane.cpp math/quaternion.cpp math/vec3.cpp)
-set(lynx3d_SOURCES BSPLevel.cpp Client.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameLogic.cpp GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp GameZombie.cpp ModelMD2.cpp NetMsg.cpp Obj.cpp ParticleSystem.cpp ParticleSystemBlood.cpp ParticleSystemDust.cpp Renderer.cpp ResourceManager.cpp Server.cpp Stream.cpp Think.cpp World.cpp WorldClient.cpp lynx.cpp lynxsys.cpp main.cpp)
+
+set(lynx3d_SOURCES BSPLevel.cpp Client.cpp ClientHUD.cpp ClientInfo.cpp
+    Frustum.cpp GameLogic.cpp GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp
+    GameZombie.cpp ModelMD2.cpp NetMsg.cpp Obj.cpp ParticleSystem.cpp
+    ParticleSystemBlood.cpp ParticleSystemDust.cpp Renderer.cpp
+    ResourceManager.cpp Server.cpp Stream.cpp Think.cpp World.cpp
+    WorldClient.cpp lynx.cpp lynxsys.cpp main.cpp)
+
+set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameLogic.cpp
+    GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp GameZombie.cpp ModelMD2.cpp
+    NetMsg.cpp Obj.cpp ParticleSystem.cpp ParticleSystemBlood.cpp
+    ParticleSystemDust.cpp ResourceManager.cpp Server.cpp Stream.cpp Think.cpp
+    World.cpp lynx.cpp lynxsys.cpp mainsv.cpp)
 
 add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH})
+add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH})
 
 
