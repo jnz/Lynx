@@ -16,9 +16,9 @@
 #endif
 // </memory leak detection>
 
-#define WINDOW_TITLE        "lynx"
-#define SCREEN_WIDTH        1024
-#define SCREEN_HEIGHT       768
+#define WINDOW_TITLE        "Lynx"
+#define SCREEN_WIDTH        800
+#define SCREEN_HEIGHT       600
 #define BPP                 32
 #define FULLSCREEN          0
 
@@ -28,6 +28,7 @@ int main(int argc, char** argv)
     int svport = 9999;
     bool startserver = true;
 
+    fprintf(stderr, "%s version %i.%i", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
     if(argc > 1) // connect to this server, disable local server
     {
         serveraddress = argv[1];
