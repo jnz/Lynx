@@ -15,8 +15,8 @@ public:
     CClientHUD(void);
     ~CClientHUD(void);
 
-    std::string weapon;     // weapon model
-    BYTE        animation;     // animation index
+    std::string weapon;         // weapon model
+    BYTE        animation;      // animation index
 
     /*
         Serverseite: ruft Serialize(true, stream, NULL) auf
@@ -31,6 +31,7 @@ public:
     void        UpdateModel(CResourceManager* resman); // Load CModelMD2 for "weapon" and set animation
 
 protected:
-    CModelMD2* m_model;
+    CModelMD2*  m_model;
     md2_state_t m_model_state;
 };
+
