@@ -77,12 +77,14 @@ void CServer::Update(const float dt, const uint32_t ticks)
         switch (event.type)
         {
         case ENET_EVENT_TYPE_CONNECT:
-            fprintf(stderr, "A new client connected from %x:%u.\n", 
-                    event.peer->address.host,
+            fprintf(stderr, "A new client connected from %i.%i.%i.%i:%u.\n", 
+                    ((uint8_t*)event.peer->address.host)[0],
+                    ((uint8_t*)event.peer->address.host)[1],
+                    ((uint8_t*)event.peer->address.host)[2],
+                    ((uint8_t*)event.peer->address.host)[3],
                     event.peer->address.port);
 
             clientinfo = new CClientInfo(event.peer);
-            
             // Fire Event
             {
             EventNewClientConnected e;
