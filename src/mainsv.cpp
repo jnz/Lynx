@@ -26,8 +26,8 @@ int main(int argc, char** argv)
     { // for dumpmemleak
     int run;
     float dt;
-    DWORD time, oldtime;
-    DWORD fpstimer, fpscounter=0;
+    uint32_t time, oldtime;
+    uint32_t fpstimer, fpscounter=0;
     SDL_Event event;
     
     // Game Modules
