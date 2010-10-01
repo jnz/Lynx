@@ -50,9 +50,9 @@ private:
 class CThinkFuncRemoveMe : public CThinkFunc
 {
 public:
-    CThinkFuncRemoveMe(DWORD time, CWorld* world, CObj* obj) : 
+    CThinkFuncRemoveMe(uint32_t time, CWorld* world, CObj* obj) : 
       CThinkFunc(time, world, obj) {}
-    virtual bool DoThink(DWORD leveltime)
+    virtual bool DoThink(uint32_t leveltime)
     {
         GetWorld()->DelObj(GetObj()->GetID());
         return true;

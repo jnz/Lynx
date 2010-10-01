@@ -46,8 +46,8 @@ namespace stdext
 
 struct world_state_t
 {
-    DWORD   leveltime; // in ms
-    DWORD   worldid; // fortlaufende nummer
+    uint32_t   leveltime; // in ms
+    uint32_t   worldid; // fortlaufende nummer
     std::string level; // Pfad zu Level
 
     // Im Prinzip ist nur der objstate Vektor interessant, aber um schnellen
@@ -92,7 +92,7 @@ public:
 
     virtual bool IsClient() const { return false; } // Hilfsfunktion, um bestimmte Aktionen für einen Server nicht auszuführen (Texturen laden)
 
-    virtual void Update(const float dt, const DWORD ticks); // Neues Frame berechnen
+    virtual void Update(const float dt, const uint32_t ticks); // Neues Frame berechnen
 
     void    AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
     void    DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht
@@ -109,8 +109,8 @@ public:
 
     bool    LoadLevel(const std::string path); // Level laden und BSP Tree vorbereiten
     const virtual CBSPLevel* GetBSP() const { return &m_bsptree; }
-    DWORD   GetLeveltime() const { return state.leveltime; } // Levelzeit, beginnt bei 0
-    DWORD   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
+    uint32_t   GetLeveltime() const { return state.leveltime; } // Levelzeit, beginnt bei 0
+    uint32_t   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
 
     virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
@@ -123,7 +123,7 @@ public:
 protected:
     CResourceManager m_resman;
     world_state_t state;
-    DWORD    m_leveltimestart;
+    uint32_t    m_leveltimestart;
     CBSPLevel m_bsptree;
 
     OBJMAPTYPE m_objlist;

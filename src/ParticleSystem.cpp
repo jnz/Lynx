@@ -56,7 +56,7 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
     }
 }
 
-void CParticleSystem::Update(const float dt, const DWORD ticks)
+void CParticleSystem::Update(const float dt, const uint32_t ticks)
 {
     const float gravity = 25.5f;
 

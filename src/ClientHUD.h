@@ -16,7 +16,7 @@ public:
     ~CClientHUD(void);
 
     std::string weapon;         // weapon model
-    BYTE        animation;      // animation index
+    uint8_t     animation;      // animation index
 
     /*
         Serverseite: ruft Serialize(true, stream, NULL) auf

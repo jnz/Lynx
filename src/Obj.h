@@ -15,45 +15,45 @@ struct obj_state_t;
 #define OBJ_FLAGS_ELASTIC       (1 << 0)
 #define OBJ_FLAGS_NOGRAVITY     (1 << 1)
 
-#define OBJFLAGTYPE             BYTE
+#define OBJFLAGTYPE             uint8_t
 
 
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
 // FIXME: use template function
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
-                  const DWORD flagparam, 
-                  DWORD* updateflags,
+                  const uint32_t flagparam, 
+                  uint32_t* updateflags,
                   CStream* stream);
 int DeltaDiffQuat(const quaternion_t* newstate,
                   const quaternion_t* oldstate,
-                  const DWORD flagparam, 
-                  DWORD* updateflags,
+                  const uint32_t flagparam, 
+                  uint32_t* updateflags,
                   CStream* stream);
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream);
-int DeltaDiffInt16(const INT16* newstate,
-                   const INT16* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+int DeltaDiffInt16(const int16_t* newstate,
+                   const int16_t* oldstate,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream);
 int DeltaDiffString(const std::string* newstate,
                     const std::string* oldstate,
-                    const DWORD flagparam, 
-                    DWORD* updateflags,
+                    const uint32_t flagparam, 
+                    uint32_t* updateflags,
                     CStream* stream);
-int DeltaDiffDWORD(const DWORD* newstate,
-                   const DWORD* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+int DeltaDiffDWORD(const uint32_t* newstate,
+                   const uint32_t* oldstate,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream);
-int DeltaDiffBytes(const BYTE* newstate,
-                   const BYTE* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+int DeltaDiffBytes(const uint8_t* newstate,
+                   const uint8_t* oldstate,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream,
                    const int size);
 
@@ -67,8 +67,8 @@ struct obj_state_t
 
     float           radius;
     std::string     resource;
-    INT16           animation;
-    INT16           nextanimation;
+    int16_t         animation;
+    int16_t         nextanimation;
     vec3_t          eyepos;
     OBJFLAGTYPE     flags;
     std::string     particles;      // Partikelsystem, das an dieses Objekt gebunden ist. Config String in der Form: "blood|dx=0.1,dy=0.6,dz=23".
@@ -101,10 +101,10 @@ public:
     void        SetRadius(float radius);
     std::string GetResource() const;
     void        SetResource(std::string resource);
-    INT16       GetAnimation() const;
-    void        SetAnimation(INT16 animation);
-    INT16       GetNextAnimation() const;
-    void        SetNextAnimation(INT16 animation);
+    int16_t     GetAnimation() const;
+    void        SetAnimation(int16_t animation);
+    int16_t     GetNextAnimation() const;
+    void        SetNextAnimation(int16_t animation);
     vec3_t      GetEyePos() const;
     void        SetEyePos(const vec3_t& eyepos);
     OBJFLAGTYPE GetFlags() const;

@@ -203,7 +203,7 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
     //glUseProgram(0);
 }
 
-void CRenderer::Update(const float dt, const DWORD ticks)
+void CRenderer::Update(const float dt, const uint32_t ticks)
 {
     CObj* obj, *localctrl;
     int localctrlid;

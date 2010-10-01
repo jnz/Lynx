@@ -7,7 +7,7 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-DWORD CLynxSys::GetTicks()
+uint32_t CLynxSys::GetTicks()
 {
     return SDL_GetTicks();
 }
@@ -35,7 +35,7 @@ bool CLynxSys::MouseMiddleDown()
     return SDL_BUTTON(s) == SDL_BUTTON_MIDDLE;
 }
 
-BYTE* CLynxSys::GetKeyState()
+uint8_t* CLynxSys::GetKeyState()
 {
     return SDL_GetKeyState(NULL);
 }

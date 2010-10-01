@@ -56,8 +56,8 @@ struct md2header_t // (from quake2 src)
 
 struct md2vertex_t
 {
-    BYTE v[3];      // compressed vertex
-    BYTE n;         // normalindex
+    uint8_t v[3];      // compressed vertex
+    uint8_t n;         // normalindex
 };
 
 struct md2frame_t
@@ -180,7 +180,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     FILE* f;
     std::string texpath;
     int i;
-    BYTE* frame;
+    uint8_t* frame;
     md2frame_t* framehead;
     md2header_t header;
     vertex_t* vertex;
@@ -255,7 +255,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     }
 
     // frames
-    frame = new BYTE[header.framesize];
+    frame = new uint8_t[header.framesize];
     if(!frame)
     {
         fprintf(stderr, "MD2: Out of memory for frame buffer: %i\n", header.framesize);

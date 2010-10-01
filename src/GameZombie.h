@@ -10,8 +10,8 @@ public:
     CGameZombie(CWorld* world, CServer* server);
     ~CGameZombie(void);
 
-    virtual void InitGame();
-    virtual void Update(const float dt, const DWORD ticks);
+    virtual bool InitGame();
+    virtual void Update(const float dt, const uint32_t ticks);
 
 protected:
     virtual void Notify(EventNewClientConnected);

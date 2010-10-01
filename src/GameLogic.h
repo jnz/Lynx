@@ -12,8 +12,8 @@ public:
     CGameLogic(CWorld* world, CServer* server); // Wenn CClient diese Klasse nutzt, server auf NULL setzen
     virtual ~CGameLogic(void);
 
-    virtual void InitGame();
-    virtual void Update(const float dt, const DWORD ticks);
+    virtual bool InitGame();
+    virtual void Update(const float dt, const uint32_t ticks);
 
     virtual void ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist); // Wird von CClient mitgenutzt
     virtual void ClientMouse(CObj* clientobj, float lat, float lon);

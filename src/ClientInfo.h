@@ -21,7 +21,7 @@ public:
 
     // Client Data
     int         m_obj;
-    DWORD       worldidACK; // Last ACK'd world from client (build diffs to this world)
+    uint32_t    worldidACK; // Last ACK'd world from client (build diffs to this world)
     CClientHUD  hud;
 
     // Client Input

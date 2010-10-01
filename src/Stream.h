@@ -9,12 +9,12 @@ class CStream
 public:
     CStream(void);
     CStream(int size);
-    CStream(BYTE* buffer, int size, int used=0);
+    CStream(uint8_t* buffer, int size, int used=0);
     ~CStream(void);
 
-    void SetBuffer(BYTE* buffer, int size, int used=0);
+    void SetBuffer(uint8_t* buffer, int size, int used=0);
     bool Resize(int newsize); // Change buffer size. Buffer wird zerstört, wenn newsize < size
-    BYTE* GetBuffer(); // pointer to raw bytes
+    uint8_t* GetBuffer(); // pointer to raw bytes
     int GetBufferSize(); // total buffer size
 
     CStream GetStream(); // Stream Objekt von aktueller Position holen
@@ -24,19 +24,19 @@ public:
     int GetSpaceLeft(); // Bytes left to write
     int GetBytesWritten() const; // written bytes
     void WriteAdvance(int bytes);
-    void WriteDWORD(DWORD value);
-    void WriteInt32(INT32 value);
-    void WriteInt16(INT16 value);
-    void WriteWORD(WORD value);
-    void WriteBYTE(BYTE value);
+    void WriteDWORD(uint32_t value);
+    void WriteInt32(int32_t value);
+    void WriteInt16(int16_t value);
+    void WriteWORD(uint16_t value);
+    void WriteBYTE(uint8_t value);
     void WriteFloat(float value);
     void WriteAngle3(const vec3_t& value); // 3 Bytes
     void WritePos6(const vec3_t& value); // 6 Bytes
     void WriteFloat2(float value); // 2 Byte
     void WriteVec3(const vec3_t& value);
     void WriteQuat(const quaternion_t& value);
-    void WriteBytes(const BYTE* values, int len);
-    WORD WriteString(const std::string& value); // Max Str len: 0xffff. return written bytes
+    void WriteBytes(const uint8_t* values, int len);
+    uint16_t WriteString(const std::string& value); // Max Str len: 0xffff. return written bytes
     void WriteStream(const CStream& stream);
     
     static size_t StringSize(const std::string& value); // size in bytes the string would occupy in the stream
@@ -46,22 +46,22 @@ public:
     int GetBytesToRead(); // Bytes left in stream to read
     int GetBytesRead(); // Bytes read
     void ReadAdvance(int bytes); // like "fseek(f, bytes, SEEK_CUR)"
-    void ReadDWORD(DWORD* value);
-    void ReadInt32(INT32* value);
-    void ReadInt16(INT16* value);
-    void ReadWORD(WORD* value);
-    void ReadBYTE(BYTE* value);
+    void ReadDWORD(uint32_t* value);
+    void ReadInt32(int32_t* value);
+    void ReadInt16(int16_t* value);
+    void ReadWORD(uint16_t* value);
+    void ReadBYTE(uint8_t* value);
     void ReadFloat(float* value);
     void ReadAngle3(vec3_t* value); // 3 Bytes
     void ReadPos6(vec3_t* value); // 6 Bytes
     void ReadFloat2(float* value); // 2 Byte Float
     void ReadVec3(vec3_t* value); // 3*4 Bytes
     void ReadQuat(quaternion_t* value);
-    void ReadBytes(BYTE* values, int len);
+    void ReadBytes(uint8_t* values, int len);
     void ReadString(std::string* value);
 
 protected:  
-    BYTE* m_buffer;
+    uint8_t* m_buffer;
     bool m_foreign;
     int m_size;
     int m_position;

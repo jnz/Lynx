@@ -16,9 +16,10 @@ CGameLogic::~CGameLogic(void)
 {
 }
 
-void CGameLogic::InitGame()
+bool CGameLogic::InitGame()
 {
     assert(0);
+	return true;
 }
 
 void CGameLogic::Notify(EventNewClientConnected e)
@@ -31,7 +32,7 @@ void CGameLogic::Notify(EventClientDisconnected e)
     assert(0);
 }
 
-void CGameLogic::Update(const float dt, const DWORD ticks)
+void CGameLogic::Update(const float dt, const uint32_t ticks)
 {
     assert(0);
 }

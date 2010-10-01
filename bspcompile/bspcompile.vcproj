@@ -175,11 +175,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\BSPTree.cpp"
+				RelativePath="..\src\BSPTree.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\lynx.cpp"
+				RelativePath="..\src\lynx.cpp"
 				>
 			</File>
 		</Filter>
@@ -189,15 +189,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\lynx\BSPBIN.h"
+				RelativePath="..\src\BSPBIN.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\BSPTree.h"
+				RelativePath="..\src\BSPTree.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\lynx.h"
+				RelativePath="..\src\lynx.h"
 				>
 			</File>
 		</Filter>
@@ -211,39 +211,39 @@
 			Name="math"
 			>
 			<File
-				RelativePath="..\lynx\math\mathconst.h"
+				RelativePath="..\src\math\mathconst.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\matrix.cpp"
+				RelativePath="..\src\math\matrix.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\matrix.h"
+				RelativePath="..\src\math\matrix.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\plane.cpp"
+				RelativePath="..\src\math\plane.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\plane.h"
+				RelativePath="..\src\math\plane.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\quaternion.cpp"
+				RelativePath="..\src\math\quaternion.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\quaternion.h"
+				RelativePath="..\src\math\quaternion.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\vec3.cpp"
+				RelativePath="..\src\math\vec3.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\lynx\math\vec3.h"
+				RelativePath="..\src\math\vec3.h"
 				>
 			</File>
 		</Filter>

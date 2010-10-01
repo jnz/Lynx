@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     int svport = 9999;
     bool startserver = true;
 
-    fprintf(stderr, "%s version %i.%i", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
+    fprintf(stderr, "%s version %i.%i\n", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
     if(argc > 1) // connect to this server, disable local server
     {
         serveraddress = argv[1];
@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     { // for dumpmemleak
     int run;
     float dt;
-    DWORD time, oldtime;
-    DWORD fpstimer, fpscounter=0;
+    uint32_t time, oldtime;
+    uint32_t fpstimer, fpscounter=0;
     SDL_Event event;
     
     // Game Modules
@@ -69,7 +69,12 @@ int main(int argc, char** argv)
             assert(0);
             return -1;
         }
-        svgame.InitGame();
+        if(!svgame.InitGame())
+		{
+            fprintf(stderr, "Failed to init game\n");
+            assert(0);
+            return -1;
+		}
         fprintf(stderr, "Server running\n");
     }
 

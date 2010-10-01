@@ -101,12 +101,12 @@ void quaternion_t::LookAt(const vec3_t& pFrom, const vec3_t& pAt, const vec3_t& 
 
     matrix_t m;
     m.SetIdentity();
-    m.m[0][0] = side.x;
-    m.m[0][1] = side.y;
-    m.m[0][2] = side.z;
-    m.m[1][0] = pUp.x;
-    m.m[1][1] = pUp.y;
-    m.m[1][2] = pUp.z;
+    m.m[0][0] =  side.x;
+    m.m[0][1] =  side.y;
+    m.m[0][2] =  side.z;
+    m.m[1][0] =  up.x;
+    m.m[1][1] =  up.y;
+    m.m[1][2] =  up.z;
     m.m[2][0] = -dir.x;
     m.m[2][1] = -dir.y;
     m.m[2][2] = -dir.z;
@@ -233,7 +233,7 @@ void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quat
     if(cosom > 1)
         cosom = 1;
     
-    if(fabsf(cosom) < 0.999 )
+    if(fabsf(cosom) < 0.999)
     {
         // standard case (slerp)
         omega = (float)acos(cosom);

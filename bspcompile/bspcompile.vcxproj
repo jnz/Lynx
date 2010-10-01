@@ -43,10 +43,10 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\SDL-1.2.13\include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\SDL-1.2.13\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL-1.2.13\include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL-1.2.13\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\SDL\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\SDL\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,22 +88,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bspcompile.cpp" />
-    <ClCompile Include="..\lynx\BSPTree.cpp" />
-    <ClCompile Include="..\lynx\lynx.cpp" />
-    <ClCompile Include="..\lynx\math\matrix.cpp" />
-    <ClCompile Include="..\lynx\math\plane.cpp" />
-    <ClCompile Include="..\lynx\math\quaternion.cpp" />
-    <ClCompile Include="..\lynx\math\vec3.cpp" />
+    <ClCompile Include="..\src\BSPTree.cpp" />
+    <ClCompile Include="..\src\lynx.cpp" />
+    <ClCompile Include="..\src\math\matrix.cpp" />
+    <ClCompile Include="..\src\math\plane.cpp" />
+    <ClCompile Include="..\src\math\quaternion.cpp" />
+    <ClCompile Include="..\src\math\vec3.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\lynx\BSPBIN.h" />
-    <ClInclude Include="..\lynx\BSPTree.h" />
-    <ClInclude Include="..\lynx\lynx.h" />
-    <ClInclude Include="..\lynx\math\mathconst.h" />
-    <ClInclude Include="..\lynx\math\matrix.h" />
-    <ClInclude Include="..\lynx\math\plane.h" />
-    <ClInclude Include="..\lynx\math\quaternion.h" />
-    <ClInclude Include="..\lynx\math\vec3.h" />
+    <ClInclude Include="..\src\BSPBIN.h" />
+    <ClInclude Include="..\src\BSPTree.h" />
+    <ClInclude Include="..\src\lynx.h" />
+    <ClInclude Include="..\src\math\mathconst.h" />
+    <ClInclude Include="..\src\math\matrix.h" />
+    <ClInclude Include="..\src\math\plane.h" />
+    <ClInclude Include="..\src\math\quaternion.h" />
+    <ClInclude Include="..\src\math\vec3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

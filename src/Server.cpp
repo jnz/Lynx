@@ -65,7 +65,7 @@ int CServer::GetClientCount() const
     return (int)m_clientlist.size();
 }
 
-void CServer::Update(const float dt, const DWORD ticks)
+void CServer::Update(const float dt, const uint32_t ticks)
 {
     ENetEvent event;
     CClientInfo* clientinfo;
@@ -147,14 +147,14 @@ void CServer::Update(const float dt, const DWORD ticks)
 
 void CServer::OnReceive(CStream* stream, CClientInfo* client)
 {
-    BYTE type;
+    uint8_t type;
 
     type = CNetMsg::ReadHeader(stream);
     switch(type)
     {
     case NET_MSG_CLIENT_CTRL:
         {
-            DWORD worldid;
+            uint32_t worldid;
             stream->ReadDWORD(&worldid);
             ClientHistoryACK(client, worldid);
 
@@ -176,7 +176,7 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             obj->SetVel(vel);
 
             assert(client->clcmdlist.size() < 30);
-            WORD cmdcount;
+            uint16_t cmdcount;
             stream->ReadWORD(&cmdcount);
             client->clcmdlist.clear();
             for(int i=0;i<cmdcount;i++)
@@ -198,12 +198,12 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
 
 void CServer::UpdateHistoryBuffer()
 {
-    DWORD lowestworldid = 0;
+    uint32_t lowestworldid = 0;
     CClientInfo* client;
-    std::map<DWORD, world_state_t>::iterator worlditer;
+    std::map<uint32_t, world_state_t>::iterator worlditer;
     std::map<int, CClientInfo*>::iterator clientiter;
-    DWORD worldtime;
-    DWORD curtime = m_world->GetLeveltime();
+    uint32_t worldtime;
+    uint32_t curtime = m_world->GetLeveltime();
 
     for(clientiter = m_clientlist.begin();clientiter!=m_clientlist.end();clientiter++)
     {
@@ -256,7 +256,7 @@ void CServer::UpdateHistoryBuffer()
     }
 }
 
-void CServer::ClientHistoryACK(CClientInfo* client, DWORD worldid)
+void CServer::ClientHistoryACK(CClientInfo* client, uint32_t worldid)
 {
     if(client->worldidACK < worldid)
         client->worldidACK = worldid;
@@ -269,10 +269,10 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     m_stream.ResetWritePosition();
 
     CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
-    m_stream.WriteWORD((WORD)localobj);
+    m_stream.WriteWORD((uint16_t)localobj);
     client->hud.Serialize(true, &m_stream, NULL);
 
-    std::map<DWORD, world_state_t>::iterator iter;
+    std::map<uint32_t, world_state_t>::iterator iter;
     iter = m_history.find(client->worldidACK);
     if(iter == m_history.end())
     {

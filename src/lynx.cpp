@@ -51,7 +51,7 @@ std::string CLynx::FloatToString(float f, int precision)
    o.precision(precision);
    if(!(o << f))
    {
-       assert(0);
+       assert(0); // Unable to convert float to string?
        return "";
    }  
    return o.str();

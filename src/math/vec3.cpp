@@ -111,9 +111,9 @@ vec3_t &vec3_t::operator *=(const float &f)
 vec3_t &vec3_t::operator /=(const float &f)
 {
     float invf = 1/f;
-    x*=f;
-    y*=f;
-    z*=f;
+    x*=invf;
+    y*=invf;
+    z*=invf;
     return *this;
 }
 

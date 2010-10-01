@@ -19,15 +19,15 @@ public:
 class CThinkFuncRespawnZombie : public CThinkFunc
 {
 public:
-    CThinkFuncRespawnZombie(DWORD time, CWorld* world, CObj* obj) : 
+    CThinkFuncRespawnZombie(uint32_t time, CWorld* world, CObj* obj) : 
       CThinkFunc(time, world, obj) {}
-    virtual bool DoThink(DWORD leveltime);
+    virtual bool DoThink(uint32_t leveltime);
 };
 
 class CThinkFuncZombie : public CThinkFunc
 {
 public:
-    CThinkFuncZombie(DWORD time, CWorld* world, CObj* obj) : 
+    CThinkFuncZombie(uint32_t time, CWorld* world, CObj* obj) : 
       CThinkFunc(time, world, obj) {}
-    virtual bool DoThink(DWORD leveltime);
+    virtual bool DoThink(uint32_t leveltime);
 };

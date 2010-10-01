@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "lynx.h"
+#include <stdio.h>
 #include "BSPLevel.h"
 #include <SDL/SDL.h>
 #include <GL/glew.h>

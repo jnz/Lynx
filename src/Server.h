@@ -20,7 +20,7 @@ public:
     bool            Create(int port); // Start server on port
     void            Shutdown(); // Stop server
 
-    void            Update(const float dt, const DWORD ticks);
+    void            Update(const float dt, const uint32_t ticks);
 
     CClientInfo*    GetClient(int id);
     int             GetClientCount() const;
@@ -32,15 +32,15 @@ protected:
     void OnReceive(CStream* stream, CClientInfo* client);
 
     void UpdateHistoryBuffer(); // Alte HistoryBuffer Einträge löschen, kein Client benötigt mehr so eine alte Welt, oder die Welt ist zu alt und Client bekommt ein komplettes Update.
-    void ClientHistoryACK(CClientInfo* client, DWORD worldid); // Client bestätigt
+    void ClientHistoryACK(CClientInfo* client, uint32_t worldid); // Client bestätigt
 
 private:
     ENetHost* m_server;
     std::map<int, CClientInfo*> m_clientlist;
 
-    std::map<DWORD, world_state_t> m_history; // World History Buffer. Benötigt für Quake 3 Network Modell bzw. differentielle Updates an Clients
+    std::map<uint32_t, world_state_t> m_history; // World History Buffer. Benötigt für Quake 3 Network Modell bzw. differentielle Updates an Clients
 
-    DWORD m_lastupdate;
+    uint32_t m_lastupdate;
     CWorld* m_world;
 
     CStream m_stream; // damit buffer nicht jedesmal neu erstellt werden muss

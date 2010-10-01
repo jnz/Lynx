@@ -20,6 +20,6 @@ public:
 
 private:
     bool m_prim_triggered; // if +fire active?
-    DWORD m_prim_triggered_time;
+    uint32_t m_prim_triggered_time;
     quaternion_t m_lookdir;
 };

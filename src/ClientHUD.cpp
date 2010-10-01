@@ -24,7 +24,7 @@ void CClientHUD::Serialize(const bool write, CStream* stream, CResourceManager* 
     else
     {
         std::string newweapon;
-        BYTE newanimation;
+        uint8_t newanimation;
 
         stream->ReadString(&newweapon);
         stream->ReadBYTE(&newanimation);

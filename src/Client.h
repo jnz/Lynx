@@ -25,7 +25,7 @@ public:
     bool IsConnected() { return m_server && !m_isconnecting; }
     bool IsRunning() { return (m_server != NULL); }
 
-    void Update(const float dt, const DWORD ticks);
+    void Update(const float dt, const uint32_t ticks);
 
 protected:
     void OnReceive(CStream* stream);
@@ -53,5 +53,5 @@ private:
     CWorldClient* m_world;
     CGameLogic* m_gamelogic;
 
-    DWORD m_lastupdate;
+    uint32_t m_lastupdate;
 };

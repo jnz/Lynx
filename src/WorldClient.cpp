@@ -53,7 +53,7 @@ void CWorldClient::SetLocalObj(int id)
     }
 }
 
-void CWorldClient::Update(const float dt, const DWORD ticks)
+void CWorldClient::Update(const float dt, const uint32_t ticks)
 {
     CWorld::Update(dt, ticks);
     
@@ -96,10 +96,10 @@ void CWorldClient::CreateClientInterp()
         return;
 
     std::list<worldclient_state_t>::iterator iter = m_history.begin();
-    const DWORD tlocal = CLynxSys::GetTicks(); // aktuelle zeit
-    const DWORD tlocal_n = (*iter).localtime; // zeit von letztem packet
-    const DWORD dtupdate = tlocal - tlocal_n; // zeit seit letztem update
-    const DWORD rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
+    const uint32_t tlocal = CLynxSys::GetTicks(); // aktuelle zeit
+    const uint32_t tlocal_n = (*iter).localtime; // zeit von letztem packet
+    const uint32_t dtupdate = tlocal - tlocal_n; // zeit seit letztem update
+    const uint32_t rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
 
     if(dtupdate > RENDER_DELAY)
     {
@@ -186,10 +186,10 @@ void CWorldClient::CreateClientInterp()
     m_interpworld.UpdatePendingObjs();
 }
 
-void CWorldInterp::Update(const float dt, const DWORD ticks) // Interpoliert zwischen versch. world_state_ts
+void CWorldInterp::Update(const float dt, const uint32_t ticks) // Interpoliert zwischen versch. world_state_t
 {
-    const DWORD rendertime = ticks - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
-    const DWORD updategap = state2.localtime - state1.localtime;
+    const uint32_t rendertime = ticks - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
+    const uint32_t updategap = state2.localtime - state1.localtime;
 
     if(updategap < 1)
         return;

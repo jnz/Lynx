@@ -60,7 +60,7 @@ void CGameObjZombie::FindVictim()
     }
 }
 
-bool CThinkFuncRespawnZombie::DoThink(DWORD leveltime)
+bool CThinkFuncRespawnZombie::DoThink(uint32_t leveltime)
 {
     GetWorld()->DelObj(GetObj()->GetID());
 
@@ -74,7 +74,7 @@ bool CThinkFuncRespawnZombie::DoThink(DWORD leveltime)
     return true;
 }
 
-bool CThinkFuncZombie::DoThink(DWORD leveltime)
+bool CThinkFuncZombie::DoThink(uint32_t leveltime)
 {
     CGameObjZombie* zombie = (CGameObjZombie*)GetObj();
     if(zombie->GetHealth() < 1)

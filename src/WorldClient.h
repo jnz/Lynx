@@ -24,7 +24,7 @@
 struct worldclient_state_t
 {
     world_state_t state;
-    DWORD   localtime; // in ms
+    uint32_t   localtime; // in ms
 };
 
 // Interpolierte Welt für Renderer
@@ -41,7 +41,7 @@ public:
     const virtual CBSPLevel*    GetBSP() const { return m_pbsp; }
     virtual CResourceManager*   GetResourceManager() { return m_presman; }
 
-    void                        Update(const float dt, const DWORD ticks); // Lineare Interpolation um Schrittweite dt weiter laufen lassen
+    void                        Update(const float dt, const uint32_t ticks); // Lineare Interpolation um Schrittweite dt weiter laufen lassen
 
 protected:
     CBSPLevel*                  m_pbsp;
@@ -66,7 +66,7 @@ public:
     void            SetLocalObj(int id);
     CObj*           GetLocalController() { return &m_ghostobj; }
 
-    void            Update(const float dt, const DWORD ticks);
+    void            Update(const float dt, const uint32_t ticks);
 
     virtual bool    Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
 

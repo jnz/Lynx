@@ -5,21 +5,21 @@
 class CThinkFunc
 {
 public:
-    CThinkFunc(DWORD time, CWorld* world, CObj* obj)
+    CThinkFunc(uint32_t time, CWorld* world, CObj* obj)
     {
         thinktime = time;
         m_world = world;
         m_obj = obj;
     }
-    DWORD GetThinktime() { return thinktime; }
-    void SetThinktime(DWORD newtime) { thinktime = newtime; }
-    virtual bool DoThink(DWORD leveltime) = 0; // bei rückgabe von true wird diese thinkfunc entfernt
+    uint32_t GetThinktime() { return thinktime; }
+    void SetThinktime(uint32_t newtime) { thinktime = newtime; }
+    virtual bool DoThink(uint32_t leveltime) = 0; // bei rückgabe von true wird diese thinkfunc entfernt
 
 protected:
     CWorld* GetWorld() { return m_world; }
     CObj* GetObj() { return m_obj; }
 private:
-    DWORD thinktime;
+    uint32_t thinktime;
     CWorld* m_world;
     CObj* m_obj;
 };
@@ -30,7 +30,7 @@ public:
     ~CThink();
     void AddFunc(CThinkFunc* func); // neue thinkfunc hinzufügen
     void RemoveAll(); // alle thinkfuncs löschen
-    void DoThink(DWORD leveltime); // alle thinkfuncs ausführen
+    void DoThink(uint32_t leveltime); // alle thinkfuncs ausführen
 private:
     std::list<CThinkFunc*> m_think;
 };

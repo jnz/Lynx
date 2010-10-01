@@ -76,7 +76,7 @@ const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float ra
 }
 
 
-void CWorld::Update(const float dt, const DWORD ticks)
+void CWorld::Update(const float dt, const uint32_t ticks)
 {
     if(!IsClient())
     {
@@ -290,9 +290,9 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
     if(write)
     {
-        DWORD updateflags = 0;
+        uint32_t updateflags = 0;
         CStream tempstream = stream->GetStream();
-        stream->WriteAdvance(sizeof(DWORD)); // An dieser Stelle sollten als DWORD die Updateflags stehen, diese kennen wir erst, nachdem wir sie geschrieben haben
+        stream->WriteAdvance(sizeof(uint32_t)); // An dieser Stelle sollten als DWORD die Updateflags stehen, diese kennen wir erst, nachdem wir sie geschrieben haben
 
         // Zuerst in tempstream schreiben um gleichzeitig die updateflags zu erkennen
         DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, stream);
@@ -308,7 +308,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
         // Alle Objekte schreiben
         assert(GetObjCount() < USHRT_MAX);
-        stream->WriteWORD((WORD)GetObjCount());
+        stream->WriteWORD((uint16_t)GetObjCount());
 
         obj_state_t obj_oldstate;
         obj_state_t* p_obj_oldstate;
@@ -331,11 +331,11 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
     }
     else
     {
-        DWORD updateflags;
-        DWORD worldid;
+        uint32_t updateflags;
+        uint32_t worldid;
         std::string level;
-        WORD objcount;
-        WORD objid;
+        uint16_t objcount;
+        uint16_t objid;
 
         stream->ReadDWORD(&updateflags);
         assert(updateflags > 0);

@@ -2,19 +2,13 @@
 
 #include <assert.h>
 #include <string>       // Default String Type for Lynx
-#include <stdint.h>
 #include <cstdlib>
 #include <limits.h>
+#include <stdint.h>		// Visual Studio < 2010 has no stdint.h, google stdint.h and place it somewhere to be found
 
 #define LYNX_TITLE      "Lynx"
 #define LYNX_MAJOR      0
 #define LYNX_MINOR      1
-
-typedef uint32_t        DWORD;
-typedef int32_t         INT32;
-typedef int16_t         INT16;
-typedef uint16_t        WORD;
-typedef unsigned char   BYTE;
 
 #define SAFE_RELEASE(x) if(x) { delete x; x = NULL; }
 #define SAFE_RELEASE_ARRAY(x) if(x) { delete[] x; x = NULL; }

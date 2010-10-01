@@ -77,7 +77,7 @@ void CClient::Shutdown()
     m_isconnecting = false;
 }
 
-void CClient::Update(const float dt, const DWORD ticks)
+void CClient::Update(const float dt, const uint32_t ticks)
 {
     ENetEvent event;
     CStream stream;
@@ -126,7 +126,7 @@ void CClient::Update(const float dt, const DWORD ticks)
 
 void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend)
 {
-    DWORD ticks = CLynxSys::GetTicks();
+    uint32_t ticks = CLynxSys::GetTicks();
     if(!IsConnected() || m_world->GetBSP()->GetFilename() == "")
         return;
 
@@ -146,7 +146,7 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     stream.WriteFloat(m_lon);
 
     assert(clcmdlist.size() < USHRT_MAX);
-    stream.WriteWORD((WORD)clcmdlist.size());
+    stream.WriteWORD((uint16_t)clcmdlist.size());
     for(size_t i=0;i<clcmdlist.size();i++)
         stream.WriteString(clcmdlist[i]);
     
@@ -163,8 +163,8 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
 
 void CClient::OnReceive(CStream* stream)
 {
-    BYTE type;
-    WORD localobj;
+    uint8_t type;
+    uint16_t localobj;
 
     // fprintf(stderr, "%i Client Incoming data: %i bytes\n", CLynx::GetTicks()&255, stream->GetBytesToRead());
 
@@ -206,7 +206,7 @@ void CClient::InputMouseMove()
 
 void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)
 {
-    BYTE* keystate = CLynxSys::GetKeyState();    
+    uint8_t* keystate = CLynxSys::GetKeyState();    
     *forcesend = false;
 
     // Client fire animation prediction

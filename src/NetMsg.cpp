@@ -13,8 +13,8 @@ void CNetMsg::WriteHeader(CStream *stream, int msgtype)
 
 int CNetMsg::ReadHeader(CStream* stream)
 {
-    BYTE magic;
-    BYTE type;
+    uint8_t magic;
+    uint8_t type;
 
     stream->ReadBYTE(&magic);
     stream->ReadBYTE(&type);

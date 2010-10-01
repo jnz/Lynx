@@ -11,7 +11,7 @@ public:
     bool Init(int width, int height, int bpp, int fullscreen);
     void Shutdown();
 
-    void Update(const float dt, const DWORD ticks);
+    void Update(const float dt, const uint32_t ticks);
 
     // Public Stats (FIXME)
     int stat_obj_visible;

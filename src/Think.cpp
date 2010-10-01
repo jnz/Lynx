@@ -23,7 +23,7 @@ void CThink::RemoveAll()
     m_think.clear();       
 }
 
-void CThink::DoThink(DWORD leveltime)
+void CThink::DoThink(uint32_t leveltime)
 {
     CThinkFunc* func;
     std::list<CThinkFunc*>::iterator iter;

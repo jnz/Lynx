@@ -27,7 +27,7 @@ CStream::CStream(int size)
         CStream();
 }
 
-CStream::CStream(BYTE* foreign, int size, int used)
+CStream::CStream(uint8_t* foreign, int size, int used)
 {
     m_buffer = NULL;
     m_foreign = true;
@@ -40,7 +40,7 @@ CStream::~CStream(void)
         delete[] m_buffer;
 }
 
-void CStream::SetBuffer(BYTE* buffer, int size, int used)
+void CStream::SetBuffer(uint8_t* buffer, int size, int used)
 {
     if(m_buffer && !m_foreign)
         delete[] m_buffer;
@@ -54,10 +54,10 @@ void CStream::SetBuffer(BYTE* buffer, int size, int used)
 
 bool CStream::Resize(int newsize)
 {
-    BYTE* newbuf;
+    uint8_t* newbuf;
     assert(newsize != m_size);
 
-    newbuf = new BYTE[newsize];
+    newbuf = new uint8_t[newsize];
     assert(newbuf);
     if(!newbuf)
         return false;
@@ -81,7 +81,7 @@ bool CStream::Resize(int newsize)
     return true;
 }
 
-BYTE* CStream::GetBuffer()
+uint8_t* CStream::GetBuffer()
 {
     return m_buffer;
 }
@@ -131,38 +131,38 @@ void CStream::WriteAdvance(int bytes)
     m_used += bytes;
 }
 
-void CStream::WriteDWORD(DWORD value)
+void CStream::WriteDWORD(uint32_t value)
 {
     assert(m_used + (int)sizeof(value) <= m_size);
-    *((DWORD*)(m_buffer+m_used)) = value;
+    *((uint32_t*)(m_buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
-void CStream::WriteInt32(INT32 value)
+void CStream::WriteInt32(int32_t value)
 {
     assert(m_used + (int)sizeof(value) <= m_size);
-    *((INT32*)(m_buffer+m_used)) = value;
+    *((int32_t*)(m_buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
-void CStream::WriteInt16(INT16 value)
+void CStream::WriteInt16(int16_t value)
 {
     assert(m_used + (int)sizeof(value) <= m_size);
-    *((INT16*)(m_buffer+m_used)) = value;
+    *((int16_t*)(m_buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
-void CStream::WriteWORD(WORD value)
+void CStream::WriteWORD(uint16_t value)
 {
     assert(m_used + (int)sizeof(value) <= m_size);
-    *((WORD*)(m_buffer+m_used)) = value;
+    *((uint16_t*)(m_buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
-void CStream::WriteBYTE(BYTE value)
+void CStream::WriteBYTE(uint8_t value)
 {
     assert(m_used + (int)sizeof(value) <= m_size);
-    *((BYTE*)(m_buffer+m_used)) = value;
+    *((uint8_t*)(m_buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -175,21 +175,21 @@ void CStream::WriteFloat(float value)
 
 void CStream::WriteAngle3(const vec3_t& value)
 {
-    WriteBYTE((BYTE)(value.x*256/360) & 255);
-    WriteBYTE((BYTE)(value.y*256/360) & 255);
-    WriteBYTE((BYTE)(value.z*256/360) & 255);
+    WriteBYTE((uint8_t)(value.x*256/360) & 255);
+    WriteBYTE((uint8_t)(value.y*256/360) & 255);
+    WriteBYTE((uint8_t)(value.z*256/360) & 255);
 }
 
 void CStream::WritePos6(const vec3_t& value)
 {
-    WriteInt16((INT16)(value.x*8.0f));
-    WriteInt16((INT16)(value.y*8.0f));
-    WriteInt16((INT16)(value.z*8.0f));
+    WriteInt16((int16_t)(value.x*8.0f));
+    WriteInt16((int16_t)(value.y*8.0f));
+    WriteInt16((int16_t)(value.z*8.0f));
 }
 
 void CStream::WriteFloat2(float value)
 {
-    WriteInt16((INT16)(value*8.0f));
+    WriteInt16((int16_t)(value*8.0f));
 }
 
 void CStream::WriteVec3(const vec3_t& value)
@@ -207,22 +207,22 @@ void CStream::WriteQuat(const quaternion_t& value)
     WriteFloat(value.w);
 }
 
-void CStream::WriteBytes(const BYTE* values, int len)
+void CStream::WriteBytes(const uint8_t* values, int len)
 {
     assert(m_used + len <= m_size);
     memcpy(m_buffer+m_used, values, len);
     m_used += len;
 }
 
-WORD CStream::WriteString(const std::string& value)
+uint16_t CStream::WriteString(const std::string& value)
 {
     assert(value.size() < USHRT_MAX);
     if(value.size() >= USHRT_MAX)
         return 0;
-    WORD len = (WORD)value.size();
+    uint16_t len = (uint16_t)value.size();
     WriteWORD(len);
-    WriteBytes((BYTE*)value.c_str(), len);
-    return sizeof(WORD) + len;
+    WriteBytes((uint8_t*)value.c_str(), len);
+    return sizeof(uint16_t) + len;
 }
 
 void CStream::WriteStream(const CStream& stream)
@@ -236,7 +236,7 @@ size_t CStream::StringSize(const std::string& value)
     assert(value.size() < USHRT_MAX);
     if(value.size() >= USHRT_MAX)
         return 0;
-    return sizeof(WORD) + value.size();
+    return sizeof(uint16_t) + value.size();
 }
 
 void CStream::ReadAdvance(int bytes)
@@ -244,39 +244,39 @@ void CStream::ReadAdvance(int bytes)
     m_position += bytes;
 }
 
-void CStream::ReadDWORD(DWORD* value)
+void CStream::ReadDWORD(uint32_t* value)
 {
-    assert(m_position + (int)sizeof(DWORD) <= m_used);
-    *value = *((DWORD*)(m_buffer+m_position));
-    m_position += sizeof(DWORD);
+    assert(m_position + (int)sizeof(uint32_t) <= m_used);
+    *value = *((uint32_t*)(m_buffer+m_position));
+    m_position += sizeof(uint32_t);
 }
 
-void CStream::ReadInt32(INT32* value)
+void CStream::ReadInt32(int32_t* value)
 {
-    assert(m_position + (int)sizeof(INT32) <= m_used);
-    *value = *((INT32*)(m_buffer+m_position));
-    m_position += sizeof(INT32);
+    assert(m_position + (int)sizeof(int32_t) <= m_used);
+    *value = *((int32_t*)(m_buffer+m_position));
+    m_position += sizeof(int32_t);
 }
 
-void CStream::ReadInt16(INT16* value)
+void CStream::ReadInt16(int16_t* value)
 {
-    assert(m_position + (int)sizeof(INT16) <= m_used);
-    *value = *((INT16*)(m_buffer+m_position));
-    m_position += sizeof(INT16);
+    assert(m_position + (int)sizeof(int16_t) <= m_used);
+    *value = *((int16_t*)(m_buffer+m_position));
+    m_position += sizeof(int16_t);
 }
 
-void CStream::ReadWORD(WORD* value)
+void CStream::ReadWORD(uint16_t* value)
 {
-    assert(m_position + (int)sizeof(WORD) <= m_used);
-    *value = *((WORD*)(m_buffer+m_position));
-    m_position += sizeof(WORD);
+    assert(m_position + (int)sizeof(uint16_t) <= m_used);
+    *value = *((uint16_t*)(m_buffer+m_position));
+    m_position += sizeof(uint16_t);
 }
 
-void CStream::ReadBYTE(BYTE* value)
+void CStream::ReadBYTE(uint8_t* value)
 { 
     assert(m_position + 1 <= m_used);
-    *value = *((BYTE*)(m_buffer+m_position));
-    m_position += sizeof(BYTE);
+    *value = *((uint8_t*)(m_buffer+m_position));
+    m_position += sizeof(uint8_t);
 }
 
 void CStream::ReadFloat(float* value)
@@ -288,7 +288,7 @@ void CStream::ReadFloat(float* value)
 
 void CStream::ReadAngle3(vec3_t* value)
 {
-    BYTE bx, by, bz;
+    uint8_t bx, by, bz;
     ReadBYTE(&bx);
     ReadBYTE(&by);
     ReadBYTE(&bz);
@@ -299,7 +299,7 @@ void CStream::ReadAngle3(vec3_t* value)
 
 void CStream::ReadPos6(vec3_t* value)
 {
-    INT16 bx, by, bz;
+    int16_t bx, by, bz;
 
     ReadInt16(&bx);
     ReadInt16(&by);
@@ -311,7 +311,7 @@ void CStream::ReadPos6(vec3_t* value)
 
 void CStream::ReadFloat2(float* value)
 {
-    INT16 b;
+    int16_t b;
     ReadInt16(&b);
     *value = b * (1.0f / 8.0f);
 }
@@ -330,7 +330,7 @@ void CStream::ReadQuat(quaternion_t* value)
     ReadFloat(&value->w);
 }
 
-void CStream::ReadBytes(BYTE* values, int len)
+void CStream::ReadBytes(uint8_t* values, int len)
 {
     assert(m_position + len <= m_used);
     memcpy(values, m_buffer+m_position, len);
@@ -339,10 +339,10 @@ void CStream::ReadBytes(BYTE* values, int len)
 
 void CStream::ReadString(std::string* value)
 {
-    assert(GetBytesToRead() >= sizeof(WORD));
-    if(GetBytesToRead() < sizeof(WORD))
+    assert(GetBytesToRead() >= sizeof(uint16_t));
+    if(GetBytesToRead() < sizeof(uint16_t))
         return;
-    WORD len;
+    uint16_t len;
     ReadWORD(&len);
     (*value).assign((char*)(m_buffer+m_position), len);
     ReadAdvance(len);

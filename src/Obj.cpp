@@ -29,7 +29,7 @@ CObj::CObj(CWorld* world)
 {
     assert(world);
     m_id = ++m_idpool;
-    assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als WORD übertragen
+    assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als uint16_t übertragen
     state.radius = 2*lynxmath::SQRT_2;
     state.eyepos = vec3_t(0,0.5f,0);
     state.animation = 0;
@@ -100,12 +100,12 @@ void CObj::SetResource(std::string resource)
     }
 }
 
-INT16 CObj::GetAnimation() const
+int16_t CObj::GetAnimation() const
 {
     return state.animation;
 }
 
-void CObj::SetAnimation(INT16 animation)
+void CObj::SetAnimation(int16_t animation)
 {
     if(animation != state.animation)
     {
@@ -115,12 +115,12 @@ void CObj::SetAnimation(INT16 animation)
     }
 }
 
-INT16 CObj::GetNextAnimation() const
+int16_t CObj::GetNextAnimation() const
 {
     return state.nextanimation;
 }
 
-void CObj::SetNextAnimation(INT16 animation)
+void CObj::SetNextAnimation(int16_t animation)
 {
     if(animation != state.nextanimation)
     {
@@ -217,8 +217,8 @@ std::string CObj::GetParticleSystemName() const
 
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
-                  const DWORD flagparam, 
-                  DWORD* updateflags,
+                  const uint32_t flagparam, 
+                  uint32_t* updateflags,
                   CStream* stream)
 {
     if(!oldstate || (*newstate != *oldstate)) {
@@ -231,8 +231,8 @@ int DeltaDiffVec3(const vec3_t* newstate,
 
 int DeltaDiffQuat(const quaternion_t* newstate,
                   const quaternion_t* oldstate,
-                  const DWORD flagparam, 
-                  DWORD* updateflags,
+                  const uint32_t flagparam, 
+                  uint32_t* updateflags,
                   CStream* stream)
 {
     if(!oldstate || (*newstate != *oldstate)) {
@@ -245,8 +245,8 @@ int DeltaDiffQuat(const quaternion_t* newstate,
 
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream)
 {
     if(!oldstate || !(*newstate == *oldstate)) {
@@ -257,24 +257,24 @@ int DeltaDiffFloat(const float* newstate,
     return 0;
 }
 
-int DeltaDiffInt16(const INT16* newstate,
-                   const INT16* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+int DeltaDiffInt16(const int16_t* newstate,
+                   const int16_t* oldstate,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream)
 {
     if(!oldstate || *newstate != *oldstate) {
         *updateflags |= flagparam;
         if(stream) stream->WriteInt16(*newstate);
-        return sizeof(INT16);
+        return sizeof(int16_t);
     }
     return 0;
 }
 
 int DeltaDiffString(const std::string* newstate,
                     const std::string* oldstate,
-                    const DWORD flagparam, 
-                    DWORD* updateflags,
+                    const uint32_t flagparam, 
+                    uint32_t* updateflags,
                     CStream* stream)
 {
     if(!oldstate || *newstate != *oldstate) {
@@ -285,24 +285,24 @@ int DeltaDiffString(const std::string* newstate,
     return 0;
 }
 
-int DeltaDiffDWORD(const DWORD* newstate,
-                   const DWORD* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+int DeltaDiffDWORD(const uint32_t* newstate,
+                   const uint32_t* oldstate,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream)
 {
     if(!oldstate || *newstate != *oldstate) {
         *updateflags |= flagparam;
         if(stream) stream->WriteDWORD(*newstate);
-        return sizeof(DWORD);
+        return sizeof(uint32_t);
     }
     return 0;
 }
 
-int DeltaDiffBytes(const BYTE* newstate,
-                   const BYTE* oldstate,
-                   const DWORD flagparam, 
-                   DWORD* updateflags,
+int DeltaDiffBytes(const uint8_t* newstate,
+                   const uint8_t* oldstate,
+                   const uint32_t flagparam, 
+                   uint32_t* updateflags,
                    CStream* stream,
                    const int size)
 {
@@ -323,14 +323,14 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
 {
     assert(!(!write && oldstate));
     assert(stream);
-    DWORD updateflags = 0;
+    uint32_t updateflags = 0;
 
     if(write)
     {
         assert(GetID() == id);
         assert(id < USHRT_MAX);
         CStream tempstream = stream->GetStream(); // wir merken uns die stelle, an die die updateflags kommen
-        stream->WriteAdvance(sizeof(DWORD)); // wir gehen sizeof(DWORD) vor
+        stream->WriteAdvance(sizeof(uint32_t)); // wir gehen sizeof(DWORD) vor
 
         DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, stream);
         DeltaDiffVec3(&state.vel,               oldstate ? &oldstate->vel : NULL,           OBJ_STATE_VEL,          &updateflags, stream);
