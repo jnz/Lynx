@@ -289,7 +289,14 @@ bool CServer::SendWorldToClient(CClientInfo* client)
         }
     }
 
-    assert(client->GetPeer()->mtu > m_stream.GetBytesWritten());
+    if(client->GetPeer()->mtu < m_stream.GetBytesWritten())
+    {
+        fprintf(stderr, "NET: MTU: %i Bytes to be send: %i\n",
+                client->GetPeer()->mtu,
+                m_stream.GetBytesWritten());
+        //assert(client->GetPeer()->mtu >= m_stream.GetBytesWritten());
+        return false;
+    }
     packet = enet_packet_create(m_stream.GetBuffer(), 
                                 m_stream.GetBytesWritten(), 
                                 0);
@@ -297,6 +304,6 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     if(!packet)
         return false;
 
-    //fprintf(stderr, "SV: Complete World: %i bytes\n", m_stream.GetBytesWritten());
+    fprintf(stderr, "SV: Complete World: %i bytes\n", m_stream.GetBytesWritten());
     return enet_peer_send(client->GetPeer(), 0, packet) == 0;
 }
