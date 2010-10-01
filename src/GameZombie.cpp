@@ -19,13 +19,13 @@ CGameZombie::~CGameZombie(void)
 bool CGameZombie::InitGame()
 {
     // Level laden
-	std::string levelpath = CLynx::GetBaseDirLevel() + "testlvl/level1.lbsp";
+    std::string levelpath = CLynx::GetBaseDirLevel() + "testlvl/level1.lbsp";
     bool success = GetWorld()->LoadLevel(levelpath);
     if(!success)
-	{
-		fprintf(stderr, "Game: Failed to load level: %s\n", levelpath.c_str());
+    {
+        fprintf(stderr, "Game: Failed to load level: %s\n", levelpath.c_str());
         return false;
-	}
+    }
 
     // n Testobjekte erstellen
     for(int i=0;i<7;i++)
@@ -38,7 +38,7 @@ bool CGameZombie::InitGame()
         GetWorld()->AddObj(zombie);
     }
 
-	return true;
+    return true;
 }
 
 void CGameZombie::Notify(EventNewClientConnected e)

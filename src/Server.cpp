@@ -276,6 +276,9 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     iter = m_history.find(client->worldidACK);
     if(iter == m_history.end())
     {
+        fprintf(stderr, "NET: MTU: %i Bytes to be send: %i\n",
+                client->GetPeer()->mtu,
+                m_stream.GetBytesWritten());
         m_world->Serialize(true, &m_stream, NULL);
     }
     else
@@ -307,3 +310,4 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     fprintf(stderr, "SV: Complete World: %i bytes\n", m_stream.GetBytesWritten());
     return enet_peer_send(client->GetPeer(), 0, packet) == 0;
 }
+

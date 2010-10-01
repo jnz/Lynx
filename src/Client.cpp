@@ -82,8 +82,9 @@ void CClient::Update(const float dt, const uint32_t ticks)
     ENetEvent event;
     CStream stream;
     assert(m_client && m_server);
+    int result=0;
 
-    while(m_client && enet_host_service(m_client, &event, 0) > 0)
+    while(m_client && (result = enet_host_service(m_client, &event, 0)) > 0)
     {
         switch (event.type)
         {
@@ -112,6 +113,7 @@ void CClient::Update(const float dt, const uint32_t ticks)
             break;
         }
     }
+    assert(result != -1);
 
     // Eingabe und Steuerung
     std::vector<std::string> clcmdlist;
