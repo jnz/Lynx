@@ -12,8 +12,6 @@ public:
     static int ReadHeader(CStream* stream); // returns msg type
 };
 
-//#define USE_RANGE_ENCODER
-
 #define NET_VERSION             30
 
 #define NET_MAGIC               0x5     // 101 (binary)
