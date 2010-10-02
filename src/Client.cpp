@@ -1,5 +1,6 @@
 #include "NetMsg.h"
 #include "Client.h"
+#include "ServerClient.h"
 #include "math/mathconst.h"
 #include <math.h>
 #include <SDL/SDL.h>
@@ -9,8 +10,6 @@
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
-
-#define CLIENT_UPDATERATE   50
 
 CClient::CClient(CWorldClient* world, CGameLogic* gamelogic)
 {
@@ -41,9 +40,14 @@ bool CClient::Connect(char* server, int port)
     if(IsConnecting() || IsConnected())
         Shutdown();
 
-    m_client = enet_host_create(NULL, 1, 0, 0, 0);
+    // channel limit 5 is arbitrary (1 should be enough)
+    m_client = enet_host_create(NULL, 1, 5, 0, OUTGOING_BANDWIDTH);
     if(!m_client)
         return false;
+
+#ifdef USE_RANGE_ENCODER
+    enet_host_compress_with_range_coder(m_client);
+#endif
 
     enet_address_set_host(&address, server);
     address.port = port;
@@ -113,7 +117,9 @@ void CClient::Update(const float dt, const uint32_t ticks)
             break;
         }
     }
-    assert(result != -1);
+    // result 1 happens, when too much data is being sent
+    if(result == -1)
+        return;
 
     // Eingabe und Steuerung
     std::vector<std::string> clcmdlist;
@@ -123,17 +129,19 @@ void CClient::Update(const float dt, const uint32_t ticks)
     m_gamelogic->ClientMove(GetLocalController(), clcmdlist);
 
     // Sende Eingabe an Server
-    SendClientState(clcmdlist, forcesend);
+    SendClientState(clcmdlist, forcesend, ticks);
 }
 
-void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend)
+void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend, uint32_t ticks)
 {
     size_t i;
-    uint32_t ticks = CLynxSys::GetTicks();
     if(!IsConnected() || m_world->GetBSP()->GetFilename() == "")
         return;
 
-    if(ticks - m_lastupdate < CLIENT_UPDATERATE && !forcesend)
+    if(forcesend)
+        fprintf(stderr, "CL: Force client state send\n");
+
+    if((ticks - m_lastupdate) < CLIENT_UPDATERATE && !forcesend)
         return;
 
     ENetPacket* packet;
@@ -245,9 +253,15 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     }
     if(keystate[SDLK_e])
     {
-        // FIXME temp hack
+        // FIXME temp hack to get local position and stats
         vec3_t pos = GetLocalController()->GetOrigin();
         fprintf(stderr, "[%.2f,%.2f,%.2f]\n", pos.x, pos.y, pos.z);
+        fprintf(stderr, "Network stats:\n");
+        fprintf(stderr, "Mean round trip time: %i (msec)\n", m_server->roundTripTime);
+        fprintf(stderr, "Incoming data total: %i (kbytes)\n", m_client->totalReceivedData/1024);
+        fprintf(stderr, "Outgoing data total: %i (kbytes)\n", m_client->totalSentData/1024);
+        fprintf(stderr, "Incoming packets total: %i\n", m_client->totalReceivedPackets);
+        fprintf(stderr, "Outgoing data total: %i\n", m_client->totalSentPackets);
     }
 
     if(!firedown)

@@ -10,6 +10,7 @@
 #define LYNX_MAJOR      0
 #define LYNX_MINOR      1
 
+
 #define SAFE_RELEASE(x) if(x) { delete x; x = NULL; }
 #define SAFE_RELEASE_ARRAY(x) if(x) { delete[] x; x = NULL; }
 

@@ -12,6 +12,7 @@
     allerdings noch in eine eigene Klasse ausgelagert werden.
  */
 
+
 class CClient
 {
 public:
@@ -32,7 +33,7 @@ protected:
 
     void InputMouseMove(); // update m_lat and m_lon
     void InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend); // forcesend: gibt es cmds, die unbedingt sofort abgeschickt werden müssen
-    void SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend);
+    void SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend, uint32_t ticks);
     CObj* GetLocalController(); // Geist Objekt, das nur auf Client Seite existiert. Sozusagen die virtuelle Kamera
     CObj* GetLocalObj(); // Tatsächliches Objekt mit dem der Client verknüpft ist
 

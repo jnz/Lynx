@@ -30,9 +30,15 @@ bool CServer::Create(int port)
     addr.host = ENET_HOST_ANY;
     addr.port = port;
 
-    m_server = enet_host_create(&addr, MAXCLIENTS, 0, 0, 0);
+    // channellimit 5 (in theory only 1 channel is used, but lets play safe
+    // here)
+    m_server = enet_host_create(&addr, MAXCLIENTS, 5, 0, 0);
     if(!m_server)
         return false;
+
+#ifdef USE_RANGE_ENCODER
+    enet_host_compress_with_range_coder(m_server);
+#endif
 
     return true;
 }

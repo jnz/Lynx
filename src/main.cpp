@@ -136,13 +136,16 @@ int main(int argc, char** argv)
             worldsv.Update(dt, time);
             server.Update(dt, time);
         }
-        worldcl.Update(dt, time);
+        if(client.IsConnected())
+        {
+            worldcl.Update(dt, time);
+        }
         client.Update(dt, time);
         renderer.Update(dt, time);
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
         SDL_Delay(10); // so my notebook fan is quiet :-)
-#endif
+//#endif
         if(!client.IsRunning())
         {
             fprintf(stderr, "Disconnected\n");
