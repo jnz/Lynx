@@ -8,7 +8,8 @@
 #include "Events.h"
 #include "Stream.h"
 
-#define CLIENTITER      std::map<int, CClientInfo*>::iterator
+#define MAX_SV_PACKETLEN    24000
+#define CLIENTITER          std::map<int, CClientInfo*>::iterator
 
 class CServer : public CSubject<EventNewClientConnected>,
                 public CSubject<EventClientDisconnected>

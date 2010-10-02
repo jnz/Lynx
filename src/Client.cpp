@@ -128,6 +128,7 @@ void CClient::Update(const float dt, const uint32_t ticks)
 
 void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend)
 {
+    size_t i;
     uint32_t ticks = CLynxSys::GetTicks();
     if(!IsConnected() || m_world->GetBSP()->GetFilename() == "")
         return;
@@ -149,9 +150,9 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
 
     assert(clcmdlist.size() < USHRT_MAX);
     stream.WriteWORD((uint16_t)clcmdlist.size());
-    for(size_t i=0;i<clcmdlist.size();i++)
+    for(i=0;i<clcmdlist.size();i++)
         stream.WriteString(clcmdlist[i]);
-    
+
     packet = enet_packet_create(stream.GetBuffer(), 
                                 stream.GetBytesWritten(), 0);
     assert(packet);
