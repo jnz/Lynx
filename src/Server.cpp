@@ -278,9 +278,9 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     if(iter == m_history.end())
     {
         m_world->Serialize(true, &m_stream, NULL);
-        fprintf(stderr, "NET: Full update MTU: %i Bytes to be send: %i\n",
-                client->GetPeer()->mtu,
-                m_stream.GetBytesWritten());
+        // fprintf(stderr, "NET: Full update MTU: %i Bytes to be send: %i\n",
+        //         client->GetPeer()->mtu,
+        //         m_stream.GetBytesWritten());
     }
     else
     {
@@ -291,9 +291,9 @@ bool CServer::SendWorldToClient(CClientInfo* client)
             client->worldidACK = m_world->GetWorldID();
             return true; // client benötigt kein update
         }
-        fprintf(stderr, "NET: Half update MTU: %i Bytes to be send: %i\n",
-                client->GetPeer()->mtu,
-                m_stream.GetBytesWritten());
+        // fprintf(stderr, "NET: Half update MTU: %i Bytes to be send: %i\n",
+        //         client->GetPeer()->mtu,
+        //         m_stream.GetBytesWritten());
     }
 
     if(client->GetPeer()->mtu < m_stream.GetBytesWritten())
@@ -301,8 +301,6 @@ bool CServer::SendWorldToClient(CClientInfo* client)
         fprintf(stderr, "NET: Packet fragmentation MTU: %i Bytes to be send: %i\n",
                 client->GetPeer()->mtu,
                 m_stream.GetBytesWritten());
-        //assert(0); // packet fragmentation
-        //return false;
     }
     packet = enet_packet_create(m_stream.GetBuffer(), 
                                 m_stream.GetBytesWritten(), 
