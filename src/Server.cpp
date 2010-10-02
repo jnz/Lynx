@@ -133,7 +133,7 @@ void CServer::Update(const float dt, const uint32_t ticks)
         }
     }
 
-    if(ticks - m_lastupdate > SERVER_UPDATETIME)
+    if((ticks - m_lastupdate) > SERVER_UPDATETIME)
     {
         int sent = 0;
         std::map<int, CClientInfo*>::iterator iter;
@@ -302,12 +302,12 @@ bool CServer::SendWorldToClient(CClientInfo* client)
         //         m_stream.GetBytesWritten());
     }
 
-    if(client->GetPeer()->mtu < m_stream.GetBytesWritten())
-    {
-        fprintf(stderr, "NET: Packet fragmentation MTU: %i Bytes to be send: %i\n",
-                client->GetPeer()->mtu,
-                m_stream.GetBytesWritten());
-    }
+    // if(client->GetPeer()->mtu < m_stream.GetBytesWritten())
+    // {
+    //     fprintf(stderr, "NET: Packet fragmentation MTU: %i Bytes to be send: %i\n",
+    //             client->GetPeer()->mtu,
+    //             m_stream.GetBytesWritten());
+    // }
     packet = enet_packet_create(m_stream.GetBuffer(), 
                                 m_stream.GetBytesWritten(), 
                                 0);

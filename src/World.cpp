@@ -102,9 +102,9 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     vec3_t q; // Schnittpunkt mit Levelgeometrie
     vec3_t p3; // Endpunkt nach "slide"
 
-    if(fabsf(vel.y) > 999.9f)
+    if(fabsf(vel.y) > 9999.9f)
     {
-        fprintf(stderr, "World error: obj in free fall\n");
+        fprintf(stderr, "World error: obj in free fall (on ground: %i)\n", obj->m_locIsOnGround?1:0);
         vel.y = 0;
         assert(0);
         return;
@@ -122,43 +122,40 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     for(int i=0;(p2 - p1) != vec3_t::origin && i < 10; i++)
     {
-        //assert(i < 9); // sollte nicht passieren
-
         trace.start = p1;
         trace.dir = p2 - p1;
         trace.f = MAX_TRACE_DIST;
         GetBSP()->TraceSphere(&trace);
-        if(trace.f < 1.0f)
-        {
-            q = trace.start + trace.f*trace.dir + 
-                trace.p.m_n * STOP_EPSILON;
-            if(obj->GetFlags() & OBJ_FLAGS_ELASTIC) // bounce
-            {
-                vel = 0.6f*(vel - 2.0f*(vel*trace.p.m_n)*trace.p.m_n);
-                p3 = q;
-            }
-            else // slide
-            {
-                p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
-
-                if(trace.p.m_n * vec3_t::yAxis > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
-                    groundhit = true;
-            }
-
-            if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
-                q.y = p1.y;
-
-            if((p3-q).Abs()<STOP_EPSILON*1000*dt)
-            {
-                p2 = q;
-                break;
-            }
-
-            p1 = q;
-            p2 = p3;
-        }
-        else
+        if(trace.f > 1.0f) // no collision
             break;
+
+        q = trace.start + trace.f*trace.dir + 
+            trace.p.m_n * STOP_EPSILON;
+        if(obj->GetFlags() & OBJ_FLAGS_ELASTIC) // bounce
+        {
+            vel = 0.6f*(vel - 2.0f*(vel*trace.p.m_n)*trace.p.m_n);
+            p3 = q;
+        }
+        else // slide
+        {
+            p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
+
+            if(trace.p.m_n * vec3_t::yAxis > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
+                groundhit = true;
+        }
+
+        // prevent problems with small increments (not an exact science here)
+        if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
+            q.y = p1.y;
+
+        if((p3-q).Abs()<STOP_EPSILON*1000*dt)
+        {
+            p2 = q;
+            break;
+        }
+
+        p1 = q;
+        p2 = p3;
     }
  
     if(groundhit)
