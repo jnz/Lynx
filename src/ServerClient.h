@@ -1,6 +1,6 @@
 #pragma once
 
-//#define USE_RANGE_ENCODER
+#define USE_RANGE_ENCODER
 
 #define MAX_SV_PACKETLEN        (24000)
 

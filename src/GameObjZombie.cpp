@@ -45,6 +45,7 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
                     GetWorld()->GetLeveltime() + 9000,
                     GetWorld(),
                     this));
+    PlaySound(hitpoint, CLynx::GetBaseDirSound() + "wilhelm.ogg", 100);
 }
 
 void CGameObjZombie::FindVictim()

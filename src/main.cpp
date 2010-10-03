@@ -4,6 +4,7 @@
 #include "lynxsys.h"
 #include <time.h>
 #include "Renderer.h"
+#include "Mixer.h"
 #include "Server.h"
 #include "Client.h"
 #include "WorldClient.h"
@@ -50,6 +51,7 @@ int main(int argc, char** argv)
     // Game Modules
     CWorldClient worldcl; // Model
     CRenderer renderer(&worldcl); // View
+    CMixer mixer(&worldcl); // View
     CGameZombie clgame(&worldcl, NULL); // Controller
     CClient client(&worldcl, &clgame); // Controller
     
@@ -85,6 +87,8 @@ int main(int argc, char** argv)
         assert(0);
         return -1;
     }
+
+    mixer.Init(); // we don't care, if it won't init
 
     if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
         return -1;
@@ -132,8 +136,8 @@ int main(int argc, char** argv)
         // Update Game Classes
         if(startserver)
         {
-            svgame.Update(dt, time);
             worldsv.Update(dt, time);
+            svgame.Update(dt, time);
             server.Update(dt, time);
         }
         if(client.IsConnected())
@@ -142,6 +146,7 @@ int main(int argc, char** argv)
         }
         client.Update(dt, time);
         renderer.Update(dt, time);
+        mixer.Update(dt, time);
 
 //#ifdef _DEBUG
         SDL_Delay(10); // so my notebook fan is quiet :-)

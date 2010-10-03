@@ -23,6 +23,7 @@ public:
     static std::string GetBaseDirLevel() { return "baselynx/level/"; }
     static std::string GetBaseDirModel() { return "baselynx/model/"; }
     static std::string GetBaseDirFX() { return "baselynx/fx/"; }
+    static std::string GetBaseDirSound() { return "baselynx/sound/"; }
 
     static std::string StripFileExtension(std::string path);
     static std::string ChangeFileExtension(std::string path, std::string newext);

@@ -23,11 +23,16 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
+#define PLAYER_GUN_FIRESPEED            50
+#define PLAYER_GUN_DAMAGE               20
+
 void CGameObjPlayer::OnCmdFire()
 {
-    if(GetWorld()->GetLeveltime() - m_prim_triggered_time < 50)
+    if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_GUN_FIRESPEED)
         return;
     m_prim_triggered_time = GetWorld()->GetLeveltime();
+
+    PlaySound(GetOrigin(), CLynx::GetBaseDirSound() + "rifle.ogg", PLAYER_GUN_FIRESPEED);
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -40,7 +45,7 @@ void CGameObjPlayer::OnCmdFire()
     {
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
         assert(hitobj);
-        hitobj->DealDamage(20, trace.hitpoint, trace.dir, this);
+        hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this);
     }
     else
     {

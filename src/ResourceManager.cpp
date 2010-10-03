@@ -23,6 +23,7 @@ CResourceManager::~CResourceManager(void)
 {
     UnloadAllModels();
     UnloadAllTextures();
+    UnloadAllSounds();
 }
 
 bool CResourceManager::IsServer()
@@ -100,6 +101,47 @@ void CResourceManager::UnloadAllModels()
     for(iter=m_modelmap.begin();iter!=m_modelmap.end();iter++)
         delete (*iter).second;
     m_modelmap.clear();
+}
+
+CSound* CResourceManager::GetSound(std::string sndname)
+{
+    if(IsServer())
+        return NULL;
+
+    std::map<std::string, CSound*>::iterator iter;
+    CSound* sound;
+
+    iter = m_soundmap.find(sndname);
+    if(iter == m_soundmap.end())
+    {
+        sound = new CSound();
+        if(sound->Load((char*)sndname.c_str()))
+        {
+            fprintf(stderr, "Loaded sound: %s\n", sndname.c_str());
+            m_soundmap[sndname] = sound;
+        }
+        else
+        {
+            fprintf(stderr, "Failed to load sound: %s\n", sndname.c_str());
+            delete sound;
+            sound = NULL;
+        }
+    }
+    else
+    {
+        sound = (*iter).second;
+    }
+
+    return sound;
+}
+
+void CResourceManager::UnloadAllSounds()
+{
+    std::map<std::string, CSound*>::iterator iter;
+    
+    for(iter=m_soundmap.begin();iter!=m_soundmap.end();iter++)
+        delete (*iter).second;
+    m_soundmap.clear();
 }
 
 unsigned int CResourceManager::LoadTGA(std::string path)

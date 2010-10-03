@@ -4,6 +4,7 @@
 #include <map>
 class CResourceManager;
 #include "ModelMD2.h"
+#include "Sound.h"
 
 class CWorld;
 
@@ -19,6 +20,9 @@ public:
     CModelMD2* GetModel(std::string mdlname);
     void UnloadAllModels();
 
+    CSound* GetSound(std::string sndname);
+    void UnloadAllSounds();
+
     bool IsServer();
 
 private:
@@ -26,6 +30,7 @@ private:
 
     std::map<std::string, unsigned int> m_texmap;
     std::map<std::string, CModelMD2*> m_modelmap;
+    std::map<std::string, CSound*> m_soundmap;
 
     CWorld* m_world;
 };

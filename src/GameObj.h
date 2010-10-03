@@ -42,6 +42,8 @@ public:
     void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir);
     void SpawnParticleDust(const vec3_t& location, const vec3_t& dir);
 
+    void PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime);
+
 private:
     int m_health;
     int m_clientid;

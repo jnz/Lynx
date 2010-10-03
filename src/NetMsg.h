@@ -12,7 +12,7 @@ public:
     static int ReadHeader(CStream* stream); // returns msg type
 };
 
-#define NET_VERSION             30
+#define NET_VERSION             31
 
 #define NET_MAGIC               0x5     // 101 (binary)
 

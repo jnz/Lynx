@@ -42,3 +42,15 @@ void CGameObj::SpawnParticleDust(const vec3_t& location, const vec3_t& dir)
     dust->AddFlags(OBJ_FLAGS_NOGRAVITY);
     GetWorld()->AddObj(dust);
 }
+
+void CGameObj::PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime) // FIXME is lifetime useful?
+{
+    CGameObj* sound = new CGameObj(GetWorld());
+    sound->SetRadius(0.0f);
+    sound->SetOrigin(location);
+    sound->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + lifetime, GetWorld(), sound));
+    sound->AddFlags(OBJ_FLAGS_NOGRAVITY);
+    sound->SetResource(soundpath);
+    GetWorld()->AddObj(sound, true);
+}
+

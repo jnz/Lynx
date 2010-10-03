@@ -31,3 +31,4 @@ private:
     int m_width, m_height;
     CWorldClient* m_world;
 };
+

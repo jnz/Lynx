@@ -36,6 +36,7 @@ CObj::CObj(CWorld* world)
     state.nextanimation = 0;
     state.flags = 0;
     m_mesh = NULL;
+    m_sound = NULL;
     m_world = world;
     UpdateMatrix();
 
@@ -409,18 +410,31 @@ void CObj::CopyObjStateFrom(const CObj* source)
     SetObjState(&source->state, m_id);
 }
 
-void CObj::UpdateAnimation()
+void CObj::UpdateAnimation() // name is a bit misleading, as this method also loads sounds
 {
-    if(state.resource == "")
-    {
-        m_mesh = NULL;
-        return;
-    }
+    m_mesh = NULL;
+    m_sound = NULL;
 
-    m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
-    if(state.animation >= 0)
-        m_mesh->SetAnimation(&m_mesh_state, state.animation);
+    if(state.resource == "")
+        return;
+
+    if(state.resource.find(".md2") != std::string::npos)
+    {
+        m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
+        if(state.animation >= 0)
+            m_mesh->SetAnimation(&m_mesh_state, state.animation);
+        else
+            m_mesh->SetAnimation(&m_mesh_state, 0);
+        m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
+    }
+    else if(state.resource.find(".ogg") != std::string::npos)
+    {
+        m_sound = m_world->GetResourceManager()->GetSound(state.resource);
+        m_sound_state.init();
+    }
     else
-        m_mesh->SetAnimation(&m_mesh_state, 0);
-    m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
+    {
+        fprintf(stderr, "Unknown resource: %s\n", state.resource.c_str());
+    }
 }
+

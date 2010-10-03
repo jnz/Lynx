@@ -14,6 +14,7 @@ CGameZombie::CGameZombie(CWorld* world, CServer* server) : CGameLogic(world, ser
 
 CGameZombie::~CGameZombie(void)
 {
+
 }
 
 bool CGameZombie::InitGame()

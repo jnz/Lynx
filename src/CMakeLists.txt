@@ -15,6 +15,7 @@ ENDIF(APPLE)
 
 # REQUIRED does not work in CMake <=2.4.6 for SDL
 Find_Package ( SDL REQUIRED )
+Find_Package ( SDL_mixer REQUIRED )
 
 # Workaround for the non-working REQUIRED flag
 if ( NOT SDL_FOUND )
@@ -39,6 +40,7 @@ link_libraries (
     enet
     ${OPENGL_LIBRARIES}
     ${SDL_LIBRARY}
+    ${SDLMIXER_LIBRARY}
     ${GLEW_LIBRARY}
     SDLmain # Sadly not included in SDL_LIBRARY variable
 )
@@ -47,15 +49,15 @@ set(lynx3d_MATH math/matrix.cpp math/plane.cpp math/quaternion.cpp math/vec3.cpp
 
 set(lynx3d_SOURCES BSPLevel.cpp Client.cpp ClientHUD.cpp ClientInfo.cpp
     Frustum.cpp GameLogic.cpp GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp
-    GameZombie.cpp ModelMD2.cpp NetMsg.cpp Obj.cpp ParticleSystem.cpp
+    GameZombie.cpp Mixer.cpp ModelMD2.cpp NetMsg.cpp Obj.cpp ParticleSystem.cpp
     ParticleSystemBlood.cpp ParticleSystemDust.cpp Renderer.cpp
-    ResourceManager.cpp Server.cpp Stream.cpp Think.cpp World.cpp
+    ResourceManager.cpp Server.cpp Stream.cpp Sound.cpp Think.cpp World.cpp
     WorldClient.cpp lynx.cpp lynxsys.cpp main.cpp)
 
 set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameLogic.cpp
     GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp GameZombie.cpp ModelMD2.cpp
     NetMsg.cpp Obj.cpp ParticleSystem.cpp ParticleSystemBlood.cpp
-    ParticleSystemDust.cpp ResourceManager.cpp Server.cpp Stream.cpp Think.cpp
+    ParticleSystemDust.cpp ResourceManager.cpp Server.cpp Sound.cpp Stream.cpp Think.cpp
     World.cpp lynx.cpp lynxsys.cpp mainsv.cpp)
 
 add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH})

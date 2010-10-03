@@ -9,6 +9,7 @@ struct obj_state_t;
 #include <string>
 #include "World.h"
 #include "ModelMD2.h"
+#include "Sound.h"
 #include <memory>
 #include "ParticleSystem.h"
 
@@ -125,6 +126,10 @@ public:
     md2_state_t*     GetMeshState() { return &m_mesh_state; }
     int              GetAnimationFromName(const char* name) const;
 
+    // Sound Data
+    const CSound*   GetSound() const { return m_sound; }
+    sound_state_t*  GetSoundState() { return &m_sound_state; }
+
     // Particle Systems
     CParticleSystem* GetParticleSystem() { return m_particlesys.get(); }
 
@@ -135,6 +140,10 @@ protected:
     CModelMD2*  m_mesh;
     md2_state_t m_mesh_state;
     void        UpdateAnimation();
+
+    // Sound
+    CSound*     m_sound;
+    sound_state_t m_sound_state;
 
     // Rotation extension
     void        UpdateMatrix();
