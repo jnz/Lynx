@@ -43,7 +43,7 @@ void CGameObj::SpawnParticleDust(const vec3_t& location, const vec3_t& dir)
     GetWorld()->AddObj(dust);
 }
 
-void CGameObj::PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime) // FIXME is lifetime useful?
+int CGameObj::PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime) // FIXME is lifetime useful?
 {
     CGameObj* sound = new CGameObj(GetWorld());
     sound->SetRadius(0.0f);
@@ -52,5 +52,6 @@ void CGameObj::PlaySound(const vec3_t& location, const std::string& soundpath, u
     sound->AddFlags(OBJ_FLAGS_NOGRAVITY);
     sound->SetResource(soundpath);
     GetWorld()->AddObj(sound, true);
+    return sound->GetID();
 }
 

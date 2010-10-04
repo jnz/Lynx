@@ -1,5 +1,6 @@
 #include "GameObjPlayer.h"
 #include "GameObjZombie.h"
+#include "ServerClient.h" // for SERVER_UPDATETIME in gun sound spam prevention
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -10,6 +11,7 @@ CGameObjPlayer::CGameObjPlayer(CWorld* world) : CGameObj(world)
 {
     m_prim_triggered = 0;
     m_prim_triggered_time = 0;
+    m_fire_sound = 0;
 }
 
 CGameObjPlayer::~CGameObjPlayer(void)
@@ -23,8 +25,8 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
-#define PLAYER_GUN_FIRESPEED            50
-#define PLAYER_GUN_DAMAGE               20
+#define PLAYER_GUN_FIRESPEED            SERVER_UPDATETIME*2
+#define PLAYER_GUN_DAMAGE               45
 
 void CGameObjPlayer::OnCmdFire()
 {
@@ -32,7 +34,15 @@ void CGameObjPlayer::OnCmdFire()
         return;
     m_prim_triggered_time = GetWorld()->GetLeveltime();
 
-    PlaySound(GetOrigin(), CLynx::GetBaseDirSound() + "rifle.ogg", PLAYER_GUN_FIRESPEED);
+    // we have to prevent sound spamming from the machine gun
+    // remember the sound obj and only play a new sound if the old one
+    // is deleted
+    if(GetWorld()->GetObj(m_fire_sound) == NULL)
+    {
+        m_fire_sound = PlaySound(GetOrigin(), 
+                            CLynx::GetBaseDirSound() + "rifle.ogg", 
+                            PLAYER_GUN_FIRESPEED);
+    }
 
     world_obj_trace_t trace;
     vec3_t dir;

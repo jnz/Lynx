@@ -106,7 +106,7 @@ void CClient::Update(const float dt, const uint32_t ticks)
 
         case ENET_EVENT_TYPE_CONNECT:
             m_isconnecting = false;
-            fprintf(stderr, "CL: Connected to server. \n");
+            fprintf(stderr, "CL: Connected to server.\n");
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:

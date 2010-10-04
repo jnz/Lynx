@@ -57,3 +57,4 @@ void CClientHUD::GetModel(CModelMD2** model, md2_state_t** state)
     if(state)
         *state = &m_model_state;
 }
+
