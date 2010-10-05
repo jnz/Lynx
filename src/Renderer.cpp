@@ -169,11 +169,13 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
     CObj* obj;
     OBJITER iter;
 
-    glDisable(GL_LIGHTING);
-    BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
-    glEnable(GL_LIGHTING);
-
-    //glUseProgram(m_program); // Object Shader 
+    if(world->GetBSP()->IsLoaded())
+    {
+        glUseProgram(m_program);
+        glDisable(GL_LIGHTING);
+        BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
+        glEnable(GL_LIGHTING);
+    }
 
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
     {
@@ -373,11 +375,12 @@ bool CRenderer::InitShader()
 
     glLinkProgram(m_program);
 
-    // glUseProgram(m_program);
+    //glUseProgram(m_program);
 
     return true;
 }
 
+// FIXME what is this function good for?
 void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum* frustum)
 {
     if(!tree)

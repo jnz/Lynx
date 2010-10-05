@@ -6,6 +6,7 @@
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
 #include <memory>
+#include "Renderer.h"
 
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
 
@@ -49,6 +50,7 @@ CBSPLevel::~CBSPLevel(void)
 bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 {
     int i;
+    int errcode;
     FILE* f = fopen(file.c_str(), "rb");
     if(!f)
         return false;
@@ -150,7 +152,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    // Prüfen, ob die index Zeiger in gültige Bereiche zeigen
+    // PrÃ¼fen, ob die index Zeiger in gÃ¼ltige Bereiche zeigen
     for(i=0;i<m_nodecount;i++)
     {
         for(int k=0;k<2;k++)
@@ -202,10 +204,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     {
         // const int runto = m_poly[i].firstvertex+m_poly[i].vertexcount;
         const std::string texpath = CLynx::GetDirectory(file) + m_tex[m_poly[i].tex].name;
-        m_texid[m_poly[i].tex] = resman->GetTexture(texpath); // könnte das direkt in m_poly[i].tex gehen?
+        m_texid[m_poly[i].tex] = resman->GetTexture(texpath); // kÃ¶nnte das direkt in m_poly[i].tex gehen?
     }
-
-    // Setup OpenGL Vertex Buffer Objects
 
     glGenBuffers(1, &m_vbo);
     if(m_vbo < 1)
@@ -216,10 +216,11 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    if(glGetError() != GL_NO_ERROR)
+    errcode = glGetError();
+    if(errcode != GL_NO_ERROR)
     {
+        fprintf(stderr, "BSP: Failed to bind VBO: %i\n", errcode);
         Unload();
-        fprintf(stderr, "BSP: Failed to bind VBO\n");
         return false;
     }
 
@@ -422,7 +423,7 @@ bool CBSPLevel::GetTriIntersection(const int polyindex,
     vec3_t tmpintersect = start + dir*cf - polyplane.m_n*offset;
     *f = cf;
 
-    // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
+    // Berechnung Ã¼ber Barycentric coordinates (math for 3d game programming p. 144)
     const vec3_t R = tmpintersect - P0;
     const vec3_t Q1 = P1 - P0;
     const vec3_t Q2 = P2 - P0;
@@ -545,9 +546,9 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         for(int i=0;i<polycount;i++)
         {
             const int polyindex = m_leaf[leafindex].firstpoly + i;
-            // - Prüfen ob Polygonfläche getroffen wird
-            // - Prüfen ob Polygon Edge getroffen wird
-            // - Prüfen ob Polygon Vertex getroffen wird
+            // - PrÃ¼fen ob PolygonflÃ¤che getroffen wird
+            // - PrÃ¼fen ob Polygon Edge getroffen wird
+            // - PrÃ¼fen ob Polygon Vertex getroffen wird
             if(GetTriIntersection(polyindex,
                                   trace->start, 
                                   trace->dir, 
@@ -593,7 +594,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     pointplane_t locstart;
     pointplane_t locend;
 
-    // Prüfen, ob alles vor der Splitplane liegt
+    // PrÃ¼fen, ob alles vor der Splitplane liegt
     plane_t tmpplane = m_plane[m_node[node].plane].p;
     tmpplane.m_d -= trace->radius;
     locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
@@ -604,7 +605,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         return;
     }
 
-    // Prüfen, ob alles hinter der Splitplane liegt
+    // PrÃ¼fen, ob alles hinter der Splitplane liegt
     tmpplane.m_d += 2*trace->radius;
     locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
     locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);

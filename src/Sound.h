@@ -24,8 +24,8 @@ public:
     bool Load(const std::string& path);
     void Unload();
 
-    void Play() const;
-    void Play(sound_state_t* state) const;
+    bool Play() const;
+    bool Play(sound_state_t* state) const;
 
 private:
     void* m_chunk; // not type safe here. should point to something that  is readable by CMixer

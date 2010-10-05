@@ -34,15 +34,16 @@ void CSound::Unload()
     m_chunk = NULL;
 }
 
-void CSound::Play() const
+bool CSound::Play() const
 {
     int result = Mix_PlayChannel(-1, (Mix_Chunk*)m_chunk, 0);
     // FIXME only for debug builds?
     if(result == -1)
         fprintf(stderr, "Failed to play sound\n");
+    return (result != -1);
 }
 
-void CSound::Play(sound_state_t* state) const
+bool CSound::Play(sound_state_t* state) const
 {
     assert(state);
     state->cur_channel = Mix_PlayChannel(-1, (Mix_Chunk*)m_chunk, 0);
@@ -50,5 +51,7 @@ void CSound::Play(sound_state_t* state) const
     // FIXME only for debug builds?
     if(state->is_playing == -1)
         fprintf(stderr, "Failed to play sound\n");
+
+    return (state->is_playing != -1);
 }
 
