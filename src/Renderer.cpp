@@ -23,6 +23,7 @@ static void BSP_RenderTree(const CBSPLevel* tree,
                            const CFrustum* frustum);
 
 static void RenderCube();
+static void setTextureMatrix(void);
 
 //#define COLORLEAFS
 
@@ -58,6 +59,9 @@ CRenderer::CRenderer(CWorldClient* world)
     m_vshader = 0;
     m_fshader = 0;
     m_program = 0;
+    m_fboId = 0;
+    m_depthTextureId = 0;
+    m_shadowMapUniform = 0;
 }
 
 CRenderer::~CRenderer(void)
@@ -69,8 +73,65 @@ CRenderer::~CRenderer(void)
     glDeleteShader(m_fshader);
     m_fshader = 0;
     glDeleteProgram(m_program);
+    m_program = 0;
 
     Shutdown();
+}
+
+#define SHADOW_MAP_RATIO 2.0
+bool CRenderer::SetupShadowFBO()
+{
+    int shadowMapWidth = m_width * SHADOW_MAP_RATIO;
+    int shadowMapHeight = m_height * SHADOW_MAP_RATIO;
+
+    GLenum FBOstatus;
+
+    // Try to use a texture depth component
+    glGenTextures(1, &m_depthTextureId);
+    glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+
+    // GL_LINEAR does not make sense for depth texture. However, next tutorial shows usage of GL_LINEAR and PCF
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Remove artifact on the edges of the shadowmap
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+
+    // No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // create a framebuffer object
+    glGenFramebuffersEXT(1, &m_fboId);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboId);
+
+    // Instruct openGL that we won't bind a color texture with the currently binded FBO
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+
+    // attach the texture to FBO depth attachment point
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D, m_depthTextureId, 0);
+
+    // check FBO status
+    FBOstatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE_EXT)
+    {
+        fprintf(stderr, "GL_FRAMEBUFFER_COMPLETE_EXT failed, CANNOT use FBO\n");
+        return false;
+    }
+
+    // switch back to window-system-provided framebuffer
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+	m_shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
+	if(m_shadowMapUniform == -1)
+    {
+        fprintf(stderr, "Failed to get ShadowMap variable from shader\n");
+        return false;
+    }
+
+    return true;
 }
 
 bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
@@ -155,6 +216,15 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         fprintf(stderr, "Init shader failed\n");
         return false;
     }
+    fprintf(stderr, "Shader loaded\n");
+
+    bool shadowFBO = SetupShadowFBO();
+    if(!shadowFBO)
+    {
+        fprintf(stderr, "Shadow mapping FBO failed\n");
+        return false;
+    }
+    fprintf(stderr, "Shadow mapping FBO created\n");
 
     return true;
 }
@@ -171,7 +241,6 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
 
     if(world->GetBSP()->IsLoaded())
     {
-        glUseProgram(m_program);
         glDisable(GL_LIGHTING);
         BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
         glEnable(GL_LIGHTING);
@@ -201,8 +270,6 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
         obj->GetMesh()->Render(obj->GetMeshState());
         glPopMatrix();
     }
-
-    //glUseProgram(0);
 }
 
 void CRenderer::Update(const float dt, const uint32_t ticks)
@@ -358,6 +425,9 @@ GLuint LoadAndCompileShader(unsigned int type, std::string path)
 
 bool CRenderer::InitShader()
 {
+    int glerr = 0;
+    int islinked = GL_FALSE;
+
     fprintf(stderr, "Compiling vertex shader...\n");
     m_vshader = LoadAndCompileShader(GL_VERTEX_SHADER, CLynx::GetBaseDirFX() + "vshader.txt");
     if(m_vshader < 1)
@@ -371,11 +441,40 @@ bool CRenderer::InitShader()
     m_program = glCreateProgram();
 
     glAttachShader(m_program, m_vshader);
+    if((glerr = glGetError()) != 0)
+    {
+        fprintf(stderr, "Failed to attach vertex shader\n");
+        return false;
+    }
     glAttachShader(m_program, m_fshader);
+    if((glerr = glGetError()) != 0)
+    {
+        fprintf(stderr, "Failed to attach fragment shader\n");
+        return false;
+    }
 
     glLinkProgram(m_program);
+    glGetProgramiv(m_program, GL_LINK_STATUS, &islinked);
+    if(islinked != GL_TRUE || (glerr = glGetError()) != 0)
+    {
+        char logbuffer[1024];
+        int usedlogbuffer;
+        glGetProgramInfoLog(m_program, sizeof(logbuffer), &usedlogbuffer, logbuffer);
+        fprintf(stderr, "GL Program Link Error:\n%s\n", logbuffer);
+        return false;
+    }
 
-    //glUseProgram(m_program);
+    glUseProgram(m_program);
+    if((glerr = glGetError()) != 0)
+    {
+        if(glerr == GL_INVALID_VALUE)
+            fprintf(stderr, "%s\n", "Error: No Shader program");
+        else if(glerr == GL_INVALID_OPERATION)
+            fprintf(stderr, "%s\n", "Error: invalid operation");
+        else
+            fprintf(stderr, "Failed to use program %i\n", glerr);
+        return false;
+    }
 
     return true;
 }
@@ -388,6 +487,36 @@ void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum*
 
     tree->RenderGL(*origin, *frustum);
 }
+
+void setTextureMatrix(void)
+{
+    static double modelView[16];
+    static double projection[16];
+
+    // Moving from unit cube [-1,1] to [0,1]  
+    const GLdouble bias[16] = {	
+        0.5, 0.0, 0.0, 0.0, 
+        0.0, 0.5, 0.0, 0.0,
+        0.0, 0.0, 0.5, 0.0,
+        0.5, 0.5, 0.5, 1.0};
+
+    // Grab modelview and transformation matrices
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelView);
+    glGetDoublev(GL_PROJECTION_MATRIX, projection);
+
+    glMatrixMode(GL_TEXTURE);
+    glActiveTextureARB(GL_TEXTURE7);
+
+    glLoadIdentity();	
+    glLoadMatrixd(bias);
+
+    // concatating all matrices into one.
+    glMultMatrixd (projection);
+    glMultMatrixd (modelView);
+
+    // Go back to normal matrix mode
+    glMatrixMode(GL_MODELVIEW);
+}		
 
 void RenderCube() // this is handy sometimes
 {
