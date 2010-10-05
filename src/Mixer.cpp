@@ -8,6 +8,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+#define SOUND_MAX_DIST      (120.0f)         // max. 120 m distance to hear the sound
+
 CMixer::CMixer(CWorldClient* world)
 {
     m_world = world;
@@ -70,6 +72,23 @@ void CMixer::Update(const float dt, const uint32_t ticks)
         if(obj->GetSound() && !obj->GetSoundState()->is_playing)
         {
             obj->GetSound()->Play(obj->GetSoundState());
+
+            CObj* localplayer = m_world->GetLocalObj();
+            if(localplayer)
+            {
+                vec3_t diff = localplayer->GetOrigin() - obj->GetOrigin();
+                float dist = std::min(diff.Abs(), SOUND_MAX_DIST);
+                int volume;
+                // y = m*x + b
+                // MAX = m*0 + b
+                // MIN = m*MAXDIST + b
+                // b = MAX_VOLUME
+                // 0 = m*MAXDIST + MAX_VOLUME
+                // m = -MAX_VOLUME/MAXDIST
+                volume = (int)(-dist*MIX_MAX_VOLUME/SOUND_MAX_DIST) + MIX_MAX_VOLUME;
+
+                Mix_Volume(obj->GetSoundState()->cur_channel, volume);
+            }
         }
     }
 
