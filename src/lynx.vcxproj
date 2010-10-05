@@ -110,6 +110,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ModelMD2.cpp" />
     <ClCompile Include="NetMsg.cpp" />
+    <ClCompile Include="Mixer.cpp" />
+    <ClCompile Include="Sound.cpp" />
     <ClCompile Include="Obj.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ResourceManager.cpp" />

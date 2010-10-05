@@ -222,6 +222,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Sound.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Mixer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Obj.cpp"
 				>
 			</File>
@@ -309,6 +317,14 @@
 			</File>
 			<File
 				RelativePath=".\Server.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Mixer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Sound.h"
 				>
 			</File>
 			<File
