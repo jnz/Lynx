@@ -27,12 +27,6 @@ protected:
     unsigned int m_fshader;
     unsigned int m_program;
 
-    // Shadow mapping
-    unsigned int m_fboId; // shadow fbo
-    unsigned int m_depthTextureId;
-    unsigned int m_shadowMapUniform;
-    bool SetupShadowFBO();
-
 private:
     int m_width, m_height;
     CWorldClient* m_world;
