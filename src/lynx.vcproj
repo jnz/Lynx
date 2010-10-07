@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="lynx"
 	ProjectGUID="{B468A762-5525-4D19-A009-328762AA3515}"
 	RootNamespace="lynx"
@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib OpenGL32.lib glu32.lib glew32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib SDL_mixer.lib OpenGL32.lib glu32.lib glew32.lib ws2_32.lib winmm.lib"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -143,7 +143,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib OpenGL32.lib glu32.lib ws2_32.lib winmm.lib glew32.lib "
+				AdditionalDependencies="enet.lib SDL.lib SDLmain.lib SDL_mixer.lib OpenGL32.lib glu32.lib ws2_32.lib winmm.lib glew32.lib "
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -214,19 +214,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Mixer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ModelMD2.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\NetMsg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Sound.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Mixer.cpp"
 				>
 			</File>
 			<File
@@ -243,6 +239,10 @@
 			</File>
 			<File
 				RelativePath=".\Server.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Sound.cpp"
 				>
 			</File>
 			<File
@@ -296,6 +296,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Mixer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ModelMD2.h"
 				>
 			</File>
@@ -320,15 +324,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Mixer.h"
+				RelativePath=".\ServerClient.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Sound.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ServerClient.h"
 				>
 			</File>
 			<File
