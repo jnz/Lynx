@@ -13,44 +13,23 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define PLANE_NEAR      0.1f
-#define PLANE_FAR       10000.0f
-#define RENDERER_FOV    90.0f
+#define PLANE_NEAR          0.1f
+#define PLANE_FAR           10000.0f
+#define RENDERER_FOV        90.0f
+#define SHADOW_MAP_RATIO    2.0f
+
+// Shadow mapping bias matrix
+static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]  
+	0.5, 0.0, 0.0, 0.0, 
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 0.5, 0.0,
+	0.5, 0.5, 0.5, 1.0 };
 
 // Local Render Functions
+static void RenderCube();
 static void BSP_RenderTree(const CBSPLevel* tree, 
                            const vec3_t* origin, 
                            const CFrustum* frustum);
-
-static void RenderCube();
-
-//#define COLORLEAFS
-
-#ifdef COLORLEAFS
-vec3_t g_colortable[] = 
-{
-    vec3_t(0,0,1),
-    vec3_t(0,1,0),
-    vec3_t(0,1,1),
-    vec3_t(0.95f,0,0),
-    vec3_t(1,0,1),
-    vec3_t(1,0.94f,0),
-    vec3_t(0,0,0.6f),
-    vec3_t(0,0.5f,0),
-    vec3_t(0,0.45f,0.55f),
-    vec3_t(0.65f,0,0),
-    vec3_t(0.45f,0,0.75f),
-    vec3_t(0.45f,0.25f,0),
-    vec3_t(0.75f,0.35f,0.65f),
-    vec3_t(0,0,0.65f),
-    vec3_t(0,0.65f,0),
-    vec3_t(0,0.45f,0.65f),
-    vec3_t(0.65f,0,0),
-    vec3_t(0.75f,0,0.35f),
-    vec3_t(0.55f,0.65f,0),
-    vec3_t(0.95f,0.35f,0.65f)
-};
-#endif
 
 CRenderer::CRenderer(CWorldClient* world)
 {
@@ -58,6 +37,12 @@ CRenderer::CRenderer(CWorldClient* world)
     m_vshader = 0;
     m_fshader = 0;
     m_program = 0;
+
+    // Shadow mapping
+    m_useShadows = true;
+    m_shadowMapUniform = 0;
+    m_fboId = 0;
+    m_depthTextureId = 0;
 }
 
 CRenderer::~CRenderer(void)
@@ -111,7 +96,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glShadeModel(GL_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     UpdatePerspective();
 
     // Vertex Lighting
@@ -157,6 +142,19 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         return false;
     }
     fprintf(stderr, "Shader loaded\n");
+
+    if(!glewIsSupported("GL_EXT_framebuffer_object"))
+	{
+		fprintf(stderr, "No framebuffer support\n");
+		m_useShadows = false;
+	}
+
+    if(m_useShadows && !CreateShadowFBO())
+    {
+        fprintf(stderr, "Init shadow mapping failed\n");
+        m_useShadows = false;
+    }
+    fprintf(stderr, "Shadow mapping active\n");
 
     return true;
 }
@@ -204,6 +202,57 @@ void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrli
     }
 }
 
+void CRenderer::PrepareShadowMap(const vec3_t& lightpos, 
+                                 const quaternion_t& lightrot,
+                                 CWorld* world, int localctrlid)
+{
+    CFrustum frustum;
+    vec3_t dir, up, side;
+    matrix_t mviewlight;
+    mviewlight.SetCamTransform(lightpos, lightrot);
+
+    mviewlight.GetVec3Cam(&dir, &up, &side);
+    dir = -dir;
+    frustum.Setup(lightpos, dir, up, side, 
+                  RENDERER_FOV, (float)m_width/(float)m_height,
+                  PLANE_NEAR, 
+                  PLANE_FAR); 
+
+	glViewport(0, 0, m_width * SHADOW_MAP_RATIO,
+	                 m_height* SHADOW_MAP_RATIO);
+    UpdatePerspective(); // FIXME remove me?
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(mviewlight.pm);
+
+    static float projection[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, projection);
+    glMatrixMode(GL_TEXTURE);
+    glActiveTexture(GL_TEXTURE7);
+    glLoadMatrixf(g_shadowBias);
+    glMultMatrixf(projection);
+    glMultMatrixf(mviewlight.pm);
+    glMatrixMode(GL_MODELVIEW);
+
+    // Render to FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); 
+    glCullFace(GL_FRONT);
+    glUseProgram(0); // no shader
+    glPolygonOffset( 0, -1000.0f );
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glActiveTexture(GL_TEXTURE0);
+
+    DrawScene(frustum, world, localctrlid);
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, m_width, m_height);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
+    glCullFace(GL_BACK);
+}
+
 void CRenderer::Update(const float dt, const uint32_t ticks)
 {
     CObj* obj, *localctrl;
@@ -218,16 +267,31 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     localctrlid = m_world->GetLocalObj()->GetID();
     world = m_world->GetInterpWorld();
 
-    m.SetCamTransform((localctrl->GetOrigin()+localctrl->GetEyePos()), 
-                       localctrl->GetRot());
-    
+    const vec3_t campos = localctrl->GetOrigin()+localctrl->GetEyePos();
+    const quaternion_t camrot = localctrl->GetRot();
+
+    m.SetCamTransform(campos, camrot);
     m.GetVec3Cam(&dir, &up, &side);
     dir = -dir;
-
-    frustum.Setup(localctrl->GetOrigin()+localctrl->GetEyePos(), dir, up, side, 
+    frustum.Setup(campos, dir, up, side, 
                   RENDERER_FOV, (float)m_width/(float)m_height,
                   PLANE_NEAR, 
                   PLANE_FAR); 
+
+    // float l0lat=-30.0f, l0lon=-90.0f;
+    // vec3_t l0pos(16.14,-13.89,24.96);
+    // quaternion_t ql0lat(vec3_t::xAxis, l0lat*lynxmath::PI/180), ql0lon(vec3_t::yAxis, l0lon*lynxmath::PI/180);
+    // quaternion_t ql0rot(ql0lon*ql0lat);
+    // tmp: render from lightpos:
+    // const vec3_t campos = l0pos;
+    // const quaternion_t camrot = ql0rot;
+
+    if(m_useShadows)
+    {
+        //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
+        PrepareShadowMap(campos+up*0.8-side*1.4, camrot, world, localctrlid); // player is light
+    }
+
 
     stat_obj_hidden = 0;
     stat_obj_visible = 0;
@@ -236,8 +300,18 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glLoadMatrixf(m.pm);
 
     glClear(GL_DEPTH_BUFFER_BIT);
+	if(m_useShadows)
+	{
+        glUseProgram(m_program);
+		glUniform1i(m_shadowMapUniform, 7);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+        glUniform1i(m_tex, 0);
+	}
+    glActiveTexture(GL_TEXTURE0);
     DrawScene(frustum, world, localctrlid);
     
+	glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
@@ -286,6 +360,25 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     }
     glEnable(GL_LIGHTING);
 
+	// DEBUG only. this piece of code draw the depth buffer onscreen
+    // glUseProgram(0);
+    // glMatrixMode(GL_PROJECTION);
+    // glLoadIdentity();
+    // glOrtho(-m_width/2,m_width/2,-m_height/2,m_height/2,1,20);
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
+    // glColor4f(1,1,1,1);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+    // glTranslated(0,0,-1);
+    // glBegin(GL_QUADS);
+    // glTexCoord2d(0,0);glVertex3f(0,0,0);
+    // glTexCoord2d(1,0);glVertex3f(m_width/2,0,0);
+    // glTexCoord2d(1,1);glVertex3f(m_width/2,m_height/2,0);
+    // glTexCoord2d(0,1);glVertex3f(0,m_height/2,0);
+    // glEnd();
+    // UpdatePerspective();
+    
     SDL_GL_SwapBuffers();
 }
 
@@ -407,11 +500,79 @@ bool CRenderer::InitShader()
             fprintf(stderr, "Failed to use program %i\n", glerr);
         return false;
     }
+	m_shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
+	m_tex = glGetUniformLocation(m_program, "tex");
+    glUniform1i(m_shadowMapUniform, 7);
+    glUniform1i(m_tex, 0);
+	glUseProgram(0);
+
+	int isValid;
+	glValidateProgram(m_program);
+	glGetProgramiv(m_program, GL_VALIDATE_STATUS, &isValid);
+	if(isValid != GL_TRUE)
+    {
+        char logbuffer[1024];
+        int usedlogbuffer;
+        glGetProgramInfoLog(m_program, sizeof(logbuffer), &usedlogbuffer, logbuffer);
+        fprintf(stderr, "GL Program Error:\n%s\n", logbuffer);
+        return false;
+    }
 
     return true;
 }
 
-// FIXME what is this function good for?
+bool CRenderer::CreateShadowFBO()
+{
+	// fbo + depth buffer
+	int shadowMapWidth = m_width * SHADOW_MAP_RATIO;
+	int shadowMapHeight = m_height * SHADOW_MAP_RATIO;
+
+	GLenum FBOstatus;
+
+	// Try to use a texture depth component
+	glGenTextures(1, &m_depthTextureId);
+	glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 	
+
+	// Remove artifact on the edges of the shadowmap
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+
+	// No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// create a framebuffer object
+	glGenFramebuffers(1, &m_fboId);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
+
+	// Instruct openGL that we won't bind a color texture with the currently binded FBO
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	// attach the texture to FBO depth attachment point
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureId, 0);
+
+	// check FBO status
+	FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(FBOstatus != GL_FRAMEBUFFER_COMPLETE)
+	{
+		fprintf(stderr, "GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO\n");
+		return false;
+	}
+
+	// switch back to window-system-provided framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return true;
+}
+
+// FIXME what is this function good for? Why not call RenderGL directly
 void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum* frustum)
 {
     if(!tree)

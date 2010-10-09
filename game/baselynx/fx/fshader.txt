@@ -1,7 +1,11 @@
+uniform sampler2DShadow ShadowMap;
 uniform sampler2D tex;
+varying vec4 ShadowCoord;
 
 void main()
-{
+{		
     vec4 color = texture2D(tex,gl_TexCoord[0].st);
-    gl_FragColor = color;
+    float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
+    gl_FragColor = (0.5 + 0.5*shadow) * color;
 }
+ 

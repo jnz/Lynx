@@ -92,7 +92,7 @@ void quaternion_t::GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const
 
 void quaternion_t::LookAt(const vec3_t& pFrom, const vec3_t& pAt, const vec3_t& pUp)
 {
-    assert(0); // Is this function OK? Currently untested
+    assert(0); // Is this function OK? Currently untested and seems not so clever
 
     assert(pUp.IsNormalized());
     const vec3_t dir = (pAt - pFrom).Normalized();

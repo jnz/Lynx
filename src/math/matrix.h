@@ -40,6 +40,7 @@ public:
              float m12, float m22, float m32, float m42,
              float m13, float m23, float m33, float m43,
              float m14, float m24, float m34, float m44);
+    matrix_t(const quaternion_t& q);
 
     bool Inverse(matrix_t* out); // *out can be the matrix itself. this method is btw. not that expensive.
     float Det() const;

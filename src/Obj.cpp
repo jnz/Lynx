@@ -410,7 +410,7 @@ void CObj::CopyObjStateFrom(const CObj* source)
     SetObjState(&source->state, m_id);
 }
 
-void CObj::UpdateAnimation() // name is a bit misleading, as this method also loads sounds
+void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method also loads sounds
 {
     m_mesh = NULL;
     m_sound = NULL;

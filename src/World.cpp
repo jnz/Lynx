@@ -104,7 +104,9 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     if(fabsf(vel.y) > 9999.9f)
     {
-        fprintf(stderr, "World error: obj in free fall (on ground: %i)\n", obj->m_locIsOnGround?1:0);
+        fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
+                obj->m_locIsOnGround?1:0,
+                obj->GetID(), obj->GetResource().c_str());
         vel.y = 0;
         assert(0);
         return;

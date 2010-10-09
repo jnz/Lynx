@@ -42,6 +42,28 @@ matrix_t::matrix_t(float m11, float m21, float m31, float m41,
     m[3][3] = m44;
 }
 
+matrix_t::matrix_t(const quaternion_t& q)
+{
+    m[0][3] = 0.0f;
+    m[1][3] = 0.0f;
+    m[2][3] = 0.0f;
+    m[3][0] = 0.0f;
+    m[3][1] = 0.0f;
+    m[3][2] = 0.0f;
+    m[3][3] = 1.0f;
+
+    m[0][0] = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
+    m[0][1] = 2.0f * (q.x*q.y + q.w*q.z);
+    m[0][2] = 2.0f * (q.x*q.z - q.w*q.y);
+
+    m[1][0] = 2.0f * (q.x*q.y - q.w*q.z);
+    m[1][1] = 1.0f - 2.0f * (q.x*q.x + q.z*q.z);
+    m[1][2] = 2.0f * (q.y*q.z + q.w*q.x);
+
+    m[2][0] = 2.0f * (q.x*q.z + q.w*q.y);
+    m[2][1] = 2.0f * (q.y*q.z - q.w*q.x);
+    m[2][2] = 1.0f - 2.0f * (q.x*q.x + q.y*q.y);
+}
 
 void matrix_t::SetZeroMatrix()
 {

@@ -26,6 +26,17 @@ protected:
     unsigned int m_vshader;
     unsigned int m_fshader;
     unsigned int m_program;
+    unsigned int m_tex; // tex0
+
+    // Shadow
+    bool         m_useShadows;
+    unsigned int m_shadowMapUniform;    // variable in fragment shader to access shadowmap
+    unsigned int m_fboId;				// framebuffer object to render light source view to
+    unsigned int m_depthTextureId;	    // this texture is bound to the fbo
+    bool         CreateShadowFBO();     // Create framebuffer object
+    void         PrepareShadowMap(const vec3_t& lightpos, 
+                                  const quaternion_t& lightrot,
+                                  CWorld* world, int localctrlid);
 
 private:
     int m_width, m_height;

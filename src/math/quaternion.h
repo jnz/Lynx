@@ -18,6 +18,11 @@ struct quaternion_t
         x=_x; y=_y; z=_z; w=_w;
     }
 
+    quaternion_t(const quaternion_t& src)
+    {
+        x=src.x; y=src.y; z=src.z; w=src.w;
+    }
+
     quaternion_t(const vec3_t& v, float a) // v = axis, a = angle (rad)
     {
         RotationAxis(v, a);
