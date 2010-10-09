@@ -29,7 +29,7 @@ bool CGameZombie::InitGame()
     }
 
     // n Testobjekte erstellen
-    for(int i=0;i<4;i++)
+    for(int i=0;i<6;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
         CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
@@ -95,6 +95,32 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 const quaternion_t qlat(vec3_t::xAxis, client->lat*lynxmath::DEGTORAD);
                 const quaternion_t qlon(vec3_t::yAxis, client->lon*lynxmath::DEGTORAD);
                 ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);
+            }
+        }
+        else if(obj->GetType() == GAME_OBJ_TYPE_ZOMBIE) // this if-condition branch applies a force to every other zombie.
+        {   // FIXME: O(n^2) complexity - bad?
+            OBJITER iter2;
+            CGameObj* obj2;
+            for(iter2 = GetWorld()->ObjBegin();iter2!=GetWorld()->ObjEnd();iter2++)
+            {
+                obj2 = (CGameObj*)(*iter2).second;
+                if(obj2 == obj || obj2->GetType() != GAME_OBJ_TYPE_ZOMBIE)
+                    continue;
+                if(obj2->GetHealth() <= 0) // don't push dead bodies
+                    continue;
+
+                // the force will decrease by 1/dist^2
+                const float force = 50.0f; // not a force in a strict physical sense
+                vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
+                float difflen = diff.AbsSquared();
+                if(difflen > 25.0f)
+                    continue;
+                difflen = lynxmath::Sqrt(difflen);
+                if(difflen < 0.25f)
+                    difflen = 0.25;
+                diff = dt*diff*force*1/(difflen*difflen*difflen);
+                diff += obj2->GetVel();
+                obj2->SetVel(diff);
             }
         }
     }

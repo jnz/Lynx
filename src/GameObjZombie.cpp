@@ -86,20 +86,20 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
     if(target == NULL)
     {
         zombie->FindVictim();
-        SetThinktime(leveltime + 500);
+        SetThinktime(leveltime + 400 + rand()%400);
         zombie->SetVel(vec3_t::origin);
         return false;
     }
 
     vec3_t dir = target->GetOrigin() - GetObj()->GetOrigin();
 
-    SetThinktime(leveltime + 100);
+    SetThinktime(leveltime + 50+rand()%100);
     quaternion_t qTo = zombie->TurnTo(target->GetOrigin());
     quaternion_t qFrom = zombie->GetRot();
     
-    zombie->SetRot(quaternion_t(qFrom, qTo, 0.4f));
+    zombie->SetRot(quaternion_t(qFrom, qTo, 0.5f));
 
-    if(dir.AbsSquared() > 35.0f)
+    if(dir.AbsSquared() > 22.0f)
     {
         zombie->GetRot().GetVec3(&dir, NULL, NULL);
         zombie->SetVel(dir*-16.0f);
@@ -109,6 +109,7 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
     {
         zombie->SetVel(vec3_t::origin);
         zombie->SetAnimation(0);
+        zombie->SetAnimation(zombie->GetMesh()->FindAnimation("attack"));
     }
 
     return false;
