@@ -25,7 +25,7 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
-#define PLAYER_GUN_FIRESPEED            SERVER_UPDATETIME*2
+#define PLAYER_GUN_FIRESPEED            SERVER_UPDATETIME
 #define PLAYER_GUN_DAMAGE               45
 
 void CGameObjPlayer::OnCmdFire()
