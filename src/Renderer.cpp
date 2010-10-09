@@ -16,7 +16,7 @@
 #define PLANE_NEAR          0.1f
 #define PLANE_FAR           10000.0f
 #define RENDERER_FOV        90.0f
-#define SHADOW_MAP_RATIO    2.0f
+#define SHADOW_MAP_RATIO    0.5f
 
 // Shadow mapping bias matrix
 static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]  
@@ -164,12 +164,15 @@ void CRenderer::Shutdown()
 
 }
 
-void CRenderer::DrawScene(const CFrustum& frustum, CWorld* world, int localctrlid)
+void CRenderer::DrawScene(const CFrustum& frustum, 
+                          CWorld* world, 
+                          int localctrlid, 
+                          bool generateShadowMap)
 {
     CObj* obj;
     OBJITER iter;
 
-    if(world->GetBSP()->IsLoaded())
+    if(!generateShadowMap && world->GetBSP()->IsLoaded())
     {
         glDisable(GL_LIGHTING);
         BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
@@ -243,7 +246,7 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
     glEnable(GL_POLYGON_OFFSET_FILL);
     glActiveTexture(GL_TEXTURE0);
 
-    DrawScene(frustum, world, localctrlid);
+    DrawScene(frustum, world, localctrlid, true);
 
     glDisable(GL_POLYGON_OFFSET_FILL);
 
@@ -289,7 +292,8 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(m_useShadows)
     {
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
-        PrepareShadowMap(campos+up*0.8-side*1.4, camrot, world, localctrlid); // player is light
+        PrepareShadowMap(campos+up*0.8-side*1.4-dir*1.2,
+                         camrot, world, localctrlid); // player is light
     }
 
 
@@ -309,7 +313,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glUniform1i(m_tex, 0);
 	}
     glActiveTexture(GL_TEXTURE0);
-    DrawScene(frustum, world, localctrlid);
+    DrawScene(frustum, world, localctrlid, false);
     
 	glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
@@ -533,8 +537,8 @@ bool CRenderer::CreateShadowFBO()
 	glGenTextures(1, &m_depthTextureId);
 	glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 	

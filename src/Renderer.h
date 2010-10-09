@@ -19,7 +19,10 @@ public:
 
 protected:
     void UpdatePerspective();
-    void DrawScene(const CFrustum& frustum, CWorld* world, int localctrlid);
+    void DrawScene(const CFrustum& frustum, 
+                   CWorld* world, 
+                   int localctrlid,
+                   bool generateShadowMap);
 
     // Shader
     bool InitShader();
