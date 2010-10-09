@@ -29,7 +29,7 @@ bool CGameZombie::InitGame()
     }
 
     // n Testobjekte erstellen
-    for(int i=0;i<7;i++)
+    for(int i=0;i<4;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
         CGameObjZombie* zombie = new CGameObjZombie(GetWorld());

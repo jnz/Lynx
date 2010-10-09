@@ -317,7 +317,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     
 	glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
-    glDisable(GL_LIGHTING);
+    //glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glDepthMask(false);
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
@@ -350,6 +350,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glColor4f(1,1,1,1);
 
     // Draw weapon
+    glDisable(GL_LIGHTING);
     CModelMD2* viewmodel;
     md2_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
