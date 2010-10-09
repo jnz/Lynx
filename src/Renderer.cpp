@@ -94,9 +94,9 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     UpdatePerspective();
 
     // Vertex Lighting
@@ -292,7 +292,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(m_useShadows)
     {
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
-        PrepareShadowMap(campos+up*0.8-side*1.4-dir*1.2,
+        PrepareShadowMap(campos+up*1.8-side*1.4-dir*1.8,
                          camrot, world, localctrlid); // player is light
     }
 
@@ -311,8 +311,8 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glUniform1i(m_tex, 0);
+		glActiveTexture(GL_TEXTURE0);
 	}
-    glActiveTexture(GL_TEXTURE0);
     DrawScene(frustum, world, localctrlid, false);
     
 	glUseProgram(0); // don't use shader from here on FIXME

@@ -307,5 +307,6 @@ unsigned int CResourceManager::LoadTGA(std::string path)
 
     delete[] imageData;
 
+    fprintf(stderr, "Loaded texture: %s\n", path.c_str());
     return texture;
 }
