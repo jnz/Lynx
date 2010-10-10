@@ -26,11 +26,11 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
     {
         SetVel(dir*5.0f);
         SpawnParticleBlood(hitpoint, dir);
-        if(CLynx::randfabs() < 0.25f)
+        if(CLynx::randfabs() < 0.50f)
         {
             PlaySound(GetOrigin(), 
                       CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterhit%i.ogg", 3), 
-                      100);
+                      180);
         }
         return;
     }
@@ -51,7 +51,10 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
                     GetWorld()->GetLeveltime() + 9000,
                     GetWorld(),
                     this));
-    PlaySound(hitpoint, CLynx::GetBaseDirSound() + "monsterdie.ogg", 100);
+    if(CLynx::randfabs() < 0.8f) // 80% change of sound playing
+    {
+        PlaySound(hitpoint, CLynx::GetBaseDirSound() + "monsterdie.ogg", 250);
+    }
 }
 
 void CGameObjZombie::FindVictim()
@@ -68,7 +71,7 @@ void CGameObjZombie::FindVictim()
         {
             PlaySound(GetOrigin(), 
                       CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterstartle%i.ogg", 3), 
-                      100);
+                      250);
         }
     }
 }
