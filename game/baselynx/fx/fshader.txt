@@ -12,6 +12,6 @@ void main()
     float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
     NdotL = max(dot(normalize(normal),normalize(lightDir)),0.0);
 
-    gl_FragColor = NdotL*(0.7 + 0.5*shadow) * color * clamp(8.0/(fdist*0.8),0.0,1.1);
+    gl_FragColor = color * clamp(NdotL*(0.7 + 0.5*shadow) * clamp(8.0/(fdist*0.6),0.0,1.0),0.0, 1.0);
 }
  

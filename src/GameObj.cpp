@@ -8,6 +8,11 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+CGameObj::CGameObj(CWorld* world) : CObj(world)
+{
+    m_health = 100;
+    m_clientid = -1;
+}
 
 CGameObj::~CGameObj(void)
 {

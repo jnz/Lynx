@@ -292,7 +292,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(m_useShadows)
     {
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
-        PrepareShadowMap(campos+up*1.8-side*1.4-dir*1.8,
+        PrepareShadowMap(campos+up*0.8-side*1.4-dir*1.8,
                          camrot, world, localctrlid); // player is light
     }
 

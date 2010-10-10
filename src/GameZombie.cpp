@@ -101,6 +101,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
         {   // FIXME: O(n^2) complexity - bad?
             OBJITER iter2;
             CGameObj* obj2;
+            // FIXME use GameNearObj function?
             for(iter2 = GetWorld()->ObjBegin();iter2!=GetWorld()->ObjEnd();iter2++)
             {
                 obj2 = (CGameObj*)(*iter2).second;

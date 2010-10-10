@@ -26,6 +26,12 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
     {
         SetVel(dir*5.0f);
         SpawnParticleBlood(hitpoint, dir);
+        if(CLynx::randfabs() < 0.25f)
+        {
+            PlaySound(GetOrigin(), 
+                      CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterhit%i.ogg", 3), 
+                      100);
+        }
         return;
     }
 
@@ -45,7 +51,7 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
                     GetWorld()->GetLeveltime() + 9000,
                     GetWorld(),
                     this));
-    PlaySound(hitpoint, CLynx::GetBaseDirSound() + "wilhelm.ogg", 100);
+    PlaySound(hitpoint, CLynx::GetBaseDirSound() + "monsterdie.ogg", 100);
 }
 
 void CGameObjZombie::FindVictim()
@@ -58,18 +64,25 @@ void CGameObjZombie::FindVictim()
         int randid = rand()%(objlist.size());
         victim = objlist[randid];
         currenttarget = victim->GetID();
+        if(CLynx::randfabs() < 0.8f) // 80% change of sound playing
+        {
+            PlaySound(GetOrigin(), 
+                      CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterstartle%i.ogg", 3), 
+                      100);
+        }
     }
 }
 
 bool CThinkFuncRespawnZombie::DoThink(uint32_t leveltime)
 {
+    quaternion_t zombierot(vec3_t::yAxis, CLynx::randf()*lynxmath::PI);
     GetWorld()->DelObj(GetObj()->GetID());
 
     bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
 
     CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
     zombie->SetOrigin(point.point);
-    zombie->SetRot(point.rot);
+    zombie->SetRot(point.rot*zombierot);
     GetWorld()->AddObj(zombie);
 
     return true;

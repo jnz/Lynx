@@ -16,11 +16,7 @@ class CGameObj :
     public CObj
 {
 public:
-    CGameObj(CWorld* world) : CObj(world)
-    {
-        m_health = 100;
-        m_clientid = -1;
-    }
+    CGameObj(CWorld* world);
     virtual ~CGameObj(void);
 
     virtual int GetType() { return GAME_OBJ_TYPE_OBJ; }

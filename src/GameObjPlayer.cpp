@@ -26,7 +26,7 @@ void CGameObjPlayer::CmdFire(bool active)
 }
 
 #define PLAYER_GUN_FIRESPEED            SERVER_UPDATETIME
-#define PLAYER_GUN_DAMAGE               45
+#define PLAYER_GUN_DAMAGE               28
 
 void CGameObjPlayer::OnCmdFire()
 {

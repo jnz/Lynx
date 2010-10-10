@@ -57,3 +57,17 @@ std::string CLynx::FloatToString(float f, int precision)
    return o.str();
 }
 
+int CLynx::random(int min, int max)
+{ 
+    return min + (int)((double)rand() / (RAND_MAX / (max - min + 1) + 1));
+}
+
+std::string CLynx::GetRandNumInStr(const char* str, unsigned int maxnumber)
+{
+    char tmpstr[512];
+
+    assert(strlen(str) < sizeof(tmpstr));
+    sprintf(tmpstr, str, CLynx::random(1, maxnumber));
+    return std::string(tmpstr);
+}
+

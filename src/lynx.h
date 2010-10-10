@@ -33,6 +33,9 @@ public:
 
     static float randf() { return (rand()%20000)*0.0001f-1.0f; } // FIXME srand aufruf sicherstellen
     static float randfabs() { return (rand()%10000)*0.0001f; }
+
+    static int random(int min, int max);
+    static std::string GetRandNumInStr(const char* str, unsigned int maxnumber); // replace %i in string with number from 1 - maxnumber
 };
 
 union intfloat_u
