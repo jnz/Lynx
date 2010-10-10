@@ -21,49 +21,49 @@
     <ClCompile Include="bspcompile.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\lynx\BSPTree.cpp">
+    <ClCompile Include="..\src\BSPTree.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\lynx\lynx.cpp">
+    <ClCompile Include="..\src\lynx.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\lynx\math\matrix.cpp">
-      <Filter>math</Filter>
+    <ClCompile Include="..\src\math\matrix.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\lynx\math\plane.cpp">
-      <Filter>math</Filter>
+    <ClCompile Include="..\src\math\plane.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\lynx\math\quaternion.cpp">
-      <Filter>math</Filter>
+    <ClCompile Include="..\src\math\quaternion.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\lynx\math\vec3.cpp">
-      <Filter>math</Filter>
+    <ClCompile Include="..\src\math\vec3.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\lynx\BSPBIN.h">
+    <ClInclude Include="..\src\BSPBIN.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\BSPTree.h">
+    <ClInclude Include="..\src\BSPTree.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\lynx.h">
+    <ClInclude Include="..\src\lynx.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\math\mathconst.h">
-      <Filter>math</Filter>
+    <ClInclude Include="..\src\math\mathconst.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\math\matrix.h">
-      <Filter>math</Filter>
+    <ClInclude Include="..\src\math\matrix.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\math\plane.h">
-      <Filter>math</Filter>
+    <ClInclude Include="..\src\math\plane.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\math\quaternion.h">
-      <Filter>math</Filter>
+    <ClInclude Include="..\src\math\quaternion.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="..\lynx\math\vec3.h">
-      <Filter>math</Filter>
+    <ClInclude Include="..\src\math\vec3.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

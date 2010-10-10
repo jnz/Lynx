@@ -120,6 +120,12 @@
     <ClCompile Include="ParticleSystemDust.cpp">
       <Filter>fx</Filter>
     </ClCompile>
+    <ClCompile Include="Mixer.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Sound.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BSPBIN.h">

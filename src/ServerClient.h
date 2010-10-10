@@ -5,7 +5,7 @@
 #define MAX_SV_PACKETLEN        (24000)
 
 #define MAX_SV_CL_POS_DIFF      (35.0f*35.0f)           // abstand im quadrat
-#define SERVER_UPDATETIME       (100)                   // Nach wievielen ms wird ein Update vom Server geschickt
+#define SERVER_UPDATETIME       (50)                    // Nach wievielen ms wird ein Update vom Server geschickt
 #define RENDER_DELAY            (2*SERVER_UPDATETIME)   // Render Delay in ms
 #define MAX_CLIENT_HISTORY      (20*SERVER_UPDATETIME)
 
@@ -14,5 +14,5 @@
 #define MAX_WORLD_BACKLOG       (10*MAXCLIENTS)     // wie viele welten werden gespeichert
 
 #define OUTGOING_BANDWIDTH      (1024*15)   // bytes/sec
-#define CLIENT_UPDATERATE       (100)       // msec
+#define CLIENT_UPDATERATE       (50)        // msec
 

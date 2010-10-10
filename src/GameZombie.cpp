@@ -111,14 +111,14 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                     continue;
 
                 // the force will decrease by 1/dist^2
-                const float force = 50.0f; // not a force in a strict physical sense
+                const float force = 75.0f; // not a force in a strict physical sense
                 vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
                 float difflen = diff.AbsSquared();
                 if(difflen > 25.0f)
                     continue;
                 difflen = lynxmath::Sqrt(difflen);
-                if(difflen < 0.25f)
-                    difflen = 0.25;
+                if(difflen < 0.15f)
+                    difflen = 0.15;
                 diff = dt*diff*force*1/(difflen*difflen*difflen);
                 diff += obj2->GetVel();
                 obj2->SetVel(diff);

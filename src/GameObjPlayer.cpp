@@ -25,7 +25,7 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
-#define PLAYER_GUN_FIRESPEED            SERVER_UPDATETIME
+#define PLAYER_GUN_FIRESPEED            200
 #define PLAYER_GUN_DAMAGE               28
 
 void CGameObjPlayer::OnCmdFire()
@@ -41,7 +41,7 @@ void CGameObjPlayer::OnCmdFire()
     {
         m_fire_sound = PlaySound(GetOrigin(), 
                             CLynx::GetBaseDirSound() + "rifle.ogg", 
-                            PLAYER_GUN_FIRESPEED);
+                            2*PLAYER_GUN_FIRESPEED);
     }
 
     world_obj_trace_t trace;
