@@ -118,7 +118,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                     continue;
                 difflen = lynxmath::Sqrt(difflen);
                 if(difflen < 0.15f)
-                    difflen = 0.15;
+                    difflen = 0.15f;
                 diff = dt*diff*force*1/(difflen*difflen*difflen);
                 diff += obj2->GetVel();
                 obj2->SetVel(diff);

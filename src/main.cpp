@@ -149,7 +149,7 @@ int main(int argc, char** argv)
         mixer.Update(dt, time);
 
 //#ifdef _DEBUG
-        SDL_Delay(10); // so my notebook fan is quiet :-)
+        //SDL_Delay(10); // so my notebook fan is quiet :-)
 //#endif
         if(!client.IsRunning())
         {

@@ -221,8 +221,8 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                   PLANE_NEAR, 
                   PLANE_FAR); 
 
-	glViewport(0, 0, m_width * SHADOW_MAP_RATIO,
-	                 m_height* SHADOW_MAP_RATIO);
+	glViewport(0, 0, (int)(m_width * SHADOW_MAP_RATIO),
+	                 (int)(m_height * SHADOW_MAP_RATIO));
     UpdatePerspective(); // FIXME remove me?
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(mviewlight.pm);
@@ -292,7 +292,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(m_useShadows)
     {
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
-        PrepareShadowMap(campos+up*0.8-side*1.4-dir*1.8,
+        PrepareShadowMap(campos+up*0.8f-side*1.4f-dir*1.8f,
                          camrot, world, localctrlid); // player is light
     }
 
@@ -529,8 +529,8 @@ bool CRenderer::InitShader()
 bool CRenderer::CreateShadowFBO()
 {
 	// fbo + depth buffer
-	int shadowMapWidth = m_width * SHADOW_MAP_RATIO;
-	int shadowMapHeight = m_height * SHADOW_MAP_RATIO;
+	int shadowMapWidth = (int)(m_width * SHADOW_MAP_RATIO);
+	int shadowMapHeight = (int)(m_height * SHADOW_MAP_RATIO);
 
 	GLenum FBOstatus;
 

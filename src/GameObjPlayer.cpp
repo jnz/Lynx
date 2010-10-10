@@ -41,7 +41,7 @@ void CGameObjPlayer::OnCmdFire()
     {
         m_fire_sound = PlaySound(GetOrigin(), 
                             CLynx::GetBaseDirSound() + "rifle.ogg", 
-                            2*PLAYER_GUN_FIRESPEED);
+                            PLAYER_GUN_FIRESPEED);
     }
 
     world_obj_trace_t trace;
