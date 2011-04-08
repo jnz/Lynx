@@ -44,10 +44,10 @@ struct vec3_t
     static float GetAngleDeg(vec3_t& a, vec3_t& b); // angle between a and b in degrees
 
     /*
-        Helferfunktion: Schnittpunkt Ray mit Zylinder. 
+        Helferfunktion: Schnittpunkt Ray mit Zylinder.
         Rückgabe: true, in f steht der Skalierungsfaktor zum Schnittpunkt pStart + f*(pEnd-pStart)
     */
-    static bool RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir, 
+    static bool RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir,
                                      const vec3_t& edgeStart, const vec3_t& edgeEnd,
                                      const float radius,
                                      float* f);
@@ -73,8 +73,6 @@ struct vec3_t
     vec3_t &operator /= ( const float &f );
     vec3_t  operator -  (void) const;
 };
-
-float vabs(vec3_t v);
 
 const vec3_t operator+(vec3_t const &a, vec3_t const &b);
 const vec3_t operator-(vec3_t const &a, vec3_t const &b);

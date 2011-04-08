@@ -30,8 +30,8 @@ plane_t::plane_t(float a, float b, float c, float d)
     SetupPlane(a, b, c, d);
 }
 
-void plane_t::SetupPlane(const vec3_t& p1, 
-                         const vec3_t& p2, 
+void plane_t::SetupPlane(const vec3_t& p1,
+                         const vec3_t& p2,
                          const vec3_t& p3)
 {
     m_n = (p3-p1)^(p2-p1);
@@ -66,7 +66,7 @@ bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const
     q = m_n * v;
     if(fabs(q) < lynxmath::EPSILON)
         return false;
-    
+
     *f = -(m_n * p + m_d) / q;
     return true;
 }
@@ -93,7 +93,7 @@ bool plane_t::IsPlaneBetween(const vec3_t& a, const vec3_t& b) const
     float t;
 
     q = m_n * (b-a);
-    if(fabs(q) < lynxmath::EPSILON) 
+    if(fabs(q) < lynxmath::EPSILON)
         return true;
 
     t = -(m_n * a + m_d) / q;

@@ -39,7 +39,6 @@ void CGameLogic::Update(const float dt, const uint32_t ticks)
 
 void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist)
 {
-    std::vector<std::string>::iterator iter;
     vec3_t velocity, dir, side;
     vec3_t newdir(0,0,0);
     vec3_t jump(0,0,0);

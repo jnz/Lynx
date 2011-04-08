@@ -28,8 +28,8 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         SpawnParticleBlood(hitpoint, dir);
         if(CLynx::randfabs() < 0.50f)
         {
-            PlaySound(GetOrigin(), 
-                      CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterhit%i.ogg", 3), 
+            PlaySound(GetOrigin(),
+                      CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterhit%i.ogg", 3),
                       180);
         }
         return;
@@ -60,7 +60,7 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
 void CGameObjZombie::FindVictim()
 {
     CObj* victim;
-    const std::vector<CObj*> objlist = 
+    const std::vector<CObj*> objlist =
         GetWorld()->GetNearObj(GetOrigin(), 50.0f, GetID(), GAME_OBJ_TYPE_PLAYER);
     if(objlist.size() > 0)
     {
@@ -69,8 +69,8 @@ void CGameObjZombie::FindVictim()
         currenttarget = victim->GetID();
         if(CLynx::randfabs() < 0.8f) // 80% change of sound playing
         {
-            PlaySound(GetOrigin(), 
-                      CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterstartle%i.ogg", 3), 
+            PlaySound(GetOrigin(),
+                      CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterstartle%i.ogg", 3),
                       250);
         }
     }
@@ -112,7 +112,7 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
     SetThinktime(leveltime + 50+rand()%100);
     quaternion_t qTo = zombie->TurnTo(target->GetOrigin());
     quaternion_t qFrom = zombie->GetRot();
-    
+
     zombie->SetRot(quaternion_t(qFrom, qTo, 0.5f));
 
     if(dir.AbsSquared() > 22.0f)
@@ -120,7 +120,7 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
         zombie->GetRot().GetVec3(&dir, NULL, NULL);
         zombie->SetVel(dir*-16.0f);
         zombie->SetAnimation(zombie->GetMesh()->FindAnimation("run"));
-   }
+    }
     else
     {
         zombie->SetVel(vec3_t::origin);

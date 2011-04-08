@@ -145,7 +145,6 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
         return;
 
     ENetPacket* packet;
-    std::vector<std::string>::iterator iter;
     CObj* localctrl = GetLocalController();
     CStream stream(1024);
 
@@ -161,7 +160,7 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     for(i=0;i<clcmdlist.size();i++)
         stream.WriteString(clcmdlist[i]);
 
-    packet = enet_packet_create(stream.GetBuffer(), 
+    packet = enet_packet_create(stream.GetBuffer(),
                                 stream.GetBytesWritten(), 0);
     assert(packet);
     if(packet)
@@ -217,7 +216,7 @@ void CClient::InputMouseMove()
 
 void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend)
 {
-    uint8_t* keystate = CLynxSys::GetKeyState();    
+    uint8_t* keystate = CLynxSys::GetKeyState();
     *forcesend = false;
 
     // Client fire animation prediction

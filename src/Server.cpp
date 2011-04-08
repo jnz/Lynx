@@ -26,7 +26,7 @@ CServer::~CServer(void)
 bool CServer::Create(int port)
 {
     ENetAddress addr;
-    
+
     addr.host = ENET_HOST_ANY;
     addr.port = port;
 
@@ -89,7 +89,7 @@ void CServer::Update(const float dt, const uint32_t ticks)
             char hostname[64];
             enet_address_get_host_ip(&event.peer->address,
                                      hostname, sizeof(hostname));
-            fprintf(stderr, "A new client connected from %s:%u.\n", 
+            fprintf(stderr, "A new client connected from %s:%u.\n",
                     hostname,
                     event.peer->address.port);
 
@@ -109,14 +109,14 @@ void CServer::Update(const float dt, const uint32_t ticks)
             OnReceive(&stream, (CClientInfo*)event.peer->data);
 
             enet_packet_destroy (event.packet);
-            
+
             break;
-           
+
         case ENET_EVENT_TYPE_DISCONNECT:
             clientinfo = (CClientInfo*)event.peer->data;
             assert(clientinfo);
             fprintf(stderr, "Client %i disconnected.\n", clientinfo->GetID());
-            
+
             // Observer benachrichtigen
             {
             EventClientDisconnected e;
@@ -142,7 +142,7 @@ void CServer::Update(const float dt, const uint32_t ticks)
             if(SendWorldToClient((*iter).second))
                 sent++;
         }
-        
+
         m_lastupdate = ticks;
         if(sent > 0)
         {
@@ -308,8 +308,8 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     //             client->GetPeer()->mtu,
     //             m_stream.GetBytesWritten());
     // }
-    packet = enet_packet_create(m_stream.GetBuffer(), 
-                                m_stream.GetBytesWritten(), 
+    packet = enet_packet_create(m_stream.GetBuffer(),
+                                m_stream.GetBytesWritten(),
                                 0);
     assert(packet);
     if(!packet)

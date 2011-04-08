@@ -2,7 +2,7 @@
 
 #include "vec3.h"
 #include "matrix.h"
-    
+
 struct quaternion_t
 {
     float x, y, z, w;

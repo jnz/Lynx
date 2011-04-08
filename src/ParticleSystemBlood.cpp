@@ -17,13 +17,13 @@ CParticleSystemBlood::CParticleSystemBlood(const PROPERTYMAP& properties, CResou
     GetProperty(properties, "dx", &dir.x, 0);
     GetProperty(properties, "dy", &dir.y, 0);
     GetProperty(properties, "dz", &dir.z, -1.0f);
-    
+
     dir = dir.Normalized() * 6.0f;
 
     for(int i=0;i<particles;i++)
     {
         particle_t p;
-        
+
         p.startalpha = p.alpha = 0.9f;
         p.color = vec3_t(1,1,1);
         p.totallifetime = p.lifetime = 0.4f + CLynx::randfabs()*0.4f;

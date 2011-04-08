@@ -190,8 +190,8 @@ void CObj::UpdateParticles()
         CParticleSystem::SetPropertyMap(pconfig, properties);
         m_particlesys = std::auto_ptr<CParticleSystem>(
                                         CParticleSystem::CreateSystem(
-                                        psystem, 
-                                        properties, 
+                                        psystem,
+                                        properties,
                                         GetWorld()->GetResourceManager()
                                         ));
     }
@@ -218,7 +218,7 @@ std::string CObj::GetParticleSystemName() const
 
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
-                  const uint32_t flagparam, 
+                  const uint32_t flagparam,
                   uint32_t* updateflags,
                   CStream* stream)
 {
@@ -232,7 +232,7 @@ int DeltaDiffVec3(const vec3_t* newstate,
 
 int DeltaDiffQuat(const quaternion_t* newstate,
                   const quaternion_t* oldstate,
-                  const uint32_t flagparam, 
+                  const uint32_t flagparam,
                   uint32_t* updateflags,
                   CStream* stream)
 {
@@ -246,7 +246,7 @@ int DeltaDiffQuat(const quaternion_t* newstate,
 
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream)
 {
@@ -260,7 +260,7 @@ int DeltaDiffFloat(const float* newstate,
 
 int DeltaDiffInt16(const int16_t* newstate,
                    const int16_t* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream)
 {
@@ -274,7 +274,7 @@ int DeltaDiffInt16(const int16_t* newstate,
 
 int DeltaDiffString(const std::string* newstate,
                     const std::string* oldstate,
-                    const uint32_t flagparam, 
+                    const uint32_t flagparam,
                     uint32_t* updateflags,
                     CStream* stream)
 {
@@ -288,7 +288,7 @@ int DeltaDiffString(const std::string* newstate,
 
 int DeltaDiffDWORD(const uint32_t* newstate,
                    const uint32_t* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream)
 {
@@ -302,7 +302,7 @@ int DeltaDiffDWORD(const uint32_t* newstate,
 
 int DeltaDiffBytes(const uint8_t* newstate,
                    const uint8_t* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream,
                    const int size)
@@ -390,7 +390,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
 void CObj::SetObjState(const obj_state_t* objstate, int id)
 {
     m_id = id;
-    bool resourcechange = objstate->resource != state.resource || 
+    bool resourcechange = objstate->resource != state.resource ||
                           objstate->animation != state.animation ||
                           objstate->nextanimation != state.nextanimation;
     bool rotationchange = objstate->rot != state.rot;

@@ -2,16 +2,16 @@
 
 #include "math/plane.h"
 
-enum frustum_plane_t 
+enum frustum_plane_t
 {
     plane_near = 0, plane_left, plane_right, plane_up, plane_down, plane_far
 };
 
 struct CFrustum
 {
-    void Setup(const vec3_t& origin, 
-               const vec3_t& dir, 
-               const vec3_t& up, 
+    void Setup(const vec3_t& origin,
+               const vec3_t& dir,
+               const vec3_t& up,
                const vec3_t& side,
                float fovY, float ratio,
                float near, float far);

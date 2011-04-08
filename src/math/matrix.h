@@ -13,7 +13,7 @@ struct quaternion_t;
 
     In memory:
     float m[] = { 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,  1, 2, 3, 1 };
-    0  4  8 12 
+    0  4  8 12
     1  5  9 13
     2  6 10 14
     3  7 11 15
@@ -24,6 +24,8 @@ struct quaternion_t;
     m[3][2] = 3
 
     m[x][y] | m[spalte][zeile]
+    i = zeile*4 + spalte
+    pm[i] = 1
 */
 
 class matrix_t
@@ -36,6 +38,7 @@ public:
     };
 
     matrix_t();
+    matrix_t(matrix_t* src);
     matrix_t(float m11, float m21, float m31, float m41,
              float m12, float m22, float m32, float m42,
              float m13, float m23, float m33, float m43,
@@ -57,6 +60,12 @@ public:
     void SetRotationZXY(const vec3_t* angles); // (x = pitch, y = yaw, z = roll)
     void SetRotationYXZ(const vec3_t* angles); // (x = pitch, y = yaw, z = roll)
     void SetRotation(const vec3_t* axis, float angle);
+
+    void Perspective(const float fovy, const float aspect, const float nearZ, const float farZ);
+    void Frustum(const float left, const float right, const float bottom, const float top, const float nearZ, const float farZ);
+    void Ortho(const float left, const float right,
+               const float bottom, const float top,
+               const float nearZ, const float farZ);
 
     void SetTransform(const vec3_t* position, const vec3_t* angles);
     void SetCamTransform(const vec3_t* position, const vec3_t* angles); // camera ZXY angle order (Inverse of SetTransform)

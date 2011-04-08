@@ -28,7 +28,7 @@ CBSPLevel::CBSPLevel(void)
     m_vertex = NULL;
     m_indices = NULL;
     m_spawnpoint = NULL;
-	
+
     m_planecount = 0;
     m_texcount = 0;
     m_nodecount = 0;
@@ -336,10 +336,10 @@ void CBSPLevel::RenderNodeGL(const int node, const vec3_t& origin, const CFrustu
         for(int i=polyindex;i<maxpolyindex;i++)
         {
             glBindTexture(GL_TEXTURE_2D, m_texid[m_poly[i].tex]);
-            
-            glDrawElements(GL_TRIANGLES, 
-                           m_poly[i].vertexcount, 
-                           GL_UNSIGNED_SHORT, 
+
+            glDrawElements(GL_TRIANGLES,
+                           m_poly[i].vertexcount,
+                           GL_UNSIGNED_SHORT,
                            BUFFER_OFFSET(m_poly[i].firstvertex * sizeof(unsigned short)));
         }
 
@@ -371,7 +371,7 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
-     
+
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -399,10 +399,10 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-bool CBSPLevel::GetTriIntersection(const int polyindex, 
-                                   const vec3_t& start, 
-                                   const vec3_t& dir, 
-                                   float* f, 
+bool CBSPLevel::GetTriIntersection(const int polyindex,
+                                   const vec3_t& start,
+                                   const vec3_t& dir,
+                                   float* f,
                                    const float offset,
                                    plane_t* hitplane) const
 {
@@ -447,10 +447,10 @@ bool CBSPLevel::GetTriIntersection(const int polyindex,
 
 bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
                                     const int vertexcount,
-                                    const vec3_t& start, 
+                                    const vec3_t& start,
                                     const vec3_t& dir,
-                                    float* f, 
-                                    const float radius, 
+                                    float* f,
+                                    const float radius,
                                     vec3_t* normal,
                                     vec3_t* hitpoint) const
 {
@@ -459,11 +459,11 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     int minindex = -1;
     for(int i=0;i<vertexcount;i++)
     {
-        if(!vec3_t::RayCylinderIntersect(start, 
-                                         dir, 
-                                         m_vertex[m_indices[firstvertex + i]].v, 
-                                         m_vertex[m_indices[firstvertex + ((i+1)%vertexcount)]].v, 
-                                         radius, 
+        if(!vec3_t::RayCylinderIntersect(start,
+                                         dir,
+                                         m_vertex[m_indices[firstvertex + i]].v,
+                                         m_vertex[m_indices[firstvertex + ((i+1)%vertexcount)]].v,
+                                         radius,
                                          &cf))
             continue;
         if(cf < minf && cf >= -BSP_EPSILON)
@@ -491,11 +491,11 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
 
 bool CBSPLevel::GetVertexIntersection(const int firstvertex,
                                       const int vertexcount,
-                                      const vec3_t& start, 
+                                      const vec3_t& start,
                                       const vec3_t& dir,
-                                      float* f, 
-                                      const float radius, 
-                                      vec3_t* normal, 
+                                      float* f,
+                                      const float radius,
+                                      vec3_t* normal,
                                       vec3_t* hitpoint) const
 {
     float minf = MAX_TRACE_DIST;
@@ -503,10 +503,10 @@ bool CBSPLevel::GetVertexIntersection(const int firstvertex,
     int minindex = -1;
     for(int i=0;i<vertexcount;i++)
     {
-        if(!vec3_t::RaySphereIntersect(start, 
+        if(!vec3_t::RaySphereIntersect(start,
                                        dir,
-                                       m_vertex[m_indices[firstvertex + i]].v, 
-                                       radius, 
+                                       m_vertex[m_indices[firstvertex + i]].v,
+                                       radius,
                                        &cf))
         {
             continue;
@@ -550,9 +550,9 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
             // - Prüfen ob Polygon Edge getroffen wird
             // - Prüfen ob Polygon Vertex getroffen wird
             if(GetTriIntersection(polyindex,
-                                  trace->start, 
-                                  trace->dir, 
-                                  &cf, 
+                                  trace->start,
+                                  trace->dir,
+                                  &cf,
                                   trace->radius,
                                   &hitplane))
             {
@@ -566,13 +566,13 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                                         m_poly[polyindex].vertexcount,
                                         trace->start,
                                         trace->dir,
-                                        &cf, trace->radius, 
-                                        &normal, &hitpoint) || 
+                                        &cf, trace->radius,
+                                        &normal, &hitpoint) ||
                     GetVertexIntersection(m_poly[polyindex].firstvertex,
                                           m_poly[polyindex].vertexcount,
                                           trace->start,
                                           trace->dir,
-                                          &cf, trace->radius, 
+                                          &cf, trace->radius,
                                           &normal, &hitpoint))
             {
                 if(cf < minf)

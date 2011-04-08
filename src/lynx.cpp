@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
- 
+
 #ifdef _DEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
@@ -53,12 +53,12 @@ std::string CLynx::FloatToString(float f, int precision)
    {
        assert(0); // Unable to convert float to string?
        return "";
-   }  
+   }
    return o.str();
 }
 
 int CLynx::random(int min, int max)
-{ 
+{
     return min + (int)((double)rand() / (RAND_MAX / (max - min + 1) + 1));
 }
 

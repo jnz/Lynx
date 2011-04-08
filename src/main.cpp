@@ -47,14 +47,14 @@ int main(int argc, char** argv)
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
     SDL_Event event;
-    
+
     // Game Modules
     CWorldClient worldcl; // Model
     CRenderer renderer(&worldcl); // View
     CMixer mixer(&worldcl); // View
     CGameZombie clgame(&worldcl, NULL); // Controller
     CClient client(&worldcl, &clgame); // Controller
-    
+
     CWorld worldsv; // Model
     CServer server(&worldsv); // Controller
     CGameZombie svgame(&worldsv, &server); // Controller
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
         if(time - fpstimer > 1000.0f)
         {
             char title[128];
-            sprintf(title, "lynx (FPS: %i) vis: %i/%i", 
+            sprintf(title, "lynx (FPS: %i) vis: %i/%i",
                 (int)fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden);
             SDL_WM_SetCaption(title, NULL);
             fpscounter = 0;

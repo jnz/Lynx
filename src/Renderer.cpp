@@ -19,16 +19,16 @@
 #define SHADOW_MAP_RATIO    0.5f
 
 // Shadow mapping bias matrix
-static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]  
-	0.5, 0.0, 0.0, 0.0, 
+static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]
+	0.5, 0.0, 0.0, 0.0,
 	0.0, 0.5, 0.0, 0.0,
 	0.0, 0.0, 0.5, 0.0,
 	0.5, 0.5, 0.5, 1.0 };
 
 // Local Render Functions
 static void RenderCube();
-static void BSP_RenderTree(const CBSPLevel* tree, 
-                           const vec3_t* origin, 
+static void BSP_RenderTree(const CBSPLevel* tree,
+                           const vec3_t* origin,
                            const CFrustum* frustum);
 
 CRenderer::CRenderer(CWorldClient* world)
@@ -74,11 +74,11 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     }
     fprintf(stderr, " successful\n");
 
-    screen = SDL_SetVideoMode(width, height, bpp, 
-                SDL_HWSURFACE | 
-                SDL_ANYFORMAT | 
-                SDL_DOUBLEBUF | 
-                SDL_OPENGL | 
+    screen = SDL_SetVideoMode(width, height, bpp,
+                SDL_HWSURFACE |
+                SDL_ANYFORMAT |
+                SDL_DOUBLEBUF |
+                SDL_OPENGL |
                 (fullscreen ? SDL_FULLSCREEN : 0));
     assert(screen);
     if(!screen)
@@ -106,7 +106,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     float light_pos[] = { 0, 1, 1, 1 };
     float white_light[] = {1,1,1,1};
     float lmodel_ambient[] = { 0.9f, 0.9f, 0.9f, 1.0f };
-    
+
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diff);
@@ -164,9 +164,9 @@ void CRenderer::Shutdown()
 
 }
 
-void CRenderer::DrawScene(const CFrustum& frustum, 
-                          CWorld* world, 
-                          int localctrlid, 
+void CRenderer::DrawScene(const CFrustum& frustum,
+                          CWorld* world,
+                          int localctrlid,
                           bool generateShadowMap)
 {
     CObj* obj;
@@ -198,14 +198,13 @@ void CRenderer::DrawScene(const CFrustum& frustum,
         glPushMatrix();
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
-
         glMultMatrixf(obj->GetRotMatrix()->pm);
         obj->GetMesh()->Render(obj->GetMeshState());
         glPopMatrix();
     }
 }
 
-void CRenderer::PrepareShadowMap(const vec3_t& lightpos, 
+void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                                  const quaternion_t& lightrot,
                                  CWorld* world, int localctrlid)
 {
@@ -216,10 +215,10 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
 
     mviewlight.GetVec3Cam(&dir, &up, &side);
     dir = -dir;
-    frustum.Setup(lightpos, dir, up, side, 
+    frustum.Setup(lightpos, dir, up, side,
                   RENDERER_FOV, (float)m_width/(float)m_height,
-                  PLANE_NEAR, 
-                  PLANE_FAR); 
+                  PLANE_NEAR,
+                  PLANE_FAR);
 
 	glViewport(0, 0, (int)(m_width * SHADOW_MAP_RATIO),
 	                 (int)(m_height * SHADOW_MAP_RATIO));
@@ -239,7 +238,7 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
     // Render to FBO
     glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
     glClear(GL_DEPTH_BUFFER_BIT);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); 
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glCullFace(GL_FRONT);
     glUseProgram(0); // no shader
     glPolygonOffset( 0, -1000.0f );
@@ -252,7 +251,7 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, m_width, m_height);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glCullFace(GL_BACK);
 }
 
@@ -276,10 +275,10 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     m.SetCamTransform(campos, camrot);
     m.GetVec3Cam(&dir, &up, &side);
     dir = -dir;
-    frustum.Setup(campos, dir, up, side, 
+    frustum.Setup(campos, dir, up, side,
                   RENDERER_FOV, (float)m_width/(float)m_height,
-                  PLANE_NEAR, 
-                  PLANE_FAR); 
+                  PLANE_NEAR,
+                  PLANE_FAR);
 
     // float l0lat=-30.0f, l0lon=-90.0f;
     // vec3_t l0pos(16.14,-13.89,24.96);
@@ -314,7 +313,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 		glActiveTexture(GL_TEXTURE0);
 	}
     DrawScene(frustum, world, localctrlid, false);
-    
+
 	glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
     //glDisable(GL_LIGHTING);
@@ -383,7 +382,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // glTexCoord2d(0,1);glVertex3f(0,m_height/2,0);
     // glEnd();
     // UpdatePerspective();
-    
+
     SDL_GL_SwapBuffers();
 }
 
@@ -391,9 +390,9 @@ void CRenderer::UpdatePerspective()
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(RENDERER_FOV, 
-                    (float)m_width/(float)m_height, 
-                    PLANE_NEAR, 
+    gluPerspective(RENDERER_FOV,
+                    (float)m_width/(float)m_height,
+                    PLANE_NEAR,
                     PLANE_FAR);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -542,7 +541,7 @@ bool CRenderer::CreateShadowFBO()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 	
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 
 	// Remove artifact on the edges of the shadowmap
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );

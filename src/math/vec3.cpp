@@ -30,9 +30,9 @@ void vec3_t::Normalize(void)
     if(abssqr > lynxmath::EPSILON)
     {
         const float ilength = lynxmath::InvSqrt(abssqr);
-        v[0] *= ilength;
-        v[1] *= ilength;
-        v[2] *= ilength;
+        x *= ilength;
+        y *= ilength;
+        z *= ilength;
     }
 }
 
@@ -40,15 +40,15 @@ void vec3_t::SetLength(float scalelen)
 {
     float length, ilength;
 
-    length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+    length = x*x+y*y+z*z;
     length = sqrtf(length);
 
     if(length > lynxmath::EPSILON)
     {
         ilength = scalelen/length;
-        v[0] *= ilength;
-        v[1] *= ilength;
-        v[2] *= ilength;
+        x *= ilength;
+        y *= ilength;
+        z *= ilength;
     }
 }
 
@@ -79,7 +79,7 @@ bool vec3_t::Equals(const vec3_t& cmp, const float epsilon) const
 
 bool vec3_t::IsInArea(const vec3_t& min, const vec3_t& max) const
 {
-    return  x >= min.x && x <= max.x && 
+    return  x >= min.x && x <= max.x &&
             y >= min.y && y <= max.y &&
             z >= min.z && z <= max.z;
 }
@@ -203,11 +203,6 @@ bool operator!=(vec3_t const &a, vec3_t const &b)
             (fabs(a.z-b.z) > lynxmath::EPSILON);
 }
 
-float vabs(vec3_t v)
-{
-    return v.Abs();
-}
-
 void vec3_t::AngleVec3(const vec3_t& angles, vec3_t* forward, vec3_t* up, vec3_t* side)
 {
     float sx, cx;
@@ -280,7 +275,7 @@ vec3_t vec3_t::Hermite(const vec3_t& p1, const vec3_t& p2, const vec3_t& T1, con
     return (1 - 3*t2 + 2*t3)*p1 + t2*(3-2*t)*p2 + t*(t-1)*(t-1)*T1 + t2*(t-1)*T2;
 }
 
-bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir, 
+bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir,
                                   const vec3_t& edgeStart, const vec3_t& edgeEnd,
                                   const float radius,
                                   float* f)
@@ -290,7 +285,7 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir,
     const vec3_t pa = edgeEnd - edgeStart;
     const vec3_t s0 = pStart - edgeStart;
     const float pa_squared = pa.AbsSquared();
-    
+
     // a
     const float pva = pDir * pa;
     const float a = pDir.AbsSquared() - pva*pva/pa_squared;
@@ -330,3 +325,4 @@ bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pDir,
     *f = u1 < u2 ? u1 : u2;
     return true;
 }
+

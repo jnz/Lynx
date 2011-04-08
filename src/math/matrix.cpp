@@ -19,6 +19,11 @@ matrix_t::matrix_t()
 {
 }
 
+matrix_t::matrix_t(matrix_t* src)
+{
+    memcpy(pm, src->pm, sizeof(m));
+}
+
 matrix_t::matrix_t(float m11, float m21, float m31, float m41,
                    float m12, float m22, float m32, float m42,
                    float m13, float m23, float m33, float m43,
@@ -81,7 +86,7 @@ void matrix_t::SetTranslation(float dx, float dy, float dz)
     SetIdentity();
     m[3][0] = dx; m[3][1] = dy; m[3][2] = dz;
 }
-    
+
 void matrix_t::SetRotationX(float wx)
 {
     float sa, ca;
@@ -332,25 +337,25 @@ float matrix_t::Det() const
 void matrix_t::MultiplyVec3(vec3_t *pDest, const vec3_t *pV) const
 {
     vec3_t tmp = *pV;
-    float w =   m[0][3]*pV->x + 
-                m[1][3]*pV->y +  
+    float w =   m[0][3]*pV->x +
+                m[1][3]*pV->y +
                 m[2][3]*pV->z +
                 m[3][3];
     assert(fabsf(w)>lynxmath::EPSILON);
     w = 1/w;
 
-    pDest->x =  (m[0][0]*tmp.x + 
-                 m[1][0]*tmp.y +  
+    pDest->x =  (m[0][0]*tmp.x +
+                 m[1][0]*tmp.y +
                  m[2][0]*tmp.z +
                  m[3][0])
                  *w;
-    pDest->y =  (m[0][1]*tmp.x + 
-                 m[1][1]*tmp.y +  
+    pDest->y =  (m[0][1]*tmp.x +
+                 m[1][1]*tmp.y +
                  m[2][1]*tmp.z +
                  m[3][1])
                  *w;
-    pDest->z =  (m[0][2]*tmp.x + 
-                 m[1][2]*tmp.y +  
+    pDest->z =  (m[0][2]*tmp.x +
+                 m[1][2]*tmp.y +
                  m[2][2]*tmp.z +
                  m[3][2])
                  *w;
@@ -361,23 +366,23 @@ void matrix_t::MultiplyVec3Fast(vec3_t *pDest, const vec3_t *pV) const
 {
     vec3_t tmp = *pV;
 #ifdef _DEBUG
-    float w =   m[0][3]*pV->x + 
-                m[1][3]*pV->y +  
+    float w =   m[0][3]*pV->x +
+                m[1][3]*pV->y +
                 m[2][3]*pV->z +
                 m[3][3];
     assert(fabsf(1.0f - w) < lynxmath::EPSILON); // if this happens, try MatrixVec3Mult
 #endif
 
-    pDest->x =  (m[0][0]*tmp.x + 
-                 m[1][0]*tmp.y +  
+    pDest->x =  (m[0][0]*tmp.x +
+                 m[1][0]*tmp.y +
                  m[2][0]*tmp.z +
                  m[3][0]);
-    pDest->y =  (m[0][1]*tmp.x + 
-                 m[1][1]*tmp.y +  
+    pDest->y =  (m[0][1]*tmp.x +
+                 m[1][1]*tmp.y +
                  m[2][1]*tmp.z +
                  m[3][1]);
-    pDest->z =  (m[0][2]*tmp.x + 
-                 m[1][2]*tmp.y +  
+    pDest->z =  (m[0][2]*tmp.x +
+                 m[1][2]*tmp.y +
                  m[2][2]*tmp.z +
                  m[3][2]);
 }
@@ -559,6 +564,58 @@ void matrix_t::SetCamTransform(const vec3_t& pos, const quaternion_t& q)
     m[3][3] = 1.0f;
 }
 
+void matrix_t::Ortho(float left, float right, float bottom, float top, float nearZ, float farZ)
+{
+    const float deltaX = right - left;
+    const float deltaY = top - bottom;
+    const float deltaZ = farZ - nearZ;
+
+    if ( (fabsf(deltaX)<lynxmath::EPSILON) ||
+         (fabsf(deltaY)<lynxmath::EPSILON) ||
+         (fabsf(deltaZ)<lynxmath::EPSILON) )
+        return;
+
+    SetIdentity();
+    m[0][0] = 2.0f / deltaX;
+    m[3][0] = -(right + left) / deltaX;
+    m[1][1] = 2.0f / deltaY;
+    m[3][1] = -(top + bottom) / deltaY;
+    m[2][2] = -2.0f / deltaZ;
+    m[3][2] = -(nearZ + farZ) / deltaZ;
+}
+
+void matrix_t::Perspective(const float fovy, const float aspect, const float nearZ, const float farZ)
+{
+   const float frustumH = tanf( fovy / 360.0f * lynxmath::PI ) * nearZ;
+   const float frustumW = frustumH * aspect;
+   Frustum(-frustumW, frustumW, -frustumH, frustumH, nearZ, farZ);
+}
+
+void matrix_t::Frustum(const float left, const float right, const float bottom, const float top, const float nearZ, const float farZ)
+{
+    const float deltaX = right - left;
+    const float deltaY = top - bottom;
+    const float deltaZ = farZ - nearZ;
+
+    if ( (nearZ <= 0.0f) || (farZ <= 0.0f) ||
+         (deltaX <= 0.0f) || (deltaY <= 0.0f) || (deltaZ <= 0.0f) )
+         return;
+
+    m[0][0] = 2.0f * nearZ / deltaX;
+    m[0][1] = m[0][2] = m[0][3] = 0.0f;
+
+    m[1][1] = 2.0f * nearZ / deltaY;
+    m[1][0] = m[1][2] = m[1][3] = 0.0f;
+
+    m[2][0] = (right + left) / deltaX;
+    m[2][1] = (top + bottom) / deltaY;
+    m[2][2] = -(nearZ + farZ) / deltaZ;
+    m[2][3] = -1.0f;
+
+    m[3][2] = -2.0f * nearZ * farZ / deltaZ;
+    m[3][0] = m[3][1] = m[3][3] = 0.0f;
+}
+
 void matrix_t::GetVec3Cam(vec3_t* dir, vec3_t* up, vec3_t* side)
 {
     if(side)
@@ -602,7 +659,7 @@ void matrix_t::GetRow(int row, float* f4) const
 /*
 
 
-static const unsigned char g_sarrus_index[4][3] = 
+static const unsigned char g_sarrus_index[4][3] =
 { { 1,2,3 },
   { 0,2,3 },
   { 0,1,3 },
@@ -651,11 +708,11 @@ bool matrix_t::Inverse(matrix_t* out)
     if(fabsf(det)<lynxmath::EPSILON)
         return false;
     det = 1/det;
-    
+
     for(i=0;i<4;i++)
         for(j=0;j<4;j++)
             out->m[i][j] = det * SubDet(j, i, m) * GetSign(j, i);
-    
+
     return true;
 }
 

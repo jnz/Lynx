@@ -56,7 +56,7 @@ void CWorldClient::SetLocalObj(int id)
 void CWorldClient::Update(const float dt, const uint32_t ticks)
 {
     CWorld::Update(dt, ticks);
-    
+
     CObj* controller = GetLocalController();
     ObjMove(controller, dt);
 
