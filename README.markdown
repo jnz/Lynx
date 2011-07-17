@@ -42,6 +42,8 @@ Create a build directory in the lynx folder
 
 > mkdir build
 
+> cd build
+
 Run CMake from the build/ folder
 
 > cmake ../
