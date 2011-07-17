@@ -107,8 +107,14 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
                 obj->m_locIsOnGround?1:0,
                 obj->GetID(), obj->GetResource().c_str());
-        vel.y = 0;
-        assert(0);
+
+        // Somehow the object is in free fall,
+        // now we just select a random spawn point and place the object with
+        // zero velocity there.
+        bspbin_spawn_t point = GetBSP()->GetRandomSpawnPoint();
+        obj->SetOrigin(point.point);
+        obj->SetVel(vec3_t::origin);
+        //assert(0);
         return;
     }
 
@@ -117,7 +123,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         vel += gravity*dt;
         p2  += 0.5f*dt*dt*gravity;
     }
-    
+
     p2 += vel*dt;
     trace.radius = obj->GetRadius();
     bool groundhit = false;
@@ -131,7 +137,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         if(trace.f > 1.0f) // no collision
             break;
 
-        q = trace.start + trace.f*trace.dir + 
+        q = trace.start + trace.f*trace.dir +
             trace.p.m_n * STOP_EPSILON;
         if(obj->GetFlags() & OBJ_FLAGS_ELASTIC) // bounce
         {
@@ -159,7 +165,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         p1 = q;
         p2 = p3;
     }
- 
+
     if(groundhit)
     {
         vel.y = 0;
@@ -193,7 +199,7 @@ bool CWorld::TraceObj(world_obj_trace_t* trace)
         {
             continue;
         }
-        
+
         if(cf >= -radius && cf < minf)
         {
             objhit = obj->GetID();
@@ -301,7 +307,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
 
         if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
             changes++;
-        
+
         assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // muss zwingend eingehalten werden
         tempstream.WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
 
@@ -425,7 +431,7 @@ void world_state_t::AddObjState(obj_state_t objstate, const int id)
 {
     assert(!ObjStateExists(id));
     objstates.push_back(objstate);
-    objindex[id] = (int)objstates.size()-1;    
+    objindex[id] = (int)objstates.size()-1;
 }
 
 bool world_state_t::ObjStateExists(const int id) const
