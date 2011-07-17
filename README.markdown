@@ -12,30 +12,57 @@ If zombies won't convince you, there are some other features:
 - OpenGL 2.0
 - Did I mention zombies?
 
-External Libraries
-==================
+Dependencies
+============
 
-Download the following libraries:
+Software
+--------
+
+- cmake [http://www.cmake.org/](http://www.cmake.org/)
+
+External Libraries
+------------------
+
+Download and install the following libraries:
 
 - enet: [http://enet.bespin.org/download/enet-1.2.tar.gz](http://enet.bespin.org/download/enet-1.2.tar.gz)
 - SDL: [http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip](http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip)
 - glew: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
 
-ENet
-----
+Compile Lynx on Linux and Mac OS X
+==================================
 
-Extract enet to a directory and open the "enet.dsp" project. Compile the enet
-library. Add library and include files to your VS path: Tools -> Options ->
-"Projects and Solutions" -> "VC++ Directories". Select "library files" and add a
-new line and select the enet "lib" folder. Then goto "include files" and add a
-new line for the enet "include" directory.
+Download Lynx from Github
+> git clone https://jnz@github.com/jnz/Lynx.git lynx
+> cd lynx
 
-SDL
----
+Create build directory and run CMake
+> mkdir build
+> cmake ../
+> make
 
-Extract SDL to a directory (you don't need to compile SDL) and add the include and lib directory in the same way as for enet. Copy the lib\SDL.dll to your lynx3d\lynx directory.
+This will create the following executable files:
+> lynx/build/src/lynx3dsv (dedicated server)
+> lynx/build/src/lynx3d (game client and server)
 
-Glew
-----
+Copy these files (lynx3d and lynx3dsv) to the game directory:
+> lynx/game
 
-Same with glew.
+The game folder contains the *baselynx* folder, where all the resources are
+stored.
+
+Run Lynx
+========
+
+Local game:
+
+> lynx/game/lynx3d
+
+Connect to remote server with the ip address 192.168.0.1 at port 9999:
+
+> lynx/game/lynx3d 192.168.0.1 9999
+
+Start a dedicated server at port 9999:
+
+> lynx/game/lynx3dsv 9999
+

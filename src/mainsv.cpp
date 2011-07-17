@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
     SDL_Event event;
-    
+
     // Game Modules
     CWorld worldsv; // Model
     CServer server(&worldsv); // Controller
