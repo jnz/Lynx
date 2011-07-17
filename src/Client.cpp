@@ -160,7 +160,7 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     for(i=0;i<clcmdlist.size();i++)
         stream.WriteString(clcmdlist[i]);
 
-    uint32_t packetflags = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+    const uint32_t packetflags = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
     packet = enet_packet_create(stream.GetBuffer(),
                                 stream.GetBytesWritten(),
                                 packetflags);

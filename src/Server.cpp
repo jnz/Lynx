@@ -308,9 +308,10 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     //             client->GetPeer()->mtu,
     //             m_stream.GetBytesWritten());
     // }
+    const uint32_t packetflags = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
     packet = enet_packet_create(m_stream.GetBuffer(),
                                 m_stream.GetBytesWritten(),
-                                0);
+                                packetflags);
     assert(packet);
     if(!packet)
         return false;
