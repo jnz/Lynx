@@ -33,19 +33,33 @@ Compile Lynx on Linux and Mac OS X
 ==================================
 
 Download Lynx from Github
+
 > git clone https://jnz@github.com/jnz/Lynx.git lynx
+
 > cd lynx
 
-Create build directory and run CMake
+Create a build directory in the lynx folder
+
 > mkdir build
+
+Run CMake from the build/ folder
+
 > cmake ../
+
+This will create a Makefile
+
 > make
 
-This will create the following executable files:
-> lynx/build/src/lynx3dsv (dedicated server)
+This will create the client executable *lynx3d*
+
 > lynx/build/src/lynx3d (game client and server)
 
+And a dedicated server module *lynx3dsv*
+
+> lynx/build/src/lynx3dsv (dedicated server)
+
 Copy these files (lynx3d and lynx3dsv) to the game directory:
+
 > lynx/game
 
 The game folder contains the *baselynx* folder, where all the resources are
