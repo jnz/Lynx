@@ -18,6 +18,10 @@ public:
     void SetLookDir(const quaternion_t& dir) { m_lookdir = dir; }
     quaternion_t GetLookDir() { return m_lookdir; }
 
+protected:
+    void FireGun();
+    void FireRocket();
+
 private:
     bool m_prim_triggered; // if +fire active?
     int m_fire_sound; // for sound spam prevention

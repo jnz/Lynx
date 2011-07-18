@@ -8,9 +8,11 @@
     der CObj Klasse. Attribute werden nicht über das Netzwerk übertragen
  */
 
+#define GAME_OBJ_TYPE_NONE          0
 #define GAME_OBJ_TYPE_OBJ           1
 #define GAME_OBJ_TYPE_ZOMBIE        2
 #define GAME_OBJ_TYPE_PLAYER        3
+#define GAME_OBJ_TYPE_ROCKET        4
 
 class CGameObj :
     public CObj
@@ -37,6 +39,7 @@ public:
 
     void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir);
     void SpawnParticleDust(const vec3_t& location, const vec3_t& dir);
+    void SpawnParticleExplosion(const vec3_t& location, const vec3_t& dir);
 
     int PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime); // id of sound obj
 
@@ -48,7 +51,7 @@ private:
 class CThinkFuncRemoveMe : public CThinkFunc
 {
 public:
-    CThinkFuncRemoveMe(uint32_t time, CWorld* world, CObj* obj) : 
+    CThinkFuncRemoveMe(uint32_t time, CWorld* world, CObj* obj) :
       CThinkFunc(time, world, obj) {}
     virtual bool DoThink(uint32_t leveltime)
     {

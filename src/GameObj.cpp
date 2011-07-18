@@ -2,6 +2,7 @@
 #include <math.h> // atan2
 #include "ParticleSystemBlood.h"
 #include "ParticleSystemDust.h"
+#include "ParticleSystemExplosion.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -46,6 +47,17 @@ void CGameObj::SpawnParticleDust(const vec3_t& location, const vec3_t& dir)
     dust->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 600, GetWorld(), dust));
     dust->AddFlags(OBJ_FLAGS_NOGRAVITY);
     GetWorld()->AddObj(dust);
+}
+
+void CGameObj::SpawnParticleExplosion(const vec3_t& location, const vec3_t& dir)
+{
+    CGameObj* explosion = new CGameObj(GetWorld());
+    explosion->SetRadius(0.0f);
+    explosion->SetOrigin(location);
+    explosion->SetParticleSystem("expl|" + CParticleSystemExplosion::GetConfigString(dir));
+    explosion->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 800, GetWorld(), explosion));
+    explosion->AddFlags(OBJ_FLAGS_NOGRAVITY);
+    GetWorld()->AddObj(explosion);
 }
 
 int CGameObj::PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime) // FIXME is lifetime useful?

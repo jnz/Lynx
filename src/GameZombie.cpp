@@ -29,7 +29,7 @@ bool CGameZombie::InitGame()
     }
 
     // n Testobjekte erstellen
-    for(int i=0;i<6;i++)
+    for(int i=0;i<0;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
         CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
@@ -79,7 +79,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
         GetWorld()->ObjMove(obj, dt);
         if(obj->IsClient())
         {
-            if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() > 
+            if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() >
                1*lynxmath::EPSILON)
                 obj->SetNextAnimation(obj->GetAnimationFromName("run"));
             else
@@ -87,7 +87,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
 
             client = GetServer()->GetClient(obj->GetClientID());
             if(client) // client evtl. disconnected, clientobj wird im nächsten frame automatisch entfernt
-            { 
+            {
                 ProcessClientCmds((CGameObjPlayer*)obj, client);
                 ClientMouse(obj, client->lat, client->lon);
 

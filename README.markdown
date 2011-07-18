@@ -25,9 +25,10 @@ External Libraries
 
 Download and install the following libraries:
 
-- enet: [http://enet.bespin.org/download/enet-1.2.tar.gz](http://enet.bespin.org/download/enet-1.2.tar.gz)
+- enet: [http://enet.bespin.org/SourceDistro.html](http://enet.bespin.org/SourceDistro.html)
 - SDL: [http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip](http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip)
 - glew: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
+- Flirt: [http://flirt.sourceforge.net/example.html](http://flirt.sourceforge.net/example.html)
 
 Compile Lynx on Linux and Mac OS X
 ==================================

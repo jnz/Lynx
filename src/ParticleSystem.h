@@ -44,3 +44,4 @@ protected:
     std::vector<particle_t> m_particles;
     int m_texture;
 };
+

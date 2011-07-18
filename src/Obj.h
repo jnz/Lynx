@@ -23,37 +23,37 @@ struct obj_state_t;
 // FIXME: use template function
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
-                  const uint32_t flagparam, 
+                  const uint32_t flagparam,
                   uint32_t* updateflags,
                   CStream* stream);
 int DeltaDiffQuat(const quaternion_t* newstate,
                   const quaternion_t* oldstate,
-                  const uint32_t flagparam, 
+                  const uint32_t flagparam,
                   uint32_t* updateflags,
                   CStream* stream);
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream);
 int DeltaDiffInt16(const int16_t* newstate,
                    const int16_t* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream);
 int DeltaDiffString(const std::string* newstate,
                     const std::string* oldstate,
-                    const uint32_t flagparam, 
+                    const uint32_t flagparam,
                     uint32_t* updateflags,
                     CStream* stream);
 int DeltaDiffDWORD(const uint32_t* newstate,
                    const uint32_t* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream);
 int DeltaDiffBytes(const uint8_t* newstate,
                    const uint8_t* oldstate,
-                   const uint32_t flagparam, 
+                   const uint32_t flagparam,
                    uint32_t* updateflags,
                    CStream* stream,
                    const int size);
@@ -132,6 +132,9 @@ public:
 
     // Particle Systems
     CParticleSystem* GetParticleSystem() { return m_particlesys.get(); }
+
+    // Wallhit notification
+    virtual void     OnHitWall(const vec3_t location, const vec3_t normal) {}
 
 protected:
     obj_state_t state; // obj_state

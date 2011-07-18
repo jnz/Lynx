@@ -211,10 +211,12 @@
     <ClCompile Include="GameObj.cpp" />
     <ClCompile Include="GameObjPlayer.cpp" />
     <ClCompile Include="GameObjZombie.cpp" />
+    <ClCompile Include="GameObjRocket.cpp" />
     <ClCompile Include="GameZombie.cpp" />
     <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="ParticleSystemBlood.cpp" />
     <ClCompile Include="ParticleSystemDust.cpp" />
+    <ClCompile Include="ParticleSystemExplosion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BSPBIN.h" />
@@ -247,10 +249,12 @@
     <ClInclude Include="GameObj.h" />
     <ClInclude Include="GameObjPlayer.h" />
     <ClInclude Include="GameObjZombie.h" />
+    <ClInclude Include="GameObjRocket.h" />
     <ClInclude Include="GameZombie.h" />
     <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="ParticleSystemBlood.h" />
     <ClInclude Include="ParticleSystemDust.h" />
+    <ClInclude Include="ParticleSystemExplosion.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

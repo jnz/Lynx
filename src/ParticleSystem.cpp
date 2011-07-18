@@ -1,6 +1,7 @@
 #include "ParticleSystem.h"
 #include "ParticleSystemBlood.h"
 #include "ParticleSystemDust.h"
+#include "ParticleSystemExplosion.h"
 #include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
@@ -31,7 +32,7 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
     {
         if(iter->lifetime < 0.0f)
             continue;
-        
+
         const vec3_t X = iter->size*0.5f*side;
         const vec3_t Y = iter->size*0.5f*up;
         const vec3_t Q1 =  X + Y + iter->origin;
@@ -88,6 +89,10 @@ CParticleSystem* CParticleSystem::CreateSystem(std::string systemname,
     {
         return new CParticleSystemDust(properties, resman);
     }
+    else if(systemname == "expl")
+    {
+        return new CParticleSystemExplosion(properties, resman);
+    }
     assert(0);
     return NULL;
 }
@@ -120,7 +125,7 @@ void CParticleSystem::SetPropertyMap(const std::string config, PROPERTYMAP& prop
         {
             std::stringstream floatconv(value);
             float f;
-            if(floatconv >> f) 
+            if(floatconv >> f)
             {
                 properties[key] = f;
             }
@@ -135,3 +140,4 @@ void CParticleSystem::SetPropertyMap(const std::string config, PROPERTYMAP& prop
         }
     }
 }
+

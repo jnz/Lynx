@@ -61,6 +61,7 @@ void CWorld::DeleteAllObjs()
 
 const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const
 {
+    // FIXME this function should use some sort of binary space partitioning
     std::vector<CObj*> objlist;
     const float radius2 = radius * radius;
     CObj* obj;
@@ -90,13 +91,13 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define GRAVITY             (100.00f) // sollte das als Welt Eigenschaft aufgenommen werden?
+#define GRAVITY             (100.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON        (0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
     bsp_sphere_trace_t trace;
-    vec3_t p1 = obj->GetOrigin(); // Startpunkt
+    vec3_t p1 = obj->GetOrigin(); // Starting point
     vec3_t p2 = p1; // Gewünschter Endpunkt
     vec3_t vel = obj->GetVel();
     vec3_t q; // Schnittpunkt mit Levelgeometrie
@@ -126,7 +127,8 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     p2 += vel*dt;
     trace.radius = obj->GetRadius();
-    bool groundhit = false;
+    bool groundhit = false; // obj on ground?
+    bool wallhit = false; // contact with level geometry
 
     for(int i=0;(p2 - p1) != vec3_t::origin && i < 10; i++)
     {
@@ -136,6 +138,8 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         GetBSP()->TraceSphere(&trace);
         if(trace.f > 1.0f) // no collision
             break;
+
+        wallhit = true; // trace.f <= 1.0
 
         q = trace.start + trace.f*trace.dir +
             trace.p.m_n * STOP_EPSILON;
@@ -170,6 +174,13 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     {
         vel.y = 0;
     }
+
+    if(wallhit)
+    {
+        // q = hit location, m_n geometry normal
+        obj->OnHitWall(q, trace.p.m_n);
+    }
+
     obj->m_locIsOnGround = groundhit;
 
     obj->SetOrigin(p2);

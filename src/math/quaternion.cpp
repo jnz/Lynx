@@ -10,31 +10,31 @@ void quaternion_t::FromMatrix(const matrix_t &mx)
     const float tr = mx.m[0][0] + mx.m[1][1] + mx.m[2][2];
 
     if(tr > 0)
-    { 
-        const float S = sqrt(tr+1.0f) * 2.0f; // S=4*qw 
+    {
+        const float S = sqrt(tr+1.0f) * 2.0f; // S=4*qw
         w = 0.25f * S;
         x = (mx.m[1][2] - mx.m[2][1]) / S;
-        y = (mx.m[2][0] - mx.m[0][2]) / S; 
-        z = (mx.m[0][1] - mx.m[1][0]) / S; 
+        y = (mx.m[2][0] - mx.m[0][2]) / S;
+        z = (mx.m[0][1] - mx.m[1][0]) / S;
     }
     else if((mx.m[0][0] > mx.m[1][1])&&(mx.m[0][0] > mx.m[2][2]))
-    { 
-        const float S = sqrt(1.0f + mx.m[0][0] - mx.m[1][1] - mx.m[2][2]) * 2.0f; // S=4*qx 
+    {
+        const float S = sqrt(1.0f + mx.m[0][0] - mx.m[1][1] - mx.m[2][2]) * 2.0f; // S=4*qx
         w = (mx.m[1][2] - mx.m[2][1]) / S;
         x = 0.25f * S;
-        y = (mx.m[1][0] + mx.m[0][1]) / S; 
-        z = (mx.m[2][0] + mx.m[0][2]) / S; 
+        y = (mx.m[1][0] + mx.m[0][1]) / S;
+        z = (mx.m[2][0] + mx.m[0][2]) / S;
     }
     else if (mx.m[1][1] > mx.m[2][2])
-    { 
+    {
         const float S = sqrt(1.0f + mx.m[1][1] - mx.m[0][0] - mx.m[2][2]) * 2.0f; // S=4*qy
         w = (mx.m[2][0] - mx.m[0][2]) / S;
-        x = (mx.m[1][0] + mx.m[0][1]) / S; 
+        x = (mx.m[1][0] + mx.m[0][1]) / S;
         y = 0.25f * S;
-        z = (mx.m[2][1] + mx.m[1][2]) / S; 
+        z = (mx.m[2][1] + mx.m[1][2]) / S;
     }
     else
-    { 
+    {
         const float S = sqrt(1.0f + mx.m[2][2] - mx.m[0][0] - mx.m[1][1]) * 2.0f; // S=4*qz
         w = (mx.m[0][1] - mx.m[1][0]) / S;
         x = (mx.m[2][0] + mx.m[0][2]) / S;
@@ -118,7 +118,7 @@ void quaternion_t::RotationAxis(vec3_t v, float a)
 {
     const float s = (float)sin(a/2);
     const float c = (float)cos(a/2);
-    
+
     v.Normalize();
     x = s * v.x;
     y = s * v.y;
@@ -222,7 +222,7 @@ void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quat
         to1[2] = - q2.z;
         to1[3] = - q2.w;
     }
-    else 
+    else
     {
         to1[0] = q2.x;
         to1[1] = q2.y;
@@ -232,7 +232,7 @@ void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quat
 
     if(cosom > 1)
         cosom = 1;
-    
+
     if(fabsf(cosom) < 0.999)
     {
         // standard case (slerp)
@@ -242,13 +242,13 @@ void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quat
         scale1 = (float)sin(t * omega) / sinom;
     }
     else
-    {        
-        // "from" and "to" quaternions are very close 
+    {
+        // "from" and "to" quaternions are very close
         //  ... so we can do a linear interpolation
         scale0 = 1.0f - t;
         scale1 = t;
     }
-    
+
     pDest->x = scale0 * q1.x + scale1 * to1[0];
     pDest->y = scale0 * q1.y + scale1 * to1[1];
     pDest->z = scale0 * q1.z + scale1 * to1[2];

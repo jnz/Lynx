@@ -20,7 +20,7 @@ void CThink::RemoveAll()
     std::list<CThinkFunc*>::iterator iter;
     for(iter = m_think.begin(); iter != m_think.end(); iter++)
         delete (*iter);
-    m_think.clear();       
+    m_think.clear();
 }
 
 void CThink::DoThink(uint32_t leveltime)
@@ -41,7 +41,7 @@ void CThink::DoThink(uint32_t leveltime)
             else
             {
                 iter++;
-                assert(func->GetThinktime() >= leveltime);
+                assert(func->GetThinktime() >= leveltime); // next thinktime should not be in the past
             }
         }
         else

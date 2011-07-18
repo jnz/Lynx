@@ -454,6 +454,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GameObjRocket.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameObjRocket.h"
+				>
+			</File>
+			<File
 				RelativePath=".\GameZombie.cpp"
 				>
 			</File>
@@ -487,6 +495,14 @@
 			</File>
 			<File
 				RelativePath=".\ParticleSystemDust.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ParticleSystemExplosion.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ParticleSystemExplosion.h"
 				>
 			</File>
 		</Filter>
