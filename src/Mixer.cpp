@@ -24,7 +24,9 @@ CMixer::~CMixer(void)
 bool CMixer::Init()
 {
     int status;
+#ifndef __linux
     int flags = MIX_INIT_OGG;
+#endif
 
     fprintf(stderr, "SDL_mixer Init... ");
     status = SDL_InitSubSystem(SDL_INIT_AUDIO);
@@ -34,12 +36,14 @@ bool CMixer::Init()
         return false;
     }
 
+#ifndef __linux
     status = Mix_Init(flags);
     if((status&flags) != flags)
     {
         fprintf(stderr, "SDL_mixer: Failed to init SDL_mixer (%s)\n", Mix_GetError());
         return false;
     }
+#endif
 
     // open 44.1KHz, signed 16bit, system byte order,
     //      stereo audio, using 1024 byte chunks
@@ -57,8 +61,10 @@ void CMixer::Shutdown()
     //Mix_HaltChannel(-1); // FIXME gehört das hier hin?
     Mix_CloseAudio();
 
+#ifndef __linux
     while(Mix_Init(0))
         Mix_Quit();
+#endif
 }
 
 void CMixer::Update(const float dt, const uint32_t ticks)
@@ -100,6 +106,5 @@ void CMixer::Update(const float dt, const uint32_t ticks)
             }
         }
     }
-
 }
 

@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <string>       // Default String Type for Lynx
 #include <cstdlib>
+#ifdef __linux
+#include <cstdio>
+#endif
 #include <limits.h>
 #include <stdint.h>		// Visual Studio < 2010 has no stdint.h, google stdint.h and place it somewhere to be found
 

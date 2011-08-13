@@ -50,7 +50,7 @@ struct md2header_t // (from quake2 src)
     int32_t         ofs_st;         // byte offset from start for stverts
     int32_t         ofs_tris;       // offset for dtriangles
     int32_t         ofs_frames;     // offset for first frame
-    int32_t         ofs_glcmds; 
+    int32_t         ofs_glcmds;
     int32_t         ofs_end;        // end of file
 };
 
@@ -124,7 +124,7 @@ CModelMD2::~CModelMD2(void)
 void CModelMD2::Render(const md2_state_t* state) const
 {
     assert(m_frames);
-    
+
     vertex_t* cur_vertices  = m_frames[state->cur_frame].vertices;
     vertex_t* next_vertices = m_frames[GetNextFrameInAnim(state, 1)].vertices;
     vertex_t* cur_vertex;
@@ -133,7 +133,7 @@ void CModelMD2::Render(const md2_state_t* state) const
     int count;
     float *u, *v;
     int* cmd = m_glcmds;
-    
+
     glBindTexture(GL_TEXTURE_2D, m_tex);
     glTranslatef(0,2.5f,0);
 
@@ -158,13 +158,13 @@ void CModelMD2::Render(const md2_state_t* state) const
             cur_vertex = &cur_vertices[*cmd];
             next_vertex = &next_vertices[*cmd];
 
-            inter_n = cur_vertex->n + 
-                        (next_vertex->n - cur_vertex->n) * 
+            inter_n = cur_vertex->n +
+                        (next_vertex->n - cur_vertex->n) *
                         state->step * m_fps;
             glNormal3fv(inter_n.v);
-            
-            inter_xyz = cur_vertex->v + 
-                        (next_vertex->v - cur_vertex->v) * 
+
+            inter_xyz = cur_vertex->v +
+                        (next_vertex->v - cur_vertex->v) *
                         state->step * m_fps;
             glVertex3fv(inter_xyz.v);
             cmd++;
@@ -193,7 +193,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     int32_t glreadcount;
 
     Unload();
-    
+
     texpath = CLynx::ChangeFileExtension(path, "tga");
     if(loadtexture) // Server muss nicht die Textur laden (oder?)
         m_tex = resman->GetTexture((char*)texpath.c_str());
@@ -223,12 +223,12 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
         if(fread(skinname, 1, MAX_SKINNAME, f) != MAX_SKINNAME)
         {
             fprintf(stderr, "MD2: Skinname length invalid\n");
-            goto loaderr;           
+            goto loaderr;
         }
         fprintf(stderr, "Skin: %s\n", skinname);
     }
 
-    // vertices 
+    // vertices
     m_vertices = new vertex_t[header.num_frames * header.num_xyz];
     if(!m_vertices)
     {
@@ -251,7 +251,7 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     if(glreadcount != m_glcmdcount)
     {
         fprintf(stderr, "MD2: Failed to read glcmds from file\n");
-        goto loaderr;       
+        goto loaderr;
     }
 
     // frames
@@ -302,11 +302,11 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
         for(int j=0;j<header.num_xyz;j++) // convert compressed vertices into our normal (sane) format
         {
             vertex = &m_frames[i].vertices[j];
-            vertex->v.z = -(framehead->v[j].v[0] * framehead->scale.x + 
+            vertex->v.z = -(framehead->v[j].v[0] * framehead->scale.x +
                                     framehead->translate.x);
-            vertex->v.x = framehead->v[j].v[1] * framehead->scale.y + 
+            vertex->v.x = framehead->v[j].v[1] * framehead->scale.y +
                                     framehead->translate.y;
-            vertex->v.y = framehead->v[j].v[2] * framehead->scale.z + 
+            vertex->v.y = framehead->v[j].v[2] * framehead->scale.z +
                                     framehead->translate.z;
 
             vertex->v *= MD2_LYNX_SCALE;
@@ -346,8 +346,8 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     {
         m_anims[i] = (*iter);
         /*
-        fprintf(stderr, "Animation: %s (%i-%i)\n", 
-                    m_anims[i].name, 
+        fprintf(stderr, "Animation: %s (%i-%i)\n",
+                    m_anims[i].name,
                     m_anims[i].start,
                     m_anims[i].end);
         */
