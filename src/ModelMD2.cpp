@@ -137,7 +137,7 @@ void CModelMD2::Render(const md2_state_t* state) const
     glBindTexture(GL_TEXTURE_2D, m_tex);
     glTranslatef(0,2.5f,0);
 
-    while(count = *cmd++)
+    while((count = *cmd++))
     {
         if(count > 0)
         {
@@ -278,13 +278,13 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     {
         m_frames[i].num_xyz = header.num_xyz;
 
-        if(fread(frame, 1, header.framesize, f) != header.framesize) // read complete frame to memory
+        if(fread(frame, 1, header.framesize, f) != (uint32_t)header.framesize) // read complete frame to memory
         {
             fprintf(stderr, "MD2: Error reading frame from model\n");
             goto loaderr;
         }
         strcpy(m_frames[i].name, framehead->name);
-        if(tmpname = strtok(framehead->name, "0123456789")) // keep track of animation sequence name
+        if((tmpname = strtok(framehead->name, "0123456789"))) // keep track of animation sequence name
         {
             if(strcmp(tmpname, curanim.name))
             {

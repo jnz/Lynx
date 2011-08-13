@@ -107,9 +107,7 @@ void CServer::Update(const float dt, const uint32_t ticks)
                             (int)event.packet->dataLength,
                             (int)event.packet->dataLength);
             OnReceive(&stream, (CClientInfo*)event.peer->data);
-
             enet_packet_destroy (event.packet);
-
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:
@@ -130,6 +128,10 @@ void CServer::Update(const float dt, const uint32_t ticks)
             delete (*iter).second;
             m_clientlist.erase(iter);
             event.peer->data = NULL;
+            break;
+                
+        case ENET_EVENT_TYPE_NONE:
+            break;
         }
     }
 
