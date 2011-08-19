@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     cout << "lynx bspcompile\n";
     if(argc < 3)
     {
-        cout << "Argumensts: bspcompile input.obj output.lbsp" << endl;
+        cout << "Arguments: bspcompile input.obj output.lbsp" << endl;
         return -1;
     }
 
