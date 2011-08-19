@@ -126,6 +126,12 @@
     <ClCompile Include="Sound.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="GameObjRocket.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystemExplosion.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BSPBIN.h">
@@ -229,6 +235,12 @@
     </ClInclude>
     <ClInclude Include="ParticleSystemDust.h">
       <Filter>fx</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjRocket.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystemExplosion.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

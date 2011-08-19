@@ -108,4 +108,3 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
 
     SpawnParticleBlood(hitpoint, dir);
 }
-
