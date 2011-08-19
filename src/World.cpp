@@ -103,7 +103,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     vec3_t q; // Schnittpunkt mit Levelgeometrie
     vec3_t p3; // Endpunkt nach "slide"
 
-    if(fabsf(vel.y) > 100.0f)
+    if(fabsf(vel.y) > 500.0f)
     {
         fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
                 obj->m_locIsOnGround?1:0,
@@ -130,7 +130,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     bool groundhit = false; // obj on ground?
     bool wallhit = false; // contact with level geometry
 
-    for(int i=0;(p2 - p1) != vec3_t::origin && i < 10; i++)
+    for(int i=0;(p2 - p1) != vec3_t::origin && i < 20; i++)
     {
         trace.start = p1;
         trace.dir = p2 - p1;

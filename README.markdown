@@ -4,7 +4,7 @@ Lynx
 Lynx is a simple 3D FPS with zombies :)
 If zombies won't convince you, there are some other features:
 
-- Multiplayer (UDP only)
+- Multiplayer with network latency interpolation
 - Shadow mapping, per-pixel lighting
 - Dedicated server
 - Multiplatform support (Windows, Mac OS X, Linux)
@@ -28,7 +28,6 @@ Download and install the following libraries:
 - enet: [http://enet.bespin.org/SourceDistro.html](http://enet.bespin.org/SourceDistro.html)
 - SDL: [http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip](http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip)
 - glew: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
-- Flirt: [http://flirt.sourceforge.net/example.html](http://flirt.sourceforge.net/example.html)
 
 Compile Lynx on Linux and Mac OS X
 ==================================
@@ -73,13 +72,13 @@ Run Lynx
 
 Local game:
 
-> lynx/game/lynx3d
+> lynx3d
 
 Connect to remote server with the ip address 192.168.0.1 at port 9999:
 
-> lynx/game/lynx3d 192.168.0.1 9999
+> lynx3d 192.168.0.1 9999
 
 Start a dedicated server at port 9999:
 
-> lynx/game/lynx3dsv 9999
+> lynx3dsv 9999
 

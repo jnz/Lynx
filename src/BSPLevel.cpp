@@ -562,18 +562,18 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                     minindex = i;
                 }
             }
-            else if(GetEdgeIntersection(m_poly[polyindex].firstvertex,
-                                        m_poly[polyindex].vertexcount,
-                                        trace->start,
-                                        trace->dir,
-                                        &cf, trace->radius,
-                                        &normal, &hitpoint) ||
-                    GetVertexIntersection(m_poly[polyindex].firstvertex,
-                                          m_poly[polyindex].vertexcount,
-                                          trace->start,
-                                          trace->dir,
-                                          &cf, trace->radius,
-                                          &normal, &hitpoint))
+            if(GetEdgeIntersection(m_poly[polyindex].firstvertex,
+                                   m_poly[polyindex].vertexcount,
+                                   trace->start,
+                                   trace->dir,
+                                   &cf, trace->radius,
+                                   &normal, &hitpoint) ||
+                GetVertexIntersection(m_poly[polyindex].firstvertex,
+                                   m_poly[polyindex].vertexcount,
+                                   trace->start,
+                                   trace->dir,
+                                   &cf, trace->radius,
+                                   &normal, &hitpoint))
             {
                 if(cf < minf)
                 {
