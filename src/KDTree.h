@@ -78,23 +78,22 @@ public:
     bool        Load(std::string file); // Lädt den Level aus Wavefront .obj Dateien. Texturen werden über den ResourceManager geladen
     void        Unload();
     std::string GetFilename() const; // Aktuell geladener Pfad zu Level
-    void        GetLeftRightScore(int* left, int* right) const; // Anzahl der Knoten im linken und rechten Bereich. Nützlich um zu sehen, ob der Baum gut balanciert ist
 
-    class CBSPNode // Hilfsklasse von KDTree, stellt einen Knoten im Baum dar
+    class CKDNode // Hilfsklasse von KDTree, stellt einen Knoten im Baum dar
     {
     public:
-        ~CBSPNode();
-        CBSPNode(CKDTree* tree,
+        ~CKDNode();
+        CKDNode(CKDTree* tree,
                  std::vector<bsp_poly_t>& polygons);
 
         union
         {
             struct
             {
-                CBSPNode* front;
-                CBSPNode* back;
+                CKDNode* front;
+                CKDNode* back;
             };
-            CBSPNode* child[2];
+            CKDNode* child[2];
         };
 
         void                    CalculateSphere(CKDTree* tree, std::vector<bsp_poly_t>& polygons); // Bounding Sphere für diesen Knoten berechnen
@@ -111,13 +110,13 @@ public:
     std::vector<vec3_t>         m_normals; // Normalenvektor
     std::vector<vec3_t>         m_texcoords; // FIXME vec2_t würde reichen
     std::vector<bsp_poly_t>     m_polylist; // Vektor für Polygone
-    CBSPNode*                   m_root; // Anfangsknoten
+    CKDNode*                   m_root; // Anfangsknoten
 
     void        TraceRay(const vec3_t& start, const vec3_t& dir, float* f) const;
     void        TraceSphere(bsp_sphere_trace_t* trace) const;
-    void        ClearMarks(CBSPNode* node);
-    void        MarkLeaf(const vec3_t& pos, float radius, CBSPNode* node);
-    CBSPNode*   GetLeaf(const vec3_t& pos);
+    void        ClearMarks(CKDNode* node);
+    void        MarkLeaf(const vec3_t& pos, float radius, CKDNode* node);
+    CKDNode*   GetLeaf(const vec3_t& pos);
     int         GetLeafCount() const { return m_leafcount; }
 
     spawn_point_t GetRandomSpawnPoint() const;
@@ -125,25 +124,25 @@ public:
     bool        WriteToBinary(const std::string filepath);
 
 protected:
-    void        TraceSphere(bsp_sphere_trace_t* trace, const CBSPNode* node) const;
-    void        TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CBSPNode* node) const; // Prüfen, wo ein Strahl die Levelgeometrie trifft.
+    void        TraceSphere(bsp_sphere_trace_t* trace, const CKDNode* node) const;
+    void        TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CKDNode* node) const; // Prüfen, wo ein Strahl die Levelgeometrie trifft.
 
 private:
-    int         m_nodecount; // increased by every CBSPNode constructor
+    int         m_nodecount; // increased by every CKDNode constructor
     int         m_leafcount;
-    bool        m_outofmem; // set to true by CBSPNode constructor, if no memory for further child nodes is available
+    bool        m_outofmem; // set to true by CKDNode constructor, if no memory for further child nodes is available
     std::string m_filename;
 
     // Spawn Point
     std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level
 
-    // Helper functions for the CBSPNode constructor to create the BSP tree
+    // Helper functions for the CKDNode constructor to create the BSP tree
     polyplane_t TestPolygon(bsp_poly_t& poly, plane_t& plane);
     int         SearchSplitPolygon(std::vector<bsp_poly_t>& polygons);
     void        SplitPolygon(bsp_poly_t& polyin, plane_t& plane,
                              bsp_poly_t& polyfront, bsp_poly_t& polyback);
     bool        IsConvexSet(std::vector<bsp_poly_t>& polygons);
 
-    void        GetLeftRightScore(int* left, int* right, CBSPNode* node) const;
-    CBSPNode*   GetLeaf(const vec3_t& pos, CBSPNode* node);
+    void        GetLeftRightScore(int* left, int* right, CKDNode* node) const;
+    CKDNode*   GetLeaf(const vec3_t& pos, CKDNode* node);
 };
