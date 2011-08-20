@@ -9,12 +9,12 @@
 
 /*
     CKDTree verwaltet die Level Geometrie und wird
-    für die Kollisionserkennung und Darstellung genutzt.
+    fÃ¼r die Kollisionserkennung und Darstellung genutzt.
  */
 
 class CKDTree;
 
-#define MAX_TRACE_DIST      99999.999f
+#define MAX_TRACE_DIST      9999.999f
 
 struct spawn_point_t
 {
@@ -22,36 +22,16 @@ struct spawn_point_t
     quaternion_t rot;
 };
 
-struct bsp_poly_t
+struct kd_tri_t // triangle for kd-tree
 {
-    bsp_poly_t() { splitmarker = false; colormarker = 0; }
-    std::vector<int> vertices; // Eckpunkte
-    std::vector<int> normals; // Normalen Vektoren
-    std::vector<int> texcoords; // UV Koordinaten
-    plane_t plane; // Ebene von Polygon
-    int texture; // Aktuelle Textur auf Polygon
-    bool splitmarker; // true if this poly was used to split the space
+    int vertices[3];
+    int normals[3];
+    int texcoords[3]; // UV coordinates
+    plane_t plane; // triangle plane
     std::string texturepath;
 
-    int Size() // vertex count
-    {
-        assert(vertices.size() == normals.size());
-        return (int)vertices.size();
-    }
-    void Clear()
-    {
-        vertices.clear();
-        normals.clear();
-        texcoords.clear();
-    }
-    // Hilfsfunktionen zum Prüfen Geradenschnitten mit der Polygon Geometrie
-    bool GetIntersectionPoint(const vec3_t& p, const vec3_t& v, float* f, const CKDTree* tree, const float offset = 0) const; // offset = plane offset
-    bool GetEdgeIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, vec3_t* hitpoint, const CKDTree* tree) const; // radius = edge radius
-    bool GetVertexIntersection(const vec3_t& start, const vec3_t& end, float* f, const float radius, vec3_t* normal, vec3_t* hitpoint, const CKDTree* tree) const;
-
-    vec3_t GetNormal(CKDTree* tree); // not unit length
-    bool IsPlanar(CKDTree* tree); // Prüfen ob Polygon eben ist
-    void GeneratePlanes(CKDTree* tree); // Erzeugt den Normalenvektor der Fläche
+    vec3_t GetNormal(CKDTree* tree);
+    void GeneratePlane(CKDTree* tree); // Calculate triangle normal
 };
 
 enum polyplane_t {  POLYPLANE_SPLIT = 0,
@@ -60,31 +40,21 @@ enum polyplane_t {  POLYPLANE_SPLIT = 0,
                     POLYPLANE_COPLANAR = 3
                     }; // if you change the order, change TestPolygon too
 
-struct bsp_sphere_trace_t
-{
-    vec3_t  start; // start point
-    vec3_t  dir; // end point = start + dir
-    float   radius;
-    float   f; // impact = start + f*dir
-    plane_t p; // impact plane
-};
-
 class CKDTree
 {
 public:
     CKDTree(void);
     ~CKDTree(void);
 
-    bool        Load(std::string file); // Lädt den Level aus Wavefront .obj Dateien. Texturen werden über den ResourceManager geladen
+    bool        Load(std::string file); // LÃ¤dt den Level aus Wavefront .obj Dateien. Texturen werden Ã¼ber den ResourceManager geladen
     void        Unload();
     std::string GetFilename() const; // Aktuell geladener Pfad zu Level
 
     class CKDNode // Hilfsklasse von KDTree, stellt einen Knoten im Baum dar
     {
     public:
+        CKDNode(const CKDTree* tree, const std::vector<int>& triangles);
         ~CKDNode();
-        CKDNode(CKDTree* tree,
-                 std::vector<bsp_poly_t>& polygons);
 
         union
         {
@@ -96,36 +66,22 @@ public:
             CKDNode* child[2];
         };
 
-        void                    CalculateSphere(CKDTree* tree, std::vector<bsp_poly_t>& polygons); // Bounding Sphere für diesen Knoten berechnen
-        bool                    IsLeaf() const { return !front && !back; } // Ist Knoten ein Blatt?
+        void                    CalculateSphere(CKDTree* tree, std::vector<kd_tri_t>& polygons); // Bounding Sphere fÃ¼r diesen Knoten berechnen
+        bool                    IsLeaf() const { return !front && !back; }
 
-        plane_t                 plane; // Teilungsbene
-        float                   sphere; // Sphere Radius
+        plane_t                 plane; // Split plane
+        float                   sphere; // Sphere radius
         vec3_t                  sphere_origin; // Sphere origin
-        std::vector<bsp_poly_t> polylist; // Liste der Polygone, ist nur bei Blättern gefüllt
-        int                     marker; // Markierer für Testzwecke. Um z.B. zu sehen wie viele Knoten bei einem Trace berührt wurden
+        std::vector<int>        triangles; // Only filled when node is a leaf
     };
 
     std::vector<vec3_t>         m_vertices; // Vertexvektor
     std::vector<vec3_t>         m_normals; // Normalenvektor
-    std::vector<vec3_t>         m_texcoords; // FIXME vec2_t würde reichen
-    std::vector<bsp_poly_t>     m_polylist; // Vektor für Polygone
-    CKDNode*                   m_root; // Anfangsknoten
-
-    void        TraceRay(const vec3_t& start, const vec3_t& dir, float* f) const;
-    void        TraceSphere(bsp_sphere_trace_t* trace) const;
-    void        ClearMarks(CKDNode* node);
-    void        MarkLeaf(const vec3_t& pos, float radius, CKDNode* node);
-    CKDNode*   GetLeaf(const vec3_t& pos);
-    int         GetLeafCount() const { return m_leafcount; }
-
-    spawn_point_t GetRandomSpawnPoint() const;
+    std::vector<vec3_t>         m_texcoords; // FIXME vec2_t wÃ¼rde reichen
+    std::vector<kd_tri_t>       m_triangles; // Vektor fÃ¼r Polygone
+    CKDNode*                    m_root; // Starting node
 
     bool        WriteToBinary(const std::string filepath);
-
-protected:
-    void        TraceSphere(bsp_sphere_trace_t* trace, const CKDNode* node) const;
-    void        TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CKDNode* node) const; // Prüfen, wo ein Strahl die Levelgeometrie trifft.
 
 private:
     int         m_nodecount; // increased by every CKDNode constructor
@@ -136,13 +92,6 @@ private:
     // Spawn Point
     std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level
 
-    // Helper functions for the CKDNode constructor to create the BSP tree
-    polyplane_t TestPolygon(bsp_poly_t& poly, plane_t& plane);
-    int         SearchSplitPolygon(std::vector<bsp_poly_t>& polygons);
-    void        SplitPolygon(bsp_poly_t& polyin, plane_t& plane,
-                             bsp_poly_t& polyfront, bsp_poly_t& polyback);
-    bool        IsConvexSet(std::vector<bsp_poly_t>& polygons);
-
-    void        GetLeftRightScore(int* left, int* right, CKDNode* node) const;
-    CKDNode*   GetLeaf(const vec3_t& pos, CKDNode* node);
+    // Helper functions for the CKDNode constructor to create the tree
+    polyplane_t TestTriangle(const kd_tri_t& tri, plane_t& plane);
 };

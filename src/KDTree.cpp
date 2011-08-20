@@ -11,7 +11,6 @@
 #endif
 
 #define MAX_POLY_PER_LEAF       0
-#define BSP_EPSILON             (0.003125f)
 
 CKDTree::CKDTree(void)
 {
@@ -29,14 +28,12 @@ bool CKDTree::Load(std::string file)
 {
     const char* DELIM = " \t\r\n";
     FILE* f;
-    char line[1024];
+    char line[2048];
     char* tok;
     char* sv[3];
     int i;
-    int vi, ti, ni;
-    int texture=0;
-    bsp_poly_t polygon;
-    int nonplanar = 0; // anzahl der nicht-ebenen polygone zählen
+    int vi, ti, ni; // vertex, texture and normal index
+    kd_tri_t triangle;
     std::string texpath;
 
     Unload();
@@ -80,16 +77,6 @@ bool CKDTree::Load(std::string file)
         {
             tok = strtok(NULL, DELIM);
             texpath = tok;
-            //if(resman)
-            //{
-            //    texture = resman->GetTexture(dir + tok);
-            //    if(texture == 0)
-            //    {
-            //        fprintf(stderr, "BSP: Texture not found: %s\n", tok);
-            //        assert(0);
-            //        return false;
-            //    }
-            //}
         }
         else if(strcmp(tok, "spawn")==0)
         {
@@ -107,68 +94,47 @@ bool CKDTree::Load(std::string file)
                 sv[i] = strtok(NULL, DELIM);
             if(!sv[0] || !sv[1] || !sv[2])
                 continue;
-            polygon.Clear();
-            polygon.texture = texture;
-            polygon.texturepath = texpath;
+
+            triangle.texturepath = texpath;
             for(i=0;i<3;i++)
             {
                 sscanf(sv[i], "%i/%i/%i", &vi, &ti, &ni);
 
-                polygon.vertices.push_back(vi-1);
-                polygon.normals.push_back(ni-1);
-                polygon.texcoords.push_back(ti-1);
+                triangle.vertices[i] = (vi-1);
+                triangle.normals[i] = (ni-1);
+                triangle.texcoords[i] = (ti-1);
             }
-            if(polygon.IsPlanar(this))
-            {
-                m_polylist.push_back(polygon);
-            }
-            else
-            {
-                /*
-                fprintf(stderr, "BSP: Nonplanar triangle (%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)(%.1f/%.1f/%.1f)\n",
-                            m_vertices[polygon.vertices[0]].x,
-                            m_vertices[polygon.vertices[0]].y,
-                            m_vertices[polygon.vertices[0]].z,
-                            m_vertices[polygon.vertices[1]].x,
-                            m_vertices[polygon.vertices[1]].y,
-                            m_vertices[polygon.vertices[1]].z,
-                            m_vertices[polygon.vertices[2]].x,
-                            m_vertices[polygon.vertices[2]].y,
-                            m_vertices[polygon.vertices[2]].z);
-                */
-                nonplanar++;
-            }
+
+            m_triangles.push_back(triangle);
         }
     }
     fclose(f);
 
-    fprintf(stderr, "BSP: Building tree from %i vertices in %i faces\n",
+    fprintf(stderr, "KD-Tree: Building tree from %i vertices in %i triangles\n",
                     (int)m_vertices.size(),
-                    (int)m_polylist.size());
-    fprintf(stderr, "BSP: Ignoring %i non-planar polygons\n", nonplanar);
+                    (int)m_triangles.size());
 
-    // Vertices u. faces wurde geladen
+    // Vertices u. faces are loaded
     m_nodecount = 0;
     m_leafcount = 0;
     m_outofmem = false;
-    m_root = new CKDNode(this, m_polylist);
+
+    std::vector<int> alltriangles;
+    for(i = 0; i < m_triangles.size(); i++)
+        alltriangles.push_back(i);
+
+    m_root = new CKDNode(this, alltriangles);
     if(m_outofmem || !m_root)
     {
-        fprintf(stderr, "BSP: not enough memory for tree\n");
+        fprintf(stderr, "KD-Tree: not enough memory for tree\n");
         assert(0);
         return false;
     }
 
-    int left, right;
-    GetLeftRightScore(&left, &right);
-    fprintf(stderr, "BSP tree generated: %i nodes from %i polygons. Left: %i nodes. Right: %i nodes. Leafs: %i. Ratio: %.2f\n",
+    fprintf(stderr, "KD-Tree tree generated: %i nodes from %i polygons. Leafs: %i.\n",
                     m_nodecount,
-                    (int)m_polylist.size(),
-                    left,
-                    right,
-                    m_leafcount,
-                    (float)left / (float)right);
-
+                    (int)m_triangles.size(),
+                    m_leafcount);
     m_filename = file;
 
     return true;
@@ -185,229 +151,9 @@ void CKDTree::Unload()
     m_spawnpoints.clear();
 }
 
-static const spawn_point_t s_spawn_default;
-spawn_point_t CKDTree::GetRandomSpawnPoint() const
-{
-    if(m_spawnpoints.size() < 1)
-        return s_spawn_default;
-    return m_spawnpoints[rand()%(m_spawnpoints.size())];
-}
-
 std::string CKDTree::GetFilename() const
 {
     return m_filename;
-}
-
-void CKDTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f) const
-{
-    TraceRay(start, dir, f, m_root);
-}
-
-void CKDTree::TraceRay(const vec3_t& start, const vec3_t& dir, float* f, const CKDNode* node) const
-{
-    if(node->IsLeaf())
-    {
-        float cf;
-        float minf = MAX_TRACE_DIST;
-        int minindex = -1;
-        int size = (int)node->polylist.size();
-        for(int i=0;i<size;i++)
-        {
-            if(node->polylist[i].plane.m_n * dir > 0.0f)
-                continue;
-
-            if(node->polylist[i].GetIntersectionPoint(start, dir, &cf, this))
-                if(cf < minf)
-                {
-                    minf = cf;
-                    minindex = i;
-                }
-        }
-        *f = minf;
-        return;
-    }
-
-    pointplane_t locstart = node->plane.Classify(start, BSP_EPSILON);
-    pointplane_t locend = node->plane.Classify(start+dir, BSP_EPSILON);
-
-    if(node->front && locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
-    {
-        TraceRay(start, dir, f, node->front);
-        return;
-    }
-    if(node->back && locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
-    {
-        TraceRay(start, dir, f, node->back);
-        return;
-    }
-
-    float f1=MAX_TRACE_DIST, f2=MAX_TRACE_DIST;
-    if(node->front)
-        TraceRay(start, dir, &f1, node->front);
-    if(node->back)
-        TraceRay(start, dir, &f2, node->back);
-
-    if(f1 < f2)
-        *f = f1;
-    else
-        *f = f2;
-}
-
-void CKDTree::TraceSphere(bsp_sphere_trace_t* trace) const
-{
-    if(m_root == NULL)
-    {
-        trace->f = MAX_TRACE_DIST;
-        return;
-    }
-    TraceSphere(trace, m_root);
-}
-
-void CKDTree::TraceSphere(bsp_sphere_trace_t* trace, const CKDNode* node) const
-{
-    if(node->IsLeaf())
-    {
-        const int size = (int)node->polylist.size();
-        float cf;
-        float minf = MAX_TRACE_DIST;
-        int minindex = -1;
-        plane_t hitplane;
-        vec3_t hitpoint;
-        vec3_t normal;
-        for(int i=0;i<size;i++)
-        {
-            if(node->polylist[i].plane.m_n * trace->dir > BSP_EPSILON) // backface culling
-                continue;
-
-            // - Prüfen ob Polygonfläche getroffen wird
-            // - Prüfen ob Polygon Edge getroffen wird
-            // - Prüfen ob Polygon Vertex getroffen wird
-            if(node->polylist[i].GetIntersectionPoint(trace->start,
-                                                      trace->dir, &cf,
-                                                      this, trace->radius))
-            {
-                if(cf < minf)
-                {
-                    minf = cf;
-                    minindex = i;
-                    hitplane = node->polylist[minindex].plane;
-                }
-            }
-            else if(node->polylist[i].GetEdgeIntersection(trace->start,
-                                                          trace->dir,
-                                                          &cf, trace->radius,
-                                                          &normal, &hitpoint, this) ||
-               node->polylist[i].GetVertexIntersection(trace->start,
-                                                       trace->dir,
-                                                       &cf, trace->radius,
-                                                       &normal, &hitpoint, this))
-            {
-                if(cf < minf)
-                {
-                    minf = cf;
-                    minindex = i;
-                    hitplane.SetupPlane(hitpoint, normal);
-                }
-            }
-        }
-        trace->f = minf;
-        if(minindex != -1)
-        {
-            trace->p = hitplane;
-        }
-        return;
-    }
-
-    pointplane_t locstart;
-    pointplane_t locend;
-
-    // Prüfen, ob alles vor der Splitplane liegt
-    plane_t tmpplane = node->plane;
-    tmpplane.m_d -= trace->radius;
-    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
-    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
-    if(node->front && locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
-    {
-        TraceSphere(trace, node->front);
-        return;
-    }
-
-    // Prüfen, ob alles hinter der Splitplane liegt
-    tmpplane = node->plane;
-    tmpplane.m_d += trace->radius;
-    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
-    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
-    if(node->back && locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
-    {
-        TraceSphere(trace, node->back);
-        return;
-    }
-
-    bsp_sphere_trace_t trace1 = *trace;
-    bsp_sphere_trace_t trace2 = *trace;
-    if(node->front)
-        TraceSphere(&trace1, node->front);
-    if(node->back)
-        TraceSphere(&trace2, node->back);
-
-    if(trace1.f < trace2.f)
-        *trace = trace1;
-    else
-        *trace = trace2;
-
-}
-
-void CKDTree::ClearMarks(CKDNode* node)
-{
-    if(node->IsLeaf())
-    {
-        node->marker = 0;
-        for(int i=0;i<(int)node->polylist.size();i++)
-            node->polylist[i].colormarker = 0;
-        return;
-    }
-    if(node->front)
-        ClearMarks(node->front);
-    if(node->back)
-        ClearMarks(node->back);
-}
-
-void CKDTree::MarkLeaf(const vec3_t& pos, float radius, CKDNode* node)
-{
-    if(node->IsLeaf())
-    {
-        for(int i=0;i<(int)node->polylist.size();i++)
-        {
-            if(fabsf(node->polylist[i].plane.GetDistFromPlane(pos)) < radius)
-                node->polylist[i].colormarker++;
-        }
-        return;
-    }
-
-    if(node->front && node->plane.GetDistFromPlane(pos) > -radius)
-        MarkLeaf(pos, radius, node->front);
-    if(node->back && node->plane.GetDistFromPlane(pos) < radius)
-        MarkLeaf(pos, radius, node->back);
-}
-
-CKDTree::CKDNode* CKDTree::GetLeaf(const vec3_t& pos)
-{
-    assert(m_root);
-    if(m_root)
-        return GetLeaf(pos, m_root);
-    else
-        return NULL;
-}
-
-CKDTree::CKDNode* CKDTree::GetLeaf(const vec3_t& pos, CKDTree::CKDNode* node)
-{
-    if(node->IsLeaf())
-        return node;
-
-    if(node->plane.Classify(pos) == POINTPLANE_BACK)
-        return GetLeaf(pos, node->back);
-    else
-        return GetLeaf(pos, node->front);
 }
 
 /*
@@ -417,15 +163,15 @@ CKDTree::CKDNode* CKDTree::GetLeaf(const vec3_t& pos, CKDTree::CKDNode* node)
         Front
         Coplanar
 */
-polyplane_t CKDTree::TestPolygon(bsp_poly_t& poly, plane_t& plane)
+polyplane_t CKDTree::TestTriangle(const kd_tri_t& tri, plane_t& plane)
 {
-    int size = poly.Size();
+    const int size = 3; // triangle size is always 3
     int allfront = 2;
     int allback = 1;
 
     for(int i=0;i<size;i++)
     {
-        switch(plane.Classify(m_vertices[poly.vertices[i]], BSP_EPSILON))
+        switch(plane.Classify(m_vertices[tri.vertices[i]], 0.0f))
         {
         case POINTPLANE_FRONT:
             allback = 0;
@@ -445,217 +191,9 @@ polyplane_t CKDTree::TestPolygon(bsp_poly_t& poly, plane_t& plane)
     return (polyplane_t)(allfront | allback);
 }
 
-int CKDTree::SearchSplitPolygon(std::vector<bsp_poly_t>& polygons)
-{
-    int i, j;
-    int polycount = (int)polygons.size();
-    int maxtest;
-    int tests=0;
-    plane_t curplane;
-    vec3_t polynormal;
-    int bestscore = INT_MAX;
-    int bestpoly = -1;
-    int score;
-    int front, back, split, coplanar;
-#ifdef _DEBUG
-    int splitpolycount = 0;
-#endif
-
-    assert(polycount >= 1);
-    if(polycount < 1)
-        return -1;
-    if(polycount == 1)
-        return 0;
-    if(polycount > 30)
-        maxtest = 30;
-    else
-        maxtest = polycount;
-
-    for(i=0;i<polycount;i++)
-    {
-        if(polygons[i].splitmarker) // do not use as split plane again
-        {
-#ifdef _DEBUG
-            splitpolycount++;
-#endif
-            continue;
-        }
-        tests++;
-        if(tests >= maxtest && bestpoly != -1)
-            break;
-
-        front = back = split = coplanar = 0;
-
-        curplane.SetupPlane(m_vertices[polygons[i].vertices[2]],
-                         m_vertices[polygons[i].vertices[1]],
-                         m_vertices[polygons[i].vertices[0]]);
-#ifdef _DEBUG
-        bsp_poly_t curpoly = polygons[i];
-        vec3_t curplane_m_n = curplane.m_n;
-        vec3_t m_norm = m_normals[polygons[i].normals[0]];
-        //assert(curplane_m_n.Equals(m_norm, 0.1f));
-#endif
-
-        for(j=0;j<polycount;j++)
-        {
-            if(j==i)
-                continue;
-            switch(TestPolygon(polygons[j], curplane))
-            {
-            case POLYPLANE_SPLIT:
-                split++;
-                break;
-            case POLYPLANE_FRONT:
-                front++;
-                break;
-            case POLYPLANE_BACK:
-                back++;
-                break;
-            case POLYPLANE_COPLANAR:
-                coplanar++;
-                break;
-#ifdef _DEBUG
-            default:
-                assert(0);
-#endif
-            }
-        }
-
-        score = 2*split + abs(front-back) + coplanar;
-        if(score < bestscore)
-        {
-            bestpoly = i;
-            bestscore = score;
-        }
-    }
-
-    //assert(splitpolycount != maxtest);
-    assert(bestpoly != -1);
-    return bestpoly;
-}
-
-void CKDTree::SplitPolygon(bsp_poly_t& polyin, plane_t& plane,
-                        bsp_poly_t& polyfront, bsp_poly_t& polyback)
-{
-    int polycount = (int)polyin.Size();
-    int from, to; // polygon index
-    pointplane_t fromloc, toloc;
-    float f; // for plane intersection
-    vec3_t fromvec, tovec, splitvec;
-    vec3_t texfrom, texto; // calculating new tex coords
-    int newindex; // for new vertices/texcoords
-
-    assert(polycount > 2);
-    //assert(polyin.IsPlanar(this));
-#ifdef _DEBUG
-    bool planar = polyin.IsPlanar(this);
-    assert(planar);
-#endif
-    polyfront.texture = polyin.texture;
-    polyback.texture = polyin.texture;
-
-    from = polycount-1;
-    fromloc = plane.Classify(m_vertices[polyin.vertices[from]], BSP_EPSILON);
-
-    for(to=0;to<polycount;from=to++)
-    {
-        switch(fromloc)
-        {
-        case POINTPLANE_FRONT:
-            polyfront.vertices.push_back(polyin.vertices[from]);
-            polyfront.normals.push_back(polyin.normals[from]);
-            polyfront.texcoords.push_back(polyin.texcoords[from]);
-            break;
-        case POINT_ON_PLANE:
-            polyfront.vertices.push_back(polyin.vertices[from]);
-            polyfront.normals.push_back(polyin.normals[from]);
-            polyfront.texcoords.push_back(polyin.texcoords[from]);
-        case POINTPLANE_BACK:
-            polyback.vertices.push_back(polyin.vertices[from]);
-            polyback.normals.push_back(polyin.normals[from]);
-            polyback.texcoords.push_back(polyin.texcoords[from]);
-            break;
-        }
-        tovec = m_vertices[polyin.vertices[to]];
-        toloc = plane.Classify(tovec, BSP_EPSILON);
-        if(toloc == POINTPLANE_BACK && fromloc == POINTPLANE_FRONT ||
-            toloc == POINTPLANE_FRONT && fromloc == POINTPLANE_BACK)
-        {
-            fromvec = m_vertices[polyin.vertices[from]];
-            tovec = tovec-fromvec;
-
-            if(!plane.GetIntersection(&f, fromvec, tovec))
-            {
-                assert(0); // let me see this
-                polyfront.Clear();
-                polyback.Clear();
-                return;
-            }
-            assert(fabsf(f) >= 0.0f && fabsf(f) <= (1.0f+lynxmath::EPSILON));
-
-            // Generating new vertex at split point
-            fromvec += tovec * f;
-            m_vertices.push_back(fromvec);
-            newindex = (int)(m_vertices.size()-1);
-            polyfront.vertices.push_back(newindex);
-            polyback.vertices.push_back(newindex);
-
-            // Generating new texture coordinates for split point
-            texfrom = m_texcoords[polyin.texcoords[from]];
-            texto = m_texcoords[polyin.texcoords[to]];
-            texfrom = texfrom + (texto-texfrom) * f;
-            m_texcoords.push_back(texfrom);
-            newindex = (int)(m_texcoords.size()-1);
-            polyfront.texcoords.push_back(newindex);
-            polyback.texcoords.push_back(newindex);
-
-            // FIXME are the normals OK?
-            polyfront.normals.push_back(polyin.normals[from]);
-            polyback.normals.push_back(polyin.normals[to]);
-        }
-
-        fromloc = toloc;
-    }
-
-    if(polyback.Size() < 3)
-        polyback.Clear();
-    if(polyfront.Size() < 3)
-        polyfront.Clear();
-}
-
-bool CKDTree::IsConvexSet(std::vector<bsp_poly_t>& polygons)
-{
-    int size = (int)polygons.size();
-    int i, j, k, ksize;
-    plane_t polyplane;
-
-    for(i=0;i<size;i++)
-    {
-        polyplane.SetupPlane(m_vertices[polygons[i].vertices[2]],
-                             m_vertices[polygons[i].vertices[1]],
-                             m_vertices[polygons[i].vertices[0]]);
-
-        for(j=0;j<size;j++)
-        {
-            if(j==i)
-                continue;
-
-            ksize = polygons[j].Size();
-            for(k=0;k<ksize;k++)
-            {
-                if(polyplane.Classify(m_vertices[polygons[j].vertices[k]],
-                    BSP_EPSILON)
-                    == POINTPLANE_BACK)
-                    return false;
-            }
-        }
-    }
-    return true;
-}
-
 // WriteToBinary Helper Functions
 
-int bspbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpath)
+int kdbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpath)
 {
     int i=0;
     std::vector<bspbin_texture_t>::const_iterator iter;
@@ -674,111 +212,71 @@ int bspbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpa
     return textures.size()-1;
 }
 
-int bspbin_pushleaf(const CKDTree& tree,
-                    const CKDTree::CKDNode* leaf,
-                        std::vector<bspbin_texture_t>& textures,
-                        std::vector<bspbin_leaf_t>& leafs,
-                        std::vector<bspbin_poly_t>& poly,
-                        std::vector<bspbin_vertex_t>& vertices,
-                        std::vector<bspbin_vertexindex_t>& vertexindices)
+int kdbin_pushleaf(const CKDTree& tree,
+                   const CKDTree::CKDNode* leaf,
+                   std::vector<bspbin_texture_t>& textures,
+                   std::vector<bspbin_leaf_t>& leafs)
 {
-    std::vector<bsp_poly_t>::const_iterator iter;
-    std::vector<int>::const_iterator intiter;
-
-    const int firstpoly = poly.size();
-    int polycount = 0;
-
-    for(iter = leaf->polylist.begin(); iter != leaf->polylist.end(); iter++)
-    {
-        const int firstvertex = vertexindices.size();
-        unsigned int index;
-
-        assert(iter->vertices.size() == iter->normals.size());
-        assert(iter->normals.size() == iter->texcoords.size());
-
-        // vertices von polygon hinzufügen
-        for(index = 0; index < iter->vertices.size(); index++)
-        {
-            bspbin_vertexindex_t vindex;
-            memset(&vindex, 0, sizeof(vindex));
-            vindex.vertex = vertices.size();
-            vertexindices.push_back(vindex);
-
-            bspbin_vertex_t vertex;
-            memset(&vertex, 0, sizeof(vertex));
-            vertex.v = tree.m_vertices[iter->vertices[index]];
-            vertex.n = tree.m_normals[iter->normals[index]];
-            vertex.tu = tree.m_texcoords[iter->texcoords[index]].x;
-            vertex.tv = tree.m_texcoords[iter->texcoords[index]].y;
-            vertices.push_back(vertex);
-        }
-
-        // Textur hinzufügen
-        int texturenum = bspbin_addtexture(textures, iter->texturepath.c_str());
-
-        bspbin_poly_t thispoly;
-        memset(&thispoly, 0, sizeof(thispoly));
-        thispoly.tex = texturenum;
-        thispoly.firstvertex = firstvertex;
-        thispoly.vertexcount = index; // index == vertexcount
-        poly.push_back(thispoly);
-        polycount++;
-    }
+    std::vector<int>::const_iterator iter;
+    int trianglecount = 0;
+    std::string texturepath;
 
     bspbin_leaf_t thisleaf;
     memset(&thisleaf, 0, sizeof(thisleaf));
-    thisleaf.firstpoly = firstpoly;
-    thisleaf.polycount = polycount;
+
+    // fill thisleaf with the right triangle indices:
+    for(iter = leaf->triangles.begin(); iter != leaf->triangles.end(); iter++)
+    {
+        // Save triangle index in leaf
+        // *iter is the triangle index tree.m_triangles
+        // and m_triangles layout is also used in the file
+        thisleaf.triangles[trianglecount] = *iter;
+        trianglecount++;
+    }
+
+    thisleaf.trianglecount = trianglecount;
     leafs.push_back(thisleaf);
 
-    return -(int)leafs.size(); // um 1 erhöht
+    return -(int)leafs.size(); // leaf indices are stored with a negative index
 }
 
-int bspbin_getnodes(const CKDTree& tree,
-                    const CKDTree::CKDNode* node,
-                        std::vector<bspbin_plane_t>& planes,
-                        std::vector<bspbin_texture_t>& textures,
-                        std::vector<bspbin_node_t>& nodes,
-                        std::vector<bspbin_leaf_t>& leafs,
-                        std::vector<bspbin_poly_t>& poly,
-                        std::vector<bspbin_vertex_t>& vertices,
-                        std::vector<bspbin_vertexindex_t>& vertexindices)
+int kdbin_getnodes(const CKDTree& tree,
+                   const CKDTree::CKDNode* node,
+                   std::vector<bspbin_plane_t>& planes,
+                   std::vector<bspbin_texture_t>& textures,
+                   std::vector<bspbin_node_t>& nodes,
+                   std::vector<bspbin_leaf_t>& leafs)
 {
     if(node->IsLeaf())
     {
-        return bspbin_pushleaf(tree, node, textures, leafs, poly, vertices, vertexindices);
+        return kdbin_pushleaf(tree, node, textures, leafs);
     }
 
     bspbin_plane_t bspplane;
     bspplane.p = node->plane;
     planes.push_back(bspplane);
+    const int planeindex = planes.size()-1;
 
     bspbin_node_t thisnode;
     const int curpos = nodes.size();
-    thisnode.plane = planes.size()-1;
+    thisnode.plane = planeindex;
     thisnode.radius = node->sphere;
     thisnode.sphere_origin = node->sphere_origin;
     nodes.push_back(thisnode);
 
     assert(node->front && node->back);
-    nodes[curpos].children[0] = bspbin_getnodes(tree,
-                                                node->front,
-                                                planes,
-                                                textures,
-                                                nodes,
-                                                leafs,
-                                                poly,
-                                                vertices,
-                                                vertexindices);
-    nodes[curpos].children[1] = bspbin_getnodes(tree,
-                                                node->back,
-                                                planes,
-                                                textures,
-                                                nodes,
-                                                leafs,
-                                                poly,
-                                                vertices,
-                                                vertexindices);
+    nodes[curpos].children[0] = kdbin_getnodes(tree,
+                                               node->front,
+                                               planes,
+                                               textures,
+                                               nodes,
+                                               leafs);
+    nodes[curpos].children[1] = kdbin_getnodes(tree,
+                                               node->back,
+                                               planes,
+                                               textures,
+                                               nodes,
+                                               leafs);
     return curpos;
 }
 
@@ -795,6 +293,7 @@ void WriteLump(FILE*f, const std::vector<Lump>& l)
 
 bool CKDTree::WriteToBinary(const std::string filepath)
 {
+    int i;
     FILE* f = fopen(filepath.c_str(), "wb");
     assert(f);
     if(!f)
@@ -804,21 +303,49 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     std::vector<bspbin_texture_t> textures;
     std::vector<bspbin_node_t> nodes;
     std::vector<bspbin_leaf_t> leafs;
-    std::vector<bspbin_poly_t> poly;
+    std::vector<bspbin_triangle_t> triangles;
     std::vector<bspbin_vertex_t> vertices;
-    std::vector<bspbin_vertexindex_t> vertexindices;
     std::vector<bspbin_spawn_t> spawnpoints;
 
+    // add vertices from tree
+    for(i = 0; i < m_vertices.size(); i++)
+    {
+        bspbin_vertex_t thisvertex;
+        memset(&thisvertex, 0, sizeof(thisvertex));
+        thisvertex.v = m_vertices[i];
+        thisvertex.n = m_normals[i];
+        thisvertex.tu = m_texcoords[i].x;
+        thisvertex.tv = m_texcoords[i].y;
+
+        vertices.push_back(thisvertex);
+    }
+
+    // add triangles from tree
+    for(i = 0; i < m_triangles.size(); i++)
+    {
+        // if the texture is not yet in "textures", add it and
+        // return the index to texturenum
+        const int texturenum = kdbin_addtexture(textures,
+                m_triangles[i].texturepath.c_str());
+
+        bspbin_triangle_t thistriangle;
+        memset(&thistriangle, 0, sizeof(thistriangle));
+        thistriangle.tex = texturenum;
+        thistriangle.v[0] = m_triangles[i].vertices[0];
+        thistriangle.v[1] = m_triangles[i].vertices[1];
+        thistriangle.v[2] = m_triangles[i].vertices[2];
+        triangles.push_back(thistriangle);
+    }
+
     // Daten aus Baum holen
-    bspbin_getnodes(*this,
+    kdbin_getnodes(*this,
                     m_root,
                     planes,
                     textures,
                     nodes,
                     leafs,
-                    poly,
-                    vertices,
-                    vertexindices);
+                    triangles,
+                    vertices);
     // Spawnpoints holen
     std::vector<spawn_point_t>::const_iterator iter;
     for(iter = m_spawnpoints.begin(); iter != m_spawnpoints.end(); iter++)
@@ -832,7 +359,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
 
     if(leafs.size() < 1)
     {
-        fprintf(stderr, "BSP: Leaf count < 1\n");
+        fprintf(stderr, "KD-Tree: Leaf count < 1\n");
         return false;
     }
 
@@ -856,7 +383,6 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     bspbin_direntry_t dirleafs;
     bspbin_direntry_t dirpoly;
     bspbin_direntry_t dirvertices;
-    bspbin_direntry_t dirvertexindices;
     bspbin_direntry_t dirspawnpoints;
 
     bspbin_header_t header;
@@ -874,12 +400,10 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     dirleafs.offset = dirnodes.length + dirnodes.offset;
     dirleafs.length = leafs.size() * sizeof(bspbin_leaf_t);
     dirpoly.offset = dirleafs.length + dirleafs.offset;
-    dirpoly.length = poly.size() * sizeof(bspbin_poly_t);
+    dirpoly.length = triangles.size() * sizeof(bspbin_triangle_t);
     dirvertices.offset = dirpoly.length + dirpoly.offset;
     dirvertices.length = vertices.size() * sizeof(bspbin_vertex_t);
-    dirvertexindices.offset = dirvertices.length + dirvertices.offset;
-    dirvertexindices.length = vertexindices.size() * sizeof(bspbin_vertexindex_t);
-    dirspawnpoints.offset = dirvertexindices.length + dirvertexindices.offset;
+    dirspawnpoints.offset = dirvertices.length + dirvertices.offset;
     dirspawnpoints.length = spawnpoints.size() * sizeof(bspbin_spawn_t);
 
     // Header
@@ -891,7 +415,6 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     fwrite(&dirleafs, sizeof(dirleafs), 1, f);
     fwrite(&dirpoly, sizeof(dirpoly), 1, f);
     fwrite(&dirvertices, sizeof(dirvertices), 1, f);
-    fwrite(&dirvertexindices, sizeof(dirvertexindices), 1, f);
     fwrite(&dirspawnpoints, sizeof(dirspawnpoints), 1, f);
 
     // Lumps
@@ -899,9 +422,8 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     WriteLump(f, textures);
     WriteLump(f, nodes);
     WriteLump(f, leafs);
-    WriteLump(f, poly);
+    WriteLump(f, triangles);
     WriteLump(f, vertices);
-    WriteLump(f, vertexindices);
     WriteLump(f, spawnpoints);
 
     fclose(f);
@@ -917,13 +439,11 @@ CKDTree::CKDNode::~CKDNode()
         delete back;
 }
 
-CKDTree::CKDNode::CKDNode(CKDTree* tree,
-                 std::vector<bsp_poly_t>& polygons)
+CKDTree::CKDNode::CKDNode(const CKDTree* tree, const std::vector<int>& triangles)
 {
-    std::vector<bsp_poly_t> frontlist;
-    std::vector<bsp_poly_t> backlist;
-    bsp_poly_t polyfront, polyback;
-    int count = (int)polygons.size();
+    std::vector<int> frontlist;
+    std::vector<int> backlist;
+    int count = (int)triangles.size();
     int split;
     int i;
     assert(tree->m_nodecount < (int)tree->m_polylist.size()*5);
@@ -1056,6 +576,7 @@ CKDTree::CKDNode::CKDNode(CKDTree* tree,
     {
         front = NULL;
     }
+
     if(backlist.size() > 0)
     {
         back = new CKDNode(tree, backlist);
@@ -1098,189 +619,18 @@ void CKDTree::CKDNode::CalculateSphere(CKDTree* tree, std::vector<bsp_poly_t>& p
     sphere = maxmin.Abs();
 }
 
-bool bsp_poly_t::IsPlanar(CKDTree* tree)
+vec3_t kd_tri_t::GetNormal(CKDTree* tree)
 {
-    plane_t testplane;
-    int j;
-    testplane.SetupPlane(tree->m_vertices[vertices[2]],
-                         tree->m_vertices[vertices[1]],
-                         tree->m_vertices[vertices[0]]);
-    if(!testplane.m_n.IsNormalized())
-    {
-//#ifdef _DEBUG
-//        vec3_t v1 = tree->m_vertices[vertices[2]];
-//        vec3_t v2 = tree->m_vertices[vertices[1]];
-//      vec3_t v3 = tree->m_vertices[vertices[0]];
-//        assert(0);
-//#endif
-        return false;
-    }
-    int polysize = Size();
-    assert(polysize > 2);
-    if(polysize > 3)
-    {
-        for(j=3;j<polysize;j++)
-            if(testplane.Classify(tree->m_vertices[vertices[j]],
-                BSP_EPSILON) !=
-                POINT_ON_PLANE)
-            {
-#ifdef _DEBUG
-                vec3_t v = tree->m_vertices[vertices[j]];
-                fprintf(stderr, "BSP: Nonplanar polygon. Dist: %f\n",
-                    testplane.GetDistFromPlane(v));
-                testplane.Classify(v, BSP_EPSILON);
-                assert(0);
-#endif
-                return false;
-            }
-    }
-    return true;
+    if(plane.m_n.IsNull())
+        GeneratePlane(tree);
+    return plane.m_n;
 }
 
-bool bsp_poly_t::GetIntersectionPoint(const vec3_t& start, const vec3_t& dir, float* f, const CKDTree* tree, const float offset) const
+void kd_tri_t::GeneratePlane(CKDTree* tree)
 {
-    vec3_t tmpintersect;
-    float cf;
-
-    plane_t ptmp = plane;
-    ptmp.m_d -= offset; // Plane shift
-    const bool hit = ptmp.GetIntersection(&cf, start, dir);
-    if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
-        return false;
-    tmpintersect = start + dir*cf - plane.m_n*offset;
-    *f = cf;
-
-    // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
-    assert(vertices.size() == 3);
-    const vec3_t P0 = tree->m_vertices[vertices[0]];
-    const vec3_t P1 = tree->m_vertices[vertices[1]];
-    const vec3_t P2 = tree->m_vertices[vertices[2]];
-    const vec3_t R = tmpintersect - P0;
-    const vec3_t Q1 = P1 - P0;
-    const vec3_t Q2 = P2 - P0;
-    const float Q1Q2 = Q1*Q2;
-    const float Q1_sqr = Q1.AbsSquared();
-    const float Q2_sqr = Q2.AbsSquared();
-    assert(fabsf(Q1_sqr*Q2_sqr - Q1Q2*Q1Q2) > lynxmath::EPSILON);
-    const float invdet = 1/(Q1_sqr*Q2_sqr - Q1Q2*Q1Q2);
-    const float RQ1 = R * Q1;
-    const float RQ2 = R * Q2;
-
-    const float w1 = invdet*(Q2_sqr*RQ1 - Q1Q2*RQ2);
-    const float w2 = invdet*(-Q1Q2*RQ1  + Q1_sqr*RQ2);
-
-    return w1 >= 0 && w2 >= 0 && (w1 + w2 <= 1);
-}
-
-bool bsp_poly_t::GetEdgeIntersection(const vec3_t& start, const vec3_t& dir,
-                                     float* f, const float radius, vec3_t* normal,
-                                     vec3_t* hitpoint, const CKDTree* tree) const
-{
-    const int size = (int)vertices.size();
-    float minf = MAX_TRACE_DIST;
-    float cf;
-    vec3_t a, b;
-    int minindex = -1;
-    for(int i=0;i<size;i++)
-    {
-        a = tree->m_vertices[vertices[i]];
-        b = tree->m_vertices[vertices[(i+1)%size]];
-        if(!vec3_t::RayCylinderIntersect(start, dir, a, b, radius, &cf))
-            continue;
-        if(cf < minf && cf >= -BSP_EPSILON)
-        {
-            minf = cf;
-            minindex = i;
-        }
-    }
-    if(minf <= 1.0f)
-    {
-        *hitpoint = start + minf*dir;
-        a = tree->m_vertices[vertices[minindex]];
-        b = tree->m_vertices[vertices[(minindex+1)%size]];
-        *normal = ((a-*hitpoint)^(b-*hitpoint)) ^ (b-a);
-        normal->Normalize();
-        *f = minf;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool bsp_poly_t::GetVertexIntersection(const vec3_t& start, const vec3_t& dir,
-                                       float* f, const float radius, vec3_t* normal,
-                                       vec3_t* hitpoint, const CKDTree* tree) const
-{
-    const int vertexcount = vertices.size();
-    float minf = MAX_TRACE_DIST;
-    float cf;
-    int minindex = -1;
-    for(int i=0;i<vertexcount;i++)
-    {
-        if(!vec3_t::RaySphereIntersect(start, dir,
-                                       tree->m_vertices[vertices[i]], radius, &cf))
-            continue;
-        if(cf < minf && cf >= -BSP_EPSILON)
-        {
-            minindex = i;
-            minf = cf;
-        }
-    }
-    if(minf <= 1.0f)
-    {
-        *hitpoint = start + minf*dir;
-        *normal = *hitpoint - tree->m_vertices[vertices[minindex]];
-        normal->Normalize();
-        *f = minf;
-        return true;
-    }
-    else
-        return false;
-}
-
-vec3_t bsp_poly_t::GetNormal(CKDTree* tree) // not unit length
-{
-    assert(plane.m_n.IsNull()); // we've got the plane - use plane.m_n instead
-    assert(tree->m_normals[normals[0]] ==
-            tree->m_normals[normals[1]]);
-    assert(tree->m_normals[normals[1]] ==
-            tree->m_normals[normals[2]]);
-    vec3_t np = tree->m_normals[normals[0]];
-    return np;
-}
-
-void CKDTree::GetLeftRightScore(int* left, int* right) const
-{
-    *left = 0;
-    *right = 0;
-    if(m_root)
-        GetLeftRightScore(left, right, m_root);
-}
-
-void CKDTree::GetLeftRightScore(int* left, int* right, CKDNode* node) const
-{
-    if(node->front)
-    {
-        (*left)++;
-        GetLeftRightScore(left, right, node->front);
-    }
-    if(node->back)
-    {
-        (*right)++;
-        GetLeftRightScore(left, right, node->back);
-    }
-}
-
-void bsp_poly_t::GeneratePlanes(CKDTree* tree)
-{
-    int size = (int)vertices.size();
-    vec3_t a, b, n;
-    plane_t p;
-
     plane.SetupPlane(tree->m_vertices[vertices[2]],
                      tree->m_vertices[vertices[1]],
                      tree->m_vertices[vertices[0]]);
 
 }
+

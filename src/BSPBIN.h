@@ -6,10 +6,10 @@
 
 // #pragma pack(push, 1) // manual padding
 
-#define BSPBIN_MAGIC            0x12051982
-#define BSPBIN_VERSION          3
-
-#define BSPBIN_HEADER_LEN   (sizeof(bspbin_header_t) + 8*sizeof(bspbin_direntry_t))
+#define BSPBIN_MAGIC                    0x12051982
+#define BSPBIN_VERSION                  4
+#define BSPBIN_MAX_TRIANGLES_PER_LEAF   64
+#define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 8*sizeof(bspbin_direntry_t))
 
 struct bspbin_header_t
 {
@@ -43,20 +43,14 @@ struct bspbin_node_t
 
 struct bspbin_leaf_t
 {
-    int32_t firstpoly;
-    int32_t polycount;
+    int32_t triangles[BSPBIN_MAX_TRIANGLES_PER_LEAF];
+    int32_t trianglecount;
 };
 
-struct bspbin_poly_t
+struct bspbin_triangle_t
 {
     int32_t tex;
-    int32_t firstvertex;
-    int32_t vertexcount;
-};
-
-struct bspbin_vertexindex_t
-{
-    int32_t vertex;
+    int32_t v[3];
 };
 
 struct bspbin_vertex_t
