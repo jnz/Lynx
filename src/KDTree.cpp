@@ -10,7 +10,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MAX_POLY_PER_LEAF       0
+#define KDTREE_EPSILON                 0.01f
+#define KDTREE_MAX_TRIANGLES_PER_LEAF  (BSPBIN_MAX_TRIANGLES_PER_LEAF/4)
 
 CKDTree::CKDTree(void)
 {
@@ -70,7 +71,7 @@ bool CKDTree::Load(std::string file)
             if(!sv[0] || !sv[1])
                 continue;
             if(!sv[2])
-                sv[2] = "0.0";
+                sv[2] = (char*)"0.0";
             m_texcoords.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
         }
         else if(strcmp(tok, "usemtl")==0)
@@ -105,6 +106,7 @@ bool CKDTree::Load(std::string file)
                 triangle.texcoords[i] = (ti-1);
             }
 
+            triangle.GeneratePlane(this);
             m_triangles.push_back(triangle);
         }
     }
@@ -123,7 +125,7 @@ bool CKDTree::Load(std::string file)
     for(i = 0; i < m_triangles.size(); i++)
         alltriangles.push_back(i);
 
-    m_root = new CKDNode(this, alltriangles);
+    m_root = new CKDNode(this, alltriangles, 0); // we begin with the x-axis (=0)
     if(m_outofmem || !m_root)
     {
         fprintf(stderr, "KD-Tree: not enough memory for tree\n");
@@ -163,7 +165,7 @@ std::string CKDTree::GetFilename() const
         Front
         Coplanar
 */
-polyplane_t CKDTree::TestTriangle(const kd_tri_t& tri, plane_t& plane)
+polyplane_t CKDTree::TestTriangle(const int triindex, plane_t& plane)
 {
     const int size = 3; // triangle size is always 3
     int allfront = 2;
@@ -171,7 +173,7 @@ polyplane_t CKDTree::TestTriangle(const kd_tri_t& tri, plane_t& plane)
 
     for(int i=0;i<size;i++)
     {
-        switch(plane.Classify(m_vertices[tri.vertices[i]], 0.0f))
+        switch(plane.Classify(m_vertices[m_triangles[triindex].vertices[i]], 0.0f))
         {
         case POINTPLANE_FRONT:
             allback = 0;
@@ -343,9 +345,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
                     planes,
                     textures,
                     nodes,
-                    leafs,
-                    triangles,
-                    vertices);
+                    leafs);
     // Spawnpoints holen
     std::vector<spawn_point_t>::const_iterator iter;
     for(iter = m_spawnpoints.begin(); iter != m_spawnpoints.end(); iter++)
@@ -368,7 +368,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         bspbin_node_t nullnode;
         nullnode.children[0] = -1;
         nullnode.children[1] = -1;
-        nullnode.radius = MAX_TRACE_DIST;
+        nullnode.radius = 99999.999f; // FIXME: this needs a define or something
         nullnode.sphere_origin = vec3_t::origin;
         nullnode.plane = 0;
         nodes.push_back(nullnode);
@@ -439,136 +439,63 @@ CKDTree::CKDNode::~CKDNode()
         delete back;
 }
 
-CKDTree::CKDNode::CKDNode(const CKDTree* tree, const std::vector<int>& triangles)
+// kdAxis = current KD-Tree axis (x, y or z)
+CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, const int kdAxis)
 {
-    std::vector<int> frontlist;
-    std::vector<int> backlist;
-    int count = (int)triangles.size();
-    int split;
+    int count = (int)trianglesIn.size();
     int i;
-    assert(tree->m_nodecount < (int)tree->m_polylist.size()*5);
 
     tree->m_nodecount++;
-    CalculateSphere(tree, polygons);
+    CalculateSphere(tree, trianglesIn);
 
-    if(polygons.size() < MAX_POLY_PER_LEAF)
+    // if there are not many triangles left, we create a leaf
+    if(count < KDTREE_MAX_TRIANGLES_PER_LEAF)
     {
-        fprintf(stderr, "BSP: subspace with %i polygons formed\n", (int)polygons.size());
-        polylist = polygons;
-        for(i=0;i<(int)polylist.size();i++)
-            polylist[i].GeneratePlanes(tree);
+        fprintf(stderr, "KD-Tree: subspace with %i polygons formed\n", count);
+
+        // save remaining triangles from trianglesIn in this leaf
+        // FIXME: what is the right STLish way to do this?
+        triangles.clear();
+        for(i=0; i<count; i++)
+            triangles.push_back(trianglesIn[i]);
+
         front = NULL;
         back = NULL;
         tree->m_leafcount++;
-        marker = tree->m_leafcount;
         return;
     }
 
-    if(tree->IsConvexSet(polygons))
-    {
-        fprintf(stderr, "BSP: Convex subspace with %i polygons formed\n", (int)polygons.size());
-        polylist = polygons;
-        for(i=0;i<(int)polylist.size();i++)
-            polylist[i].GeneratePlanes(tree);
-        front = NULL;
-        back = NULL;
-        tree->m_leafcount++;
-        marker = tree->m_leafcount;
-        return;
-    }
-    marker = 0;
+    // we still have a lot of triangles,
+    // so we find a good (tm) splitting plane now
+    // attention: don't write FindSpittingPlane
+    plane = FindSplittingPlane(tree, trianglesIn, kdAxis);
 
-    assert(polygons.size()>0);
-    split = tree->SearchSplitPolygon(polygons);
-    if(split < 0)
-    {
-        assert(0);
-        fprintf(stderr, "BSP: Weird problem\n");
-        // Im Endeffekt ist das hier dann auf ein neues Leaf. Sollte so nie vorkommen
-        polylist = polygons;
-        for(i=0;i<(int)polylist.size();i++)
-            polylist[i].GeneratePlanes(tree);
-        front = NULL;
-        back = NULL;
-        return;
-    }
-    plane.SetupPlane(tree->m_vertices[polygons[split].vertices[2]],
-                     tree->m_vertices[polygons[split].vertices[1]],
-                     tree->m_vertices[polygons[split].vertices[0]]);
-    polygons[split].splitmarker = true;
-    frontlist.push_back(polygons[split]);
+    std::vector<int> frontlist;
+    std::vector<int> backlist;
 
-    for(i=0;i<count;i++)
+    for(i=0;i<count;i++) // for every triangle
     {
-        if(i == split)
-            continue;
-        switch(tree->TestPolygon(polygons[i], plane))
+        switch(tree->TestTriangle(trianglesIn[i], plane))
         {
         case POLYPLANE_COPLANAR:
-            if(polygons[i].GetNormal(tree) * plane.m_n > 0.0f)
-                frontlist.push_back(polygons[i]);
-            else
-                backlist.push_back(polygons[i]);
+        case POLYPLANE_SPLIT:
+            frontlist.push_back(trianglesIn[i]);
+            backlist.push_back(trianglesIn[i]);
             break;
         case POLYPLANE_FRONT:
-            frontlist.push_back(polygons[i]);
+            frontlist.push_back(trianglesIn[i]);
             break;
         case POLYPLANE_BACK:
-            backlist.push_back(polygons[i]);
-            break;
-        case POLYPLANE_SPLIT:
-            tree->SplitPolygon(polygons[i], plane, polyfront, polyback);
-
-            // Wir akzeptieren nur Dreiecke als Eingangspolygone und wenn jetzt nach einem
-            // Split ein Quad entsteht teilen wir das wieder in
-            if(polyfront.Size() > 3)
-            {
-                bsp_poly_t poly1 = polyfront;
-                bsp_poly_t poly2 = polyfront;
-                poly1.vertices.pop_back();
-                poly1.texcoords.pop_back();
-                poly1.normals.pop_back();
-                poly2.vertices.erase(poly2.vertices.begin() + 1);
-                poly2.texcoords.erase(poly2.texcoords.begin() + 1);
-                poly2.normals.erase(poly2.normals.begin() + 1);
-                if(poly1.IsPlanar(tree))
-                    frontlist.push_back(poly1);
-                if(poly2.IsPlanar(tree))
-                    frontlist.push_back(poly2);
-            }
-            else if(polyfront.Size() > 2 && polyfront.IsPlanar(tree))
-            {
-                frontlist.push_back(polyfront);
-            }
-            if(polyback.Size() > 3) // FIXME copy and paste code
-            {
-                bsp_poly_t poly1 = polyback;
-                bsp_poly_t poly2 = polyback;
-                poly1.vertices.pop_back();
-                poly1.texcoords.pop_back();
-                poly1.normals.pop_back();
-                poly2.vertices.erase(poly2.vertices.begin() + 1);
-                poly2.texcoords.erase(poly2.texcoords.begin() + 1);
-                poly2.normals.erase(poly2.normals.begin() + 1);
-                if(poly1.IsPlanar(tree))
-                    backlist.push_back(poly1);
-                if(poly2.IsPlanar(tree))
-                    backlist.push_back(poly2);
-            }
-            else if(polyback.Size() > 2 && polyback.IsPlanar(tree))
-            {
-                backlist.push_back(polyback);
-            }
-
-            polyfront.Clear();
-            polyback.Clear();
+            backlist.push_back(trianglesIn[i]);
             break;
         }
     }
 
+    const int newkdAxis = (kdAxis+1)%3; // keep kdAxis between 0 and 2 (x, y, or z)
+
     if(frontlist.size() > 0)
     {
-        front = new CKDNode(tree, frontlist);
+        front = new CKDNode(tree, frontlist, newkdAxis);
         if(!front)
             tree->m_outofmem = true;
     }
@@ -579,7 +506,7 @@ CKDTree::CKDNode::CKDNode(const CKDTree* tree, const std::vector<int>& triangles
 
     if(backlist.size() > 0)
     {
-        back = new CKDNode(tree, backlist);
+        back = new CKDNode(tree, backlist, newkdAxis);
         if(!back)
             tree->m_outofmem = true;
     }
@@ -589,17 +516,56 @@ CKDTree::CKDNode::CKDNode(const CKDTree* tree, const std::vector<int>& triangles
     }
 }
 
-void CKDTree::CKDNode::CalculateSphere(CKDTree* tree, std::vector<bsp_poly_t>& polygons)
+plane_t CKDTree::CKDNode::FindSplittingPlane(const CKDTree* tree, const std::vector<int>& trianglesIn, const int kdAxis)
+{
+    static const vec3_t axis[3] = {vec3_t::xAxis,
+                                   vec3_t::yAxis,
+                                   vec3_t::zAxis};
+
+    int i, j, k;
+    int count = (int)trianglesIn.size();
+    std::vector<float> coords(trianglesIn.size()*3);
+    // we store every vertex component (x OR y OR z, depending on kdAxis)
+    // in the coords array.
+    // then the coords array gets sorted and we choose the median as splitting
+    // plane.
+
+    k = 0;
+    for(i=0; i<count; i++) // for every triangleIn
+    {
+        for(j = 0; j<3; j++) // for every triangle vertex
+        {
+            const int vertexindex = tree->m_triangles[trianglesIn[i]].vertices[j];
+            coords[k++] = tree->m_vertices[vertexindex].v[kdAxis];
+        }
+    }
+
+    // sort the coordinates for a L1 median estimation
+    // this makes us robust against triangle outliers
+    sort(coords.begin(), coords.end());
+    const float split = coords[coords.size()/2]; // median like
+    const vec3_t p(axis[kdAxis]*split); // point
+    const vec3_t n(axis[kdAxis]); // normal vector
+    return plane_t(p, n); // create plane from point and normal vector
+
+}
+
+void CKDTree::CKDNode::CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn) // Bounding Sphere für diesen Knoten berechnen
 {
     vec3_t v, min(0,0,0), max(0,0,0);
-    int i, j, jsize, isize = (int)polygons.size();
+    int i, j;
+    const int trisize = 3;
+    const int isize = (int)trianglesIn.size();
+    int triindex; // triangle index
+    int vertexindex; // vertex index
 
-    for(i=0;i<isize;i++)
+    for(i=0;i<isize;i++) // for every triangle
     {
-        jsize = polygons[i].Size();
-        for(j=0;j<jsize;j++)
+        triindex = trianglesIn[i];
+        for(j=0;j<3;j++) // for every vertex
         {
-            v = tree->m_vertices[polygons[i].vertices[j]];
+            vertexindex = tree->m_triangles[triindex].vertices[j];
+            v = tree->m_vertices[vertexindex];
             if(v.x < min.x)
                 min.x = v.x;
             if(v.y < min.y)

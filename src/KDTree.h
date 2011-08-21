@@ -14,9 +14,6 @@
 
 class CKDTree;
 
-#define MAX_TRACE_DIST      9999.999f
-#define KDTREE_EPSILON      0.01f
-
 struct spawn_point_t
 {
     vec3_t origin;
@@ -54,7 +51,8 @@ public:
     class CKDNode // Hilfsklasse von KDTree, stellt einen Knoten im Baum dar
     {
     public:
-        CKDNode(const CKDTree* tree, const std::vector<int>& triangles);
+
+        CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, const int kdAxis);
         ~CKDNode();
 
         union
@@ -67,8 +65,9 @@ public:
             CKDNode* child[2];
         };
 
-        void                    CalculateSphere(CKDTree* tree, std::vector<kd_tri_t>& polygons); // Bounding Sphere für diesen Knoten berechnen
+        void                    CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn); // Bounding Sphere für diesen Knoten berechnen
         bool                    IsLeaf() const { return !front && !back; }
+        plane_t                 FindSplittingPlane(const CKDTree* tree, const std::vector<int>& triangles, const int kdAxis);
 
         plane_t                 plane; // Split plane
         float                   sphere; // Sphere radius
@@ -93,6 +92,7 @@ private:
     // Spawn Point
     std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level
 
-    // Helper functions for the CKDNode constructor to create the tree
-    polyplane_t TestTriangle(const kd_tri_t& tri, plane_t& plane);
+    // Test Triangle: is a triangle in front or back of the plane?
+    polyplane_t TestTriangle(const int triindex, plane_t& plane);
 };
+

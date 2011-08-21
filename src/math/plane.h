@@ -12,8 +12,8 @@ struct plane_t
     plane_t(vec3_t p, vec3_t n);
     plane_t(float a, float b, float c, float d);
 
-    void SetupPlane(const vec3_t& p1, 
-                    const vec3_t& p2, 
+    void SetupPlane(const vec3_t& p1,
+                    const vec3_t& p2,
                     const vec3_t& p3);
     void SetupPlane(vec3_t p, vec3_t n);
     void SetupPlane(vec3_t n, float d);
