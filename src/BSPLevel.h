@@ -3,6 +3,7 @@
 #include "BSPBIN.h"
 #include "ResourceManager.h"
 #include <string>
+#include <vector>
 #include "Frustum.h"
 
 #define MAX_TRACE_DIST      99999.999f
@@ -14,6 +15,13 @@ struct bsp_sphere_trace_t
     float   radius;
     float   f; // impact = start + f*dir
     plane_t p; // impact plane
+};
+
+struct bsp_texture_batch_t
+{
+    uint16_t start; // vertex index start
+    uint16_t count; // vertex index count
+    int texid;
 };
 
 class CBSPLevel
@@ -38,25 +46,21 @@ public:
 
 protected:
 
-    void        RenderNodeGL(const int node, const vec3_t& origin, const CFrustum& frustum) const;
-
     void        TraceSphere(bsp_sphere_trace_t* trace, const int node) const;
-    inline bool GetTriIntersection(const int polyindex, 
+    inline bool GetTriIntersection(const int triangleindex, 
                                    const vec3_t& start, 
                                    const vec3_t& dir, 
                                    float* f, 
                                    const float offset, 
                                    plane_t* hitplane) const;
-    inline bool GetEdgeIntersection(const int firstvertex, 
-                                    const int vertexcount, 
+    inline bool GetEdgeIntersection(const int triangleindex, 
                                     const vec3_t& start, 
                                     const vec3_t& dir, 
                                     float* f, 
                                     const float radius, 
                                     vec3_t* normal,
                                     vec3_t* hitpoint) const;
-    inline bool GetVertexIntersection(const int firstvertex,
-                                      const int vertexcount,
+    inline bool GetVertexIntersection(const int triangleindex,
                                       const vec3_t& start, 
                                       const vec3_t& dir,
                                       float* f, 
@@ -70,19 +74,19 @@ protected:
     int*                m_texid;
     bspbin_node_t*      m_node;
     bspbin_leaf_t*      m_leaf;
-    bspbin_poly_t*      m_poly;
+    bspbin_triangle_t*  m_triangle;
     bspbin_vertex_t*    m_vertex;
     bspbin_spawn_t*     m_spawnpoint;
 
-    unsigned short*     m_indices;
+    uint16_t*           m_indices;
+    std::vector<bsp_texture_batch_t> m_texturebatch;
 
     int m_planecount;
     int m_texcount;
     int m_nodecount;
     int m_leafcount;
-    int m_polycount;
+    int m_trianglecount;
     int m_vertexcount;
-    int m_vertexindexcount;
     int m_spawnpointcount;
 
     std::string m_filename;

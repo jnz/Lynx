@@ -80,6 +80,8 @@
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\enet\include;..\..\glew\include;..\..\SDL;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL_mixer\lib;..\..\enet\Release;..\..\SDL\lib;..\..\glew\lib;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\SDL_mixer\lib;..\..\enet\Release;..\..\SDL\lib;..\..\glew\lib;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -92,6 +94,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL_mixer.lib;enet.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;glew32.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>

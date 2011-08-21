@@ -24,7 +24,7 @@ CBSPLevel::CBSPLevel(void)
     m_texid = NULL;
     m_node = NULL;
     m_leaf = NULL;
-    m_poly = NULL;
+    m_triangle = NULL;
     m_vertex = NULL;
     m_indices = NULL;
     m_spawnpoint = NULL;
@@ -33,9 +33,8 @@ CBSPLevel::CBSPLevel(void)
     m_texcount = 0;
     m_nodecount = 0;
     m_leafcount = 0;
-    m_polycount = 0;
+    m_trianglecount = 0;
     m_vertexcount = 0;
-    m_vertexindexcount = 0;
     m_spawnpointcount = 0;
 
     m_vbo = 0;
@@ -49,7 +48,7 @@ CBSPLevel::~CBSPLevel(void)
 
 bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 {
-    int i;
+    int i, j;
     int errcode;
     FILE* f = fopen(file.c_str(), "rb");
     if(!f)
@@ -75,18 +74,16 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     bspbin_direntry_t dirtextures;
     bspbin_direntry_t dirnodes;
     bspbin_direntry_t dirleafs;
-    bspbin_direntry_t dirpoly;
+    bspbin_direntry_t dirtriangles;
     bspbin_direntry_t dirvertices;
-    bspbin_direntry_t dirvertexindices;
     bspbin_direntry_t dirspawnpoints;
 
     fread(&dirplane, sizeof(dirplane), 1, f);
     fread(&dirtextures, sizeof(dirtextures), 1, f);
     fread(&dirnodes, sizeof(dirnodes), 1, f);
     fread(&dirleafs, sizeof(dirleafs), 1, f);
-    fread(&dirpoly, sizeof(dirpoly), 1, f);
+    fread(&dirtriangles, sizeof(dirtriangles), 1, f);
     fread(&dirvertices, sizeof(dirvertices), 1, f);
-    fread(&dirvertexindices, sizeof(dirvertexindices), 1, f);
     fread(&dirspawnpoints, sizeof(dirspawnpoints), 1, f);
     if(ftell(f) != BSPBIN_HEADER_LEN)
     {
@@ -98,9 +95,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     m_texcount = dirtextures.length / sizeof(bspbin_texture_t);
     m_nodecount = dirnodes.length / sizeof(bspbin_node_t);
     m_leafcount = dirleafs.length / sizeof(bspbin_leaf_t);
-    m_polycount = dirpoly.length / sizeof(bspbin_poly_t);
+    m_trianglecount = dirtriangles.length / sizeof(bspbin_triangle_t);
     m_vertexcount = dirvertices.length / sizeof(bspbin_vertex_t);
-    m_vertexindexcount = dirvertexindices.length / sizeof(bspbin_vertexindex_t);
     m_spawnpointcount = dirspawnpoints.length / sizeof(bspbin_spawn_t);
 
     m_plane = new bspbin_plane_t[ m_planecount ];
@@ -108,13 +104,18 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     m_texid = new int[ m_texcount ];
     m_node = new bspbin_node_t[ m_nodecount ];
     m_leaf = new bspbin_leaf_t[ m_leafcount ];
-    m_poly = new bspbin_poly_t[ m_polycount ];
+    m_triangle = new bspbin_triangle_t[ m_trianglecount ];
     m_vertex = new bspbin_vertex_t[ m_vertexcount ];
     m_spawnpoint = new bspbin_spawn_t[ m_spawnpointcount ];
-    std::auto_ptr<bspbin_vertexindex_t> tmpindex =
-        std::auto_ptr<bspbin_vertexindex_t>( new bspbin_vertexindex_t[ m_vertexindexcount ] ); // temp. vertex index buffer
 
-    if(!m_plane || !m_tex || !m_texid || !m_node || !m_leaf || !m_poly || !m_vertex || !m_spawnpoint)
+    if(!m_plane ||
+       !m_tex ||
+       !m_texid ||
+       !m_node ||
+       !m_leaf ||
+       !m_triangle ||
+       !m_vertex ||
+       !m_spawnpoint)
     {
         Unload();
         fprintf(stderr, "BSP: Not enough memory to load Lynx BSP\n");
@@ -133,26 +134,25 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     fseek(f, dirleafs.offset, SEEK_SET);
     fread(m_leaf, sizeof(bspbin_leaf_t), m_leafcount, f);
 
-    fseek(f, dirpoly.offset, SEEK_SET);
-    fread(m_poly, sizeof(bspbin_poly_t), m_polycount, f);
+    fseek(f, dirtriangles.offset, SEEK_SET);
+    fread(m_triangle, sizeof(bspbin_triangle_t), m_trianglecount, f);
 
     fseek(f, dirvertices.offset, SEEK_SET);
     fread(m_vertex, sizeof(bspbin_vertex_t), m_vertexcount, f);
 
-    fseek(f, dirvertexindices.offset, SEEK_SET);
-    fread(tmpindex.get(), sizeof(bspbin_vertexindex_t), m_vertexindexcount, f);
-
     fseek(f, dirspawnpoints.offset, SEEK_SET);
     fread(m_spawnpoint, sizeof(bspbin_spawn_t), m_spawnpointcount, f);
 
-    if(ftell(f) != (dirspawnpoints.offset + dirspawnpoints.length))
+    long curpos = ftell(f);
+    long theoreticalpos = (dirspawnpoints.offset + dirspawnpoints.length);
+    if(curpos != theoreticalpos)
     {
         Unload();
         fprintf(stderr, "BSP: Error reading lumps from BSP file\n");
         return false;
     }
 
-    // Prüfen, ob die index Zeiger in gültige Bereiche zeigen
+    // Check if tree file indices are within a valid range 
     for(i=0;i<m_nodecount;i++)
     {
         for(int k=0;k<2;k++)
@@ -177,21 +177,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
     m_filename = file;
 
-    // Setup Indices
-    m_indices = new unsigned short[ m_vertexindexcount ];
-    if(!m_indices)
-    {
-        Unload();
-        fprintf(stderr, "BSP: Not enough memory for index buffer array\n");
-        return false;
-    }
-
-    for(i=0;i<m_vertexindexcount;i++) // convert bspbin_vertexindex_t indices in unsigned short
-    {
-        m_indices[i] = (unsigned short)tmpindex.get()[i].vertex;
-    }
-
-    // Rendering Stuff
+    // Rendering stuff, if we are running as a server,
+    // we can return now.
     if(!resman)
     {
         m_vbo = 0;
@@ -199,13 +186,44 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return true;
     }
 
-    // load textures
-    for(i=0;i<m_polycount;i++)
+    // Setup indices
+    const int indexcount = m_trianglecount*3;
+    m_indices = new unsigned short[ indexcount ];
+    if(!m_indices)
     {
-        // const int runto = m_poly[i].firstvertex+m_poly[i].vertexcount;
-        const std::string texpath = CLynx::GetDirectory(file) + m_tex[m_poly[i].tex].name;
-        m_texid[m_poly[i].tex] = resman->GetTexture(texpath); // könnte das direkt in m_poly[i].tex gehen?
+        Unload();
+        fprintf(stderr, "BSP: Not enough memory for index buffer array\n");
+        return false;
     }
+
+    // Prepare indices grouped by texture
+    int vertexindex = 0;
+    for(i=0;i<m_texcount;i++)
+    {
+        // loading all textures
+        const std::string texpath = CLynx::GetDirectory(file) + m_tex[i].name;
+        m_texid[i] = resman->GetTexture(texpath);
+
+        // we group all triangles with the same
+        // texture in a complete batch of vertex indices
+        bsp_texture_batch_t thisbatch;
+
+        thisbatch.texid = m_texid[i];
+        thisbatch.start = vertexindex;
+
+        for(j=0;j<m_trianglecount;j++)
+        {
+            if(m_triangle[j].tex == i) // this triangle is using the current texture
+            {
+                m_indices[vertexindex++] = m_triangle[j].v[0];
+                m_indices[vertexindex++] = m_triangle[j].v[1];
+                m_indices[vertexindex++] = m_triangle[j].v[2];
+            }
+        }
+        thisbatch.count = vertexindex - thisbatch.start;
+        m_texturebatch.push_back(thisbatch);
+    }
+    assert(indexcount == vertexindex);
 
     glGenBuffers(1, &m_vbo);
     if(m_vbo < 1)
@@ -266,7 +284,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * m_vertexcount, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexcount, NULL, GL_STATIC_DRAW);
     if(glGetError() != GL_NO_ERROR)
     {
         Unload();
@@ -274,7 +292,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(unsigned short) * m_vertexcount, m_indices);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(uint16_t) * indexcount, m_indices);
     if(glGetError() != GL_NO_ERROR)
     {
         Unload();
@@ -292,10 +310,12 @@ void CBSPLevel::Unload()
     SAFE_RELEASE_ARRAY(m_texid);
     SAFE_RELEASE_ARRAY(m_node);
     SAFE_RELEASE_ARRAY(m_leaf);
-    SAFE_RELEASE_ARRAY(m_poly);
+    SAFE_RELEASE_ARRAY(m_triangle);
     SAFE_RELEASE_ARRAY(m_vertex);
     SAFE_RELEASE_ARRAY(m_indices);
     SAFE_RELEASE_ARRAY(m_spawnpoint);
+
+    m_texturebatch.clear();
 
     m_filename = "";
 
@@ -303,9 +323,8 @@ void CBSPLevel::Unload()
     m_texcount = 0;
     m_nodecount = 0;
     m_leafcount = 0;
-    m_polycount = 0;
+    m_trianglecount = 0;
     m_vertexcount = 0;
-    m_vertexindexcount = 0;
     m_spawnpointcount = 0;
 
     if(m_vbo > 0)
@@ -325,45 +344,6 @@ bspbin_spawn_t CBSPLevel::GetRandomSpawnPoint() const
     return m_spawnpoint[rand()%m_spawnpointcount];
 }
 
-void CBSPLevel::RenderNodeGL(const int node, const vec3_t& origin, const CFrustum& frustum) const
-{
-    if(node < 0) // is leaf
-    {
-        const int leafindex = -node-1;
-        const int polyindex = m_leaf[leafindex].firstpoly;
-        const int maxpolyindex = polyindex + m_leaf[leafindex].polycount;
-
-        for(int i=polyindex;i<maxpolyindex;i++)
-        {
-            glBindTexture(GL_TEXTURE_2D, m_texid[m_poly[i].tex]);
-
-            glDrawElements(GL_TRIANGLES,
-                           m_poly[i].vertexcount,
-                           GL_UNSIGNED_SHORT,
-                           BUFFER_OFFSET(m_poly[i].firstvertex * sizeof(unsigned short)));
-        }
-
-        return;
-    }
-
-    if(!frustum.TestSphere(m_node[node].sphere_origin, m_node[node].radius))
-        return;
-
-    const int planeindex = m_node[node].plane;
-    switch(m_plane[planeindex].p.Classify(origin))
-    {
-    case POINTPLANE_FRONT:
-        RenderNodeGL(m_node[node].children[1], origin, frustum);
-        RenderNodeGL(m_node[node].children[0], origin, frustum);
-        break;
-    case POINTPLANE_BACK:
-    case POINT_ON_PLANE:
-        RenderNodeGL(m_node[node].children[0], origin, frustum);
-        RenderNodeGL(m_node[node].children[1], origin, frustum);
-        break;
-    }
-}
-
 void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
 {
     if(!IsLoaded())
@@ -380,9 +360,15 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
     glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
 
-    // glDepthFunc(GL_ALWAYS); // We do this, because the tree is already sorted, but we need the z-buffer info for the models
-    RenderNodeGL(0, origin, frustum);
-    // glDepthFunc(GL_LEQUAL);
+    const int batchcount = (int)m_texturebatch.size();
+    for(int i=0; i<batchcount; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texid);
+        glDrawElements(GL_TRIANGLES,
+                       m_texturebatch[i].count,
+                       GL_UNSIGNED_SHORT,
+                       BUFFER_OFFSET(m_texturebatch[i].start * sizeof(uint16_t)));
+    }
 
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
@@ -399,7 +385,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-bool CBSPLevel::GetTriIntersection(const int polyindex,
+bool CBSPLevel::GetTriIntersection(const int triangleindex,
                                    const vec3_t& start,
                                    const vec3_t& dir,
                                    float* f,
@@ -407,15 +393,14 @@ bool CBSPLevel::GetTriIntersection(const int polyindex,
                                    plane_t* hitplane) const
 {
     float cf;
-    const int vertexindex = m_poly[polyindex].firstvertex;
-    const vec3_t& P0 = m_vertex[m_indices[vertexindex + 0]].v;
-    const vec3_t& P1 = m_vertex[m_indices[vertexindex + 1]].v;
-    const vec3_t& P2 = m_vertex[m_indices[vertexindex + 2]].v;
+    const int vertexindex1 = m_triangle[triangleindex].v[0];
+    const int vertexindex2 = m_triangle[triangleindex].v[1];
+    const int vertexindex3 = m_triangle[triangleindex].v[2];
+    const vec3_t& P0 = m_vertex[vertexindex1].v;
+    const vec3_t& P1 = m_vertex[vertexindex2].v;
+    const vec3_t& P2 = m_vertex[vertexindex3].v;
     plane_t polyplane(P2, P1, P0); // Polygon Ebene
     polyplane.m_d -= offset; // Plane shift
-
-    // Nur Dreiecke sind erlaubt
-    assert(m_poly[polyindex].vertexcount == 3);
 
     bool hit = polyplane.GetIntersection(&cf, start, dir);
     if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
@@ -445,8 +430,7 @@ bool CBSPLevel::GetTriIntersection(const int polyindex,
     return hit;
 }
 
-bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
-                                    const int vertexcount,
+bool CBSPLevel::GetEdgeIntersection(const int triangleindex,
                                     const vec3_t& start,
                                     const vec3_t& dir,
                                     float* f,
@@ -457,15 +441,16 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     float minf = MAX_TRACE_DIST;
     float cf;
     int minindex = -1;
-    for(int i=0;i<vertexcount;i++)
+    for(int i=0;i<3;i++) // for every edge of triangle
     {
+        const vec3_t fromvec = m_vertex[m_triangle[triangleindex].v[i]].v;
+        const vec3_t tovec = m_vertex[m_triangle[triangleindex].v[(i+1)%3]].v;
         if(!vec3_t::RayCylinderIntersect(start,
                                          dir,
-                                         m_vertex[m_indices[firstvertex + i]].v,
-                                         m_vertex[m_indices[firstvertex + ((i+1)%vertexcount)]].v,
+                                         fromvec,
+                                         tovec,
                                          radius,
-                                         &cf))
-            continue;
+                                         &cf)) continue;
         if(cf < minf && cf >= -BSP_EPSILON)
         {
             minf = cf;
@@ -475,8 +460,8 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     if(minf <= 1.0f)
     {
         *hitpoint = start + minf*dir;
-        const vec3_t* a = &m_vertex[m_indices[firstvertex + minindex]].v;
-        const vec3_t* b = &m_vertex[m_indices[firstvertex + ((minindex+1)%vertexcount)]].v;
+        const vec3_t* a = &m_vertex[m_triangle[triangleindex].v[minindex]].v;
+        const vec3_t* b = &m_vertex[m_triangle[triangleindex].v[(minindex+1)%3]].v;
 
         *normal = ((*a-*hitpoint)^(*b-*hitpoint)) ^ (*b-*a);
         normal->Normalize();
@@ -489,8 +474,7 @@ bool CBSPLevel::GetEdgeIntersection(const int firstvertex,
     }
 }
 
-bool CBSPLevel::GetVertexIntersection(const int firstvertex,
-                                      const int vertexcount,
+bool CBSPLevel::GetVertexIntersection(const int triangleindex,
                                       const vec3_t& start,
                                       const vec3_t& dir,
                                       float* f,
@@ -501,11 +485,12 @@ bool CBSPLevel::GetVertexIntersection(const int firstvertex,
     float minf = MAX_TRACE_DIST;
     float cf;
     int minindex = -1;
-    for(int i=0;i<vertexcount;i++)
+    for(int i=0;i<3;i++) // for every vertex of triangle
     {
+        const vec3_t v = m_vertex[m_triangle[triangleindex].v[i]].v;
         if(!vec3_t::RaySphereIntersect(start,
                                        dir,
-                                       m_vertex[m_indices[firstvertex + i]].v,
+                                       v,
                                        radius,
                                        &cf))
         {
@@ -520,7 +505,7 @@ bool CBSPLevel::GetVertexIntersection(const int firstvertex,
     if(minf <= 1.0f)
     {
         *hitpoint = start + minf*dir;
-        *normal = *hitpoint - m_vertex[m_indices[firstvertex + minindex]].v;
+        *normal = *hitpoint - m_vertex[m_triangle[triangleindex].v[minindex]].v;
         normal->Normalize();
         *f = minf;
         return true;
@@ -536,20 +521,19 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     if(node < 0) // Sind wir an einem Blatt angelangt?
     {
         const int leafindex = -node-1;
-        const int polycount = m_leaf[leafindex].polycount;
+        const int trianglecount = m_leaf[leafindex].trianglecount;
         float cf;
         float minf = MAX_TRACE_DIST;
         int minindex = -1;
         plane_t hitplane;
         vec3_t hitpoint;
         vec3_t normal;
-        for(int i=0;i<polycount;i++)
+        for(int i=0;i<trianglecount;i++)
         {
-            const int polyindex = m_leaf[leafindex].firstpoly + i;
             // - Prüfen ob Polygonfläche getroffen wird
             // - Prüfen ob Polygon Edge getroffen wird
             // - Prüfen ob Polygon Vertex getroffen wird
-            if(GetTriIntersection(polyindex,
+            if(GetTriIntersection(i,
                                   trace->start,
                                   trace->dir,
                                   &cf,
@@ -562,14 +546,12 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                     minindex = i;
                 }
             }
-            if(GetEdgeIntersection(m_poly[polyindex].firstvertex,
-                                   m_poly[polyindex].vertexcount,
+            if(GetEdgeIntersection(i,
                                    trace->start,
                                    trace->dir,
                                    &cf, trace->radius,
                                    &normal, &hitpoint) ||
-                GetVertexIntersection(m_poly[polyindex].firstvertex,
-                                   m_poly[polyindex].vertexcount,
+                GetVertexIntersection(i,
                                    trace->start,
                                    trace->dir,
                                    &cf, trace->radius,
@@ -597,8 +579,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     // Prüfen, ob alles vor der Splitplane liegt
     plane_t tmpplane = m_plane[m_node[node].plane].p;
     tmpplane.m_d -= trace->radius;
-    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
-    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
+    locstart = tmpplane.Classify(trace->start, 0.0f);
+    locend = tmpplane.Classify(trace->start + trace->dir, 0.0f);
     if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
     {
         TraceSphere(trace, m_node[node].children[0]);
@@ -606,9 +588,9 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     }
 
     // Prüfen, ob alles hinter der Splitplane liegt
-    tmpplane.m_d += 2*trace->radius;
-    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
-    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
+    tmpplane.m_d = m_plane[m_node[node].plane].p.m_d + trace->radius;
+    locstart = tmpplane.Classify(trace->start, 0.0f);
+    locend = tmpplane.Classify(trace->start + trace->dir, 0.0f);
     if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
     {
         TraceSphere(trace, m_node[node].children[1]);
