@@ -15,6 +15,7 @@
 class CKDTree;
 
 #define MAX_TRACE_DIST      9999.999f
+#define KDTREE_EPSILON      0.01f
 
 struct spawn_point_t
 {
