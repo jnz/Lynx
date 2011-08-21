@@ -8,7 +8,7 @@
 
 #define BSPBIN_MAGIC                    0x12051982
 #define BSPBIN_VERSION                  4
-#define BSPBIN_MAX_TRIANGLES_PER_LEAF   32
+#define BSPBIN_MAX_TRIANGLES_PER_LEAF   256
 #define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 7*sizeof(bspbin_direntry_t))
 
 struct bspbin_header_t

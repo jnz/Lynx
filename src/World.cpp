@@ -91,7 +91,7 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define GRAVITY             (100.00f) // should this be a world property?
+#define GRAVITY             (50.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON        (0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const
@@ -130,7 +130,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     bool groundhit = false; // obj on ground?
     bool wallhit = false; // contact with level geometry
 
-    for(int i=0;(p2 - p1) != vec3_t::origin && i < 20; i++)
+    for(int i=0;(p2 - p1) != vec3_t::origin && i < 5; i++)
     {
         trace.start = p1;
         trace.dir = p2 - p1;
