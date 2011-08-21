@@ -76,7 +76,7 @@ float plane_t::GetDistFromPlane(const vec3_t& p) const
     return p*m_n + m_d;
 }
 
-pointplane_t plane_t::Classify(const vec3_t& p, float epsilon) const
+pointplane_t plane_t::Classify(const vec3_t& p, const float epsilon) const
 {
     float f = p*m_n + m_d; // GetDistFromPlane
     if(f > epsilon)

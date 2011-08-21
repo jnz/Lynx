@@ -47,6 +47,8 @@
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\SDL\lib;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\SDL\lib;$(LibraryPath)</LibraryPath>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -59,6 +61,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -87,6 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\KDTree.cpp" />
     <ClCompile Include="..\src\lynx.cpp" />
     <ClCompile Include="..\src\math\matrix.cpp" />
     <ClCompile Include="..\src\math\plane.cpp" />
@@ -96,6 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\BSPBIN.h" />
+    <ClInclude Include="..\src\KDTree.h" />
     <ClInclude Include="..\src\lynx.h" />
     <ClInclude Include="..\src\math\mathconst.h" />
     <ClInclude Include="..\src\math\matrix.h" />

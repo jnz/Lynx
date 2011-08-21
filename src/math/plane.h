@@ -21,7 +21,7 @@ struct plane_t
 
     bool GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const;
     float GetDistFromPlane(const vec3_t& p) const;
-    pointplane_t Classify(const vec3_t& p, float epsilon = lynxmath::EPSILON) const;
+    pointplane_t Classify(const vec3_t& p, const float epsilon = lynxmath::EPSILON) const;
     bool IsPlaneBetween(const vec3_t&a, const vec3_t& b) const;
 
     // Plane Data

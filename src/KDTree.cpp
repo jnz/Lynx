@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <algorithm> // for std::sort
 #include "math/mathconst.h"
 #include "BSPBIN.h"
 
@@ -11,7 +12,7 @@
 #endif
 
 #define KDTREE_EPSILON                 0.01f
-#define KDTREE_MAX_TRIANGLES_PER_LEAF  (BSPBIN_MAX_TRIANGLES_PER_LEAF/4)
+#define KDTREE_MAX_TRIANGLES_PER_LEAF  (BSPBIN_MAX_TRIANGLES_PER_LEAF*3/4)
 
 CKDTree::CKDTree(void)
 {
@@ -27,6 +28,7 @@ CKDTree::~CKDTree(void)
 #pragma warning(disable: 4244)
 bool CKDTree::Load(std::string file)
 {
+    bool success = false; // failed to read file, if false
     const char* DELIM = " \t\r\n";
     FILE* f;
     char line[2048];
@@ -36,12 +38,16 @@ bool CKDTree::Load(std::string file)
     int vi, ti, ni; // vertex, texture and normal index
     kd_tri_t triangle;
     std::string texpath;
+    std::vector<int> alltriangles; // indices of all triangles, used for the init of the root node
 
     Unload();
 
     f = fopen(file.c_str(), "rb");
     if(!f)
+    {
+        fprintf(stderr, "Failed to open file: %s\n", file.c_str());
         return false;
+    }
 
     while(!feof(f))
     {
@@ -53,7 +59,7 @@ bool CKDTree::Load(std::string file)
             for(i=0;i<3;i++)
                 sv[i] = strtok(NULL, DELIM);
             if(!sv[0] || !sv[1] || !sv[2])
-                continue;
+                goto cleanup;
             m_vertices.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
         }
         else if(strcmp(tok, "vn")==0) // normal
@@ -61,7 +67,7 @@ bool CKDTree::Load(std::string file)
             for(i=0;i<3;i++)
                 sv[i] = strtok(NULL, DELIM);
             if(!sv[0] || !sv[1] || !sv[2])
-                continue;
+                goto cleanup;
             m_normals.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
         }
         else if(strcmp(tok, "vt")==0) // textures
@@ -69,7 +75,7 @@ bool CKDTree::Load(std::string file)
             for(i=0;i<3;i++)
                 sv[i] = strtok(NULL, DELIM);
             if(!sv[0] || !sv[1])
-                continue;
+                goto cleanup;
             if(!sv[2])
                 sv[2] = (char*)"0.0";
             m_texcoords.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
@@ -77,6 +83,8 @@ bool CKDTree::Load(std::string file)
         else if(strcmp(tok, "usemtl")==0)
         {
             tok = strtok(NULL, DELIM);
+            if(strlen(tok) < 1)
+                goto cleanup;
             texpath = tok;
         }
         else if(strcmp(tok, "spawn")==0)
@@ -94,12 +102,13 @@ bool CKDTree::Load(std::string file)
             for(i=0;i<3;i++)
                 sv[i] = strtok(NULL, DELIM);
             if(!sv[0] || !sv[1] || !sv[2])
-                continue;
+                goto cleanup;
 
             triangle.texturepath = texpath;
             for(i=0;i<3;i++)
             {
-                sscanf(sv[i], "%i/%i/%i", &vi, &ti, &ni);
+                if(sscanf(sv[i], "%i/%i/%i", &vi, &ti, &ni) != 3)
+                    goto cleanup;
 
                 triangle.vertices[i] = (vi-1);
                 triangle.normals[i] = (ni-1);
@@ -110,7 +119,6 @@ bool CKDTree::Load(std::string file)
             m_triangles.push_back(triangle);
         }
     }
-    fclose(f);
 
     fprintf(stderr, "KD-Tree: Building tree from %i vertices in %i triangles\n",
                     (int)m_vertices.size(),
@@ -121,8 +129,7 @@ bool CKDTree::Load(std::string file)
     m_leafcount = 0;
     m_outofmem = false;
 
-    std::vector<int> alltriangles;
-    for(i = 0; i < m_triangles.size(); i++)
+    for(i = 0; i < (int)m_triangles.size(); i++)
         alltriangles.push_back(i);
 
     m_root = new CKDNode(this, alltriangles, 0); // we begin with the x-axis (=0)
@@ -133,13 +140,18 @@ bool CKDTree::Load(std::string file)
         return false;
     }
 
-    fprintf(stderr, "KD-Tree tree generated: %i nodes from %i polygons. Leafs: %i.\n",
+    fprintf(stderr, "KD-Tree tree generated: %i nodes from %i triangles. Leafs: %i.\n",
                     m_nodecount,
                     (int)m_triangles.size(),
                     m_leafcount);
     m_filename = file;
+    success = true;
 
-    return true;
+cleanup:
+    if(success == false)
+        fprintf(stderr, "File parse error!\n");
+    fclose(f);
+    return success;
 }
 
 void CKDTree::Unload()
@@ -165,7 +177,7 @@ std::string CKDTree::GetFilename() const
         Front
         Coplanar
 */
-polyplane_t CKDTree::TestTriangle(const int triindex, plane_t& plane)
+polyplane_t CKDTree::TestTriangle(const int triindex, const plane_t& plane)
 {
     const int size = 3; // triangle size is always 3
     int allfront = 2;
@@ -216,12 +228,10 @@ int kdbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpat
 
 int kdbin_pushleaf(const CKDTree& tree,
                    const CKDTree::CKDNode* leaf,
-                   std::vector<bspbin_texture_t>& textures,
                    std::vector<bspbin_leaf_t>& leafs)
 {
     std::vector<int>::const_iterator iter;
     int trianglecount = 0;
-    std::string texturepath;
 
     bspbin_leaf_t thisleaf;
     memset(&thisleaf, 0, sizeof(thisleaf));
@@ -245,13 +255,12 @@ int kdbin_pushleaf(const CKDTree& tree,
 int kdbin_getnodes(const CKDTree& tree,
                    const CKDTree::CKDNode* node,
                    std::vector<bspbin_plane_t>& planes,
-                   std::vector<bspbin_texture_t>& textures,
                    std::vector<bspbin_node_t>& nodes,
                    std::vector<bspbin_leaf_t>& leafs)
 {
     if(node->IsLeaf())
     {
-        return kdbin_pushleaf(tree, node, textures, leafs);
+        return kdbin_pushleaf(tree, node, leafs);
     }
 
     bspbin_plane_t bspplane;
@@ -270,13 +279,11 @@ int kdbin_getnodes(const CKDTree& tree,
     nodes[curpos].children[0] = kdbin_getnodes(tree,
                                                node->front,
                                                planes,
-                                               textures,
                                                nodes,
                                                leafs);
     nodes[curpos].children[1] = kdbin_getnodes(tree,
                                                node->back,
                                                planes,
-                                               textures,
                                                nodes,
                                                leafs);
     return curpos;
@@ -295,7 +302,7 @@ void WriteLump(FILE*f, const std::vector<Lump>& l)
 
 bool CKDTree::WriteToBinary(const std::string filepath)
 {
-    int i;
+    int i, j;
     FILE* f = fopen(filepath.c_str(), "wb");
     assert(f);
     if(!f)
@@ -309,33 +316,34 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     std::vector<bspbin_vertex_t> vertices;
     std::vector<bspbin_spawn_t> spawnpoints;
 
-    // add vertices from tree
-    for(i = 0; i < m_vertices.size(); i++)
-    {
-        bspbin_vertex_t thisvertex;
-        memset(&thisvertex, 0, sizeof(thisvertex));
-        thisvertex.v = m_vertices[i];
-        thisvertex.n = m_normals[i];
-        thisvertex.tu = m_texcoords[i].x;
-        thisvertex.tv = m_texcoords[i].y;
-
-        vertices.push_back(thisvertex);
-    }
-
     // add triangles from tree
-    for(i = 0; i < m_triangles.size(); i++)
+    for(i = 0; i < (int)m_triangles.size(); i++) // for each triangle
     {
-        // if the texture is not yet in "textures", add it and
-        // return the index to texturenum
-        const int texturenum = kdbin_addtexture(textures,
-                m_triangles[i].texturepath.c_str());
-
         bspbin_triangle_t thistriangle;
         memset(&thistriangle, 0, sizeof(thistriangle));
-        thistriangle.tex = texturenum;
-        thistriangle.v[0] = m_triangles[i].vertices[0];
-        thistriangle.v[1] = m_triangles[i].vertices[1];
-        thistriangle.v[2] = m_triangles[i].vertices[2];
+
+        // if the texture is not yet in "textures", add it and
+        // return the index to texturenum
+        thistriangle.tex = kdbin_addtexture(textures, m_triangles[i].texturepath.c_str());
+
+        // add vertices for this triangle to the file
+        for(j=0; j<3; j++) // for every vertex
+        {
+            bspbin_vertex_t thisvertex;
+            memset(&thisvertex, 0, sizeof(thisvertex));
+
+            thisvertex.v = m_vertices[m_triangles[i].vertices[j]];
+            thisvertex.n = m_normals[m_triangles[i].normals[j]];
+            thisvertex.tu = m_texcoords[m_triangles[i].texcoords[j]].x;
+            thisvertex.tv = m_texcoords[m_triangles[i].texcoords[j]].y;
+
+            // assign this vertex to the current triangle
+            thistriangle.v[j] = vertices.size();
+
+            // store the vertex in the file
+            vertices.push_back(thisvertex);
+        }
+
         triangles.push_back(thistriangle);
     }
 
@@ -343,7 +351,6 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     kdbin_getnodes(*this,
                     m_root,
                     planes,
-                    textures,
                     nodes,
                     leafs);
     // Spawnpoints holen
@@ -408,7 +415,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
 
     // Header
     fwrite(&header, sizeof(header), 1, f);
-    // Lump Table
+    // Lump table
     fwrite(&dirplane, sizeof(dirplane), 1, f);
     fwrite(&dirtextures, sizeof(dirtextures), 1, f);
     fwrite(&dirnodes, sizeof(dirnodes), 1, f);
@@ -523,8 +530,8 @@ plane_t CKDTree::CKDNode::FindSplittingPlane(const CKDTree* tree, const std::vec
                                    vec3_t::zAxis};
 
     int i, j, k;
-    int count = (int)trianglesIn.size();
-    std::vector<float> coords(trianglesIn.size()*3);
+    int count = (int)trianglesIn.size(); // triangle count
+    std::vector<float> coords(count*3);
     // we store every vertex component (x OR y OR z, depending on kdAxis)
     // in the coords array.
     // then the coords array gets sorted and we choose the median as splitting
@@ -542,12 +549,11 @@ plane_t CKDTree::CKDNode::FindSplittingPlane(const CKDTree* tree, const std::vec
 
     // sort the coordinates for a L1 median estimation
     // this makes us robust against triangle outliers
-    sort(coords.begin(), coords.end());
+    std::sort(coords.begin(), coords.end());
     const float split = coords[coords.size()/2]; // median like
     const vec3_t p(axis[kdAxis]*split); // point
     const vec3_t n(axis[kdAxis]); // normal vector
     return plane_t(p, n); // create plane from point and normal vector
-
 }
 
 void CKDTree::CKDNode::CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn) // Bounding Sphere für diesen Knoten berechnen

@@ -93,6 +93,6 @@ private:
     std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level
 
     // Test Triangle: is a triangle in front or back of the plane?
-    polyplane_t TestTriangle(const int triindex, plane_t& plane);
+    polyplane_t TestTriangle(const int triindex, const plane_t& plane);
 };
 
