@@ -325,6 +325,8 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
     assert(!(!write && oldstate));
     assert(stream);
     uint32_t updateflags = 0;
+    if(!stream)
+        return false;
 
     if(write)
     {

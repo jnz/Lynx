@@ -46,6 +46,8 @@ bool CSound::Play() const
 bool CSound::Play(sound_state_t* state) const
 {
     assert(state);
+    if(!state)
+        return false;
     state->cur_channel = Mix_PlayChannel(-1, (Mix_Chunk*)m_chunk, 0);
     state->is_playing = (state->cur_channel != -1);
     // FIXME only for debug builds?

@@ -27,6 +27,8 @@ void CWorld::AddObj(CObj* obj, bool inthisframe)
 {
     assert(obj && !GetObj(obj->GetID()));
     assert(GetObjCount() < USHRT_MAX);
+    if(!obj)
+        return;
 
     if(inthisframe)
         m_objlist[obj->GetID()] = obj;
@@ -91,7 +93,7 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define GRAVITY             (50.00f) // should this be a world property?
+#define GRAVITY             (90.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON        (0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const
@@ -103,7 +105,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     vec3_t q; // Schnittpunkt mit Levelgeometrie
     vec3_t p3; // Endpunkt nach "slide"
 
-    if(fabsf(vel.y) > 500.0f)
+    if(vel.y < -250.0f)
     {
         fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
                 obj->m_locIsOnGround?1:0,
@@ -115,7 +117,6 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         bspbin_spawn_t point = GetBSP()->GetRandomSpawnPoint();
         obj->SetOrigin(point.point);
         obj->SetVel(vec3_t::origin);
-        //assert(0);
         return;
     }
 
@@ -302,6 +303,8 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
     CObj* obj;
     OBJITER iter;
     int changes = 0;
+    if(!stream)
+        return false;
 
     if(write)
     {

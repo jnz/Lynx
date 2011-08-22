@@ -10,6 +10,8 @@ int main(int argc, char** argv)
     CKDTree tree;
 
     cout << "lynx kdcompile\n";
+    cout << "Compiling a WaveFront .obj to a binary Lynx level.\n";
+    cout << "Copyright 2011 Jan Zwiener\n";
     if(argc < 3)
     {
         cout << "Arguments: kdcompile input.obj output.lbsp" << endl;
@@ -31,6 +33,7 @@ int main(int argc, char** argv)
         cout << "Failed to open output file" << endl;
         return -1;
     }
+    cout << "Complete." << endl;
 
     return 0;
 }

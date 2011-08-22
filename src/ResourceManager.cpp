@@ -189,6 +189,12 @@ unsigned int CResourceManager::LoadTGA(std::string path)
         else
             rle = 0;
     }
+    else
+    {
+        fprintf(stderr, "Invalid TGA header: %s\n", path.c_str());
+        fclose(f);
+        return 0;
+    }
     
     if(fread(header, 1, sizeof(header), f) != sizeof(header))
     {

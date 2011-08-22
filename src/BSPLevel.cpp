@@ -520,6 +520,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // Sind wir an einem Blatt angelangt?
     {
+        int triangleindex;
         const int leafindex = -node-1;
         const int trianglecount = m_leaf[leafindex].trianglecount;
         float cf;
@@ -530,10 +531,11 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         vec3_t normal;
         for(int i=0;i<trianglecount;i++)
         {
+            triangleindex = m_leaf[leafindex].triangles[i];
             // - Prüfen ob Polygonfläche getroffen wird
             // - Prüfen ob Polygon Edge getroffen wird
             // - Prüfen ob Polygon Vertex getroffen wird
-            if(GetTriIntersection(i,
+            if(GetTriIntersection(triangleindex,
                                   trace->start,
                                   trace->dir,
                                   &cf,
@@ -546,12 +548,12 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                     minindex = i;
                 }
             }
-            if(GetEdgeIntersection(i,
+            if(GetEdgeIntersection(triangleindex,
                                    trace->start,
                                    trace->dir,
                                    &cf, trace->radius,
                                    &normal, &hitpoint) ||
-                GetVertexIntersection(i,
+                GetVertexIntersection(triangleindex,
                                    trace->start,
                                    trace->dir,
                                    &cf, trace->radius,

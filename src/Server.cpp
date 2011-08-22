@@ -113,6 +113,9 @@ void CServer::Update(const float dt, const uint32_t ticks)
         case ENET_EVENT_TYPE_DISCONNECT:
             clientinfo = (CClientInfo*)event.peer->data;
             assert(clientinfo);
+            if(!clientinfo)
+                break; // this should not happen
+
             fprintf(stderr, "Client %i disconnected.\n", clientinfo->GetID());
 
             // Observer benachrichtigen
@@ -138,7 +141,6 @@ void CServer::Update(const float dt, const uint32_t ticks)
     if((ticks - m_lastupdate) > SERVER_UPDATETIME)
     {
         int sent = 0;
-        std::map<int, CClientInfo*>::iterator iter;
         for(iter = m_clientlist.begin();iter!=m_clientlist.end();iter++)
         {
             if(SendWorldToClient((*iter).second))
@@ -170,6 +172,11 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
 
             CObj* obj = m_world->GetObj(client->m_obj);
             assert(obj);
+            if(!obj)
+            {
+                fprintf(stderr, "Invalid client message\n");
+                return;
+            }
             vec3_t origin, vel;
             stream->ReadVec3(&origin);
             stream->ReadVec3(&vel);
@@ -201,8 +208,6 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
     default:
         assert(0);
     }
-
-
 }
 
 void CServer::UpdateHistoryBuffer()

@@ -72,11 +72,11 @@ int main(int argc, char** argv)
             return -1;
         }
         if(!svgame.InitGame())
-		{
+        {
             fprintf(stderr, "Failed to init game\n");
             assert(0);
             return -1;
-		}
+        }
         fprintf(stderr, "Server running\n");
     }
 

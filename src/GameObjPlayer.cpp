@@ -26,16 +26,34 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
-#define PLAYER_GUN_FIRESPEED            2000
+#define PLAYER_GUN_FIRESPEED            400
 #define PLAYER_GUN_DAMAGE               28
 
 void CGameObjPlayer::OnCmdFire()
 {
+#if 0
+    vec3_t dir;
+    GetLookDir().GetVec3(&dir, NULL, NULL);
+    dir = -dir;
+    bsp_sphere_trace_t trace;
+    trace.dir = dir;
+    trace.start = GetOrigin();
+    trace.dir = dir * 800.0f;
+    trace.radius = 0.02f;
+    GetWorld()->GetBSP()->TraceSphere(&trace);
+    if(trace.f < 1.0f)
+    {
+        vec3_t hitpoint = trace.start + trace.f * trace.dir;
+        SpawnParticleDust(hitpoint, trace.p.m_n);
+    }
+    return;
+#endif
+
     if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_GUN_FIRESPEED)
         return;
     m_prim_triggered_time = GetWorld()->GetLeveltime();
 
-    FireRocket();
+    FireGun();
 }
 
 void CGameObjPlayer::FireGun()
@@ -43,12 +61,13 @@ void CGameObjPlayer::FireGun()
     // we have to prevent sound spamming from the machine gun
     // remember the sound obj and only play a new sound if the old one
     // is deleted
-    if(GetWorld()->GetObj(m_fire_sound) == NULL)
-    {
-        m_fire_sound = PlaySound(GetOrigin(),
-                                 CLynx::GetBaseDirSound() + "rifle.ogg",
-                                 PLAYER_GUN_FIRESPEED);
-    }
+    // THE SOUND SYSTEM SUCKS ATM FIXME
+    //if(GetWorld()->GetObj(m_fire_sound) == NULL)
+    //{
+    //    m_fire_sound = PlaySound(GetOrigin(),
+    //                             CLynx::GetBaseDirSound() + "rifle.ogg",
+    //                             PLAYER_GUN_FIRESPEED);
+    //}
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -61,7 +80,8 @@ void CGameObjPlayer::FireGun()
     {
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
         assert(hitobj);
-        hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this);
+        if(hitobj)
+            hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this);
     }
     else
     {

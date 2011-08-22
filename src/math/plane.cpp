@@ -13,6 +13,7 @@ bool operator!=(plane_t const &a, plane_t const &b)
 
 plane_t::plane_t(void)
 {
+    m_d = 0.0f;
 }
 
 plane_t::plane_t(vec3_t p1, vec3_t p2, vec3_t p3)

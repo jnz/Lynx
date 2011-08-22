@@ -59,20 +59,20 @@ public:
         {
             struct
             {
-                CKDNode* front;
-                CKDNode* back;
+                CKDNode* m_front;
+                CKDNode* m_back;
             };
             CKDNode* child[2];
         };
 
         void                    CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn); // Bounding Sphere für diesen Knoten berechnen
-        bool                    IsLeaf() const { return !front && !back; }
-        plane_t                 FindSplittingPlane(const CKDTree* tree, const std::vector<int>& triangles, const int kdAxis);
+        bool                    IsLeaf() const { return !m_front && !m_back; }
+        plane_t                 FindSplittingPlane(const CKDTree* tree, const std::vector<int>& triangles, const int kdAxis) const;
 
-        plane_t                 plane; // Split plane
-        float                   sphere; // Sphere radius
-        vec3_t                  sphere_origin; // Sphere origin
-        std::vector<int>        triangles; // Only filled when node is a leaf
+        plane_t                 m_plane; // Split plane
+        float                   m_sphere; // Sphere radius
+        vec3_t                  m_sphere_origin; // Sphere origin
+        std::vector<int>        m_triangles; // Only filled when node is a leaf
     };
 
     std::vector<vec3_t>         m_vertices; // Vertexvektor
@@ -93,6 +93,6 @@ private:
     std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level
 
     // Test Triangle: is a triangle in front or back of the plane?
-    polyplane_t TestTriangle(const int triindex, const plane_t& plane);
+    polyplane_t TestTriangle(const int triindex, const plane_t& plane) const;
 };
 
