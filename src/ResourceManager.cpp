@@ -60,7 +60,7 @@ unsigned int CResourceManager::GetTexture(std::string texname)
 void CResourceManager::UnloadAllTextures()
 {
     std::map<std::string, unsigned int>::iterator iter;
-    
+
     for(iter=m_texmap.begin();iter!=m_texmap.end();iter++)
         glDeleteTextures(1, &((*iter).second));
     m_texmap.clear();
@@ -97,7 +97,7 @@ CModelMD2* CResourceManager::GetModel(std::string mdlname)
 void CResourceManager::UnloadAllModels()
 {
     std::map<std::string, CModelMD2*>::iterator iter;
-    
+
     for(iter=m_modelmap.begin();iter!=m_modelmap.end();iter++)
         delete (*iter).second;
     m_modelmap.clear();
@@ -138,7 +138,7 @@ CSound* CResourceManager::GetSound(std::string sndname)
 void CResourceManager::UnloadAllSounds()
 {
     std::map<std::string, CSound*>::iterator iter;
-    
+
     for(iter=m_soundmap.begin();iter!=m_soundmap.end();iter++)
         delete (*iter).second;
     m_soundmap.clear();
@@ -195,7 +195,7 @@ unsigned int CResourceManager::LoadTGA(std::string path)
         fclose(f);
         return 0;
     }
-    
+
     if(fread(header, 1, sizeof(header), f) != sizeof(header))
     {
         printf("Invalid header size\n");
@@ -295,8 +295,10 @@ unsigned int CResourceManager::LoadTGA(std::string path)
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     if(bpp == 32)
         type = GL_RGBA;

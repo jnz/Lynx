@@ -4,4 +4,8 @@
     <LocalDebuggerCommandArguments>$(ProjectDir)..\game\baselynx\level\testlvl\level1.obj $(ProjectDir)..\game\baselynx\level\testlvl\level1.lbsp</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LocalDebuggerCommandArguments>$(ProjectDir)..\game\baselynx\level\sponza\untitled.obj $(ProjectDir)..\game\baselynx\level\sponza\sponza.lbsp</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

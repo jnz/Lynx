@@ -170,6 +170,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
                 if(m_node[i].children[k] >= m_nodecount)
                 {
                     fprintf(stderr, "BSP: Invalid node pointer\n");
+                    return false;
                 }
             }
         }
@@ -188,7 +189,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
     // Setup indices
     const int indexcount = m_trianglecount*3;
-    m_indices = new unsigned short[ indexcount ];
+    m_indices = new vertexindex_t[ indexcount ];
     if(!m_indices)
     {
         Unload();
@@ -284,7 +285,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexcount, NULL, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertexindex_t) * indexcount, NULL, GL_STATIC_DRAW);
     if(glGetError() != GL_NO_ERROR)
     {
         Unload();
@@ -292,7 +293,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(uint16_t) * indexcount, m_indices);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(vertexindex_t) * indexcount, m_indices);
     if(glGetError() != GL_NO_ERROR)
     {
         Unload();
@@ -366,8 +367,8 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
         glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texid);
         glDrawElements(GL_TRIANGLES,
                        m_texturebatch[i].count,
-                       GL_UNSIGNED_SHORT,
-                       BUFFER_OFFSET(m_texturebatch[i].start * sizeof(uint16_t)));
+                       MY_GL_VERTEXINDEX_TYPE, // see bsplevel.h
+                       BUFFER_OFFSET(m_texturebatch[i].start * sizeof(vertexindex_t)));
     }
 
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -457,7 +458,7 @@ bool CBSPLevel::GetEdgeIntersection(const int triangleindex,
             minindex = i;
         }
     }
-    if(minf <= 1.0f)
+    if(minf <= 1.0f && minindex >= 0)
     {
         *hitpoint = start + minf*dir;
         const vec3_t* a = &m_vertex[m_triangle[triangleindex].v[minindex]].v;
@@ -502,7 +503,7 @@ bool CBSPLevel::GetVertexIntersection(const int triangleindex,
             minf = cf;
         }
     }
-    if(minf <= 1.0f)
+    if(minf <= 1.0f && minindex >= 0)
     {
         *hitpoint = start + minf*dir;
         *normal = *hitpoint - m_vertex[m_triangle[triangleindex].v[minindex]].v;

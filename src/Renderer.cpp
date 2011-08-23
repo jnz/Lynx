@@ -20,10 +20,10 @@
 
 // Shadow mapping bias matrix
 static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]
-	0.5, 0.0, 0.0, 0.0,
-	0.0, 0.5, 0.0, 0.0,
-	0.0, 0.0, 0.5, 0.0,
-	0.5, 0.5, 0.5, 1.0 };
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.5, 0.5, 0.5, 1.0 };
 
 // Local Render Functions
 static void RenderCube();
@@ -144,10 +144,10 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     fprintf(stderr, "Shader loaded\n");
 
     if(!glewIsSupported("GL_EXT_framebuffer_object"))
-	{
-		fprintf(stderr, "No framebuffer support\n");
-		m_useShadows = false;
-	}
+    {
+        fprintf(stderr, "No framebuffer support\n");
+        m_useShadows = false;
+    }
 
     if(m_useShadows && !CreateShadowFBO())
     {
@@ -220,8 +220,8 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                   PLANE_NEAR,
                   PLANE_FAR);
 
-	glViewport(0, 0, (int)(m_width * SHADOW_MAP_RATIO),
-	                 (int)(m_height * SHADOW_MAP_RATIO));
+    glViewport(0, 0, (int)(m_width * SHADOW_MAP_RATIO),
+                     (int)(m_height * SHADOW_MAP_RATIO));
     UpdatePerspective(); // FIXME remove me?
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(mviewlight.pm);
@@ -250,7 +250,7 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
     glDisable(GL_POLYGON_OFFSET_FILL);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, m_width, m_height);
+    glViewport(0, 0, m_width, m_height);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glCullFace(GL_BACK);
 }
@@ -303,18 +303,19 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glLoadMatrixf(m.pm);
 
     glClear(GL_DEPTH_BUFFER_BIT);
-	if(m_useShadows)
-	{
+    glClear(GL_COLOR_BUFFER_BIT);
+    if(m_useShadows)
+    {
         glUseProgram(m_program);
-		glUniform1i(m_shadowMapUniform, 7);
-		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+        glUniform1i(m_shadowMapUniform, 7);
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glUniform1i(m_tex, 0);
-		glActiveTexture(GL_TEXTURE0);
-	}
+        glActiveTexture(GL_TEXTURE0);
+    }
     DrawScene(frustum, world, localctrlid, false);
 
-	glUseProgram(0); // don't use shader from here on FIXME
+    glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
     //glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
@@ -364,7 +365,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     }
     glEnable(GL_LIGHTING);
 
-	// DEBUG only. this piece of code draw the depth buffer onscreen
+    // DEBUG only. this piece of code draw the depth buffer onscreen
     // glUseProgram(0);
     // glMatrixMode(GL_PROJECTION);
     // glLoadIdentity();
@@ -504,16 +505,16 @@ bool CRenderer::InitShader()
             fprintf(stderr, "Failed to use program %i\n", glerr);
         return false;
     }
-	m_shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
-	m_tex = glGetUniformLocation(m_program, "tex");
+    m_shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
+    m_tex = glGetUniformLocation(m_program, "tex");
     glUniform1i(m_shadowMapUniform, 7);
     glUniform1i(m_tex, 0);
-	glUseProgram(0);
+    glUseProgram(0);
 
-	int isValid;
-	glValidateProgram(m_program);
-	glGetProgramiv(m_program, GL_VALIDATE_STATUS, &isValid);
-	if(isValid != GL_TRUE)
+    int isValid;
+    glValidateProgram(m_program);
+    glGetProgramiv(m_program, GL_VALIDATE_STATUS, &isValid);
+    if(isValid != GL_TRUE)
     {
         char logbuffer[1024];
         int usedlogbuffer;
@@ -527,53 +528,53 @@ bool CRenderer::InitShader()
 
 bool CRenderer::CreateShadowFBO()
 {
-	// fbo + depth buffer
-	int shadowMapWidth = (int)(m_width * SHADOW_MAP_RATIO);
-	int shadowMapHeight = (int)(m_height * SHADOW_MAP_RATIO);
+    // fbo + depth buffer
+    int shadowMapWidth = (int)(m_width * SHADOW_MAP_RATIO);
+    int shadowMapHeight = (int)(m_height * SHADOW_MAP_RATIO);
 
-	GLenum FBOstatus;
+    GLenum FBOstatus;
 
-	// Try to use a texture depth component
-	glGenTextures(1, &m_depthTextureId);
-	glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+    // Try to use a texture depth component
+    glGenTextures(1, &m_depthTextureId);
+    glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
 
-	// Remove artifact on the edges of the shadowmap
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+    // Remove artifact on the edges of the shadowmap
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 
-	// No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+    // No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-	// create a framebuffer object
-	glGenFramebuffers(1, &m_fboId);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
+    // create a framebuffer object
+    glGenFramebuffers(1, &m_fboId);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
 
-	// Instruct openGL that we won't bind a color texture with the currently binded FBO
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
+    // Instruct openGL that we won't bind a color texture with the currently binded FBO
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
 
-	// attach the texture to FBO depth attachment point
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureId, 0);
+    // attach the texture to FBO depth attachment point
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureId, 0);
 
-	// check FBO status
-	FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if(FBOstatus != GL_FRAMEBUFFER_COMPLETE)
-	{
-		fprintf(stderr, "GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO\n");
-		return false;
-	}
+    // check FBO status
+    FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if(FBOstatus != GL_FRAMEBUFFER_COMPLETE)
+    {
+        fprintf(stderr, "GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO\n");
+        return false;
+    }
 
-	// switch back to window-system-provided framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // switch back to window-system-provided framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	return true;
+    return true;
 }
 
 // FIXME what is this function good for? Why not call RenderGL directly

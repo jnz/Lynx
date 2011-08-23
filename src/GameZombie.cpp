@@ -20,7 +20,7 @@ CGameZombie::~CGameZombie(void)
 bool CGameZombie::InitGame()
 {
     // Level laden
-    std::string levelpath = CLynx::GetBaseDirLevel() + "testlvl/level1.lbsp";
+    std::string levelpath = CLynx::GetBaseDirLevel() + "sponza/sponza.lbsp";
     bool success = GetWorld()->LoadLevel(levelpath);
     if(!success)
     {
@@ -45,8 +45,9 @@ bool CGameZombie::InitGame()
 void CGameZombie::Notify(EventNewClientConnected e)
 {
     CGameObjPlayer* player;
+    vec3_t spawn = GetWorld()->GetBSP()->GetRandomSpawnPoint().point;
     player = new CGameObjPlayer(GetWorld());
-    player->SetOrigin(vec3_t(0.0f, 2.0f, 0));
+    player->SetOrigin(spawn);
     player->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
     player->SetAnimation(0);
     player->SetEyePos(vec3_t(0,0.65f,0));

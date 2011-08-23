@@ -93,7 +93,7 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define GRAVITY             (90.00f) // should this be a world property?
+#define GRAVITY             (80.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON        (0.01f)
 void CWorld::ObjMove(CObj* obj, const float dt) const

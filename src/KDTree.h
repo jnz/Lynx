@@ -52,7 +52,7 @@ public:
     {
     public:
 
-        CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, const int kdAxis);
+        CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, const int recursionDepth);
         ~CKDNode();
 
         union
@@ -67,9 +67,16 @@ public:
 
         void                    CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn); // Bounding Sphere für diesen Knoten berechnen
         bool                    IsLeaf() const { return !m_front && !m_back; }
+        void                    SplitTrianglesAlongAxis(const CKDTree* tree,
+                                                        const std::vector<int>& trianglesIn,
+                                                        const int kdAxis,
+                                                        std::vector<int>& front,
+                                                        std::vector<int>& back,
+                                                        std::vector<int>& splitlist,
+                                                        plane_t& splitplane) const;
         plane_t                 FindSplittingPlane(const CKDTree* tree, const std::vector<int>& triangles, const int kdAxis) const;
 
-        plane_t                 m_plane; // Split plane
+        plane_t                 m_plane; // Split plane, not set for leafs
         float                   m_sphere; // Sphere radius
         vec3_t                  m_sphere_origin; // Sphere origin
         std::vector<int>        m_triangles; // Only filled when node is a leaf
@@ -80,13 +87,13 @@ public:
     std::vector<vec3_t>         m_texcoords; // FIXME vec2_t würde reichen
     std::vector<kd_tri_t>       m_triangles; // Vektor für Polygone
     CKDNode*                    m_root; // Starting node
+    int                         m_estimatedtexturecount; // how many textures are used in the obj file?
 
     bool        WriteToBinary(const std::string filepath);
 
 private:
     int         m_nodecount; // increased by every CKDNode constructor
-    int         m_leafcount;
-    bool        m_outofmem; // set to true by CKDNode constructor, if no memory for further child nodes is available
+    int         m_leafcount; // increased by every CKNode that is a leaf node
     std::string m_filename;
 
     // Spawn Point

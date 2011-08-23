@@ -12,12 +12,13 @@
 #endif
 
 #define KDTREE_EPSILON                 0.01f
-#define KDTREE_MAX_TRIANGLES_PER_LEAF  BSPBIN_MAX_TRIANGLES_PER_LEAF
+#define KDTREE_MAX_TRIANGLES_PER_LEAF  200     // BSPBIN_MAX_TRIANGLES_PER_LEAF
 
 CKDTree::CKDTree(void)
 {
     m_root = NULL;
     m_leafcount = 0;
+    m_estimatedtexturecount = 0;
 }
 
 CKDTree::~CKDTree(void)
@@ -87,6 +88,7 @@ bool CKDTree::Load(std::string file)
             if(strlen(tok) < 1)
                 goto cleanup;
             texpath = tok;
+            m_estimatedtexturecount++;
         }
         else if(strcmp(tok, "spawn")==0)
         {
@@ -103,7 +105,7 @@ bool CKDTree::Load(std::string file)
             for(i=0;i<3;i++)
                 sv[i] = strtok(NULL, DELIM);
             if(!sv[0] || !sv[1] || !sv[2])
-                goto cleanup;
+                continue;
 
             triangle.texturepath = texpath;
             for(i=0;i<3;i++)
@@ -125,10 +127,17 @@ bool CKDTree::Load(std::string file)
                     (int)m_vertices.size(),
                     (int)m_triangles.size());
 
+    if(m_spawnpoints.size() < 1)
+    {
+        fprintf(stderr, "No spawn points found. Adding default spawn point at: 0.0 10.0 0.0\n");
+        spawn_point_t spawn;
+        spawn.origin = vec3_t(0.0f, 10.0f, 0.0f);
+        m_spawnpoints.push_back(spawn);
+    }
+
     // Vertices u. faces are loaded
     m_nodecount = 0;
     m_leafcount = 0;
-    m_outofmem = false;
 
     fprintf(stderr, "Creating triangle indices\n");
     for(i = 0; i < (int)m_triangles.size(); i++)
@@ -136,7 +145,7 @@ bool CKDTree::Load(std::string file)
 
     fprintf(stderr, "Starting binary space partitioning...\n");
     m_root = new CKDNode(this, alltriangles, 0); // we begin with the x-axis (=0)
-    if(m_outofmem || !m_root)
+    if(m_root == NULL)
     {
         fprintf(stderr, "KD-Tree: not enough memory for tree\n");
         goto cleanup;
@@ -165,6 +174,7 @@ void CKDTree::Unload()
     }
     m_filename = "";
     m_spawnpoints.clear();
+    m_estimatedtexturecount = 0;
 }
 
 std::string CKDTree::GetFilename() const
@@ -329,6 +339,13 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     std::vector<bspbin_vertex_t> vertices;
     std::vector<bspbin_spawn_t> spawnpoints;
 
+    planes.reserve(m_nodecount-m_leafcount);
+    textures.reserve(m_estimatedtexturecount);
+    nodes.reserve(m_nodecount-m_leafcount);
+    leafs.reserve(m_leafcount);
+    triangles.reserve(m_triangles.size());
+    vertices.reserve(m_vertices.size());
+
     // add triangles from tree
     for(i = 0; i < (int)m_triangles.size(); i++) // for each triangle
     {
@@ -358,6 +375,10 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         }
 
         triangles.push_back(thistriangle);
+    }
+    if(vertices.size() > USHRT_MAX)
+    {
+        fprintf(stderr, "Warning, more than %i vertices\n", USHRT_MAX);
     }
 
     // Daten aus Baum holen
@@ -459,56 +480,82 @@ CKDTree::CKDNode::~CKDNode()
         delete m_back;
 }
 
+
 // kdAxis = current KD-Tree axis (x, y or z)
-CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, const int kdAxis)
+CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, const int recursionDepth)
 {
     int trianglecount = (int)trianglesIn.size(); // number of input triangles
-    int splitcount = 0; // number of split triangles
-    int i; // triangle loop counter
+    //const int kdAxis = recursionDepth%3; // keep axis between 0 and 2 (x, y, or z)
+
+    if(recursionDepth > 35)
+    {
+        fprintf(stderr, "Unable to compile polygon soup. Recursion depth too deep.");
+        assert(0);
+        exit(0);
+    }
 
     tree->m_nodecount++; // even if this ends up as a leaf, we count it as a node
     CalculateSphere(tree, trianglesIn); // calculate node bounding sphere
 
-    // find a good (tm) splitting plane now
-    // attention: don't write FindSpittingPlane
-    m_plane = FindSplittingPlane(tree, trianglesIn, kdAxis);
+    std::vector<int> flX, flY, flZ; // front list
+    std::vector<int> blX, blY, blZ; // back list
+    std::vector<int> slX, slY, slZ; // split list
+    std::vector<int>* frontlist[] = {&flX, &flY, &flZ}; // every triangle in front of the plane will be stored here
+    std::vector<int>* backlist[] = {&blX, &blY, &blZ}; // every triangle behind the plane will be stored here
+    std::vector<int>* splitlist[] = {&slX, &slY, &slZ}; // every triangle on the splitting plane
+    plane_t plane[3];
+    float ratioFrontBack[3]; // ratio between the frontlist size and the backlist size or vice versa (always <= 1.0f)
 
-    std::vector<int> frontlist; // every triangle in front of the plane will be stored here
-    std::vector<int> backlist; // every triangle behind the plane will be stored here
-
-    for(i=0;i<trianglecount;i++) // for every triangle
+    int i;
+    int best=recursionDepth%3; // best plane (x, y, z)
+    // we try to find out which splitting plane gives us
+    // a good balanced node (x, y or z)
+    for(i=0;i<3;i++)
     {
-        switch(tree->TestTriangle(trianglesIn[i], m_plane))
+        SplitTrianglesAlongAxis(tree,
+                                trianglesIn,
+                                i,
+                                *frontlist[i],
+                                *backlist[i],
+                                *splitlist[i],
+                                plane[i]);
+
+        const unsigned int flsize = (*frontlist[i]).size();
+        const unsigned int blsize = (*backlist[i]).size();
+        if(flsize > blsize)
+            ratioFrontBack[i] = (float)blsize / (float)flsize;
+        else
+            ratioFrontBack[i] = (float)flsize / (float)blsize;
+    }
+
+    float bestratio = 0.0f;
+    for(i=0;i<3;i++)
+    {
+        if(ratioFrontBack[i] > bestratio)
         {
-        case POLYPLANE_COPLANAR:
-        case POLYPLANE_SPLIT:
-            frontlist.push_back(trianglesIn[i]);
-            backlist.push_back(trianglesIn[i]);
-            splitcount++;
-            break;
-        case POLYPLANE_FRONT:
-            frontlist.push_back(trianglesIn[i]);
-            break;
-        case POLYPLANE_BACK:
-            backlist.push_back(trianglesIn[i]);
-            break;
+            best = i;
+            bestratio = ratioFrontBack[i];
         }
     }
 
-    if(splitcount == trianglecount &&
-        trianglecount > KDTREE_MAX_TRIANGLES_PER_LEAF)
-    {
-        fprintf(stderr, "Unable to compile polygon soup.");
-        exit(0);
-    }
+    m_plane = plane[best];
+
     // if there are not many triangles left, we create a leaf
     // or we can't do any further subdivision
-    if(trianglecount <= KDTREE_MAX_TRIANGLES_PER_LEAF)
+    if(frontlist[best]->size() < 1 ||
+       backlist[best]->size() < 1 ||
+       trianglecount <= KDTREE_MAX_TRIANGLES_PER_LEAF)
     {
+        if(trianglecount > BSPBIN_MAX_TRIANGLES_PER_LEAF)
+        {
+            fprintf(stderr, "Too many triangles in leaf: %i\n", trianglecount);
+            system("pause");
+            exit(0);
+        }
+
         fprintf(stderr, "KD-Tree: subspace with %i polygons formed\n", trianglecount);
 
         // save remaining triangles from trianglesIn in this leaf
-        m_triangles.clear();
         m_triangles.insert(m_triangles.begin(),
                            trianglesIn.begin(),
                            trianglesIn.end());
@@ -519,28 +566,46 @@ CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, co
         return;
     }
 
-    const int newkdAxis = (kdAxis+1)%3; // keep kdAxis between 0 and 2 (x, y, or z)
+    // add the split triangles to both sides of the plane
+    frontlist[best]->insert(frontlist[best]->end(),
+                           splitlist[best]->begin(),
+                           splitlist[best]->end());
+    backlist[best]->insert(backlist[best]->end(),
+                          splitlist[best]->begin(),
+                          splitlist[best]->end());
 
-    if(frontlist.size() > 0)
-    {
-        m_front = new CKDNode(tree, frontlist, newkdAxis);
-        if(!m_front)
-            tree->m_outofmem = true; // oh, this is bad
-    }
-    else
-    {
-        m_front = NULL; // empty space
-    }
+    m_front = new CKDNode(tree, *frontlist[best], recursionDepth+1);
+    m_back = new CKDNode(tree, *backlist[best], recursionDepth+1);
+}
 
-    if(backlist.size() > 0)
+void CKDTree::CKDNode::SplitTrianglesAlongAxis(const CKDTree* tree,
+    const std::vector<int>& trianglesIn,
+    const int kdAxis,
+    std::vector<int>& frontlist,
+    std::vector<int>& backlist,
+    std::vector<int>& splitlist,
+    plane_t& splitplane) const
+{
+    int trianglecount = trianglesIn.size();
+    // find a good (tm) splitting plane now
+    // attention: don't write FindSpittingPlane
+    splitplane = FindSplittingPlane(tree, trianglesIn, kdAxis);
+
+    for(int i=0;i<trianglecount;i++) // for every triangle
     {
-        m_back = new CKDNode(tree, backlist, newkdAxis);
-        if(!m_back)
-            tree->m_outofmem = true; // oh, this is bad too
-    }
-    else
-    {
-        m_back = NULL; // empty space
+        switch(tree->TestTriangle(trianglesIn[i], splitplane))
+        {
+        case POLYPLANE_COPLANAR:
+        case POLYPLANE_SPLIT:
+            splitlist.push_back(trianglesIn[i]);
+            break;
+        case POLYPLANE_FRONT:
+            frontlist.push_back(trianglesIn[i]);
+            break;
+        case POLYPLANE_BACK:
+            backlist.push_back(trianglesIn[i]);
+            break;
+        }
     }
 }
 
@@ -574,6 +639,7 @@ plane_t CKDTree::CKDNode::FindSplittingPlane(const CKDTree* tree, const std::vec
     // this makes us robust against triangle outliers
     std::sort(coords.begin(), coords.end());
     const float split = coords[coords.size()/2]; // median like
+    //const float split = (coords[coords.size()-1]+coords[0])*0.5f; //tchebyscheff like
     const vec3_t p(axis[kdAxis]*split); // point
     const vec3_t n(axis[kdAxis]); // normal vector
     return plane_t(p, n); // create plane from point and normal vector
