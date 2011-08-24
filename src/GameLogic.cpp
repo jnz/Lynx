@@ -19,7 +19,7 @@ CGameLogic::~CGameLogic(void)
 bool CGameLogic::InitGame()
 {
     assert(0);
-	return true;
+    return true;
 }
 
 void CGameLogic::Notify(EventNewClientConnected e)

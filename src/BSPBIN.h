@@ -13,14 +13,14 @@
 
 struct bspbin_header_t
 {
-    int32_t magic;
-    int32_t version;
+    uint32_t magic;
+    uint32_t version;
 };
 
 struct bspbin_direntry_t
 {
-    int32_t offset;
-    int32_t length;
+    uint32_t offset;
+    uint32_t length;
 };
 
 struct bspbin_plane_t
@@ -35,22 +35,22 @@ struct bspbin_texture_t
 
 struct bspbin_node_t
 {
-    int32_t plane;
-    int32_t children[2];
+    uint32_t plane;
+    int32_t children[2]; // don't change this to uint32_t, the negative sign is essential!
     float radius;
     vec3_t sphere_origin;
 };
 
 struct bspbin_leaf_t
 {
-    int32_t triangles[BSPBIN_MAX_TRIANGLES_PER_LEAF];
-    int32_t trianglecount;
+    uint32_t triangles[BSPBIN_MAX_TRIANGLES_PER_LEAF];
+    uint32_t trianglecount;
 };
 
 struct bspbin_triangle_t
 {
-    int32_t tex;
-    int32_t v[3]; // integer index to bspbin_vertex_t array
+    uint32_t tex;
+    uint32_t v[3]; // integer index to bspbin_vertex_t array
 };
 
 struct bspbin_vertex_t

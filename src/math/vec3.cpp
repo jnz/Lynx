@@ -281,7 +281,7 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir,
                                   float* f)
 {
     // math. for 3d game programming 2nd ed. page 270
-    assert(edgeStart != edgeEnd);
+    // assert(edgeStart != edgeEnd); // sloppy level design
     const vec3_t pa = edgeEnd - edgeStart;
     const vec3_t s0 = pStart - edgeStart;
     const float pa_squared = pa.AbsSquared();

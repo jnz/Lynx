@@ -93,9 +93,12 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define GRAVITY             (80.00f) // should this be a world property?
+#define GRAVITY                (90.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
-#define STOP_EPSILON        (0.01f)
+#define STOP_EPSILON           (0.02f)
+
+#define MAX_COLLISION_PLANES   7
+
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
     bsp_sphere_trace_t trace;
@@ -104,11 +107,12 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     vec3_t vel = obj->GetVel();
     vec3_t q; // Schnittpunkt mit Levelgeometrie
     vec3_t p3; // Endpunkt nach "slide"
+    int i;
 
     if(vel.y < -250.0f)
     {
         fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
-                obj->m_locIsOnGround?1:0,
+                obj->m_locIsOnGround ? 1 : 0,
                 obj->GetID(), obj->GetResource().c_str());
 
         // Somehow the object is in free fall,
@@ -131,19 +135,21 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     bool groundhit = false; // obj on ground?
     bool wallhit = false; // contact with level geometry
 
-    for(int i=0;(p2 - p1) != vec3_t::origin && i < 5; i++)
+    for(i=0;(p2 - p1) != vec3_t::origin && i < MAX_COLLISION_PLANES; i++)
     {
         trace.start = p1;
         trace.dir = p2 - p1;
         trace.f = MAX_TRACE_DIST;
         GetBSP()->TraceSphere(&trace);
-        if(trace.f > 1.0f) // no collision
+        if(trace.f >= 1.0f) // no collision
             break;
 
         wallhit = true; // trace.f <= 1.0
 
-        q = trace.start + trace.f*trace.dir +
-            trace.p.m_n * STOP_EPSILON;
+        const vec3_t vechit = trace.f*trace.dir;
+        const vec3_t delta = trace.dir.Normalized()*STOP_EPSILON;
+        q = p1 + vechit - delta;
+
         if(obj->GetFlags() & OBJ_FLAGS_ELASTIC) // bounce
         {
             vel = 0.6f*(vel - 2.0f*(vel*trace.p.m_n)*trace.p.m_n);
@@ -158,17 +164,23 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         }
 
         // prevent problems with small increments (not an exact science here)
-        if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
-            q.y = p1.y;
+        //if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
+        //    q.y = p1.y;
 
-        if((p3-q).Abs()<STOP_EPSILON*1000*dt)
-        {
-            p2 = q;
-            break;
-        }
+        //if((p3-q).Abs()<STOP_EPSILON*10000*dt)
+        //{
+        //    p3 = q;
+        //    break;
+        //}
 
         p1 = q;
         p2 = p3;
+    }
+    if(i == MAX_COLLISION_PLANES)
+    {
+        //p2 = obj->GetOrigin();
+        vel = vec3_t::origin;
+        fprintf(stderr, "Too many planes\n");
     }
 
     if(groundhit)

@@ -48,7 +48,7 @@ CBSPLevel::~CBSPLevel(void)
 
 bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 {
-    int i, j;
+    uint32_t i, j, k;
     int errcode;
     FILE* f = fopen(file.c_str(), "rb");
     if(!f)
@@ -155,11 +155,11 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     // Check if tree file indices are within a valid range 
     for(i=0;i<m_nodecount;i++)
     {
-        for(int k=0;k<2;k++)
+        for(k=0;k<2;k++)
         {
             if(m_node[i].children[k] < 0) // leaf index
             {
-                if(-m_node[i].children[k]-1 >= m_leafcount)
+                if(-m_node[i].children[k]-1 >= (int)m_leafcount)
                 {
                     fprintf(stderr, "BSP: Invalid leaf pointer\n");
                     return false;
@@ -167,7 +167,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
             }
             else
             {
-                if(m_node[i].children[k] >= m_nodecount)
+                if(m_node[i].children[k] >= (int)m_nodecount)
                 {
                     fprintf(stderr, "BSP: Invalid node pointer\n");
                     return false;
@@ -188,7 +188,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     }
 
     // Setup indices
-    const int indexcount = m_trianglecount*3;
+    const uint32_t indexcount = m_trianglecount*3;
     m_indices = new vertexindex_t[ indexcount ];
     if(!m_indices)
     {
@@ -198,7 +198,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     }
 
     // Prepare indices grouped by texture
-    int vertexindex = 0;
+    fprintf(stderr, "Creating index buffer\n");
+    uint32_t vertexindex = 0;
     for(i=0;i<m_texcount;i++)
     {
         // loading all textures
@@ -361,8 +362,8 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
     glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
 
-    const int batchcount = (int)m_texturebatch.size();
-    for(int i=0; i<batchcount; i++)
+    const uint32_t batchcount = m_texturebatch.size();
+    for(uint32_t i=0; i<batchcount; i++)
     {
         glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texid);
         glDrawElements(GL_TRIANGLES,
@@ -374,16 +375,6 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
-{
-    if(m_node == NULL)
-    {
-        trace->f = MAX_TRACE_DIST;
-        return;
-    }
-    TraceSphere(trace, 0);
 }
 
 bool CBSPLevel::GetTriIntersection(const int triangleindex,
@@ -400,11 +391,11 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
     const vec3_t& P0 = m_vertex[vertexindex1].v;
     const vec3_t& P1 = m_vertex[vertexindex2].v;
     const vec3_t& P2 = m_vertex[vertexindex3].v;
-    plane_t polyplane(P2, P1, P0); // Polygon Ebene
+    plane_t polyplane(P2, P1, P0); // Polygon Ebene  -  why don't we precalculate the triangle normal vector?
     polyplane.m_d -= offset; // Plane shift
 
     bool hit = polyplane.GetIntersection(&cf, start, dir);
-    if(!hit || cf > 1.0f || cf < -BSP_EPSILON)
+    if(!hit || cf > 1.0f || cf < 0.0f)
         return false;
     vec3_t tmpintersect = start + dir*cf - polyplane.m_n*offset;
     *f = cf;
@@ -452,7 +443,7 @@ bool CBSPLevel::GetEdgeIntersection(const int triangleindex,
                                          tovec,
                                          radius,
                                          &cf)) continue;
-        if(cf < minf && cf >= -BSP_EPSILON)
+        if(cf < minf && cf >= 0.0f)
         {
             minf = cf;
             minindex = i;
@@ -497,7 +488,7 @@ bool CBSPLevel::GetVertexIntersection(const int triangleindex,
         {
             continue;
         }
-        if(cf < minf && cf >= -BSP_EPSILON)
+        if(cf < minf && cf >= 0.0f)
         {
             minindex = i;
             minf = cf;
@@ -517,15 +508,27 @@ bool CBSPLevel::GetVertexIntersection(const int triangleindex,
     }
 }
 
+void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
+{
+    if(m_node == NULL)
+    {
+        fprintf(stderr, "Warning: Tracing in unloaded level\n");
+        trace->f = MAX_TRACE_DIST;
+        return;
+    }
+    trace->f = MAX_TRACE_DIST;
+    TraceSphere(trace, 0);
+}
+
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
-    if(node < 0) // Sind wir an einem Blatt angelangt?
+    if(node < 0) // have we reached a leaf?
     {
         int triangleindex;
         const int leafindex = -node-1;
         const int trianglecount = m_leaf[leafindex].trianglecount;
         float cf;
-        float minf = MAX_TRACE_DIST;
+        float minf = trace->f;
         int minindex = -1;
         plane_t hitplane;
         vec3_t hitpoint;

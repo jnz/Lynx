@@ -88,13 +88,13 @@ protected:
     vertexindex_t*      m_indices;
     std::vector<bsp_texture_batch_t> m_texturebatch;
 
-    int m_planecount;
-    int m_texcount;
-    int m_nodecount;
-    int m_leafcount;
-    int m_trianglecount;
-    int m_vertexcount;
-    int m_spawnpointcount;
+    uint32_t m_planecount;
+    uint32_t m_texcount;
+    uint32_t m_nodecount;
+    uint32_t m_leafcount;
+    uint32_t m_trianglecount;
+    uint32_t m_vertexcount;
+    uint32_t m_spawnpointcount;
 
     std::string m_filename;
 
