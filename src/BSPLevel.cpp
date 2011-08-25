@@ -392,6 +392,7 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
     const vec3_t& P1 = m_vertex[vertexindex2].v;
     const vec3_t& P2 = m_vertex[vertexindex3].v;
     plane_t polyplane(P2, P1, P0); // Polygon Ebene  -  why don't we precalculate the triangle normal vector?
+    float dsave = polyplane.m_d;
     polyplane.m_d -= offset; // Plane shift
 
     bool hit = polyplane.GetIntersection(&cf, start, dir);
@@ -416,7 +417,7 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
     hit = w1 >= 0 && w2 >= 0 && (w1 + w2 <= 1);
     if(hit)
     {
-        polyplane.m_d += offset;
+        polyplane.m_d = dsave;
         *hitplane = polyplane;
     }
     return hit;
@@ -520,6 +521,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
+#define	DIST_EPSILON	(0.03125f) // stolen from quake, although they have a different scaling
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // have we reached a leaf?
@@ -571,9 +573,11 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                 }
             }
         }
-        trace->f = minf;
         if(minindex != -1)
         {
+            const float df = DIST_EPSILON/(hitplane.m_n * trace->dir);
+            assert(df);
+            trace->f = minf + df;
             trace->p = hitplane;
         }
         return;
@@ -585,8 +589,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     // Prüfen, ob alles vor der Splitplane liegt
     plane_t tmpplane = m_plane[m_node[node].plane].p;
     tmpplane.m_d -= trace->radius;
-    locstart = tmpplane.Classify(trace->start, 0.0f);
-    locend = tmpplane.Classify(trace->start + trace->dir, 0.0f);
+    locstart = tmpplane.Classify(trace->start, 0.01f);
+    locend = tmpplane.Classify(trace->start + trace->dir, 0.01f);
     if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
     {
         TraceSphere(trace, m_node[node].children[0]);
@@ -595,8 +599,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 
     // Prüfen, ob alles hinter der Splitplane liegt
     tmpplane.m_d = m_plane[m_node[node].plane].p.m_d + trace->radius;
-    locstart = tmpplane.Classify(trace->start, 0.0f);
-    locend = tmpplane.Classify(trace->start + trace->dir, 0.0f);
+    locstart = tmpplane.Classify(trace->start, 0.01f);
+    locend = tmpplane.Classify(trace->start + trace->dir, 0.01f);
     if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
     {
         TraceSphere(trace, m_node[node].children[1]);

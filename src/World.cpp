@@ -184,7 +184,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
         // See, if we can move along this path
         trace.start = pos;
-        trace.dir = time_left * vel;
+        trace.dir = end - pos;
         trace.f = MAX_TRACE_DIST;
         GetBSP()->TraceSphere(&trace);
         f = trace.f > 1.0f ? 1.0f : trace.f;
@@ -223,6 +223,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         {   // this shouldn't really happen
             //  Stop our movement if so.
             vel = vec3_t::origin;
+            fprintf(stderr, "Too many planes %i\n", MAX_CLIP_PLANES);
             break;
         }
 
@@ -235,7 +236,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             PM_ClipVelocity(original_velocity, planes[i], vel, 1);
             for(j=0; j<numplanes; j++)
             {
-                if(j != i)
+                if(j != i && !(planes[i] == planes[j]))
                 {
                     // Are we now moving against this plane?
                     if (vel*planes[j] < 0)
@@ -257,7 +258,6 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             {
                 vel = vec3_t::origin;
                 fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
-
                 break;
             }
             dir = planes[0] ^ planes[1];
@@ -270,7 +270,6 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         //
         if(vel*primal_velocity <= 0.0f)
         {
-            fprintf(stderr, "Back\n");
             vel = vec3_t::origin;
             break;
         }
@@ -279,7 +278,17 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     if(all_fraction == 0)
     {
         vel = vec3_t::origin;
-        fprintf(stderr, "Don't stick\n");
+    }
+
+    if(wallhit)
+    {
+        // q = hit location, trace.p.m_n = geometry normal
+        obj->OnHitWall(pos, trace.p.m_n);
+    }
+
+    if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
+    {
+        vel += gravity*dt;
     }
 
     if(groundhit)
@@ -287,14 +296,8 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         vel.y = 0;
     }
 
-    if(wallhit)
-    {
-        // q = hit location, trace.p.m_n = geometry normal
-        obj->OnHitWall(q, trace.p.m_n);
-    }
-
     obj->m_locIsOnGround = groundhit;
-    obj->SetOrigin(p2);
+    obj->SetOrigin(pos);
     obj->SetVel(vel);
 }
 
