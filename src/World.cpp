@@ -93,41 +93,29 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define STOP_EPSILON           (0.02f)
+#define STOP_EPSILON           (0.01f)
 
-int PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const float overbounce)
+void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const float overbounce)
 {
     float backoff;
     float change;
-    float angle;
-    int i, blocked;
-
-    angle = normal.y; // upward (y) direction
-
-    blocked = 0x00;    // Assume unblocked.
-    if(angle > 0)      // If the plane that is blocking us has a positive y component, then assume it's a floor.
-        blocked |= 0x01;
-    if(angle == 0.0f)  // If the plane has no Z, it is vertical (wall/step)
-        blocked |= 0x02;
+    int i;
 
     // Determine how far along plane to slide based on incoming direction.
     // Scale by overbounce factor.
     backoff = in*normal  *  overbounce;
 
-    for (i=0 ; i<3 ; i++)
+    for(i=0; i<3; i++)
     {
         change = normal.v[i]*backoff;
         out.v[i] = in.v[i] - change;
         // If out velocity is too small, zero it out.
-        if (out.v[i] > -STOP_EPSILON && out.v[i] < STOP_EPSILON)
-            out.v[i] = 0;
+        if(out.v[i] > -STOP_EPSILON && out.v[i] < STOP_EPSILON)
+           out.v[i] = 0;
     }
-
-    // Return blocking flags.
-    return blocked;
 }
 
-#define GRAVITY                (90.00f) // should this be a world property?
+#define GRAVITY                (40.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 
 #define MAX_CLIP_PLANES   5
@@ -282,19 +270,25 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     if(wallhit)
     {
-        // q = hit location, trace.p.m_n = geometry normal
         obj->OnHitWall(pos, trace.p.m_n);
     }
 
-    if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
-    {
-        vel += gravity*dt;
-    }
+    //if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
+    //{
+    //    if(!groundhit)
+    //    {
+    //        vel += gravity*dt;
+    //    }
+    //    if(groundhit && !wasonground)
+    //    {
+    //        vel.y = 0;
+    //        fprintf(stderr, "Hit ground\n");
+    //    }
+    //}
 
-    if(groundhit)
-    {
-        vel.y = 0;
-    }
+    fprintf(stderr, "Vel: %s%5.2f %s%5.2f %s%5.2f\n", vel.x < 0.0f?"":" ", vel.x,
+                                                      vel.y < 0.0f?"":" ", vel.y,
+                                                      vel.z < 0.0f?"":" ", vel.z);
 
     obj->m_locIsOnGround = groundhit;
     obj->SetOrigin(pos);
