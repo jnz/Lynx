@@ -139,6 +139,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     bool groundhit = false; // obj on ground?
     bool wallhit = false; // contact with level geometry
+    plane_t wallplane;
 
     bsp_sphere_trace_t trace;
     trace.radius = obj->GetRadius();
@@ -155,6 +156,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     int numplanes = 0; // and not sliding anything
     vec3_t original_velocity = vel; // store original velocity
     vec3_t primal_velocity = vel;
+    vec3_t new_velocity;
     float all_fraction = 0.0f;
     float time_left = dt;
     vec3_t end;
@@ -167,15 +169,16 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             break;
 
         // Assume we can move all the way from the current origin to the
-        //  end point.
-        end = pos + time_left * vel;
-
-        // See, if we can move along this path
+        // end point.
+        // See, if we can move along this path:
         trace.start = pos;
-        trace.dir = end - pos;
-        trace.f = MAX_TRACE_DIST;
+        trace.dir = time_left*vel;
         GetBSP()->TraceSphere(&trace);
-        f = trace.f > 1.0f ? 1.0f : trace.f;
+        f = trace.f;
+        if(f > 1.0f)
+            f = 1.0f;
+        if(f < 0.0f)
+            f = 0.0f;
 
         all_fraction += f;
         // If we moved some portion of the total distance, then
@@ -183,7 +186,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         //  zero the plane counter.
         if(f > 0.0f)
         {
-            pos = trace.start + trace.dir*f;
+            pos += trace.dir*f;
             original_velocity = vel;
             numplanes = 0;
         }
@@ -193,18 +196,21 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         if(f == 1.0f)
             break;
 
+        // Reduce amount of frametime (dt) left by total time left * fraction
+        //  that we covered.
+        time_left = time_left * (1-f);
+
         // If the plane we hit has a high y component in the normal, then
         //  it's probably a floor
         if(trace.p.m_n.v[1] > 0.7)
             groundhit = true;
 
         // if the y component is zero, it is a wall
-        if(trace.p.m_n.v[1] == 0.0f)
+        if(fabsf(trace.p.m_n.v[1]) < 0.1f)
+        {
+            wallplane = trace.p;
             wallhit = true;
-
-        // Reduce amount of frametime (dt) left by total time left * fraction
-        //  that we covered.
-        time_left -= time_left * f;
+        }
 
         // Did we run out of planes to clip against?
         if(numplanes >= MAX_CLIP_PLANES)
@@ -221,13 +227,13 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
         for(i=0; i<numplanes; i++)
         {
-            PM_ClipVelocity(original_velocity, planes[i], vel, 1);
+            PM_ClipVelocity(original_velocity, planes[i], new_velocity, 1);
             for(j=0; j<numplanes; j++)
             {
                 if(j != i && !(planes[i] == planes[j]))
                 {
                     // Are we now moving against this plane?
-                    if (vel*planes[j] < 0)
+                    if (new_velocity*planes[j] < 0)
                         break;  // not ok
                 }
             }
@@ -238,23 +244,24 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         // Did we go all the way through plane set
         if (i != numplanes)
         {   // go along this plane
-            // pmove->velocity is set in clipping call, no need to set again.
+            vel = new_velocity;
         }
         else
         {   // go along the crease
             if (numplanes != 2)
             {
                 vel = vec3_t::origin;
-                fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
+                //fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
                 break;
             }
             dir = planes[0] ^ planes[1];
+            // dir = planes[1] ^ planes[0];
             d = dir * vel;
             vel = dir * d;
         }
         //
         // if original velocity is against the original velocity, stop dead
-        // to avoid tiny occilations in sloping corners
+        // to avoid tiny oscillations in sloping corners
         //
         if(vel*primal_velocity <= 0.0f)
         {
@@ -263,32 +270,27 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         }
     }
 
-    if(all_fraction == 0)
+    if(all_fraction == 0.0f)
     {
         vel = vec3_t::origin;
     }
 
     if(wallhit)
     {
-        obj->OnHitWall(pos, trace.p.m_n);
+        obj->OnHitWall(pos, wallplane.m_n);
     }
 
-    //if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
-    //{
-    //    if(!groundhit)
-    //    {
-    //        vel += gravity*dt;
-    //    }
-    //    if(groundhit && !wasonground)
-    //    {
-    //        vel.y = 0;
-    //        fprintf(stderr, "Hit ground\n");
-    //    }
-    //}
-
-    fprintf(stderr, "Vel: %s%5.2f %s%5.2f %s%5.2f\n", vel.x < 0.0f?"":" ", vel.x,
-                                                      vel.y < 0.0f?"":" ", vel.y,
-                                                      vel.z < 0.0f?"":" ", vel.z);
+    if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
+    {
+        if(groundhit)
+        {
+            //vel.y = 0;
+        }
+        else
+        {
+            //vel += gravity*dt;
+        }
+    }
 
     obj->m_locIsOnGround = groundhit;
     obj->SetOrigin(pos);
