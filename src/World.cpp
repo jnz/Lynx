@@ -93,28 +93,53 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define GRAVITY                (90.00f) // should this be a world property?
-const static vec3_t gravity(0, -GRAVITY, 0);
 #define STOP_EPSILON           (0.02f)
 
-#define MAX_COLLISION_PLANES   7
+int PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const float overbounce)
+{
+    float backoff;
+    float change;
+    float angle;
+    int i, blocked;
+
+    angle = normal.y; // upward (y) direction
+
+    blocked = 0x00;    // Assume unblocked.
+    if(angle > 0)      // If the plane that is blocking us has a positive y component, then assume it's a floor.
+        blocked |= 0x01;
+    if(angle == 0.0f)  // If the plane has no Z, it is vertical (wall/step)
+        blocked |= 0x02;
+
+    // Determine how far along plane to slide based on incoming direction.
+    // Scale by overbounce factor.
+    backoff = in*normal  *  overbounce;
+
+    for (i=0 ; i<3 ; i++)
+    {
+        change = normal.v[i]*backoff;
+        out.v[i] = in.v[i] - change;
+        // If out velocity is too small, zero it out.
+        if (out.v[i] > -STOP_EPSILON && out.v[i] < STOP_EPSILON)
+            out.v[i] = 0;
+    }
+
+    // Return blocking flags.
+    return blocked;
+}
+
+#define GRAVITY                (90.00f) // should this be a world property?
+const static vec3_t gravity(0, -GRAVITY, 0);
+
+#define MAX_CLIP_PLANES   5
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
-    bsp_sphere_trace_t trace;
-    vec3_t p1 = obj->GetOrigin(); // Starting point
-    vec3_t p2 = p1; // Gewünschter Endpunkt
-    vec3_t vel = obj->GetVel();
-    vec3_t q; // Schnittpunkt mit Levelgeometrie
-    vec3_t p3; // Endpunkt nach "slide"
-    int i;
-
-    if(vel.y < -250.0f)
+    if(obj->GetVel().y < -250.0f)
     {
         fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
                 obj->m_locIsOnGround ? 1 : 0,
                 obj->GetID(), obj->GetResource().c_str());
-
+        // hack:
         // Somehow the object is in free fall,
         // now we just select a random spawn point and place the object with
         // zero velocity there.
@@ -124,63 +149,137 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         return;
     }
 
-    if(!(obj->GetFlags() & OBJ_FLAGS_NOGRAVITY)) // Objekt reagiert auf Gravity
-    {
-        vel += gravity*dt;
-        p2  += 0.5f*dt*dt*gravity;
-    }
-
-    p2 += vel*dt;
-    trace.radius = obj->GetRadius();
     bool groundhit = false; // obj on ground?
     bool wallhit = false; // contact with level geometry
 
-    for(i=0;(p2 - p1) != vec3_t::origin && i < MAX_COLLISION_PLANES; i++)
+    bsp_sphere_trace_t trace;
+    trace.radius = obj->GetRadius();
+
+    // quake style movement clipping
+    vec3_t planes[MAX_CLIP_PLANES];
+    vec3_t pos = obj->GetOrigin();
+    vec3_t vel = obj->GetVel();
+    vec3_t dir;
+    float d;
+    int numbumps = 4; // bump up to 4 times
+    int bumpcount;
+    int blocked = 0; // assume no blocking initially
+    int numplanes = 0; // and not sliding anything
+    vec3_t original_velocity = vel; // store original velocity
+    vec3_t primal_velocity = vel;
+    float all_fraction = 0.0f;
+    float time_left = dt;
+    vec3_t end;
+    float f; // trace.f: fraction of path along trace direction
+    int i, j;
+
+    for(bumpcount = 0; bumpcount < numbumps; bumpcount++)
     {
-        trace.start = p1;
-        trace.dir = p2 - p1;
-        trace.f = MAX_TRACE_DIST;
-        GetBSP()->TraceSphere(&trace);
-        if(trace.f >= 1.0f) // no collision
+        if(vel == vec3_t::origin)
             break;
 
-        wallhit = true; // trace.f <= 1.0
+        // Assume we can move all the way from the current origin to the
+        //  end point.
+        end = pos + time_left * vel;
 
-        const vec3_t vechit = trace.f*trace.dir;
-        const vec3_t delta = trace.dir.Normalized()*STOP_EPSILON;
-        q = p1 + vechit - delta;
+        // See, if we can move along this path
+        trace.start = pos;
+        trace.dir = time_left * vel;
+        trace.f = MAX_TRACE_DIST;
+        GetBSP()->TraceSphere(&trace);
+        f = trace.f > 1.0f ? 1.0f : trace.f;
 
-        if(obj->GetFlags() & OBJ_FLAGS_ELASTIC) // bounce
+        all_fraction += f;
+        // If we moved some portion of the total distance, then
+        //  copy the end position into pos and
+        //  zero the plane counter.
+        if(f > 0.0f)
         {
-            vel = 0.6f*(vel - 2.0f*(vel*trace.p.m_n)*trace.p.m_n);
-            p3 = q;
+            pos = trace.start + trace.dir*f;
+            original_velocity = vel;
+            numplanes = 0;
         }
-        else // slide
+
+        // If we covered the entire distance, we are done
+        //  and can return.
+        if(f == 1.0f)
+            break;
+
+        // If the plane we hit has a high y component in the normal, then
+        //  it's probably a floor
+        if(trace.p.m_n.v[1] > 0.7)
+            groundhit = true;
+
+        // if the y component is zero, it is a wall
+        if(trace.p.m_n.v[1] == 0.0f)
+            wallhit = true;
+
+        // Reduce amount of frametime (dt) left by total time left * fraction
+        //  that we covered.
+        time_left -= time_left * f;
+
+        // Did we run out of planes to clip against?
+        if(numplanes >= MAX_CLIP_PLANES)
+        {   // this shouldn't really happen
+            //  Stop our movement if so.
+            vel = vec3_t::origin;
+            break;
+        }
+
+        // Set up next clipping plane
+        planes[numplanes] = trace.p.m_n;
+        numplanes++;
+
+        for(i=0; i<numplanes; i++)
         {
-            p3 = p2 -((p2 - q)*trace.p.m_n)*trace.p.m_n;
-
-            if(trace.p.m_n * vec3_t::yAxis > lynxmath::SQRT_2_HALF) // unter 45° neigung bleiben wir stehen
-                groundhit = true;
+            PM_ClipVelocity(original_velocity, planes[i], vel, 1);
+            for(j=0; j<numplanes; j++)
+            {
+                if(j != i)
+                {
+                    // Are we now moving against this plane?
+                    if (vel*planes[j] < 0)
+                        break;  // not ok
+                }
+            }
+            if(j == numplanes)  // Didn't have to clip, so we're ok
+                break;
         }
 
-        // prevent problems with small increments (not an exact science here)
-        //if(fabsf(q.y-p1.y)<STOP_EPSILON*100*dt)
-        //    q.y = p1.y;
+        // Did we go all the way through plane set
+        if (i != numplanes)
+        {   // go along this plane
+            // pmove->velocity is set in clipping call, no need to set again.
+        }
+        else
+        {   // go along the crease
+            if (numplanes != 2)
+            {
+                vel = vec3_t::origin;
+                fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
 
-        //if((p3-q).Abs()<STOP_EPSILON*10000*dt)
-        //{
-        //    p3 = q;
-        //    break;
-        //}
-
-        p1 = q;
-        p2 = p3;
+                break;
+            }
+            dir = planes[0] ^ planes[1];
+            d = dir * vel;
+            vel = dir * d;
+        }
+        //
+        // if original velocity is against the original velocity, stop dead
+        // to avoid tiny occilations in sloping corners
+        //
+        if(vel*primal_velocity <= 0.0f)
+        {
+            fprintf(stderr, "Back\n");
+            vel = vec3_t::origin;
+            break;
+        }
     }
-    if(i == MAX_COLLISION_PLANES)
+
+    if(all_fraction == 0)
     {
-        //p2 = obj->GetOrigin();
         vel = vec3_t::origin;
-        fprintf(stderr, "Too many planes\n");
+        fprintf(stderr, "Don't stick\n");
     }
 
     if(groundhit)
