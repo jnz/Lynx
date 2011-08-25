@@ -521,7 +521,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-#define	DIST_EPSILON	(0.05f)
+#define	DIST_EPSILON	(5.50f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // have we reached a leaf?
@@ -577,9 +577,9 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         {
             // safety shift. inspired from the quake source code.
             float df = DIST_EPSILON/(hitplane.m_n * trace->dir);
+            if(df > 0.0f)
+                df = 0.0f;
             trace->f = minf + df;
-            //if(trace->f < 0.0f)
-            //    trace->f = 0.0f;
             trace->p = hitplane;
         }
         return;

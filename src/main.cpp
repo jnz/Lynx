@@ -148,9 +148,11 @@ int main(int argc, char** argv)
         renderer.Update(dt, time);
         mixer.Update(dt, time);
 
-#ifdef _DEBUG
-        // SDL_Delay(0); // so my notebook fan is quiet :-)
-#endif
+        // so my notebook fan is quiet :-)
+        const float dtrest = 1.0f/50.0f - dt;
+        if(dtrest > 0.0f)
+            SDL_Delay(dtrest * 1000);
+
         if(!client.IsRunning())
         {
             fprintf(stderr, "Disconnected\n");

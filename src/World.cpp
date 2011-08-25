@@ -93,7 +93,7 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define STOP_EPSILON           (0.01f)
+#define STOP_EPSILON           (0.1f)
 
 void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const float overbounce)
 {
@@ -217,7 +217,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         {   // this shouldn't really happen
             //  Stop our movement if so.
             vel = vec3_t::origin;
-            fprintf(stderr, "Too many planes %i\n", MAX_CLIP_PLANES);
+            //fprintf(stderr, "Too many planes %i\n", MAX_CLIP_PLANES);
             break;
         }
 
@@ -227,7 +227,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
         for(i=0; i<numplanes; i++)
         {
-            PM_ClipVelocity(original_velocity, planes[i], new_velocity, 1);
+            PM_ClipVelocity(original_velocity, planes[i], new_velocity, 1.01f);
             for(j=0; j<numplanes; j++)
             {
                 if(j != i && !(planes[i] == planes[j]))
@@ -251,7 +251,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             if (numplanes != 2)
             {
                 vel = vec3_t::origin;
-                //fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
+                fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
                 break;
             }
             dir = planes[0] ^ planes[1];
@@ -259,7 +259,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             d = dir * vel;
             vel = dir * d;
         }
-        //
+
         // if original velocity is against the original velocity, stop dead
         // to avoid tiny oscillations in sloping corners
         //
@@ -284,11 +284,11 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     {
         if(groundhit)
         {
-            //vel.y = 0;
+            vel -= gravity*dt;
         }
         else
         {
-            //vel += gravity*dt;
+            vel += gravity*dt;
         }
     }
 
