@@ -251,7 +251,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             if (numplanes != 2)
             {
                 vel = vec3_t::origin;
-                fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
+                //fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
                 break;
             }
             dir = planes[0] ^ planes[1];

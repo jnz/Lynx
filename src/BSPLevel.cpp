@@ -521,7 +521,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-#define	DIST_EPSILON	(5.50f)
+#define	DIST_EPSILON	(0.1f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // have we reached a leaf?
