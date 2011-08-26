@@ -284,7 +284,8 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     {
         if(groundhit)
         {
-            vel -= gravity*dt;
+            //vel -= gravity*dt;
+            vel.y = 0.0f;
         }
         else
         {

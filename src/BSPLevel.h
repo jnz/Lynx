@@ -59,7 +59,9 @@ protected:
                                    const vec3_t& dir, 
                                    float* f, 
                                    const float offset, 
-                                   plane_t* hitplane) const;
+                                   plane_t* hitplane,
+                                   bool& needs_edge_test) const;
+
     inline bool GetEdgeIntersection(const int triangleindex, 
                                     const vec3_t& start, 
                                     const vec3_t& dir, 

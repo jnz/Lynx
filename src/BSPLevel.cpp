@@ -382,7 +382,8 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
                                    const vec3_t& dir,
                                    float* f,
                                    const float offset,
-                                   plane_t* hitplane) const
+                                   plane_t* hitplane,
+                                   bool& needs_edge_test) const
 {
     float cf;
     const int vertexindex1 = m_triangle[triangleindex].v[0];
@@ -397,7 +398,10 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
 
     bool hit = polyplane.GetIntersection(&cf, start, dir);
     if(!hit || cf > 1.0f || cf < 0.0f)
+    {
+        needs_edge_test = !(cf > 1.0f);
         return false;
+    }
     vec3_t tmpintersect = start + dir*cf - polyplane.m_n*offset;
     *f = cf;
 
@@ -420,6 +424,8 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
         polyplane.m_d = dsave;
         *hitplane = polyplane;
     }
+    needs_edge_test = !hit;
+
     return hit;
 }
 
@@ -521,7 +527,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-#define	DIST_EPSILON	(0.1f)
+#define	DIST_EPSILON	(0.05f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // have we reached a leaf?
@@ -535,6 +541,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         plane_t hitplane;
         vec3_t hitpoint;
         vec3_t normal;
+        bool needs_edge_test;
         for(int i=0;i<trianglecount;i++)
         {
             triangleindex = m_leaf[leafindex].triangles[i];
@@ -546,7 +553,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                                   trace->dir,
                                   &cf,
                                   trace->radius,
-                                  &hitplane))
+                                  &hitplane,
+                                  needs_edge_test))
             {
                 if(cf < minf)
                 {
@@ -554,6 +562,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                     minindex = i;
                 }
             }
+            if(!needs_edge_test)
+                continue;
             if(GetEdgeIntersection(triangleindex,
                                    trace->start,
                                    trace->dir,
@@ -575,11 +585,18 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         }
         if(minindex != -1)
         {
-            // safety shift. inspired from the quake source code.
+            // safety shift along the trace path.
+            // this keeps the object DIST_EPSILON away from
+            // the plane along the plane normal.
             float df = DIST_EPSILON/(hitplane.m_n * trace->dir);
-            if(df > 0.0f)
-                df = 0.0f;
-            trace->f = minf + df;
+            assert(df <= 0.0f);
+            if(minf + df <= 0.01f)
+                trace->f = 0.0f;
+            else
+                trace->f = minf + df;
+
+            if(trace->f > 0.0f && trace->f < 0.05f)
+                fprintf(stderr, "minf: %3.3f\n", minf);
             trace->p = hitplane;
         }
         return;
