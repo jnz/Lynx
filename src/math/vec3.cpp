@@ -259,7 +259,7 @@ float vec3_t::GetAngleDeg(vec3_t& a, vec3_t& b)
 #ifdef _DEBUG
 void vec3_t::Print()
 {
-    fprintf(stderr, "%.2f %.2f %.2f\n", x, y, z);
+    fprintf(stderr, "%.5f %.5f %.5f\n", x, y, z);
 }
 #endif
 

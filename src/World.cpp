@@ -115,7 +115,7 @@ void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const 
     }
 }
 
-#define GRAVITY                (40.00f) // should this be a world property?
+#define GRAVITY                (80.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 
 #define MAX_CLIP_PLANES   5

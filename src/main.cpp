@@ -149,7 +149,7 @@ int main(int argc, char** argv)
         mixer.Update(dt, time);
 
         // so my notebook fan is quiet :-)
-        const float dtrest = 1.0f/50.0f - dt;
+        const float dtrest = 1.0f/60.0f - dt;
         if(dtrest > 0.0f)
             SDL_Delay(dtrest * 1000);
 

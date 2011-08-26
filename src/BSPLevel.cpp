@@ -589,14 +589,12 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
             // this keeps the object DIST_EPSILON away from
             // the plane along the plane normal.
             float df = DIST_EPSILON/(hitplane.m_n * trace->dir);
-            assert(df <= 0.0f);
+            if(df > 0.0f)
+                df = 0.0f;
             if(minf + df <= 0.01f)
                 trace->f = 0.0f;
             else
                 trace->f = minf + df;
-
-            if(trace->f > 0.0f && trace->f < 0.05f)
-                fprintf(stderr, "minf: %3.3f\n", minf);
             trace->p = hitplane;
         }
         return;
