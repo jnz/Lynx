@@ -264,6 +264,12 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         fprintf(stderr, "Incoming packets total: %i\n", m_client->totalReceivedPackets);
         fprintf(stderr, "Outgoing data total: %i\n", m_client->totalSentPackets);
     }
+    if(keystate[SDLK_q])
+    {
+        vec3_t pos = GetLocalController()->GetOrigin();
+        pos.y += 0.5f;
+        GetLocalController()->SetOrigin(pos);
+    }
 
     if(!firedown)
     {

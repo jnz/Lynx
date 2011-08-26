@@ -18,6 +18,7 @@ CKDTree::CKDTree(void)
 {
     m_root = NULL;
     m_leafcount = 0;
+    m_depth = 0;
     m_estimatedtexturecount = 0;
 }
 
@@ -151,10 +152,11 @@ bool CKDTree::Load(std::string file)
         goto cleanup;
     }
 
-    fprintf(stderr, "KD-Tree tree generated: %i nodes from %i triangles. Leafs: %i.\n",
+    fprintf(stderr, "KD-Tree tree generated: %i nodes from %i triangles. Leafs: %i. Depth: %i\n",
                     m_nodecount-m_leafcount, // leafs also count as nodes
                     (int)m_triangles.size(),
-                    m_leafcount);
+                    m_leafcount,
+                    m_depth);
     m_filename = file;
     success = true;
 
@@ -175,6 +177,7 @@ void CKDTree::Unload()
     m_filename = "";
     m_spawnpoints.clear();
     m_estimatedtexturecount = 0;
+    m_depth = 0;
 }
 
 std::string CKDTree::GetFilename() const
@@ -269,6 +272,12 @@ int kdbin_pushleaf(const CKDTree& tree,
         trianglecount++;
     }
 
+    if(trianglecount > BSPBIN_MAX_TRIANGLES_PER_LEAF)
+    {
+        fprintf(stderr, "Too many triangles in leaf\n");
+        assert(0);
+        exit(0);
+    }
     thisleaf.trianglecount = trianglecount;
     leafs.push_back(thisleaf);
 
@@ -487,6 +496,8 @@ CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, co
     int trianglecount = (int)trianglesIn.size(); // number of input triangles
     //const int kdAxis = recursionDepth%3; // keep axis between 0 and 2 (x, y, or z)
 
+    if(recursionDepth > tree->m_depth)
+        tree->m_depth = recursionDepth;
     if(recursionDepth > 35)
     {
         fprintf(stderr, "Unable to compile polygon soup. Recursion depth too deep.");

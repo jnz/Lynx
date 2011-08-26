@@ -94,6 +94,7 @@ public:
 private:
     int         m_nodecount; // increased by every CKDNode constructor
     int         m_leafcount; // increased by every CKNode that is a leaf node
+    int         m_depth;     // set by CKNode constructor
     std::string m_filename;
 
     // Spawn Point
