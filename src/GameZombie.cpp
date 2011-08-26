@@ -29,15 +29,15 @@ bool CGameZombie::InitGame()
     }
 
     // n Testobjekte erstellen
-    //for(int i=0;i<4;i++)
-    //{
-    //    bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
-    //    CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
+    for(int i=0;i<1;i++)
+    {
+        bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
+        CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
 
-    //    zombie->SetOrigin(point.point);
-    //    zombie->SetRot(point.rot);
-    //    GetWorld()->AddObj(zombie);
-    //}
+        zombie->SetOrigin(point.point);
+        zombie->SetRot(point.rot);
+        GetWorld()->AddObj(zombie);
+    }
 
     return true;
 }

@@ -292,7 +292,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     {
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
         PrepareShadowMap(campos+up*0.8f-side*1.4f-dir*1.8f,
-                         camrot, world, localctrlid); // player is light
+                         camrot, world, localctrlid); // the player is the light
     }
 
 
