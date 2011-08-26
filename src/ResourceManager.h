@@ -26,7 +26,8 @@ public:
     bool IsServer();
 
 private:
-    unsigned int LoadTGA(std::string path);
+    //unsigned int LoadTGA(std::string path);
+    unsigned int LoadTexture(std::string path);
 
     std::map<std::string, unsigned int> m_texmap;
     std::map<std::string, CModelMD2*> m_modelmap;

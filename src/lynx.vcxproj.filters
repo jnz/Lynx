@@ -28,6 +28,9 @@
     <Filter Include="fx">
       <UniqueIdentifier>{7e42c1c2-8b78-442a-be31-42a78c98d472}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SOIL">
+      <UniqueIdentifier>{e345c178-6f88-4830-a81e-fbb44fe1fd0e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BSPLevel.cpp">
@@ -131,6 +134,18 @@
     </ClCompile>
     <ClCompile Include="ParticleSystemExplosion.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\image_DXT.c">
+      <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\image_helper.c">
+      <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\SOIL.c">
+      <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\stb_image_aug.c">
+      <Filter>SOIL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

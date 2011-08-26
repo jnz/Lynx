@@ -4,6 +4,7 @@
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
 #include <stdio.h>
+#include "../soil/src/SOIL.h"
 #include "ResourceManager.h"
 #include "World.h"
 
@@ -45,7 +46,7 @@ unsigned int CResourceManager::GetTexture(std::string texname)
     iter = m_texmap.find(texname);
     if(iter == m_texmap.end())
     {
-        texture = LoadTGA(texname);
+        texture = LoadTexture(texname);
         if(texture != 0)
             m_texmap[texname] = texture;
     }
@@ -144,6 +145,29 @@ void CResourceManager::UnloadAllSounds()
     m_soundmap.clear();
 }
 
+unsigned int CResourceManager::LoadTexture(std::string path)
+{
+    unsigned int tex = SOIL_load_OGL_texture(
+        path.c_str(),
+        SOIL_LOAD_AUTO,
+        SOIL_CREATE_NEW_ID,
+          SOIL_FLAG_MIPMAPS |
+          SOIL_FLAG_INVERT_Y |
+          SOIL_FLAG_NTSC_SAFE_RGB |
+          SOIL_FLAG_COMPRESS_TO_DXT |
+          SOIL_FLAG_TEXTURE_REPEATS
+    );
+
+    if(tex == 0)
+    {
+        fprintf(stderr, "Failed to load texture: '%s'\n", SOIL_last_result());
+        return 0;
+    }
+
+    return tex;
+}
+
+#if 0
 unsigned int CResourceManager::LoadTGA(std::string path)
 {
     GLubyte* imageData;
@@ -318,3 +342,4 @@ unsigned int CResourceManager::LoadTGA(std::string path)
     fprintf(stderr, "Loaded texture: %s\n", path.c_str());
     return texture;
 }
+#endif

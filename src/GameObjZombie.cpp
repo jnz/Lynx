@@ -118,7 +118,10 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
     if(dir.AbsSquared() > 22.0f)
     {
         zombie->GetRot().GetVec3(&dir, NULL, NULL);
-        zombie->SetVel(dir*-16.0f);
+
+        vec3_t targetvel = dir*-16.0f;
+        targetvel.y = zombie->GetVel().y; // preserve gravity
+        zombie->SetVel(targetvel);
         zombie->SetAnimation(zombie->GetMesh()->FindAnimation("run"));
     }
     else
