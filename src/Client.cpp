@@ -270,6 +270,11 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         pos.y += 0.5f;
         GetLocalController()->SetOrigin(pos);
     }
+    if(keystate[SDLK_r])
+    {
+        bspbin_spawn_t spawn = m_world->GetBSP()->GetRandomSpawnPoint();
+        GetLocalController()->SetOrigin(spawn.point);
+    }
 
     if(!firedown)
     {

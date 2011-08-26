@@ -19,8 +19,8 @@ struct bsp_sphere_trace_t
 
 struct bsp_texture_batch_t
 {
-    uint16_t start; // vertex index start
-    uint16_t count; // vertex index count
+    uint32_t start; // vertex index start
+    uint32_t count; // vertex index count
     int texid;
 };
 
