@@ -78,7 +78,7 @@ protected:
                                       vec3_t* hitpoint) const;
 
     // Data
-    bspbin_plane_t*     m_plane;
+    plane_t*            m_plane;
     bspbin_texture_t*   m_tex;
     int*                m_texid;
     bspbin_node_t*      m_node;

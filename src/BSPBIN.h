@@ -25,7 +25,9 @@ struct bspbin_direntry_t
 
 struct bspbin_plane_t
 {
-    plane_t p;
+    //plane_t p;
+    uint8_t type; // 0 = x, 1 = y, 2 = z
+    float d;
 };
 
 struct bspbin_texture_t

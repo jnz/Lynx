@@ -279,7 +279,16 @@ int kdbin_getnodes(const CKDTree& tree,
     }
 
     bspbin_plane_t bspplane;
-    bspplane.p = node->m_plane;
+    bspplane.d = node->m_plane.m_d;
+    for(int i=0;i<3;i++)
+    {
+        if(fabs(node->m_plane.m_n.v[i]) > 0.0f)
+        {
+            bspplane.type = i;
+            break;
+        }
+    }
+
     planes.push_back(bspplane);
     const int planeindex = planes.size()-1;
 
@@ -445,7 +454,8 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         nullnode.plane = 0;
         nodes.push_back(nullnode);
         bspbin_plane_t nullplane;
-        nullplane.p = plane_t(vec3_t::origin, vec3_t::yAxis);
+        nullplane.type = 0;
+        nullplane.d = 0;
         planes.push_back(nullplane);
     }
 

@@ -55,7 +55,12 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
 
     Unload();
+    // This code has three sections:
+    // Reading the header
+    // Reading the file allocation table
+    // Reading the actual data
 
+    // Reading header
     bspbin_header_t header;
 
     fread(&header, sizeof(header), 1, f);
@@ -70,6 +75,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
+    // Reading file allocation table
     bspbin_direntry_t dirplane;
     bspbin_direntry_t dirtextures;
     bspbin_direntry_t dirnodes;
@@ -99,7 +105,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     m_spawnpointcount = dirspawnpoints.length / sizeof(bspbin_spawn_t);
     m_leafcount = dirleafs.length; // special case for the leafs
 
-    m_plane = new bspbin_plane_t[ m_planecount ];
+    m_plane = new plane_t[ m_planecount ];
     m_tex = new bspbin_texture_t[ m_texcount ];
     m_texid = new int[ m_texcount ];
     m_node = new bspbin_node_t[ m_nodecount ];
@@ -122,8 +128,31 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
+    // Reading data
+
+    bspbin_plane_t kdplane;
     fseek(f, dirplane.offset, SEEK_SET);
-    fread(m_plane, sizeof(bspbin_plane_t), m_planecount, f);
+    for(i=0; i<m_planecount; i++) // reconstruct the planes
+    {
+        fread(&kdplane, sizeof(kdplane), 1, f);
+        m_plane[i].m_d = kdplane.d;
+        switch(kdplane.type)
+        {
+        case 0:
+            m_plane[i].m_n = vec3_t::xAxis;
+            break;
+        case 1:
+            m_plane[i].m_n = vec3_t::yAxis;
+            break;
+        case 2:
+            m_plane[i].m_n = vec3_t::zAxis;
+            break;
+        default:
+            Unload();
+            fprintf(stderr, "BSP: Unknown plane type\n");
+            return false;
+        }
+    }
 
     fseek(f, dirtextures.offset, SEEK_SET);
     fread(m_tex, sizeof(bspbin_texture_t), m_texcount, f);
@@ -558,7 +587,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         vec3_t hitpoint;
         vec3_t normal;
         bool needs_edge_test;
-        for(int i=0;i<trianglecount;i++)
+        for(unsigned int i=0;i<trianglecount;i++)
         {
             triangleindex = m_leaf[leafindex].triangles[i];
             // - Prüfen ob Polygonfläche getroffen wird
@@ -620,7 +649,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     pointplane_t locend;
 
     // Prüfen, ob alles vor der Splitplane liegt
-    plane_t tmpplane = m_plane[m_node[node].plane].p;
+    plane_t tmpplane = m_plane[m_node[node].plane];
     tmpplane.m_d -= trace->radius;
     locstart = tmpplane.Classify(trace->start, 0.01f);
     locend = tmpplane.Classify(trace->start + trace->dir, 0.01f);
@@ -631,7 +660,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     }
 
     // Prüfen, ob alles hinter der Splitplane liegt
-    tmpplane.m_d = m_plane[m_node[node].plane].p.m_d + trace->radius;
+    tmpplane.m_d = m_plane[m_node[node].plane].m_d + trace->radius;
     locstart = tmpplane.Classify(trace->start, 0.01f);
     locend = tmpplane.Classify(trace->start + trace->dir, 0.01f);
     if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
