@@ -12,7 +12,7 @@
 #endif
 
 #define KDTREE_EPSILON                 0.01f
-#define KDTREE_MAX_TRIANGLES_PER_LEAF  10     // BSPBIN_MAX_TRIANGLES_PER_LEAF
+#define KDTREE_MAX_TRIANGLES_PER_LEAF  10     // This is no hard limit, leafs can have more triangles
 
 CKDTree::CKDTree(void)
 {
@@ -256,29 +256,12 @@ int kdbin_pushleaf(const CKDTree& tree,
                    const CKDTree::CKDNode* leaf,
                    std::vector<bspbin_leaf_t>& leafs)
 {
-    std::vector<int>::const_iterator iter;
-    int trianglecount = 0;
-
     bspbin_leaf_t thisleaf;
-    memset(&thisleaf, 0, sizeof(thisleaf));
-
     // fill thisleaf with the right triangle indices:
-    for(iter = leaf->m_triangles.begin(); iter != leaf->m_triangles.end(); iter++)
-    {
-        // Save triangle index in leaf
-        // *iter is the triangle index tree.m_triangles
-        // and m_triangles layout is also used in the file
-        thisleaf.triangles[trianglecount] = *iter;
-        trianglecount++;
-    }
+    thisleaf.triangles.insert(thisleaf.triangles.begin(),
+                              leaf->m_triangles.begin(),
+                              leaf->m_triangles.end());
 
-    if(trianglecount > BSPBIN_MAX_TRIANGLES_PER_LEAF)
-    {
-        fprintf(stderr, "Too many triangles in leaf\n");
-        assert(0);
-        exit(0);
-    }
-    thisleaf.trianglecount = trianglecount;
     leafs.push_back(thisleaf);
 
     return -(int)leafs.size(); // leaf indices are stored with a negative index
@@ -321,6 +304,24 @@ int kdbin_getnodes(const CKDTree& tree,
     return curpos;
 }
 
+void WriteLeafs(FILE* f, const std::vector<bspbin_leaf_t>& leafs)
+{
+    uint32_t i;
+    uint32_t trianglecount;
+    uint32_t triangleindex;
+    std::vector<bspbin_leaf_t>::const_iterator iter;
+    for(iter = leafs.begin();iter != leafs.end();iter++)
+    {
+        trianglecount = (*iter).triangles.size();
+        fwrite(&trianglecount, sizeof(trianglecount), 1, f);
+        for(i = 0; i < trianglecount; i++)
+        {
+            triangleindex = (*iter).triangles[i];
+            fwrite(&triangleindex, sizeof(triangleindex), 1, f);
+        }
+    }
+}
+
 template<typename Lump>
 void WriteLump(FILE*f, const std::vector<Lump>& l)
 {
@@ -332,6 +333,27 @@ void WriteLump(FILE*f, const std::vector<Lump>& l)
     }
 }
 
+/*
+LBSP file layout
+
+HEADER
+bspbin_direntry_t dirplane; // offset and length in bytes
+bspbin_direntry_t dirtextures; // offset and length in bytes
+bspbin_direntry_t dirnodes; // offset and length in bytes
+bspbin_direntry_t dirpoly; // offset and length in bytes
+bspbin_direntry_t dirvertices; // offset and length in bytes
+bspbin_direntry_t dirspawnpoints; // offset and length in bytes
+bspbin_direntry_t dirleafs; // offset and count of leafs (!)
+planes
+textures
+nodes
+triangles
+vertices
+spawnpoints
+leafs: for every leaf there is a trianglecount (uint32_t), followed
+       by the triangle indices (uint32_t) of this leaf, then the next leaf
+       follows with its trianglecount a.s.o.
+*/
 bool CKDTree::WriteToBinary(const std::string filepath)
 {
     int i, j;
@@ -343,17 +365,17 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     std::vector<bspbin_plane_t> planes;
     std::vector<bspbin_texture_t> textures;
     std::vector<bspbin_node_t> nodes;
-    std::vector<bspbin_leaf_t> leafs;
     std::vector<bspbin_triangle_t> triangles;
     std::vector<bspbin_vertex_t> vertices;
     std::vector<bspbin_spawn_t> spawnpoints;
+    std::vector<bspbin_leaf_t> leafs;
 
     planes.reserve(m_nodecount-m_leafcount);
     textures.reserve(m_estimatedtexturecount);
     nodes.reserve(m_nodecount-m_leafcount);
-    leafs.reserve(m_leafcount);
     triangles.reserve(m_triangles.size());
     vertices.reserve(m_vertices.size());
+    leafs.reserve(m_leafcount);
 
     // add triangles from tree
     for(i = 0; i < (int)m_triangles.size(); i++) // for each triangle
@@ -430,10 +452,10 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     bspbin_direntry_t dirplane;
     bspbin_direntry_t dirtextures;
     bspbin_direntry_t dirnodes;
-    bspbin_direntry_t dirleafs;
     bspbin_direntry_t dirpoly;
     bspbin_direntry_t dirvertices;
     bspbin_direntry_t dirspawnpoints;
+    bspbin_direntry_t dirleafs;
 
     bspbin_header_t header;
     header.magic = BSPBIN_MAGIC;
@@ -447,14 +469,15 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     dirtextures.length = textures.size() * sizeof(bspbin_texture_t);
     dirnodes.offset = dirtextures.length + dirtextures.offset;
     dirnodes.length = nodes.size() * sizeof(bspbin_node_t);
-    dirleafs.offset = dirnodes.length + dirnodes.offset;
-    dirleafs.length = leafs.size() * sizeof(bspbin_leaf_t);
-    dirpoly.offset = dirleafs.length + dirleafs.offset;
+    dirpoly.offset = dirnodes.length + dirnodes.offset;
     dirpoly.length = triangles.size() * sizeof(bspbin_triangle_t);
     dirvertices.offset = dirpoly.length + dirpoly.offset;
     dirvertices.length = vertices.size() * sizeof(bspbin_vertex_t);
     dirspawnpoints.offset = dirvertices.length + dirvertices.offset;
     dirspawnpoints.length = spawnpoints.size() * sizeof(bspbin_spawn_t);
+
+    dirleafs.offset = dirspawnpoints.length + dirspawnpoints.offset;
+    dirleafs.length = leafs.size(); // this is not the length in bytes, but the leaf count
 
     // Header
     fwrite(&header, sizeof(header), 1, f);
@@ -462,19 +485,23 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     fwrite(&dirplane, sizeof(dirplane), 1, f);
     fwrite(&dirtextures, sizeof(dirtextures), 1, f);
     fwrite(&dirnodes, sizeof(dirnodes), 1, f);
-    fwrite(&dirleafs, sizeof(dirleafs), 1, f);
     fwrite(&dirpoly, sizeof(dirpoly), 1, f);
     fwrite(&dirvertices, sizeof(dirvertices), 1, f);
     fwrite(&dirspawnpoints, sizeof(dirspawnpoints), 1, f);
+    fwrite(&dirleafs, sizeof(dirleafs), 1, f);
 
     // Lumps
     WriteLump(f, planes);
     WriteLump(f, textures);
     WriteLump(f, nodes);
-    WriteLump(f, leafs);
     WriteLump(f, triangles);
     WriteLump(f, vertices);
     WriteLump(f, spawnpoints);
+    // WriteLump(f, leafs); // this is no longer possible in lbsp version 5
+    WriteLeafs(f, leafs);
+
+    const uint32_t endmark = BSPBIN_MAGIC; // for the reader to check if the file is valid
+    fwrite(&endmark, sizeof(endmark), 1, f);
 
     fclose(f);
 
@@ -557,13 +584,6 @@ CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, co
        backlist[best]->size() < 1 ||
        trianglecount <= KDTREE_MAX_TRIANGLES_PER_LEAF)
     {
-        if(trianglecount > BSPBIN_MAX_TRIANGLES_PER_LEAF)
-        {
-            fprintf(stderr, "Too many triangles in leaf: %i\n", trianglecount);
-            system("pause");
-            exit(0);
-        }
-
         fprintf(stderr, "KD-Tree: subspace with %i polygons formed\n", trianglecount);
 
         // save remaining triangles from trianglesIn in this leaf

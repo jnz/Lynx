@@ -66,25 +66,25 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     }
     if(header.version != BSPBIN_VERSION)
     {
-        fprintf(stderr, "BSP: Wrong Lynx BSP file format version\n");
+        fprintf(stderr, "BSP: Wrong Lynx BSP file format version. Expecting: %i, got: %i\n", BSPBIN_VERSION, header.version);
         return false;
     }
 
     bspbin_direntry_t dirplane;
     bspbin_direntry_t dirtextures;
     bspbin_direntry_t dirnodes;
-    bspbin_direntry_t dirleafs;
     bspbin_direntry_t dirtriangles;
     bspbin_direntry_t dirvertices;
     bspbin_direntry_t dirspawnpoints;
+    bspbin_direntry_t dirleafs;
 
     fread(&dirplane, sizeof(dirplane), 1, f);
     fread(&dirtextures, sizeof(dirtextures), 1, f);
     fread(&dirnodes, sizeof(dirnodes), 1, f);
-    fread(&dirleafs, sizeof(dirleafs), 1, f);
     fread(&dirtriangles, sizeof(dirtriangles), 1, f);
     fread(&dirvertices, sizeof(dirvertices), 1, f);
     fread(&dirspawnpoints, sizeof(dirspawnpoints), 1, f);
+    fread(&dirleafs, sizeof(dirleafs), 1, f);
     if(ftell(f) != BSPBIN_HEADER_LEN)
     {
         fprintf(stderr, "BSP: Error reading header\n");
@@ -94,19 +94,19 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     m_planecount = dirplane.length / sizeof(bspbin_plane_t);
     m_texcount = dirtextures.length / sizeof(bspbin_texture_t);
     m_nodecount = dirnodes.length / sizeof(bspbin_node_t);
-    m_leafcount = dirleafs.length / sizeof(bspbin_leaf_t);
     m_trianglecount = dirtriangles.length / sizeof(bspbin_triangle_t);
     m_vertexcount = dirvertices.length / sizeof(bspbin_vertex_t);
     m_spawnpointcount = dirspawnpoints.length / sizeof(bspbin_spawn_t);
+    m_leafcount = dirleafs.length; // special case for the leafs
 
     m_plane = new bspbin_plane_t[ m_planecount ];
     m_tex = new bspbin_texture_t[ m_texcount ];
     m_texid = new int[ m_texcount ];
     m_node = new bspbin_node_t[ m_nodecount ];
-    m_leaf = new bspbin_leaf_t[ m_leafcount ];
     m_triangle = new bspbin_triangle_t[ m_trianglecount ];
     m_vertex = new bspbin_vertex_t[ m_vertexcount ];
     m_spawnpoint = new bspbin_spawn_t[ m_spawnpointcount ];
+    m_leaf = new bspbin_leaf_t[ m_leafcount ];
 
     if(!m_plane ||
        !m_tex ||
@@ -131,9 +131,6 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     fseek(f, dirnodes.offset, SEEK_SET);
     fread(m_node, sizeof(bspbin_node_t), m_nodecount, f);
 
-    fseek(f, dirleafs.offset, SEEK_SET);
-    fread(m_leaf, sizeof(bspbin_leaf_t), m_leafcount, f);
-
     fseek(f, dirtriangles.offset, SEEK_SET);
     fread(m_triangle, sizeof(bspbin_triangle_t), m_trianglecount, f);
 
@@ -143,9 +140,26 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     fseek(f, dirspawnpoints.offset, SEEK_SET);
     fread(m_spawnpoint, sizeof(bspbin_spawn_t), m_spawnpointcount, f);
 
-    long curpos = ftell(f);
-    long theoreticalpos = (dirspawnpoints.offset + dirspawnpoints.length);
-    if(curpos != theoreticalpos)
+    // Reading the triangle indices of the leafs
+    fseek(f, dirleafs.offset, SEEK_SET);
+
+    uint32_t trianglecount, triangleindex;
+    for(i = 0; i < dirleafs.length; i++)
+    {
+        fread(&trianglecount, sizeof(trianglecount), 1, f);
+        m_leaf[i].triangles.reserve(trianglecount);
+        for(j=0; j<trianglecount; j++)
+        {
+            fread(&triangleindex, sizeof(triangleindex), 1, f);
+            m_leaf[i].triangles.push_back(triangleindex);
+        }
+    }
+
+    // integrity check, the last 4 bytes in a lbsp version >=5
+    // is the magic pattern.
+    uint32_t endmark;
+    fread(&endmark, sizeof(endmark), 1, f);
+    if(endmark != BSPBIN_MAGIC)
     {
         Unload();
         fprintf(stderr, "BSP: Error reading lumps from BSP file\n");
@@ -162,6 +176,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
                 if(-m_node[i].children[k]-1 >= (int)m_leafcount)
                 {
                     fprintf(stderr, "BSP: Invalid leaf pointer\n");
+                    Unload();
                     return false;
                 }
             }
@@ -170,6 +185,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
                 if(m_node[i].children[k] >= (int)m_nodecount)
                 {
                     fprintf(stderr, "BSP: Invalid node pointer\n");
+                    Unload();
                     return false;
                 }
             }
@@ -534,7 +550,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     {
         int triangleindex;
         const int leafindex = -node-1;
-        const int trianglecount = m_leaf[leafindex].trianglecount;
+        const unsigned int trianglecount = m_leaf[leafindex].triangles.size();
         float cf;
         float minf = trace->f;
         int minindex = -1;

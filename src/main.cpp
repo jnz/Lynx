@@ -151,7 +151,7 @@ int main(int argc, char** argv)
         // so my notebook fan is quiet :-)
         const float dtrest = 1.0f/60.0f - dt;
         if(dtrest > 0.0f)
-            SDL_Delay(dtrest * 1000);
+            SDL_Delay((uint32_t)(dtrest * 1000.0f));
 
         if(!client.IsRunning())
         {

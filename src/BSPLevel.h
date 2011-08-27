@@ -82,10 +82,10 @@ protected:
     bspbin_texture_t*   m_tex;
     int*                m_texid;
     bspbin_node_t*      m_node;
-    bspbin_leaf_t*      m_leaf;
     bspbin_triangle_t*  m_triangle;
     bspbin_vertex_t*    m_vertex;
     bspbin_spawn_t*     m_spawnpoint;
+    bspbin_leaf_t*      m_leaf;
 
     vertexindex_t*      m_indices;
     std::vector<bsp_texture_batch_t> m_texturebatch;

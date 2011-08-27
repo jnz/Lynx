@@ -3,11 +3,11 @@
 #include "lynx.h"
 #include "math/plane.h"
 #include "math/quaternion.h"
+#include <vector>
 
 #define BSPBIN_MAGIC                    0x12051982
-#define BSPBIN_VERSION                  4
+#define BSPBIN_VERSION                  5
 #define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 7*sizeof(bspbin_direntry_t))
-#define BSPBIN_MAX_TRIANGLES_PER_LEAF   128
 
 #pragma pack(push, 1) // manual padding
 
@@ -41,12 +41,6 @@ struct bspbin_node_t
     vec3_t sphere_origin;
 };
 
-struct bspbin_leaf_t
-{
-    uint32_t triangles[BSPBIN_MAX_TRIANGLES_PER_LEAF];
-    uint32_t trianglecount;
-};
-
 struct bspbin_triangle_t
 {
     uint32_t tex;
@@ -69,3 +63,13 @@ struct bspbin_spawn_t
 };
 
 #pragma pack(pop)
+
+struct bspbin_leaf_t
+{
+    // Dynamic array:
+    std::vector<uint32_t> triangles; // if you change this type, change the read/write functions too
+};
+// new in version 5: there is no fixed array of triangle indices
+// triangle is a placeholder variable, and the triangles will
+// be written after the trianglecount variable
+
