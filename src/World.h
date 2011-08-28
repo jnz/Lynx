@@ -46,9 +46,9 @@ namespace stdext
 
 struct world_state_t
 {
-    uint32_t   leveltime; // in ms
-    uint32_t   worldid; // fortlaufende nummer
-    std::string level; // Pfad zu Level
+    uint32_t   leveltime; // time in [ms]
+    uint32_t   worldid; // worldid increments every frame
+    std::string level; // path to level file
 
     // Im Prinzip ist nur der objstate Vektor interessant, aber um schnellen
     // Zugriff auf die Objekt-States mit Hilfe einer Hash-Tabelle zu ermöglichen,
@@ -61,16 +61,16 @@ struct world_state_t
     int         GetObjCount() const { return (int)objstates.size(); }
 
 protected:
-    std::vector<obj_state_t> objstates; // Liste mit allen Objekten
-    WORLD_STATE_OBJMAPTYPE objindex; // ID zu objstates Index Tabelle. Key = obj id, Value = Index in objstates Tabelle
+    std::vector<obj_state_t> objstates; // List with all objects
+    WORLD_STATE_OBJMAPTYPE objindex; // ID to objstates index table. Key = obj id, value = index in objstates table
 };
 
-struct world_obj_trace_t // Zum Suchen von Objekten die von Strahl getroffen werden
+struct world_obj_trace_t // Search for objects hit by a ray
 {
     // Input
     vec3_t  start; // start point
     vec3_t  dir; // end point = start + dir
-    int     excludeobj; // welche objekt wird vom strahl ignoriert
+    int     excludeobj; // Which object should be ignored
 
     // Output
     float   f; // impact = start + f*dir
@@ -79,7 +79,7 @@ struct world_obj_trace_t // Zum Suchen von Objekten die von Strahl getroffen wer
     int     objid;
 };
 
-// Diese beiden Macros geben an, wie CObj von CWorld verwaltet wird (welcher STL map Typ)
+// STL types for our object storage
 #define OBJMAPTYPE   stdext::hash_map<int, CObj*>
 #define OBJITER      stdext::hash_map<int, CObj*>::iterator
 #define OBJITERCONST stdext::hash_map<int, CObj*>::const_iterator

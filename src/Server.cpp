@@ -206,6 +206,7 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
         break;
     case NET_MSG_INVALID:
     default:
+        fprintf(stderr, "Invalid client message\n");
         assert(0);
     }
 }
