@@ -20,7 +20,7 @@ CGameZombie::~CGameZombie(void)
 bool CGameZombie::InitGame()
 {
     // Level laden
-    std::string levelpath = CLynx::GetBaseDirLevel() + "testlvl/level1.lbsp";
+    std::string levelpath = CLynx::GetBaseDirLevel() + "sponza/sponza.lbsp";
     bool success = GetWorld()->LoadLevel(levelpath);
     if(!success)
     {

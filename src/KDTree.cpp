@@ -290,17 +290,24 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
             {
                 if(triangles[tindex].v[i] == vindex)
                 {
-                    kdbin_calculate_tangent(triangles,
-                                            vertices,
-                                            tindex,
-                                            tangentpre,
-                                            bitangentpre);
-
-                    tangentTotal += tangentpre;
-                    bitangentTotal += bitangentpre;
-                    break; // every triangle can only use this vertex once
+                    if(kdbin_calculate_tangent(triangles,
+                                               vertices,
+                                               tindex,
+                                               tangentpre,
+                                               bitangentpre))
+                    {
+                        tangentTotal += tangentpre;
+                        bitangentTotal += bitangentpre;
+                        break; // every triangle can only use this vertex once
+                    }
                 }
             }
+        }
+        if(tangentpre.IsNull() || bitangentpre.IsNull())
+        {
+            vertices[vindex].t = vec3_t::xAxis;
+            vertices[vindex].w = 1;
+            continue;
         }
 
         // Following p. 186 Lengyel's math book
@@ -319,6 +326,9 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
 
         // Test, if we can reconstruct the bitangent from the w component
         assert(vec3_t(vertices[vindex].w*(normal^tangent)).Equals(bitangent,0.01f));
+
+        if(vindex%100 == 0)
+            fprintf(stderr, ".");
     }
 }
 
@@ -502,10 +512,10 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     leafs.reserve(m_leafcount);
 
     // add triangles from tree
+    fprintf(stderr, "Building vertices\n");
     for(i = 0; i < m_triangles.size(); i++) // for each triangle
     {
         bspbin_triangle_t thistriangle;
-        memset(&thistriangle, 0, sizeof(thistriangle));
 
         // if the texture is not yet in "textures", add it and
         // return the index to texturenum
@@ -516,7 +526,6 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         {
             // assign vertices, normals etc.
             bspbin_vertex_t thisvertex;
-
             thisvertex.v = m_vertices[m_triangles[i].vertices[j]];
             thisvertex.n = m_normals[m_triangles[i].normals[j]];
             thisvertex.tu = m_texcoords[m_triangles[i].texcoords[j]].x;
@@ -537,7 +546,10 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         }
 
         triangles.push_back(thistriangle);
+        if(i%100==0)
+            fprintf(stderr, ".");
     }
+    fprintf(stderr, "\n");
     if(vertices.size() > USHRT_MAX)
     {
         fprintf(stderr, "Warning, more than %i vertices\n", USHRT_MAX);
@@ -545,6 +557,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
 
     // The tree is stored with pointers in memory.
     // Now we want to write this structure to the file.
+    fprintf(stderr, "Building tree structure\n");
     kdbin_getnodes(*this,
                     m_root,
                     planes,
@@ -561,7 +574,9 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         spawnpoints.push_back(spawn);
     }
     // Create tangent vectors for each vertex
+    fprintf(stderr, "Creating tangent vectors\n");
     kdbin_create_tangents(vertices, triangles);
+    fprintf(stderr, "\n");
 
     if(leafs.size() < 1)
     {
