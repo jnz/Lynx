@@ -243,7 +243,7 @@ void vec3_t::AngleVec3(const vec3_t& angles, vec3_t* forward, vec3_t* up, vec3_t
     }
 }
 
-float vec3_t::GetAngleDeg(vec3_t& a, vec3_t& b)
+float vec3_t::GetAngleDeg(const vec3_t& a, const vec3_t& b)
 {
     float d = a.Abs() * b.Abs();
 #ifdef _DEBUG
@@ -257,7 +257,7 @@ float vec3_t::GetAngleDeg(vec3_t& a, vec3_t& b)
 }
 
 #ifdef _DEBUG
-void vec3_t::Print()
+void vec3_t::Print() const
 {
     fprintf(stderr, "%.5f %.5f %.5f\n", x, y, z);
 }

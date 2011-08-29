@@ -48,6 +48,9 @@ CBSPLevel::~CBSPLevel(void)
 
 bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 {
+    static const vec3_t axis[3] = {vec3_t::xAxis,
+                                   vec3_t::yAxis,
+                                   vec3_t::zAxis};
     uint32_t i, j, k;
     int errcode;
     FILE* f = fopen(file.c_str(), "rb");
@@ -135,23 +138,14 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     for(i=0; i<m_planecount; i++) // reconstruct the planes
     {
         fread(&kdplane, sizeof(kdplane), 1, f);
-        m_plane[i].m_d = kdplane.d;
-        switch(kdplane.type)
+        if(kdplane.type > 2)
         {
-        case 0:
-            m_plane[i].m_n = vec3_t::xAxis;
-            break;
-        case 1:
-            m_plane[i].m_n = vec3_t::yAxis;
-            break;
-        case 2:
-            m_plane[i].m_n = vec3_t::zAxis;
-            break;
-        default:
             Unload();
             fprintf(stderr, "BSP: Unknown plane type\n");
             return false;
         }
+        m_plane[i].m_d = kdplane.d;
+        m_plane[i].m_n = axis[kdplane.type]; // lookup table
     }
 
     fseek(f, dirtextures.offset, SEEK_SET);

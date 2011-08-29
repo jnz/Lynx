@@ -41,7 +41,7 @@ struct vec3_t
         AngleVec3 entspricht den Drehungen einer YXZ Rotationsmatrix
     */
     static void AngleVec3(const vec3_t& angles, vec3_t* forward, vec3_t* up, vec3_t* side);
-    static float GetAngleDeg(vec3_t& a, vec3_t& b); // angle between a and b in degrees
+    static float GetAngleDeg(const vec3_t& a, const vec3_t& b); // angle between a and b in degrees
 
     /*
         Helferfunktion: Schnittpunkt Ray mit Zylinder.
@@ -64,7 +64,7 @@ struct vec3_t
     static const vec3_t zAxis; // 0,0,1
 
 #ifdef _DEBUG
-    void Print();
+    void Print() const;
 #endif
 
     vec3_t &operator += ( const vec3_t &v );
