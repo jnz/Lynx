@@ -105,7 +105,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     float mat_diff[] = { 0.5f, 0.5f, 0.5f, 1.0f };
     float light_pos[] = { 0, 1, 1, 1 };
     float white_light[] = {1,1,1,1};
-    float lmodel_ambient[] = { 0.9f, 0.9f, 0.9f, 1.0f };
+    float lmodel_ambient[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
@@ -288,11 +288,17 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // const vec3_t campos = l0pos;
     // const quaternion_t camrot = ql0rot;
 
+    const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
+    //const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
+    const float lightpos0_4f[4] = {dir.x, dir.y, dir.z, 1};
+    glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
     if(m_useShadows)
     {
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
-        PrepareShadowMap(campos+up*0.8f-side*1.4f-dir*1.8f,
-                         camrot, world, localctrlid); // the player is the light
+        PrepareShadowMap(lightpos0,
+                         camrot,
+                         world,
+                         localctrlid); // the player is the light
     }
 
 
@@ -310,6 +316,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glUniform1i(m_shadowMapUniform, 7);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+        glUniform1i(m_normalMap, 1);
         glUniform1i(m_tex, 0);
         glActiveTexture(GL_TEXTURE0);
     }
@@ -507,7 +514,9 @@ bool CRenderer::InitShader()
     }
     m_shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
     m_tex = glGetUniformLocation(m_program, "tex");
+    m_normalMap = glGetUniformLocation(m_program, "normalMap");
     glUniform1i(m_shadowMapUniform, 7);
+    glUniform1i(m_normalMap, 1);
     glUniform1i(m_tex, 0);
     glUseProgram(0);
 
@@ -556,7 +565,7 @@ bool CRenderer::CreateShadowFBO()
     glGenFramebuffers(1, &m_fboId);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
 
-    // Instruct openGL that we won't bind a color texture with the currently binded FBO
+    // Instruct openGL that we won't bind a color texture with the current FBO
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 

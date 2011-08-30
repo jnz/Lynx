@@ -1,18 +1,19 @@
-uniform sampler2DShadow ShadowMap;
+uniform sampler2D normalMap;
 uniform sampler2D tex;
+uniform sampler2DShadow ShadowMap;
 varying vec4 ShadowCoord;
-varying float fdist;
-varying vec3 normal, lightDir;
+
+varying vec3 lightDir;
 
 void main()
 {
-    float NdotL;
+    vec3 n = normalize(texture2D(normalMap, gl_TexCoord[0].st).xyz * 2.0 - 1.0);
+    vec3 l = normalize(lightDir);
+    float nDotL = max(0.0, dot(n, l));
 
-    vec4 color = texture2D(tex,gl_TexCoord[0].st);
     float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
-    NdotL = max(dot(normalize(normal),normalize(lightDir)),0.0);
 
-    gl_FragColor = color * clamp(NdotL*(0.7 + 0.5*shadow) * clamp(8.0/(fdist*0.6),0.0,1.0),0.0, 1.0);
-    // gl_FragColor = color * clamp(0.7 + 0.5*shadow,0.0,1.0);
+    // gl_FragColor = color * texture2D(tex, gl_TexCoord[0].st);
+    gl_FragColor = (0.6 + nDotL*0.4) * texture2D(tex, gl_TexCoord[0].st);
 }
 

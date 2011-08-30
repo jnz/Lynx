@@ -160,7 +160,9 @@ unsigned int CResourceManager::LoadTexture(std::string path)
 
     if(tex == 0)
     {
-        fprintf(stderr, "Failed to load texture: '%s'\n", SOIL_last_result());
+        fprintf(stderr, "Failed to load texture: %s (%s)\n",
+                path.c_str(),
+                SOIL_last_result());
         return 0;
     }
 

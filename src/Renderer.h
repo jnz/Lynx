@@ -30,6 +30,7 @@ protected:
     unsigned int m_fshader;
     unsigned int m_program;
     unsigned int m_tex; // tex0
+    unsigned int m_normalMap; // tex1
 
     // Shadow
     bool         m_useShadows;

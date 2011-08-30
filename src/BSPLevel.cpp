@@ -238,19 +238,31 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
     // Prepare indices grouped by texture
     fprintf(stderr, "Creating index buffer\n");
+
+    // we use this normal map, if no texture_bump.jpg is available
+    int texnormal_fallback = resman->GetTexture(CLynx::GetBaseDirTexture() + "normal.jpg");
+
     uint32_t vertexindex = 0;
     for(i=0;i<m_texcount;i++)
     {
         // loading all textures
         const std::string texpath = CLynx::GetDirectory(file) + m_tex[i].name;
-        m_texid[i] = resman->GetTexture(texpath);
+
+        const std::string texpathnoext = CLynx::StripFileExtension(m_tex[i].name);
+        const std::string texpathext = CLynx::GetFileExtension(m_tex[i].name);
+        const std::string texpathnormal = CLynx::GetDirectory(file) + texpathnoext + "_bump" + texpathext;
 
         // we group all triangles with the same
         // texture in a complete batch of vertex indices
         bsp_texture_batch_t thisbatch;
 
-        thisbatch.texid = m_texid[i];
         thisbatch.start = vertexindex;
+
+        m_texid[i] = resman->GetTexture(texpath);
+        thisbatch.texid = m_texid[i];
+        thisbatch.texidnormal = resman->GetTexture(texpathnormal);
+        if(thisbatch.texidnormal == 0) // no texture found, use fall back texture
+            thisbatch.texidnormal = texnormal_fallback;
 
         for(j=0;j<m_trianglecount;j++)
         {
@@ -299,9 +311,15 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
-    glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
+    // the following depends on the bspbin_vertex_t struct
+    // (byte offsets)
     glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
+    glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
+    glClientActiveTexture(GL_TEXTURE0);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
+    glClientActiveTexture(GL_TEXTURE1);
+    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(36));
+
     if(glGetError() != GL_NO_ERROR)
     {
         Unload();
@@ -393,27 +411,50 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
 
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
-
-    glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
-    glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
     glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
+
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
+
+    glClientActiveTexture(GL_TEXTURE0);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
+
+    glClientActiveTexture(GL_TEXTURE1);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(36));
 
     const uint32_t batchcount = m_texturebatch.size();
     for(uint32_t i=0; i<batchcount; i++)
     {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texidnormal);
+
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texid);
+
         glDrawElements(GL_TRIANGLES,
                        m_texturebatch[i].count,
-                       MY_GL_VERTEXINDEX_TYPE, // see bsplevel.h
+                       MY_GL_VERTEXINDEX_TYPE,
                        BUFFER_OFFSET(m_texturebatch[i].start * sizeof(vertexindex_t)));
     }
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glClientActiveTexture(GL_TEXTURE1);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE0);
+    glClientActiveTexture(GL_TEXTURE0);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 bool CBSPLevel::GetTriIntersection(const int triangleindex,

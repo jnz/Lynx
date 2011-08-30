@@ -49,7 +49,7 @@ struct bspbin_triangle_t
     uint32_t v[3]; // integer index to bspbin_vertex_t array
 };
 
-struct bspbin_vertex_t
+struct bspbin_vertex_t // if you change this, you need to change the VBO code (BSPLevel.cpp) too
 {
     vec3_t v;
     vec3_t n;

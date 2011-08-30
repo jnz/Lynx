@@ -29,6 +29,17 @@ std::string CLynx::StripFileExtension(std::string path)
     return path.substr(0, pos);
 }
 
+std::string CLynx::GetFileExtension(std::string path)
+{
+    size_t pos;
+
+    pos = path.rfind('.');
+    if(pos == std::string::npos)
+        return "";
+
+    return path.substr(pos, std::string::npos);
+}
+
 std::string CLynx::ChangeFileExtension(std::string path, std::string newext)
 {
     return StripFileExtension(path) + "." + newext;

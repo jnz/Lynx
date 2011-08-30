@@ -22,6 +22,7 @@ struct bsp_texture_batch_t
     uint32_t start; // vertex index start
     uint32_t count; // vertex index count
     int texid;
+    int texidnormal; // normal map
 };
 
 // what data type should we use for the 
