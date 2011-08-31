@@ -79,10 +79,11 @@ void CGameObjZombie::FindVictim()
 bool CThinkFuncRespawnZombie::DoThink(uint32_t leveltime)
 {
     quaternion_t zombierot(vec3_t::yAxis, CLynx::randf()*lynxmath::PI);
-    GetWorld()->DelObj(GetObj()->GetID());
+    GetWorld()->DelObj(GetObj()->GetID()); // delete old zombie
 
     bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
 
+    // add a new zombie to the world
     CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
     zombie->SetOrigin(point.point);
     zombie->SetRot(point.rot*zombierot);

@@ -12,7 +12,7 @@ public:
     CGameLogic(CWorld* world, CServer* server); // Wenn CClient diese Klasse nutzt, server auf NULL setzen
     virtual ~CGameLogic(void);
 
-    virtual bool InitGame();
+    virtual bool InitGame(const char* level);
     virtual void Update(const float dt, const uint32_t ticks);
 
     virtual void ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist); // Wird von CClient mitgenutzt

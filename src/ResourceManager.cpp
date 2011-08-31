@@ -32,7 +32,7 @@ bool CResourceManager::IsServer()
     return !m_world->IsClient();
 }
 
-unsigned int CResourceManager::GetTexture(std::string texname)
+unsigned int CResourceManager::GetTexture(std::string texname, bool noerrormsg)
 {
     if(IsServer())
     {
@@ -46,7 +46,7 @@ unsigned int CResourceManager::GetTexture(std::string texname)
     iter = m_texmap.find(texname);
     if(iter == m_texmap.end())
     {
-        texture = LoadTexture(texname);
+        texture = LoadTexture(texname, noerrormsg);
         if(texture != 0)
             m_texmap[texname] = texture;
     }
@@ -145,7 +145,7 @@ void CResourceManager::UnloadAllSounds()
     m_soundmap.clear();
 }
 
-unsigned int CResourceManager::LoadTexture(std::string path)
+unsigned int CResourceManager::LoadTexture(std::string path, bool noerrormsg)
 {
     unsigned int tex = SOIL_load_OGL_texture(
         path.c_str(),
@@ -158,12 +158,11 @@ unsigned int CResourceManager::LoadTexture(std::string path)
           SOIL_FLAG_TEXTURE_REPEATS
     );
 
-    if(tex == 0)
+    if(tex == 0 && !noerrormsg)
     {
         fprintf(stderr, "Failed to load texture: %s (%s)\n",
                 path.c_str(),
                 SOIL_last_result());
-        return 0;
     }
 
     return tex;

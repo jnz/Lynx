@@ -1,9 +1,8 @@
 uniform sampler2D normalMap;
 uniform sampler2D tex;
 uniform sampler2DShadow ShadowMap;
-varying vec4 ShadowCoord;
-
-varying vec3 lightDir;
+varying vec4 ShadowCoord; // pos in shadow space
+varying vec3 lightDir; // in tangent space
 
 void main()
 {
@@ -14,6 +13,6 @@ void main()
     float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
 
     // gl_FragColor = color * texture2D(tex, gl_TexCoord[0].st);
-    gl_FragColor = (0.6 + nDotL*0.4) * texture2D(tex, gl_TexCoord[0].st);
+    gl_FragColor = (0.3 + nDotL*0.7) * texture2D(tex, gl_TexCoord[0].st);
 }
 

@@ -189,7 +189,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         return false;
     }
 
-    // Check if tree file indices are within a valid range 
+    // Check if tree file indices are within a valid range
     for(i=0;i<m_nodecount;i++)
     {
         for(k=0;k<2;k++)
@@ -241,6 +241,11 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
     // we use this normal map, if no texture_bump.jpg is available
     int texnormal_fallback = resman->GetTexture(CLynx::GetBaseDirTexture() + "normal.jpg");
+    if(texnormal_fallback == 0)
+    {
+        fprintf(stderr, "Failed to load standard normal map");
+        return false;
+    }
 
     uint32_t vertexindex = 0;
     for(i=0;i<m_texcount;i++)
@@ -260,7 +265,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
         m_texid[i] = resman->GetTexture(texpath);
         thisbatch.texid = m_texid[i];
-        thisbatch.texidnormal = resman->GetTexture(texpathnormal);
+        thisbatch.texidnormal = resman->GetTexture(texpathnormal, true); // we only try to load the bump map
         if(thisbatch.texidnormal == 0) // no texture found, use fall back texture
             thisbatch.texidnormal = texnormal_fallback;
 

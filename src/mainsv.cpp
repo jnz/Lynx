@@ -13,13 +13,21 @@
 #endif
 // </memory leak detection>
 
+#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
+
 int main(int argc, char** argv)
 {
     int svport = 9999;
+    char* level = (char*)DEFAULT_LEVEL;
 
     if(argc > 1) // port
     {
         svport = atoi(argv[1]);
+    }
+    if(argc > 2) // level
+    {
+        level = argv[2];
+        fprintf(stderr, "Level: %s", level);
     }
     srand((unsigned int)time(NULL));
 
@@ -44,7 +52,7 @@ int main(int argc, char** argv)
         assert(0);
         return -1;
     }
-    svgame.InitGame();
+    svgame.InitGame(level);
     fprintf(stderr, "Server running\n");
 
     run = 1;

@@ -24,19 +24,17 @@ CMixer::~CMixer(void)
 bool CMixer::Init()
 {
     int status;
-#ifndef __linux
-    int flags = MIX_INIT_OGG;
-#endif
 
-    fprintf(stderr, "SDL_mixer Init... ");
+    fprintf(stderr, "Sound mixer init...\n");
     status = SDL_InitSubSystem(SDL_INIT_AUDIO);
     if(status != 0)
     {
-        fprintf(stderr, "SDL: Failed to init audio subsystem\n");
+        fprintf(stderr, "SDL_mixer: Failed to init audio subsystem\n");
         return false;
     }
 
 #ifndef __linux
+    int flags = MIX_INIT_OGG;
     status = Mix_Init(flags);
     if((status&flags) != flags)
     {

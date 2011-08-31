@@ -20,7 +20,6 @@ struct obj_state_t;
 
 
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
-// FIXME: use template function
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
                   const uint32_t flagparam,
@@ -59,7 +58,12 @@ int DeltaDiffBytes(const uint8_t* newstate,
                    const int size);
 
 
-// If you change this, update the Serialize function
+// If you change this in any way, update the Serialize function!
+// -------------------------------------------------------------
+// The basic object state has no acceleration (f=ma)
+// property. The Lynx physical model is in general pretty
+// simple. But forces should be handled on the server side
+// anyway.
 struct obj_state_t
 {
     vec3_t          origin;         // Position
@@ -72,7 +76,7 @@ struct obj_state_t
     int16_t         nextanimation;
     vec3_t          eyepos;
     OBJFLAGTYPE     flags;
-    std::string     particles;      // Partikelsystem, das an dieses Objekt gebunden ist. Config String in der Form: "blood|dx=0.1,dy=0.6,dz=23".
+    std::string     particles;      // Particlesystem bound to this object. The string looks something like this: "blood|dx=0.1,dy=0.6,dz=23".
 };
 
 class CObj
@@ -116,10 +120,10 @@ public:
     std::string GetParticleSystemName() const;
 
     // Local Attributes
-    bool        locGetIsOnGround() const { return m_locIsOnGround; } // Berüht das Objekt den Boden? Wird von World::ObjMove gesetzt
+    bool        locGetIsOnGround() const { return m_locIsOnGround; } // Has this object touched the ground? Set by World::ObjMove gesetzt
 
     // Rotation
-    const matrix_t* GetRotMatrix() const { return &m; } // Direkter Zugriff auf die Rotationsmatrix
+    const matrix_t* GetRotMatrix() const { return &m; } // Direct access to the rotation matrix
 
     // Model Data
     const CModelMD2* GetMesh() const { return m_mesh; }
@@ -133,11 +137,11 @@ public:
     // Particle Systems
     CParticleSystem* GetParticleSystem() { return m_particlesys.get(); }
 
-    // Wallhit notification
+    // Wallhit notification, called by World::ObjMove(...)
     virtual void     OnHitWall(const vec3_t location, const vec3_t normal) {}
 
 protected:
-    obj_state_t state; // obj_state
+    obj_state_t state; // Core data
 
     // Animation extension
     CModelMD2*  m_mesh;

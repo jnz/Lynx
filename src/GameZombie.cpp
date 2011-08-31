@@ -17,10 +17,17 @@ CGameZombie::~CGameZombie(void)
 
 }
 
-bool CGameZombie::InitGame()
+bool CGameZombie::InitGame(const char* level)
 {
-    // Level laden
-    std::string levelpath = CLynx::GetBaseDirLevel() + "sponza/sponza.lbsp";
+    // Loading level
+    std::string leveluser(level);
+    std::string levelpath;
+    if(leveluser.length() < 1)
+    {
+        fprintf(stderr, "GameZombie init failed, level argument is null");
+        return false;
+    }
+    levelpath = CLynx::GetBaseDirLevel() + leveluser;
     bool success = GetWorld()->LoadLevel(levelpath);
     if(!success)
     {
@@ -53,8 +60,8 @@ void CGameZombie::Notify(EventNewClientConnected e)
     player->SetEyePos(vec3_t(0,0.65f,0));
     player->SetClientID(e.client->GetID());
 
-    GetWorld()->AddObj(player, true); // In diesem Frame, weil die Welt umgehend vom CServer serialized wird
-    e.client->m_obj = player->GetID(); // Mit Client verknüpfen
+    GetWorld()->AddObj(player, true); // we set this argument to true, so that we are directly in the next serialize message
+    e.client->m_obj = player->GetID(); // Connect this object with the client
     e.client->hud.weapon = "weapon/tris.md2";
     e.client->hud.animation = HUD_WEAPON_IDLE_ANIMATION;
 }
@@ -112,7 +119,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                     continue;
 
                 // the force will decrease by 1/dist^2
-                const float force = 75.0f; // not a force in a strict physical sense
+                const float force = 75.0f; // not really a force, where f = ma
                 vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
                 float difflen = diff.AbsSquared();
                 if(difflen > 25.0f)

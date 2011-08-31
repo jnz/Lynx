@@ -18,10 +18,11 @@ void main()
                           t.y, b.y, n.y,
                           t.z, b.z, n.z);
 
-    // light dir to eye space
-    vec3 leye = gl_NormalMatrix * gl_LightSource[0].position.xyz;
-
+    // light position to eye space
+    vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
+    // light dir in eye space
+    lightDir = vec3(lightpos - vPos);
     // light dir in tangent space
-    lightDir = tbnMatrix * leye;
+    lightDir = tbnMatrix * lightDir;
 }
 

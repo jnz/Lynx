@@ -2,6 +2,24 @@
 
 #include "Obj.h"
 
+/*
+ * The idea of the think functions (thinkfunc) is that an
+ * object will execute a piece of code at some point in the future.
+ * To do this, you create a subclass of the CThinkFunc with
+ * your own DoThink function (this is a virtual function) and use the
+ * m_think object of the object to register your new think function.
+ *
+ * Example in GameObjZombie.cpp:
+ *
+ *  m_think.AddFunc(new CThinkFuncRespawnZombie(
+ *                  GetWorld()->GetLeveltime() + 9000,
+ *                  GetWorld(),
+ *                  this));
+ *  The custom think function object "CThinkFuncRespawnZombie" is added
+ *  to the list of think functions and will be executed in 9000 ms.
+ *
+ * */
+
 class CThinkFunc
 {
 public:

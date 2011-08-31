@@ -64,15 +64,14 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     int status;
     SDL_Surface* screen;
 
-    fprintf(stderr, "SDL Init... ");
+    fprintf(stderr, "Initialising OpenGL subsystem...\n");
     status = SDL_InitSubSystem(SDL_INIT_VIDEO);
     assert(status == 0);
     if(status)
     {
-        fprintf(stderr, " failed\n");
+        fprintf(stderr, "Failed to init SDL OpenGL subsystem!\n");
         return false;
     }
-    fprintf(stderr, " successful\n");
 
     screen = SDL_SetVideoMode(width, height, bpp,
                 SDL_HWSURFACE |
@@ -82,7 +81,10 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
                 (fullscreen ? SDL_FULLSCREEN : 0));
     assert(screen);
     if(!screen)
+    {
+        fprintf(stderr, "Failed to set screen resolution mode: %i x %i", width, height);
         return false;
+    }
 
     m_width = width;
     m_height = height;
@@ -121,17 +123,17 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     GLenum err = glewInit();
     if(GLEW_OK != err)
     {
-        fprintf(stderr, "glew error: %s\n", glewGetErrorString(err));
+        fprintf(stderr, "GLEW init error: %s\n", glewGetErrorString(err));
         return false;
     }
 
     if(glewIsSupported("GL_VERSION_2_0"))
     {
-        fprintf(stderr, "OpenGL 2.0 support\n");
+        fprintf(stderr, "OpenGL 2.0 support found\n");
     }
     else
     {
-        fprintf(stderr, "Error: No OpenGL 2.0 support\n");
+        fprintf(stderr, "Fatal error: No OpenGL 2.0 support\n");
         return false;
     }
 
@@ -141,7 +143,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         fprintf(stderr, "Init shader failed\n");
         return false;
     }
-    fprintf(stderr, "Shader loaded\n");
+    fprintf(stderr, "GLSL shader loaded\n");
 
     if(!glewIsSupported("GL_EXT_framebuffer_object"))
     {
@@ -174,9 +176,9 @@ void CRenderer::DrawScene(const CFrustum& frustum,
 
     if(!generateShadowMap && world->GetBSP()->IsLoaded())
     {
-        glDisable(GL_LIGHTING);
+        //glDisable(GL_LIGHTING);
         BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
-        glEnable(GL_LIGHTING);
+        //glEnable(GL_LIGHTING);
     }
 
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
@@ -288,9 +290,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // const vec3_t campos = l0pos;
     // const quaternion_t camrot = ql0rot;
 
-    const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
-    //const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
-    const float lightpos0_4f[4] = {dir.x, dir.y, dir.z, 1};
+    //const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
+    const vec3_t lightpos0 = campos+up*0.5f;
+    const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
     if(m_useShadows)
     {
@@ -365,7 +367,8 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
-        glTranslatef(0,-2.0f,1.25f);
+        glTranslatef(0,-2.0f,1.25f); // weapon offset
+        // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
         viewmodel->Render(viewmodelstate);
         viewmodel->Animate(viewmodelstate, dt);

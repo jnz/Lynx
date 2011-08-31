@@ -16,7 +16,7 @@ CGameLogic::~CGameLogic(void)
 {
 }
 
-bool CGameLogic::InitGame()
+bool CGameLogic::InitGame(const char* level)
 {
     assert(0);
     return true;

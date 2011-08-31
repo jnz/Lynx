@@ -14,7 +14,7 @@ public:
     CResourceManager(CWorld* world);
     ~CResourceManager(void);
 
-    unsigned int GetTexture(std::string texname);
+    unsigned int GetTexture(std::string texname, bool noerrormsg=false);
     void UnloadAllTextures();
 
     CModelMD2* GetModel(std::string mdlname);
@@ -27,7 +27,7 @@ public:
 
 private:
     //unsigned int LoadTGA(std::string path);
-    unsigned int LoadTexture(std::string path);
+    unsigned int LoadTexture(std::string path, bool noerrormsg=false);
 
     std::map<std::string, unsigned int> m_texmap;
     std::map<std::string, CModelMD2*> m_modelmap;

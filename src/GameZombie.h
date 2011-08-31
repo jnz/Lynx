@@ -10,7 +10,7 @@ public:
     CGameZombie(CWorld* world, CServer* server);
     ~CGameZombie(void);
 
-    virtual bool InitGame();
+    virtual bool InitGame(const char* level);
     virtual void Update(const float dt, const uint32_t ticks);
 
 protected:

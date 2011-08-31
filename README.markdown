@@ -4,12 +4,14 @@ Lynx
 Lynx is a simple 3D FPS with zombies :)
 If zombies won't convince you, there are some other features:
 
-- Multiplayer with network latency interpolation
-- Shadow mapping, per-pixel lighting
+- Multiplayer with robust network latency interpolation
+- OpenGL 2.0
+- Shadow mapping
+- Per-pixel lighting
+- Normal mapping
 - Dedicated server
 - Multiplatform support (Windows, Mac OS X, Linux)
-- Blender as a map editor + custom bsp compiler
-- OpenGL 2.0
+- Blender as a map editor + custom KD tree compiler
 - Did I mention zombies?
 
 Dependencies
@@ -81,4 +83,19 @@ Connect to remote server with the ip address 192.168.0.1 at port 9999:
 Start a dedicated server at port 9999:
 
 > lynx3dsv 9999
+
+Load a level in Lynx
+====================
+
+You need to have your geometry available as Wavefront .obj file.
+Then you need to convert this .obj file to a .lbsp file with the kdcompile
+helper program. kdcompile reads the .obj file and writes a Lynx compatible
+.lbsp file.
+
+> kdcompile mylevel.obj mylevel.lbsp
+
+Then you need to place the .lbsp in your baselynx/level/ folder.
+Start the lynx server with the level path as the 3rd argument:
+
+> lynx3dsv 9999 mylevel/mylevel.lbsp
 

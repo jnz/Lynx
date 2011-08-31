@@ -22,12 +22,14 @@
 #define SCREEN_HEIGHT       600
 #define BPP                 32
 #define FULLSCREEN          0
+#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
 
 int main(int argc, char** argv)
 {
     char* serveraddress = (char*)"localhost";
     int svport = 9999;
     bool startserver = true;
+    char* level = (char*)DEFAULT_LEVEL;
 
     fprintf(stderr, "%s version %i.%i\n", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
     if(argc > 1) // connect to this server, disable local server
@@ -39,9 +41,14 @@ int main(int argc, char** argv)
     {
         svport = atoi(argv[2]);
     }
+    if(argc > 3) // level
+    {
+        level = argv[3];
+        fprintf(stderr, "Level: %s", level);
+    }
     srand((unsigned int)time(NULL));
 
-    { // for dumpmemleak
+    { // the { is for the win32 visual studio dumpmemleak at the end
     int run;
     float dt;
     uint32_t time, oldtime;
@@ -71,7 +78,7 @@ int main(int argc, char** argv)
             assert(0);
             return -1;
         }
-        if(!svgame.InitGame())
+        if(!svgame.InitGame(level))
         {
             fprintf(stderr, "Failed to init game\n");
             assert(0);
@@ -149,9 +156,9 @@ int main(int argc, char** argv)
         mixer.Update(dt, time);
 
         // so my notebook fan is quiet :-)
-        const float dtrest = 1.0f/60.0f - dt;
-        if(dtrest > 0.0f)
-            SDL_Delay((uint32_t)(dtrest * 1000.0f));
+        //const float dtrest = 1.0f/60.0f - dt;
+        //if(dtrest > 0.0f)
+            //SDL_Delay((uint32_t)(dtrest * 1000.0f));
 
         if(!client.IsRunning())
         {

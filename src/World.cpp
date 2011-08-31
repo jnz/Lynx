@@ -64,6 +64,7 @@ void CWorld::DeleteAllObjs()
 const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const
 {
     // FIXME this function should use some sort of binary space partitioning
+    // naive implementation:
     std::vector<CObj*> objlist;
     const float radius2 = radius * radius;
     CObj* obj;
