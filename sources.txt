@@ -1,3 +1,6 @@
-﻿Monster Sound Pack, Volume 1 www.opengameart.org by Ogrebane
-
+﻿Monster Sound Pack, Volume 1 www.opengameart.org by Ogrebane.
 http://opengameart.org/content/fire-spell-explosion
+
+Sponza Atrium model by Marko Dabrovic.
+
+SOIL texture loading library by Jonathan Dummer.

@@ -45,6 +45,11 @@ link_libraries (
     SDLmain # Sadly not included in SDL_LIBRARY variable
 )
 
+set(lynx3d_SOIL ../soil/src/SOIL.c
+                ../soil/src/image_DXT.c
+                ../soil/src/image_helper.c
+                ../soil/src/stb_image_aug.c)
+
 set(lynx3d_MATH math/matrix.cpp math/plane.cpp math/quaternion.cpp math/vec3.cpp)
 
 set(lynx3d_SOURCES BSPLevel.cpp Client.cpp ClientHUD.cpp ClientInfo.cpp
@@ -62,6 +67,6 @@ set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameL
     ResourceManager.cpp Server.cpp Sound.cpp Stream.cpp Think.cpp World.cpp
     lynx.cpp lynxsys.cpp mainsv.cpp)
 
-add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH})
-add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH})
+add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})
+add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})
 
