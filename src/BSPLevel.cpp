@@ -178,7 +178,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         }
     }
 
-    // integrity check, the last 4 bytes in a lbsp version >=5
+    // integrity check, the last 4 bytes in a lbsp version >=5 file
     // is the magic pattern.
     uint32_t endmark;
     fread(&endmark, sizeof(endmark), 1, f);
@@ -460,6 +460,33 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glDisableClientState(GL_VERTEX_ARRAY);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void CBSPLevel::RenderNormals() const
+{
+    unsigned int vindex;
+    const vec3_t tanoff(0.06f); // offset for tangents
+    const vec3_t bitanoff(-0.06f); // offset for tangents
+    const float nscale = 5.0f;
+    vec3_t bitangent;
+
+    glBegin(GL_LINES);
+    for(vindex = 0; vindex < m_vertexcount; vindex++)
+    {
+        glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+        glVertex3fv(m_vertex[vindex].v.v);
+        glVertex3fv((nscale*m_vertex[vindex].n + m_vertex[vindex].v).v);
+
+        //glColor3f(0.0f, 1.0f, 0.0f);
+        //glVertex3fv((tanoff + m_vertex[vindex].v).v);
+        //glVertex3fv((nscale*m_vertex[vindex].t + m_vertex[vindex].v + tanoff).v);
+
+        //glColor3f(0.0f, 0.0f, 1.0f);
+        //bitangent = m_vertex[vindex].w * (m_vertex[vindex].n ^ m_vertex[vindex].t);
+        //glVertex3fv((bitanoff + m_vertex[vindex].v).v);
+        //glVertex3fv((nscale*bitangent + m_vertex[vindex].v + bitanoff).v);
+    }
+    glEnd();
 }
 
 bool CBSPLevel::GetTriIntersection(const int triangleindex,

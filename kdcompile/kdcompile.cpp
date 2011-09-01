@@ -34,7 +34,9 @@ int main(int argc, char** argv)
         return -1;
     }
     cout << "Complete." << endl;
+#ifdef WIN32
     system("pause");
+#endif
 
     return 0;
 }

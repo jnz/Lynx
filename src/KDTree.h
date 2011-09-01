@@ -23,7 +23,6 @@ struct spawn_point_t
 struct kd_tri_t // triangle for kd-tree
 {
     int vertices[3];
-    int normals[3];
     int texcoords[3]; // UV coordinates
     plane_t plane; // triangle plane
     std::string texturepath;
@@ -82,14 +81,17 @@ public:
         std::vector<int>        m_triangles; // Only filled when node is a leaf
     };
 
-    std::vector<vec3_t>         m_vertices; // Vertexvektor
-    std::vector<vec3_t>         m_normals; // Normalenvektor
-    std::vector<vec3_t>         m_texcoords; // FIXME vec2_t würde reichen
-    std::vector<kd_tri_t>       m_triangles; // Vektor für Polygone
+    std::vector<vec3_t>         m_vertices; // Vertices from obj file
+    std::vector<vec3_t>         m_normals; // Vertex normals
+    std::vector<vec3_t>         m_texcoords; // FIXME vec2_t would be sufficient
+    std::vector<kd_tri_t>       m_triangles; // Triangles from obj file
     CKDNode*                    m_root; // Starting node
     int                         m_estimatedtexturecount; // how many textures are used in the obj file?
 
     bool        WriteToBinary(const std::string filepath);
+
+protected:
+    void        CalculateVertexNormals();
 
 private:
     int         m_nodecount; // increased by every CKDNode constructor

@@ -358,6 +358,16 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glDisable(GL_BLEND);
     glColor4f(1,1,1,1);
 
+    // Draw normals?
+    if(world && world->GetBSP())
+    {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_LIGHTING);
+        world->GetBSP()->RenderNormals();
+        glColor4f(1,1,1,1);
+        glEnable(GL_LIGHTING);
+    }
+
     // Draw weapon
     glDisable(GL_LIGHTING);
     CModelMD2* viewmodel;

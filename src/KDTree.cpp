@@ -12,11 +12,12 @@
 #endif
 
 #define KDTREE_EPSILON                 0.01f
-#define KDTREE_MAX_TRIANGLES_PER_LEAF  10     // This is no hard limit, leafs can have more triangles
+#define KDTREE_MAX_TRIANGLES_PER_LEAF  5     // This is no hard limit, leafs can have more triangles
 
 CKDTree::CKDTree(void)
 {
     m_root = NULL;
+    m_nodecount = 0;
     m_leafcount = 0;
     m_depth = 0;
     m_estimatedtexturecount = 0;
@@ -65,14 +66,14 @@ bool CKDTree::Load(std::string file)
                 goto cleanup;
             m_vertices.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
         }
-        else if(strcmp(tok, "vn")==0) // normal
-        {
-            for(i=0;i<3;i++)
-                sv[i] = strtok(NULL, DELIM);
-            if(!sv[0] || !sv[1] || !sv[2])
-                goto cleanup;
-            m_normals.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
-        }
+        //else if(strcmp(tok, "vn")==0) // normal
+        //{
+            //for(i=0;i<3;i++)
+                //sv[i] = strtok(NULL, DELIM);
+            //if(!sv[0] || !sv[1] || !sv[2])
+                //goto cleanup;
+            //m_normals.push_back(vec3_t(atof(sv[0]), atof(sv[1]), atof(sv[2])));
+        //}
         else if(strcmp(tok, "vt")==0) // textures
         {
             for(i=0;i<3;i++)
@@ -115,7 +116,6 @@ bool CKDTree::Load(std::string file)
                     goto cleanup;
 
                 triangle.vertices[i] = (vi-1);
-                triangle.normals[i] = (ni-1);
                 triangle.texcoords[i] = (ti-1);
             }
 
@@ -139,6 +139,11 @@ bool CKDTree::Load(std::string file)
     // Vertices u. faces are loaded
     m_nodecount = 0;
     m_leafcount = 0;
+
+    // Calculating vertex normals
+    fprintf(stderr, "Calculating vertex normals... ");
+    CalculateVertexNormals();
+    fprintf(stderr, "finished.\n");
 
     fprintf(stderr, "Creating triangle indices\n");
     for(i = 0; i < (int)m_triangles.size(); i++)
@@ -178,6 +183,49 @@ void CKDTree::Unload()
     m_spawnpoints.clear();
     m_estimatedtexturecount = 0;
     m_depth = 0;
+    m_vertices.clear();
+    m_normals.clear();
+    m_texcoords.clear();
+    m_triangles.clear();
+
+    m_nodecount = 0;
+    m_leafcount = 0;
+    m_depth = 0;
+}
+
+void CKDTree::CalculateVertexNormals()
+{
+    const unsigned int vertexcount = m_vertices.size();
+    const unsigned int trianglecount = m_triangles.size();
+    std::vector<vec3_t> normals;
+    vec3_t normal;
+    unsigned int vindex;
+    unsigned int tindex;
+    unsigned int v0, v1, v2; // vertex indices
+
+    normals.reserve(vertexcount);
+
+    for(tindex = 0; tindex < trianglecount; tindex++)
+    {
+        v0 = m_triangles[tindex].vertices[0]; // vertex index 0
+        v1 = m_triangles[tindex].vertices[1]; // vertex index 1
+        v2 = m_triangles[tindex].vertices[2]; // vertex index 2
+        const vec3_t& p0 = m_vertices[v0];
+        const vec3_t& p1 = m_vertices[v1];
+        const vec3_t& p2 = m_vertices[v2];
+
+        normal = ((p1-p0)^(p2-p0)).Normalized();
+
+        normals[v0] += normal;
+        normals[v1] += normal;
+        normals[v2] += normal;
+    }
+
+    m_normals.resize(vertexcount);
+    for(vindex = 0; vindex < vertexcount; vindex++)
+    {
+        m_normals[vindex] = normals[vindex].Normalized();
+    }
 }
 
 std::string CKDTree::GetFilename() const
@@ -234,15 +282,16 @@ polyplane_t CKDTree::TestTriangle(const int triindex, const plane_t& plane) cons
 // WriteToBinary Helper Functions
 
 // Computation of the tangent according to Lengyel p. 186
-bool kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
+// return vectors are not normalized
+void kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
                              const std::vector<bspbin_vertex_t>& vertices,
                              const int triangleindex,
                              vec3_t& tangent,
                              vec3_t& bitangent)
 {
-    const vec3_t& p0 = vertices[triangles[triangleindex].v[0]].v; 
-    const vec3_t& p1 = vertices[triangles[triangleindex].v[1]].v; 
-    const vec3_t& p2 = vertices[triangles[triangleindex].v[2]].v; 
+    const vec3_t& p0 = vertices[triangles[triangleindex].v[0]].v;
+    const vec3_t& p1 = vertices[triangles[triangleindex].v[1]].v;
+    const vec3_t& p2 = vertices[triangles[triangleindex].v[2]].v;
     const float s1 = vertices[triangles[triangleindex].v[1]].tu - vertices[triangles[triangleindex].v[0]].tu;
     const float s2 = vertices[triangles[triangleindex].v[2]].tu - vertices[triangles[triangleindex].v[0]].tu;
     const float t1 = vertices[triangles[triangleindex].v[1]].tv - vertices[triangles[triangleindex].v[0]].tv;
@@ -253,8 +302,11 @@ bool kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
     assert(fabsf(det) > lynxmath::EPSILON);
     if(fabsf(det) <= lynxmath::EPSILON)
     {
-        fprintf(stderr, "Warning, could not compute tangent\n");
-        return false;
+        fprintf(stderr, "Warning: Unable to compute tangent + bitangent\n");
+        assert(0);
+        tangent = vec3_t(1.0f, 0.0f, 0.0f);
+        bitangent = vec3_t(0.0f, 1.0f, 0.0f);
+        return;
     }
     const float idet = 1/det;
     tangent = vec3_t(idet*(t2*Q1.x - t1*Q2.x),
@@ -263,72 +315,72 @@ bool kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
     bitangent = vec3_t(idet*(-s2*Q1.x + s1*Q2.x),
                        idet*(-s2*Q1.y + s1*Q2.y),
                        idet*(-s2*Q1.z + s1*Q2.z));
-
-    return true;
+    assert(tangent.Abs()>0.01f);
+    assert(bitangent.Abs()>0.01f);
 }
 
+// Calculate the vertex normals and tangents.
+// Lengyel's algorithm for tangents and bitangents is used here
 void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
                            const std::vector<bspbin_triangle_t>& triangles)
 {
     const unsigned int vertexcount = vertices.size();
     const unsigned int trianglecount = triangles.size();
+    std::vector<vec3_t> tangents;
+    std::vector<vec3_t> bitangents;
+    vec3_t normal, tangent, bitangent;
     unsigned int vindex;
     unsigned int tindex;
-    int i;
-    vec3_t tangentpre, bitangentpre; // before orthogonalization
-    vec3_t tangent, bitangent; // after orthogonalization
+    unsigned int v0, v1, v2; // vertex indices
+
+    tangents.reserve(vertexcount);
+    bitangents.reserve(vertexcount);
+
+    for(tindex = 0; tindex < trianglecount; tindex++)
+    {
+        kdbin_calculate_tangent(triangles,
+                                vertices,
+                                tindex,
+                                tangent,
+                                bitangent);
+
+        v0 = triangles[tindex].v[0]; // vertex index 0
+        v1 = triangles[tindex].v[1]; // vertex index 1
+        v2 = triangles[tindex].v[2]; // vertex index 2
+
+        tangents[v0] += tangent;
+        tangents[v1] += tangent;
+        tangents[v2] += tangent;
+        bitangents[v0] += bitangent;
+        bitangents[v1] += bitangent;
+        bitangents[v2] += bitangent;
+    }
 
     for(vindex = 0; vindex < vertexcount; vindex++)
     {
-        vec3_t bitangentTotal(0.0f);
-        vec3_t tangentTotal(0.0f);
+        const vec3_t& n = vertices[vindex].n;
+        const vec3_t& t = tangents[vindex];
 
-        // find the triangles, that use this vertex
-        for(tindex = 0; tindex < trianglecount; tindex++)
-        {
-            for(i = 0; i < 3; i++)
-            {
-                if(triangles[tindex].v[i] == vindex)
-                {
-                    if(kdbin_calculate_tangent(triangles,
-                                               vertices,
-                                               tindex,
-                                               tangentpre,
-                                               bitangentpre))
-                    {
-                        tangentTotal += tangentpre;
-                        bitangentTotal += bitangentpre;
-                        break; // every triangle can only use this vertex once
-                    }
-                }
-            }
-        }
-        if(tangentpre.IsNull() || bitangentpre.IsNull())
-        {
-            vertices[vindex].t = vec3_t::xAxis;
-            vertices[vindex].w = 1;
-            continue;
-        }
+        // tangent
+        // Gram-Schmidt orthogonalize
+        vertices[vindex].t = (t - n * (n*t)).Normalized();
 
-        // Following p. 186 Lengyel's math book
-        // Gram-Schmidt algorithm:
-        tangentpre = tangentTotal.Normalized();
-        bitangentpre = bitangentTotal.Normalized();
-        const vec3_t& normal = vertices[vindex].n;
-        tangent = tangentpre - (normal*tangentpre)*normal;
-        bitangent = bitangentpre - (normal*bitangentpre)*normal - (tangent*bitangentpre)*tangent;
+        // the bitangent is only stored by its handedness in the w component (-1 or 1)
+        // Calculate handedness
+        vertices[vindex].w = (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f;
 
-        vertices[vindex].t = tangent;
-        float ma=tangent.x, mb=tangent.y, mc=tangent.z;
-        float md=bitangent.x, me=bitangent.y, mf=bitangent.z;
-        float mg=normal.x, mh=normal.y, mi=normal.z;
-        vertices[vindex].w = ma*me*mi + mb*mf*mg + mc*md*mh - ma*mf*mh - mb*md*mi - mc*me*mg;
-
-        // Test, if we can reconstruct the bitangent from the w component
-        assert(vec3_t(vertices[vindex].w*(normal^tangent)).Equals(bitangent,0.01f));
-
-        if(vindex%100 == 0)
-            fprintf(stderr, ".");
+        // .--------------.
+        // fprintf(stderr, "%s V%3i v: %3.2f %3.2f %3.2f n: %3.2f %3.2f %3.2f t: %3.2f %3.2f %3.2f t': %3.2f %3.2f %3.2f b: %3.2f %3.2f %3.2f\n",
+        //                vertices[vindex].t.IsNormalized()?"  ":"x ",
+        //                vindex,
+        //                vertices[vindex].v.x, vertices[vindex].v.y, vertices[vindex].v.z,
+        //                vertices[vindex].n.x, vertices[vindex].n.y, vertices[vindex].n.z,
+        //                vertices[vindex].t.x, vertices[vindex].t.y, vertices[vindex].t.z,
+        //                t.x, t.y, t.z,
+        //                bitangents[vindex].x, bitangents[vindex].y, bitangents[vindex].z
+        //                );
+        //assert(vertices[vindex].t.IsNormalized());
+        //assert(bitangents[vindex].IsNormalized());
     }
 }
 
@@ -366,29 +418,14 @@ int kdbin_pushleaf(const CKDTree& tree,
     return -(int)leafs.size(); // leaf indices are stored with a negative index
 }
 
-bool kdbin_compare_vertex(const bspbin_vertex_t& vA,
-                          const bspbin_vertex_t& vB,
-                          bool checkTangent,
-                          const float epsilon)
+// returns true if the vertex position and uv coordinates are equal
+bool kdbin_compare_vertex_and_uv(const bspbin_vertex_t& vA,
+                                 const bspbin_vertex_t& vB,
+                                 const float epsilon)
 {
-    if(!vA.v.Equals(vB.v, epsilon))
-        return false;
-    if(!vA.n.Equals(vB.n, epsilon))
-        return false;
-    if(fabsf(vA.tu-vB.tu) > epsilon)
-        return false;
-    if(fabsf(vA.tv-vB.tv) > epsilon)
-        return false;
-
-    if(!checkTangent)
-        return true;
-
-    if(!vA.t.Equals(vB.t, epsilon))
-        return false;
-    if(fabsf(vA.w-vB.w) > epsilon)
-        return false;
-
-    return false;
+    return vA.v.Equals(vB.v, epsilon) &&
+           (fabsf(vA.tu-vB.tu) < epsilon) &&
+           (fabsf(vA.tv-vB.tv) < epsilon);
 }
 
 int kdbin_getnodes(const CKDTree& tree,
@@ -520,27 +557,27 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         // if the texture is not yet in "textures", add it and
         // return the index to texturenum
         thistriangle.tex = kdbin_addtexture(textures, m_triangles[i].texturepath.c_str());
-        
+
         // add vertices for this triangle to the file
         for(j=0; j<3; j++) // for every vertex
         {
-            // assign vertices, normals etc.
             bspbin_vertex_t thisvertex;
             thisvertex.v = m_vertices[m_triangles[i].vertices[j]];
-            thisvertex.n = m_normals[m_triangles[i].normals[j]];
+            thisvertex.n = m_normals[m_triangles[i].vertices[j]];
             thisvertex.tu = m_texcoords[m_triangles[i].texcoords[j]].x;
             thisvertex.tv = m_texcoords[m_triangles[i].texcoords[j]].y;
 
             for(k = 0; k < vertices.size(); k++)
             {
-                if(kdbin_compare_vertex(vertices[k], thisvertex, false, 0.001f))
+                if(kdbin_compare_vertex_and_uv(vertices[k], thisvertex, 0.001f))
                 {
                     break;
                 }
             }
-            if(k >= vertices.size()) // we have no matching vertex found
+            if(k >= vertices.size()) // no matching vertex found
             {
                 vertices.push_back(thisvertex);
+                k = vertices.size()-1;
             }
             thistriangle.v[j] = k;
         }
@@ -549,7 +586,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         if(i%100==0)
             fprintf(stderr, ".");
     }
-    fprintf(stderr, "\n");
+    fprintf(stderr, "\nVertices for file: %i\n", (int)vertices.size());
     if(vertices.size() > USHRT_MAX)
     {
         fprintf(stderr, "Warning, more than %i vertices\n", USHRT_MAX);
@@ -576,7 +613,6 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     // Create tangent vectors for each vertex
     fprintf(stderr, "Creating tangent vectors\n");
     kdbin_create_tangents(vertices, triangles);
-    fprintf(stderr, "\n");
 
     if(leafs.size() < 1)
     {
@@ -873,3 +909,4 @@ void kd_tri_t::GeneratePlane(CKDTree* tree)
                      tree->m_vertices[vertices[0]]);
 
 }
+

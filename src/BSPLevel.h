@@ -25,7 +25,7 @@ struct bsp_texture_batch_t
     int texidnormal; // normal map
 };
 
-// what data type should we use for the 
+// what data type should we use for the
 // VBO index buffer? for less than 0xffff vertices
 // uint16_t is sufficient
 typedef uint32_t vertexindex_t; // if you change this, change MY_GL_VERTEXINDEX_TYPE too
@@ -51,31 +51,32 @@ public:
     void        TraceSphere(bsp_sphere_trace_t* trace) const;
 
     void        RenderGL(const vec3_t& origin, const CFrustum& frustum) const;
+    void        RenderNormals() const;
 
 protected:
 
     void        TraceSphere(bsp_sphere_trace_t* trace, const int node) const;
-    inline bool GetTriIntersection(const int triangleindex, 
-                                   const vec3_t& start, 
-                                   const vec3_t& dir, 
-                                   float* f, 
-                                   const float offset, 
+    inline bool GetTriIntersection(const int triangleindex,
+                                   const vec3_t& start,
+                                   const vec3_t& dir,
+                                   float* f,
+                                   const float offset,
                                    plane_t* hitplane,
                                    bool& needs_edge_test) const;
 
-    inline bool GetEdgeIntersection(const int triangleindex, 
-                                    const vec3_t& start, 
-                                    const vec3_t& dir, 
-                                    float* f, 
-                                    const float radius, 
+    inline bool GetEdgeIntersection(const int triangleindex,
+                                    const vec3_t& start,
+                                    const vec3_t& dir,
+                                    float* f,
+                                    const float radius,
                                     vec3_t* normal,
                                     vec3_t* hitpoint) const;
     inline bool GetVertexIntersection(const int triangleindex,
-                                      const vec3_t& start, 
+                                      const vec3_t& start,
                                       const vec3_t& dir,
-                                      float* f, 
-                                      const float radius, 
-                                      vec3_t* normal, 
+                                      float* f,
+                                      const float radius,
+                                      vec3_t* normal,
                                       vec3_t* hitpoint) const;
 
     // Data

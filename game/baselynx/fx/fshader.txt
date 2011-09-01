@@ -4,6 +4,7 @@ uniform sampler2DShadow ShadowMap;
 varying vec4 ShadowCoord; // pos in shadow space
 varying vec3 lightDir; // in tangent space
 
+// Fragment shader
 void main()
 {
     vec3 n = normalize(texture2D(normalMap, gl_TexCoord[0].st).xyz * 2.0 - 1.0);
