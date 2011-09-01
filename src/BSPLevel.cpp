@@ -428,7 +428,7 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
 
     glClientActiveTexture(GL_TEXTURE1);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(36));
+    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
     const uint32_t batchcount = m_texturebatch.size();
     for(uint32_t i=0; i<batchcount; i++)
