@@ -39,7 +39,7 @@ CRenderer::CRenderer(CWorldClient* world)
     m_program = 0;
 
     // Shadow mapping
-    m_useShadows = true;
+    m_useShadows = false;
     m_shadowMapUniform = 0;
     m_fboId = 0;
     m_depthTextureId = 0;
@@ -291,11 +291,14 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // const quaternion_t camrot = ql0rot;
 
     //const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
-    const vec3_t lightpos0 = campos+up*0.5f;
+    const vec3_t lightpos0 = campos;
     const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
+    glEnable(GL_LIGHTING);
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
+    glDisable(GL_LIGHTING);
     if(m_useShadows)
     {
+        assert(0);
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
         PrepareShadowMap(lightpos0,
                          camrot,
@@ -312,14 +315,16 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(m_program);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(m_tex, 0);
+    glUniform1i(m_normalMap, 1);
     if(m_useShadows)
     {
-        glUseProgram(m_program);
         glUniform1i(m_shadowMapUniform, 7);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
-        glUniform1i(m_normalMap, 1);
-        glUniform1i(m_tex, 0);
         glActiveTexture(GL_TEXTURE0);
     }
     DrawScene(frustum, world, localctrlid, false);
@@ -327,63 +332,63 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
     //glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);
-    glDepthMask(false);
-    for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
-    {
-        obj = (*iter).second;
+    // glEnable(GL_BLEND);
+    // glDepthMask(false);
+    // for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+    // {
+    //     obj = (*iter).second;
 
-        if(obj->GetMesh())
-        {
-            obj->GetMesh()->Animate(obj->GetMeshState(), dt);
-        }
+    //     if(obj->GetMesh())
+    //     {
+    //         obj->GetMesh()->Animate(obj->GetMeshState(), dt);
+    //     }
 
-        if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
-            continue;
+    //     if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
+    //         continue;
 
-        obj->GetParticleSystem()->Update(dt, ticks);
+    //     obj->GetParticleSystem()->Update(dt, ticks);
 
-        // FIXME frustum test for particle system!
-        //if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-        //{
-        //  stat_obj_hidden++;
-        //  continue;
-        //}
-        glPushMatrix();
-        glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
-        obj->GetParticleSystem()->Render(side, up, dir);
-        glPopMatrix();
-    }
-    glDepthMask(true);
-    glDisable(GL_BLEND);
-    glColor4f(1,1,1,1);
+    //     // FIXME frustum test for particle system!
+    //     //if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+    //     //{
+    //     //  stat_obj_hidden++;
+    //     //  continue;
+    //     //}
+    //     glPushMatrix();
+    //     glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+    //     obj->GetParticleSystem()->Render(side, up, dir);
+    //     glPopMatrix();
+    // }
+    // glDepthMask(true);
+    // glDisable(GL_BLEND);
+    // glColor4f(1,1,1,1);
 
     // Draw normals?
-    if(world && world->GetBSP())
-    {
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_LIGHTING);
-        world->GetBSP()->RenderNormals();
-        glColor4f(1,1,1,1);
-        glEnable(GL_LIGHTING);
-    }
+    //if(world && world->GetBSP())
+    //{
+    //    glClear(GL_DEPTH_BUFFER_BIT);
+    //    glDisable(GL_LIGHTING);
+    //    world->GetBSP()->RenderNormals();
+    //    glColor4f(1,1,1,1);
+    //    glEnable(GL_LIGHTING);
+    //}
 
     // Draw weapon
-    glDisable(GL_LIGHTING);
-    CModelMD2* viewmodel;
-    md2_state_t* viewmodelstate;
-    m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
-    if(viewmodel)
-    {
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glLoadIdentity();
-        glTranslatef(0,-2.0f,1.25f); // weapon offset
-        // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
+    // glDisable(GL_LIGHTING);
+    // CModelMD2* viewmodel;
+    // md2_state_t* viewmodelstate;
+    // m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
+    // if(viewmodel)
+    // {
+    //     glClear(GL_DEPTH_BUFFER_BIT);
+    //     glLoadIdentity();
+    //     glTranslatef(0,-2.0f,1.25f); // weapon offset
+    //     // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
-        viewmodel->Render(viewmodelstate);
-        viewmodel->Animate(viewmodelstate, dt);
-    }
-    glEnable(GL_LIGHTING);
+    //     viewmodel->Render(viewmodelstate);
+    //     viewmodel->Animate(viewmodelstate, dt);
+    // }
+    // glEnable(GL_LIGHTING);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen
     // glUseProgram(0);

@@ -141,9 +141,9 @@ bool CKDTree::Load(std::string file)
     m_leafcount = 0;
 
     // Calculating vertex normals
-    fprintf(stderr, "Calculating vertex normals... ");
-    CalculateVertexNormals();
-    fprintf(stderr, "finished.\n");
+    // fprintf(stderr, "Calculating vertex normals... ");
+    // CalculateVertexNormals();
+    // fprintf(stderr, "finished.\n");
 
     fprintf(stderr, "Creating triangle indices\n");
     for(i = 0; i < (int)m_triangles.size(); i++)
@@ -184,7 +184,7 @@ void CKDTree::Unload()
     m_estimatedtexturecount = 0;
     m_depth = 0;
     m_vertices.clear();
-    m_normals.clear();
+    // m_normals.clear();
     m_texcoords.clear();
     m_triangles.clear();
 
@@ -193,40 +193,42 @@ void CKDTree::Unload()
     m_depth = 0;
 }
 
-void CKDTree::CalculateVertexNormals()
-{
-    const unsigned int vertexcount = m_vertices.size();
-    const unsigned int trianglecount = m_triangles.size();
-    std::vector<vec3_t> normals;
-    vec3_t normal;
-    unsigned int vindex;
-    unsigned int tindex;
-    unsigned int v0, v1, v2; // vertex indices
-
-    normals.reserve(vertexcount);
-
-    for(tindex = 0; tindex < trianglecount; tindex++)
-    {
-        v0 = m_triangles[tindex].vertices[0]; // vertex index 0
-        v1 = m_triangles[tindex].vertices[1]; // vertex index 1
-        v2 = m_triangles[tindex].vertices[2]; // vertex index 2
-        const vec3_t& p0 = m_vertices[v0];
-        const vec3_t& p1 = m_vertices[v1];
-        const vec3_t& p2 = m_vertices[v2];
-
-        normal = ((p1-p0)^(p2-p0)).Normalized();
-
-        normals[v0] += normal;
-        normals[v1] += normal;
-        normals[v2] += normal;
-    }
-
-    m_normals.resize(vertexcount);
-    for(vindex = 0; vindex < vertexcount; vindex++)
-    {
-        m_normals[vindex] = normals[vindex].Normalized();
-    }
-}
+/*
+ *void CKDTree::CalculateVertexNormals()
+ *{
+ *    const unsigned int vertexcount = m_vertices.size();
+ *    const unsigned int trianglecount = m_triangles.size();
+ *    std::vector<vec3_t> normals;
+ *    vec3_t normal;
+ *    unsigned int vindex;
+ *    unsigned int tindex;
+ *    unsigned int v0, v1, v2; // vertex indices
+ *
+ *    normals.resize(vertexcount);
+ *
+ *    for(tindex = 0; tindex < trianglecount; tindex++)
+ *    {
+ *        v0 = m_triangles[tindex].vertices[0]; // vertex index 0
+ *        v1 = m_triangles[tindex].vertices[1]; // vertex index 1
+ *        v2 = m_triangles[tindex].vertices[2]; // vertex index 2
+ *        const vec3_t& p0 = m_vertices[v0];
+ *        const vec3_t& p1 = m_vertices[v1];
+ *        const vec3_t& p2 = m_vertices[v2];
+ *
+ *        normal = (p1-p0)^(p2-p0);
+ *
+ *        normals[v0] += normal;
+ *        normals[v1] += normal;
+ *        normals[v2] += normal;
+ *    }
+ *
+ *    m_normals.resize(vertexcount);
+ *    for(vindex = 0; vindex < vertexcount; vindex++)
+ *    {
+ *        m_normals[vindex] = normals[vindex].Normalized();
+ *    }
+ *}
+ */
 
 std::string CKDTree::GetFilename() const
 {
@@ -286,6 +288,7 @@ polyplane_t CKDTree::TestTriangle(const int triindex, const plane_t& plane) cons
 void kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
                              const std::vector<bspbin_vertex_t>& vertices,
                              const int triangleindex,
+                             vec3_t& facenormal,
                              vec3_t& tangent,
                              vec3_t& bitangent)
 {
@@ -299,22 +302,22 @@ void kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
     const float det = s1*t2 - s2*t1;
     const vec3_t Q1(p1 - p0);
     const vec3_t Q2(p2 - p0);
-    assert(fabsf(det) > lynxmath::EPSILON);
     if(fabsf(det) <= lynxmath::EPSILON)
     {
         fprintf(stderr, "Warning: Unable to compute tangent + bitangent\n");
-        assert(0);
         tangent = vec3_t(1.0f, 0.0f, 0.0f);
         bitangent = vec3_t(0.0f, 1.0f, 0.0f);
         return;
     }
-    const float idet = 1/det;
+    const float idet = 1 / det;
     tangent = vec3_t(idet*(t2*Q1.x - t1*Q2.x),
                      idet*(t2*Q1.y - t1*Q2.y),
                      idet*(t2*Q1.z - t1*Q2.z));
     bitangent = vec3_t(idet*(-s2*Q1.x + s1*Q2.x),
                        idet*(-s2*Q1.y + s1*Q2.y),
                        idet*(-s2*Q1.z + s1*Q2.z));
+    facenormal = (p1-p0)^(p2-p0);
+
     assert(tangent.Abs()>0.01f);
     assert(bitangent.Abs()>0.01f);
 }
@@ -326,6 +329,7 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
 {
     const unsigned int vertexcount = vertices.size();
     const unsigned int trianglecount = triangles.size();
+    std::vector<vec3_t> normals;
     std::vector<vec3_t> tangents;
     std::vector<vec3_t> bitangents;
     vec3_t normal, tangent, bitangent;
@@ -333,14 +337,16 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
     unsigned int tindex;
     unsigned int v0, v1, v2; // vertex indices
 
-    tangents.reserve(vertexcount);
-    bitangents.reserve(vertexcount);
+    normals.resize(vertexcount);
+    tangents.resize(vertexcount);
+    bitangents.resize(vertexcount);
 
     for(tindex = 0; tindex < trianglecount; tindex++)
     {
         kdbin_calculate_tangent(triangles,
                                 vertices,
                                 tindex,
+                                normal,
                                 tangent,
                                 bitangent);
 
@@ -348,6 +354,9 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
         v1 = triangles[tindex].v[1]; // vertex index 1
         v2 = triangles[tindex].v[2]; // vertex index 2
 
+        normals[v0] += normal;
+        normals[v1] += normal;
+        normals[v2] += normal;
         tangents[v0] += tangent;
         tangents[v1] += tangent;
         tangents[v2] += tangent;
@@ -358,6 +367,7 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
 
     for(vindex = 0; vindex < vertexcount; vindex++)
     {
+        vertices[vindex].n = normals[vindex].Normalized();
         const vec3_t& n = vertices[vindex].n;
         const vec3_t& t = tangents[vindex];
 
@@ -369,18 +379,21 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
         // Calculate handedness
         vertices[vindex].w = (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f;
 
-        // .--------------.
-        // fprintf(stderr, "%s V%3i v: %3.2f %3.2f %3.2f n: %3.2f %3.2f %3.2f t: %3.2f %3.2f %3.2f t': %3.2f %3.2f %3.2f b: %3.2f %3.2f %3.2f\n",
-        //                vertices[vindex].t.IsNormalized()?"  ":"x ",
-        //                vindex,
-        //                vertices[vindex].v.x, vertices[vindex].v.y, vertices[vindex].v.z,
-        //                vertices[vindex].n.x, vertices[vindex].n.y, vertices[vindex].n.z,
-        //                vertices[vindex].t.x, vertices[vindex].t.y, vertices[vindex].t.z,
-        //                t.x, t.y, t.z,
-        //                bitangents[vindex].x, bitangents[vindex].y, bitangents[vindex].z
-        //                );
-        //assert(vertices[vindex].t.IsNormalized());
-        //assert(bitangents[vindex].IsNormalized());
+        // assert(vertices[vindex].t.IsNormalized());
+        if(!vertices[vindex].t.IsNormalized())
+        {
+            vertices[vindex].t = vec3_t(1.0f, 0.0f, 0.0f);
+            fprintf(stderr, "Failed to calculate vertex tangent in vertex %i\n", vindex);
+            fprintf(stderr, "%s V%3i v: %3.2f %3.2f %3.2f n: %3.2f %3.2f %3.2f t: %3.2f %3.2f %3.2f t': %3.2f %3.2f %3.2f b: %3.2f %3.2f %3.2f\n",
+                    vertices[vindex].t.IsNormalized()?"  ":"x ",
+                    vindex,
+                    vertices[vindex].v.x, vertices[vindex].v.y, vertices[vindex].v.z,
+                    vertices[vindex].n.x, vertices[vindex].n.y, vertices[vindex].n.z,
+                    vertices[vindex].t.x, vertices[vindex].t.y, vertices[vindex].t.z,
+                    t.x, t.y, t.z,
+                    bitangents[vindex].x, bitangents[vindex].y, bitangents[vindex].z
+                   );
+        }
     }
 }
 
@@ -423,6 +436,7 @@ bool kdbin_compare_vertex_and_uv(const bspbin_vertex_t& vA,
                                  const bspbin_vertex_t& vB,
                                  const float epsilon)
 {
+    // return false;
     return vA.v.Equals(vB.v, epsilon) &&
            (fabsf(vA.tu-vB.tu) < epsilon) &&
            (fabsf(vA.tv-vB.tv) < epsilon);
@@ -563,13 +577,15 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         {
             bspbin_vertex_t thisvertex;
             thisvertex.v = m_vertices[m_triangles[i].vertices[j]];
-            thisvertex.n = m_normals[m_triangles[i].vertices[j]];
+            // thisvertex.n = m_normals[m_triangles[i].vertices[j]];
             thisvertex.tu = m_texcoords[m_triangles[i].texcoords[j]].x;
             thisvertex.tv = m_texcoords[m_triangles[i].texcoords[j]].y;
 
             for(k = 0; k < vertices.size(); k++)
             {
-                if(kdbin_compare_vertex_and_uv(vertices[k], thisvertex, 0.001f))
+                if(kdbin_compare_vertex_and_uv(vertices[k],
+                                               thisvertex,
+                                               lynxmath::EPSILON))
                 {
                     break;
                 }

@@ -467,7 +467,7 @@ void CBSPLevel::RenderNormals() const
     unsigned int vindex;
     const vec3_t tanoff(0.06f); // offset for tangents
     const vec3_t bitanoff(-0.06f); // offset for tangents
-    const float nscale = 5.0f;
+    const float nscale = 0.3f;
     vec3_t bitangent;
 
     glBegin(GL_LINES);
@@ -477,14 +477,14 @@ void CBSPLevel::RenderNormals() const
         glVertex3fv(m_vertex[vindex].v.v);
         glVertex3fv((nscale*m_vertex[vindex].n + m_vertex[vindex].v).v);
 
-        //glColor3f(0.0f, 1.0f, 0.0f);
-        //glVertex3fv((tanoff + m_vertex[vindex].v).v);
-        //glVertex3fv((nscale*m_vertex[vindex].t + m_vertex[vindex].v + tanoff).v);
+        glColor3f(0.0f, 1.0f, 0.0f);
+        glVertex3fv((tanoff + m_vertex[vindex].v).v);
+        glVertex3fv((nscale*m_vertex[vindex].t + m_vertex[vindex].v + tanoff).v);
 
-        //glColor3f(0.0f, 0.0f, 1.0f);
-        //bitangent = m_vertex[vindex].w * (m_vertex[vindex].n ^ m_vertex[vindex].t);
-        //glVertex3fv((bitanoff + m_vertex[vindex].v).v);
-        //glVertex3fv((nscale*bitangent + m_vertex[vindex].v + bitanoff).v);
+        glColor3f(0.0f, 0.0f, 1.0f);
+        bitangent = m_vertex[vindex].w * (m_vertex[vindex].n ^ m_vertex[vindex].t);
+        glVertex3fv((bitanoff + m_vertex[vindex].v).v);
+        glVertex3fv((nscale*bitangent + m_vertex[vindex].v + bitanoff).v);
     }
     glEnd();
 }
@@ -504,7 +504,7 @@ bool CBSPLevel::GetTriIntersection(const int triangleindex,
     const vec3_t& P0 = m_vertex[vertexindex1].v;
     const vec3_t& P1 = m_vertex[vertexindex2].v;
     const vec3_t& P2 = m_vertex[vertexindex3].v;
-    plane_t polyplane(P2, P1, P0); // Polygon Ebene  -  why don't we precalculate the triangle normal vector?
+    plane_t polyplane(P0, P1, P2); // Polygon Ebene  -  why don't we precalculate the triangle normal vector?
     float dsave = polyplane.m_d;
     polyplane.m_d -= offset; // Plane shift
 

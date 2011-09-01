@@ -3,6 +3,7 @@ uniform sampler2D tex;
 uniform sampler2DShadow ShadowMap;
 varying vec4 ShadowCoord; // pos in shadow space
 varying vec3 lightDir; // in tangent space
+varying vec3 normal; // in eye space
 
 // Fragment shader
 void main()
@@ -11,9 +12,9 @@ void main()
     vec3 l = normalize(lightDir);
     float nDotL = max(0.0, dot(n, l));
 
-    float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
+    // float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
 
-    // gl_FragColor = color * texture2D(tex, gl_TexCoord[0].st);
-    gl_FragColor = (0.3 + nDotL*0.7) * texture2D(tex, gl_TexCoord[0].st);
+    // gl_FragColor = texture2D(tex, gl_TexCoord[0].st);
+    gl_FragColor = (0.5 + nDotL*0.5) * texture2D(tex, gl_TexCoord[0].st);
 }
 

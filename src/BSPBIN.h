@@ -9,7 +9,7 @@
 #define BSPBIN_VERSION                  6
 #define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 7*sizeof(bspbin_direntry_t))
 
-//#pragma pack(push, 1) // manual padding
+#pragma pack(push, 1) // manual padding
 
 struct bspbin_header_t
 {
@@ -66,7 +66,7 @@ struct bspbin_spawn_t
     quaternion_t rot;
 };
 
-//#pragma pack(pop)
+#pragma pack(pop)
 
 struct bspbin_leaf_t
 {

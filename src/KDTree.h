@@ -82,7 +82,7 @@ public:
     };
 
     std::vector<vec3_t>         m_vertices; // Vertices from obj file
-    std::vector<vec3_t>         m_normals; // Vertex normals
+    // std::vector<vec3_t>         m_normals; // Vertex normals
     std::vector<vec3_t>         m_texcoords; // FIXME vec2_t would be sufficient
     std::vector<kd_tri_t>       m_triangles; // Triangles from obj file
     CKDNode*                    m_root; // Starting node
@@ -91,7 +91,7 @@ public:
     bool        WriteToBinary(const std::string filepath);
 
 protected:
-    void        CalculateVertexNormals();
+    // void        CalculateVertexNormals();
 
 private:
     int         m_nodecount; // increased by every CKDNode constructor

@@ -35,7 +35,7 @@ void plane_t::SetupPlane(const vec3_t& p1,
                          const vec3_t& p2,
                          const vec3_t& p3)
 {
-    m_n = (p3-p1)^(p2-p1);
+    m_n = (p2-p1)^(p3-p1);
     m_n.Normalize();
     m_d = -m_n * p1;
 }
