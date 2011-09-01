@@ -39,7 +39,7 @@ CRenderer::CRenderer(CWorldClient* world)
     m_program = 0;
 
     // Shadow mapping
-    m_useShadows = false;
+    m_useShadows = true;
     m_shadowMapUniform = 0;
     m_fboId = 0;
     m_depthTextureId = 0;
@@ -298,7 +298,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glDisable(GL_LIGHTING);
     if(m_useShadows)
     {
-        assert(0);
         //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
         PrepareShadowMap(lightpos0,
                          camrot,
@@ -331,37 +330,37 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
     glUseProgram(0); // don't use shader from here on FIXME
     // Particle Draw
-    //glDisable(GL_LIGHTING);
-    // glEnable(GL_BLEND);
-    // glDepthMask(false);
-    // for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
-    // {
-    //     obj = (*iter).second;
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glDepthMask(false);
+    for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+    {
+        obj = (*iter).second;
 
-    //     if(obj->GetMesh())
-    //     {
-    //         obj->GetMesh()->Animate(obj->GetMeshState(), dt);
-    //     }
+        if(obj->GetMesh())
+        {
+            obj->GetMesh()->Animate(obj->GetMeshState(), dt);
+        }
 
-    //     if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
-    //         continue;
+        if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
+            continue;
 
-    //     obj->GetParticleSystem()->Update(dt, ticks);
+        obj->GetParticleSystem()->Update(dt, ticks);
 
-    //     // FIXME frustum test for particle system!
-    //     //if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-    //     //{
-    //     //  stat_obj_hidden++;
-    //     //  continue;
-    //     //}
-    //     glPushMatrix();
-    //     glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
-    //     obj->GetParticleSystem()->Render(side, up, dir);
-    //     glPopMatrix();
-    // }
-    // glDepthMask(true);
-    // glDisable(GL_BLEND);
-    // glColor4f(1,1,1,1);
+        // FIXME frustum test for particle system!
+        //if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+        //{
+        //  stat_obj_hidden++;
+        //  continue;
+        //}
+        glPushMatrix();
+        glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        obj->GetParticleSystem()->Render(side, up, dir);
+        glPopMatrix();
+    }
+    glDepthMask(true);
+    glDisable(GL_BLEND);
+    glColor4f(1,1,1,1);
 
     // Draw normals?
     //if(world && world->GetBSP())
@@ -374,21 +373,21 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     //}
 
     // Draw weapon
-    // glDisable(GL_LIGHTING);
-    // CModelMD2* viewmodel;
-    // md2_state_t* viewmodelstate;
-    // m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
-    // if(viewmodel)
-    // {
-    //     glClear(GL_DEPTH_BUFFER_BIT);
-    //     glLoadIdentity();
-    //     glTranslatef(0,-2.0f,1.25f); // weapon offset
-    //     // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
+    glDisable(GL_LIGHTING);
+    CModelMD2* viewmodel;
+    md2_state_t* viewmodelstate;
+    m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
+    if(viewmodel)
+    {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
+        glTranslatef(0,-2.0f,1.25f); // weapon offset
+        // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
-    //     viewmodel->Render(viewmodelstate);
-    //     viewmodel->Animate(viewmodelstate, dt);
-    // }
-    // glEnable(GL_LIGHTING);
+        viewmodel->Render(viewmodelstate);
+        viewmodel->Animate(viewmodelstate, dt);
+    }
+    glEnable(GL_LIGHTING);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen
     // glUseProgram(0);
