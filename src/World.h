@@ -13,22 +13,31 @@ class CWorld;
 #include "ResourceManager.h"
 
 /*
-    CWorld ist der wichtigste Kern in der Lynx Engine.
-    Der Zustand einer Welt wird Datenmäßig in der
-    world_state_t Struktur festgehalten und von
-    der CWorld Klasse verwaltet.
+    CWorld is the core of the Lynx engine.
+    The current state of the game is stored in CWorld.
+    The data itself is in the world_state_t struct. The CWorld
+    class provides the functions to access this data.
+    Every frame on the server modifies the world_state_t and the
+    task is to distribute the changes to the client. The client
+    needs a copy of the current world_state_t to display the game.
 
-    Update() aktualisiert die Welt bei jedem Frame
-    Mit Serialize() kann die Welt als Datenstrom abgespeichert werden bzw. über das Netzwerk verschickt werden
+    Update() is modifying the world each frame.
+    The serialize function writes the world_state to a binary stream.
+    This binary stream is send to each client. The major optimization
+    is that the serialize function can create a delta snapshot of
+    the world state. A new client gets the complete world_state transmitted.
+    But then only delta updates are transmitted to the client.
 
+    This is transparent to the server game logic. The game logic is modifying
+    the server CWorld and the network logic takes care of distributing the
+    deltas to the connected clients.
  */
 
 /*
-    world_state_t fasst die internen Daten von CWorld zusammen und ist nach außen hin nicht interessant
-    world_state_t speichert alle Daten über die Welt ab, inklusive ihrer Objekte.
-    Intern repräsentiert world_state_t damit den Zustand der Welt zu einem bestimmten Zeitpunkt.
+    world_state_t is not to be modified outside of CWorld.
+    world_state_t represents a complete snapshot of the game state.
 
-    if you change world_state_t, change:
+    If you change world_state_t, change:
     - GenerateWorldState
     - Serialize
  */
@@ -50,9 +59,17 @@ struct world_state_t
     uint32_t   worldid; // worldid increments every frame
     std::string level; // path to level file
 
-    // Im Prinzip ist nur der objstate Vektor interessant, aber um schnellen
-    // Zugriff auf die Objekt-States mit Hilfe einer Hash-Tabelle zu ermöglichen,
-    // sind folgende Hilfsfunktionen nützlich, bzw. erforderlich (früher war objstates public)
+    // Everything to describe the current state of the game
+    // is stored in this struct.
+    // The objstates vector contains all the objects.
+    // The objindex is a map to the objstates vector
+    // indices.
+    // E.g. you have the OBJID of an object,
+    // then you can access the obj_state_t in this way:
+    //
+    //  objstates[objindex[OBJID]]
+    //
+
     void        AddObjState(obj_state_t objstate, const int id);
     bool        ObjStateExists(const int id) const;
     bool        GetObjState(const int id, obj_state_t& objstate) const;
@@ -90,31 +107,31 @@ public:
     CWorld(void);
     virtual ~CWorld(void);
 
-    virtual bool IsClient() const { return false; } // Hilfsfunktion, um bestimmte Aktionen für einen Server nicht auszuführen (Texturen laden)
+    virtual bool IsClient() const { return false; } // If the world is not a client, some operations are skipped, e.g. loading textures
 
-    virtual void Update(const float dt, const uint32_t ticks); // Neues Frame berechnen
+    virtual void Update(const float dt, const uint32_t ticks); // Calculate a new frame.
 
-    void    AddObj(CObj* obj, bool inthisframe=false); // Objekt in Welt hinzufügen. Speicher wird automatisch von World freigegeben
-    void    DelObj(int objid); // Objekt aus Welt entfernen. Wird beim nächsten Frame gelöscht
+    void    AddObj(CObj* obj, bool inthisframe=false); // Add object to world. World will free the memory of CObj*.
+    void    DelObj(int objid); // Remove object from the world. Get deleted at the end of the frame.
 
-    CObj*   GetObj(int objid); // Objekt mit dieser ID suchen
+    CObj*   GetObj(int objid); // Search for object with this id.
 
-    int     GetObjCount() const { return (int)m_objlist.size(); } // Anzahl der Objekte in Welt
+    int     GetObjCount() const { return (int)m_objlist.size(); } // Number of currently active objects.
     OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
     OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
 
     const std::vector<CObj*> GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const; // List is only valid for this frame!
 
-    virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Komplette Welt in einen Byte-Stream schreiben. true, wenn sich welt gegenüber oldstate verändert hat
+    virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Serialize the world state to a byte stream. Returns true if the world has changed compared to the oldstate.
 
-    bool    LoadLevel(const std::string path); // Level laden und BSP Tree vorbereiten
+    bool    LoadLevel(const std::string path); // Load the level from a .lbsp file
     const virtual CBSPLevel* GetBSP() const { return &m_bsptree; }
-    uint32_t   GetLeveltime() const { return state.leveltime; } // Levelzeit, beginnt bei 0
-    uint32_t   GetWorldID() const { return state.worldid; } // WorldID erhöht sich bei jedem Update() aufruf um 1
+    uint32_t   GetLeveltime() const { return state.leveltime; } // Leveltime in ms. Starts at 0 ms.
+    uint32_t   GetWorldID() const { return state.worldid; } // WorldID get incremented by 1 for each Update() call
 
     virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
-    void    ObjMove(CObj* obj, const float dt) const; // Objekt bewegen + Kollisionserkennung
+    void    ObjMove(CObj* obj, const float dt) const; // Move object and perform collision detection with level geometry
 
     bool    TraceObj(world_obj_trace_t* trace);
 
