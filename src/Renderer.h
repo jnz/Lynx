@@ -19,8 +19,8 @@ public:
 
 protected:
     void UpdatePerspective();
-    void DrawScene(const CFrustum& frustum, 
-                   CWorld* world, 
+    void DrawScene(const CFrustum& frustum,
+                   CWorld* world,
                    int localctrlid,
                    bool generateShadowMap);
 
@@ -38,7 +38,7 @@ protected:
     unsigned int m_fboId;				// framebuffer object to render light source view to
     unsigned int m_depthTextureId;	    // this texture is bound to the fbo
     bool         CreateShadowFBO();     // Create framebuffer object
-    void         PrepareShadowMap(const vec3_t& lightpos, 
+    void         PrepareShadowMap(const vec3_t& lightpos,
                                   const quaternion_t& lightrot,
                                   CWorld* world, int localctrlid);
 

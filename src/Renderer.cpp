@@ -13,8 +13,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define PLANE_NEAR          0.1f
-#define PLANE_FAR           10000.0f
+#define PLANE_NEAR          0.3f
+#define PLANE_FAR           500.0f
 #define RENDERER_FOV        90.0f
 #define SHADOW_MAP_RATIO    0.5f
 
@@ -174,12 +174,11 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     CObj* obj;
     OBJITER iter;
 
-    if(!generateShadowMap && world->GetBSP()->IsLoaded())
+    if(/*!generateShadowMap && */world->GetBSP()->IsLoaded())
     {
         BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
     }
 
-    //glUseProgram(0); // don't use shader from here on FIXME
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
     {
         obj = (*iter).second;
@@ -203,7 +202,6 @@ void CRenderer::DrawScene(const CFrustum& frustum,
         obj->GetMesh()->Render(obj->GetMeshState());
         glPopMatrix();
     }
-    //glUseProgram(m_program);
 }
 
 void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
@@ -290,8 +288,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // const vec3_t campos = l0pos;
     // const quaternion_t camrot = ql0rot;
 
-    //const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
-    const vec3_t lightpos0 = campos;
+    const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
     const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
     glEnable(GL_LIGHTING);
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
@@ -368,7 +365,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     //}
 
     // Draw weapon
-    glDisable(GL_LIGHTING);
+    // glDisable(GL_LIGHTING);
     CModelMD2* viewmodel;
     md2_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
@@ -382,10 +379,16 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         viewmodel->Render(viewmodelstate);
         viewmodel->Animate(viewmodelstate, dt);
     }
-    glEnable(GL_LIGHTING);
+    // glEnable(GL_LIGHTING);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen
+	// The only problem is: it does not work
+	// glActiveTexture(GL_TEXTURE7);
+	// glBindTexture(GL_TEXTURE_2D, 0);
+	// glActiveTexture(GL_TEXTURE0);
     // glUseProgram(0);
+	// glClear(GL_DEPTH_BUFFER_BIT);
+	// glDisable(GL_LIGHTING);
     // glMatrixMode(GL_PROJECTION);
     // glLoadIdentity();
     // glOrtho(-m_width/2,m_width/2,-m_height/2,m_height/2,1,20);
@@ -394,6 +397,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // glColor4f(1,1,1,1);
     // glActiveTexture(GL_TEXTURE0);
     // glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+    // glEnable(GL_TEXTURE_2D);
     // glTranslated(0,0,-1);
     // glBegin(GL_QUADS);
     // glTexCoord2d(0,0);glVertex3f(0,0,0);
@@ -401,6 +405,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // glTexCoord2d(1,1);glVertex3f(m_width/2,m_height/2,0);
     // glTexCoord2d(0,1);glVertex3f(0,m_height/2,0);
     // glEnd();
+	// glEnable(GL_LIGHTING);
     // UpdatePerspective();
 
     SDL_GL_SwapBuffers();
