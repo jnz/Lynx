@@ -98,7 +98,6 @@ void CMixer::Update(const float dt, const uint32_t ticks)
 				fAlpha = atan2(diff.x, -diff.z);
 				fBeta = atan2(playerlook.x, -playerlook.z);
 				angle = (uint16_t)((fAlpha - fBeta)*180/lynxmath::PI);
-
 				Mix_SetPosition(obj->GetSoundState()->cur_channel,
 							    angle, (uint8_t)volume);
             }

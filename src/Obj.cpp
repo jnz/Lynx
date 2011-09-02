@@ -431,8 +431,12 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
     }
     else if(state.resource.find(".ogg") != std::string::npos)
     {
-        m_sound = m_world->GetResourceManager()->GetSound(state.resource);
-        m_sound_state.init();
+        if(m_sound_state.soundpath != state.resource)
+        {
+            m_sound = m_world->GetResourceManager()->GetSound(state.resource);
+            m_sound_state.init();
+            m_sound_state.soundpath = state.resource;
+        }
     }
     else
     {

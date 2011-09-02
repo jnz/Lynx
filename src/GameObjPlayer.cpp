@@ -31,24 +31,6 @@ void CGameObjPlayer::CmdFire(bool active)
 
 void CGameObjPlayer::OnCmdFire()
 {
-#if 0
-    vec3_t dir;
-    GetLookDir().GetVec3(&dir, NULL, NULL);
-    dir = -dir;
-    bsp_sphere_trace_t trace;
-    trace.dir = dir;
-    trace.start = GetOrigin();
-    trace.dir = dir * 800.0f;
-    trace.radius = 0.02f;
-    GetWorld()->GetBSP()->TraceSphere(&trace);
-    if(trace.f < 1.0f)
-    {
-        vec3_t hitpoint = trace.start + trace.f * trace.dir;
-        SpawnParticleDust(hitpoint, trace.p.m_n);
-    }
-    return;
-#endif
-
     if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_GUN_FIRESPEED)
         return;
     m_prim_triggered_time = GetWorld()->GetLeveltime();
@@ -62,12 +44,10 @@ void CGameObjPlayer::FireGun()
     // remember the sound obj and only play a new sound if the old one
     // is deleted
     // THE SOUND SYSTEM SUCKS ATM FIXME
-    //if(GetWorld()->GetObj(m_fire_sound) == NULL)
-    //{
-    //    m_fire_sound = PlaySound(GetOrigin(),
-    //                             CLynx::GetBaseDirSound() + "rifle.ogg",
-    //                             PLAYER_GUN_FIRESPEED);
-    //}
+    m_fire_sound = PlaySound(GetOrigin(),
+                             CLynx::GetBaseDirSound() + "rifle.ogg",
+                             PLAYER_GUN_FIRESPEED+10);
+
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -76,6 +56,7 @@ void CGameObjPlayer::FireGun()
     trace.dir = dir;
     trace.start = GetOrigin();
     trace.excludeobj = GetID();
+    // FIXME? can we shoot through walls with this code?
     if(GetWorld()->TraceObj(&trace))
     {
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
@@ -85,7 +66,7 @@ void CGameObjPlayer::FireGun()
     }
     else
     {
-        // Kein Objekt getroffen, mit Levelgeometrie testen
+        // Test with level geometry
         bsp_sphere_trace_t spheretrace;
         spheretrace.start = trace.start;
         spheretrace.dir = dir * 800.0f;
@@ -108,7 +89,7 @@ void CGameObjPlayer::FireRocket()
     {
         m_fire_sound = PlaySound(GetOrigin(),
                                  CLynx::GetBaseDirSound() + "rifle.ogg",
-                                 PLAYER_GUN_FIRESPEED);
+                                 PLAYER_GUN_FIRESPEED/2);
     }
 
     vec3_t dir;
@@ -128,3 +109,4 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
 
     SpawnParticleBlood(hitpoint, dir);
 }
+

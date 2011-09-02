@@ -9,10 +9,12 @@ struct sound_state_t
     {
         cur_channel = -1;
         is_playing = 0;
+        soundpath = "";
     }
 
     int cur_channel;
     int is_playing;
+    std::string soundpath;
 };
 
 class CSound

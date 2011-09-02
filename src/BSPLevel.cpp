@@ -639,7 +639,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-#define	DIST_EPSILON	(0.05f)
+#define	DIST_EPSILON	(0.06f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // have we reached a leaf?
@@ -657,9 +657,9 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         for(unsigned int i=0;i<trianglecount;i++)
         {
             triangleindex = m_leaf[leafindex].triangles[i];
-            // - Prüfen ob Polygonfläche getroffen wird
-            // - Prüfen ob Polygon Edge getroffen wird
-            // - Prüfen ob Polygon Vertex getroffen wird
+            // - Check for triangle inner area
+            // - Check for all three triangle edges
+            // - Check for all three triangles vertices
             if(GetTriIntersection(triangleindex,
                                   trace->start,
                                   trace->dir,
@@ -703,7 +703,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
             float df = DIST_EPSILON/(hitplane.m_n * trace->dir);
             if(df > 0.0f)
                 df = 0.0f;
-            if(minf + df <= 0.01f)
+            if(minf + df <= DIST_EPSILON)
                 trace->f = 0.0f;
             else
                 trace->f = minf + df;
@@ -747,3 +747,4 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     else
         *trace = trace2;
 }
+

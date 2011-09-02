@@ -19,10 +19,10 @@ public:
     uint8_t     animation;      // animation index
 
     /*
-        Serverseite: ruft Serialize(true, stream, NULL) auf
-        Clientseite: ruft Serialize(false, stream, resman) auf, dann wird intern
-                     das passende CModelMD2* m_model geladen, damit der Renderer
-                     schnell über GetModel() auf das model zugreifen kann.
+        Server side: calls Serialize(true, stream, NULL)
+        Client side: calls Serialize(false, stream, resman), then the matching
+                     CModelMD2 gets loaded, so the renderer can quickly access
+                     the model by a GetModel() call.
      */
 
     void        Serialize(const bool write, CStream* stream, CResourceManager* resman);

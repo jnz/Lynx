@@ -15,9 +15,19 @@ struct obj_state_t;
 
 #define OBJ_FLAGS_ELASTIC       (1 << 0)
 #define OBJ_FLAGS_NOGRAVITY     (1 << 1)
+#define OBJ_FLAGS_GHOST         (1 << 2)
 
 #define OBJFLAGTYPE             uint8_t
 
+// Ghost objects:
+// --------------
+// For light weight objects with no graphical representation.
+// Consequences of the GHOST flag:
+//  - World::GetNearObj skips these objects
+//  - World::ObjMove skips these objects
+//  - World::TraceObj skips these objects
+//  - The object is not rendered
+//
 
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
 int DeltaDiffVec3(const vec3_t* newstate,
@@ -120,7 +130,7 @@ public:
     std::string GetParticleSystemName() const;
 
     // Local Attributes
-    bool        locGetIsOnGround() const { return m_locIsOnGround; } // Has this object touched the ground? Set by World::ObjMove gesetzt
+    bool        locGetIsOnGround() const { return m_locIsOnGround; } // Has this object touched the ground? Set by World::ObjMove
 
     // Rotation
     const matrix_t* GetRotMatrix() const { return &m; } // Direct access to the rotation matrix
@@ -173,3 +183,4 @@ private:
 
     static int m_idpool;
 };
+

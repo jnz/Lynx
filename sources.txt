@@ -4,3 +4,8 @@ http://opengameart.org/content/fire-spell-explosion
 Sponza Atrium model by Marko Dabrovic.
 
 SOIL texture loading library by Jonathan Dummer.
+
+Tangent vector calculation code by Eric Lengyel.
+
+MP5 model by the Action Quake 2 team.
+

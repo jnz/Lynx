@@ -72,6 +72,9 @@ const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float ra
     for(iter = m_objlist.begin();iter!=m_objlist.end();iter++)
     {
         obj = (*iter).second;
+        if(obj->GetFlags() & OBJ_FLAGS_GHOST)
+            continue;
+
         if(obj->GetID() != exclude && (obj->GetOrigin() - origin).AbsSquared() < radius2 &&
             ((obj->GetType() == type) || type < 0 ))
             objlist.push_back(obj);
@@ -123,6 +126,9 @@ const static vec3_t gravity(0, -GRAVITY, 0);
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
+    if(obj->GetFlags() & OBJ_FLAGS_GHOST)
+        return;
+
     if(obj->GetVel().y < -250.0f)
     {
         fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
@@ -313,6 +319,8 @@ bool CWorld::TraceObj(world_obj_trace_t* trace)
     for(iter = ObjBegin(); iter != ObjEnd(); iter++)
     {
         obj = (*iter).second;
+        if(obj->GetFlags() & OBJ_FLAGS_GHOST)
+            continue;
         if(obj->GetID() == ignore->GetID() || obj->GetRadius() < lynxmath::EPSILON)
             continue;
         origin = obj->GetOrigin();
@@ -524,7 +532,6 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             obj = (*iter).second;
             if(objread.find(obj->GetID()) != objread.end())
                 continue;
-            //assert(0); // nur mal zum sehen, ob hier alles klappt. danach zeile löschen
             DelObj(obj->GetID());
         }
 
@@ -573,3 +580,4 @@ bool world_state_t::GetObjState(const int id, obj_state_t& objstate) const
     objstate = objstates[indexiter->second];
     return true;
 }
+

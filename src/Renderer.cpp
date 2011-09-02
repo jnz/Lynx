@@ -182,10 +182,10 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
     {
         obj = (*iter).second;
-        if(obj->GetID() == localctrlid)
-            continue;
 
-        if(!obj->GetMesh())
+        if((obj->GetFlags() & OBJ_FLAGS_GHOST) ||
+            obj->GetID() == localctrlid ||
+           !obj->GetMesh())
             continue;
 
 		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))

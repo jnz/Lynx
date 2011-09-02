@@ -66,7 +66,7 @@ int CGameObj::PlaySound(const vec3_t& location, const std::string& soundpath, ui
     sound->SetRadius(0.0f);
     sound->SetOrigin(location);
     sound->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + lifetime, GetWorld(), sound));
-    sound->AddFlags(OBJ_FLAGS_NOGRAVITY);
+    sound->AddFlags(OBJ_FLAGS_GHOST | OBJ_FLAGS_NOGRAVITY);
     sound->SetResource(soundpath);
     GetWorld()->AddObj(sound, true);
     return sound->GetID();
