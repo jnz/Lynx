@@ -176,11 +176,10 @@ void CRenderer::DrawScene(const CFrustum& frustum,
 
     if(!generateShadowMap && world->GetBSP()->IsLoaded())
     {
-        //glDisable(GL_LIGHTING);
         BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
-        //glEnable(GL_LIGHTING);
     }
 
+    //glUseProgram(0); // don't use shader from here on FIXME
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
     {
         obj = (*iter).second;
@@ -190,11 +189,11 @@ void CRenderer::DrawScene(const CFrustum& frustum,
         if(!obj->GetMesh())
             continue;
 
-        if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-        {
-            stat_obj_hidden++;
-            continue;
-        }
+		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+		{
+			stat_obj_hidden++;
+			continue;
+		}
         stat_obj_visible++;
 
         glPushMatrix();
@@ -204,6 +203,7 @@ void CRenderer::DrawScene(const CFrustum& frustum,
         obj->GetMesh()->Render(obj->GetMeshState());
         glPopMatrix();
     }
+    //glUseProgram(m_program);
 }
 
 void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
@@ -348,11 +348,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         obj->GetParticleSystem()->Update(dt, ticks);
 
         // FIXME frustum test for particle system!
-        //if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-        //{
-        //  stat_obj_hidden++;
-        //  continue;
-        //}
         glPushMatrix();
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         obj->GetParticleSystem()->Render(side, up, dir);

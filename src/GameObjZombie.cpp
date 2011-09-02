@@ -35,17 +35,17 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         return;
     }
 
-    if(GetFlags() & OBJ_FLAGS_ELASTIC) // zombie ist schon tot
+    if(GetFlags() & OBJ_FLAGS_ELASTIC) // we use this flag to remember that zombie is dead
         return;
 
     if(dealer)
     {
         SetRot(TurnTo(dealer->GetOrigin()));
     }
-    SetVel(dir*18.0f + vec3_t(0,30.0f,0));
+    SetVel(vec3_t::origin);
     SetAnimation(GetMesh()->FindAnimation("crdeath"));
     SetNextAnimation(-1);
-    AddFlags(OBJ_FLAGS_ELASTIC); // zombie ist damit tot
+    AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
                     GetWorld()->GetLeveltime() + 9000,
@@ -134,3 +134,4 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
 
     return false;
 }
+

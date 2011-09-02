@@ -1,12 +1,10 @@
 #include <assert.h>
 #include <math.h>
+#include <stdio.h> // for fprintf
 #include <stdlib.h>
 #include "mathconst.h"
 #include "vec3.h"
 #include "matrix.h"
-#ifdef _DEBUG
-#include <stdio.h> // fprintf
-#endif
 
 const vec3_t vec3_t::origin(0,0,0);
 const vec3_t vec3_t::xAxis(1.0f, 0.0f, 0.0f);
@@ -256,12 +254,10 @@ float vec3_t::GetAngleDeg(const vec3_t& a, const vec3_t& b)
     return acosf((a * b) / d) * lynxmath::RADTODEG;
 }
 
-#ifdef _DEBUG
 void vec3_t::Print() const
 {
-    fprintf(stderr, "%.5f %.5f %.5f\n", x, y, z);
+    fprintf(stderr, "%.3f %.3f %.3f", x, y, z);
 }
-#endif
 
 vec3_t vec3_t::Lerp(const vec3_t& p1, const vec3_t& p2, const float f)
 {

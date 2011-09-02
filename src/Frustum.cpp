@@ -45,12 +45,12 @@ void CFrustum::Setup(const vec3_t& origin,
     nbl = origin + nearplane - nearup - nearside;
     nbr = origin + nearplane - nearup + nearside;
 
-    planes[plane_left].SetupPlane(ntl, ftl, fbl);
-    planes[plane_right].SetupPlane(nbr, fbr, ftr);
-    planes[plane_up].SetupPlane(ftr, ftl, ntl);
-    planes[plane_down].SetupPlane(nbl, fbl, fbr);
+    planes[plane_left].SetupPlane(fbl, ftl, ntl);
+    planes[plane_right].SetupPlane(ftr, fbr, nbr);
+    planes[plane_up].SetupPlane(ntl, ftl, ftr);
+    planes[plane_down].SetupPlane(fbr, fbl, nbl);
     planes[plane_near].SetupPlane(origin + nearplane, dir);
-    planes[plane_far].SetupPlane(ftl, ftr, fbr);
+    planes[plane_far].SetupPlane(fbr, ftr, ftl);
 
     pos = origin;
 }

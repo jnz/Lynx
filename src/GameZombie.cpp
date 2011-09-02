@@ -36,10 +36,14 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // n Testobjekte erstellen
-    for(int i=0;i<0;i++)
+    for(int i=0;i<1;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
         CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
+
+		fprintf(stderr, "Spawning zombie at: ");
+		point.point.Print();
+		fprintf(stderr, "\n");
 
         zombie->SetOrigin(point.point);
         zombie->SetRot(point.rot);

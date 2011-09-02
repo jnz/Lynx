@@ -63,9 +63,7 @@ struct vec3_t
     static const vec3_t yAxis; // 0,1,0
     static const vec3_t zAxis; // 0,0,1
 
-#ifdef _DEBUG
-    void Print() const;
-#endif
+    void Print() const; // print x,y,z to stderr
 
     vec3_t &operator += ( const vec3_t &v );
     vec3_t &operator -= ( const vec3_t &v );
