@@ -6,8 +6,6 @@
 #include <vector>
 #include "Frustum.h"
 
-#define MAX_TRACE_DIST      99999.999f
-
 struct bsp_sphere_trace_t
 {
     vec3_t  start; // start point

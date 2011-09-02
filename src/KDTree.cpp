@@ -11,8 +11,9 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define KDTREE_EPSILON                 0.01f
-#define KDTREE_MAX_TRIANGLES_PER_LEAF  5     // This is no hard limit, leafs can have more triangles
+#define KDTREE_EPSILON                 0.01f // Plane offset for point classification (front or back)
+#define KDTREE_MAX_TRIANGLES_PER_LEAF  5     // This is no hard limit, leafs can have more triangles, but at this point we don't go further down the tree.
+#define KDTREE_MAX_RECURSION_DEPTH     35    // Tree depth
 
 CKDTree::CKDTree(void)
 {
@@ -45,7 +46,7 @@ bool CKDTree::Load(std::string file)
 
     Unload();
 
-    f = fopen(file.c_str(), "rb");
+    f = fopen(file.c_str(), "rt");
     if(!f)
     {
         fprintf(stderr, "Failed to open file: %s\n", file.c_str());
@@ -130,9 +131,9 @@ bool CKDTree::Load(std::string file)
 
     if(m_spawnpoints.size() < 1)
     {
-        fprintf(stderr, "No spawn points found. Adding default spawn point at: 0.0 10.0 0.0\n");
+        fprintf(stderr, "Warning: No spawn points found. Adding default spawn point at: 0.0 0.0 0.0\n");
         spawn_point_t spawn;
-        spawn.origin = vec3_t(0.0f, 10.0f, 0.0f);
+        spawn.origin = vec3_t(0.0f, 0.0f, 0.0f);
         m_spawnpoints.push_back(spawn);
     }
 
@@ -146,6 +147,7 @@ bool CKDTree::Load(std::string file)
     // fprintf(stderr, "finished.\n");
 
     fprintf(stderr, "Creating triangle indices\n");
+    alltriangles.reserve(m_triangles.size());
     for(i = 0; i < (int)m_triangles.size(); i++)
         alltriangles.push_back(i);
 
@@ -285,12 +287,12 @@ polyplane_t CKDTree::TestTriangle(const int triindex, const plane_t& plane) cons
 
 // Computation of the tangent according to Lengyel p. 186
 // return vectors are not normalized
-void kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
-                             const std::vector<bspbin_vertex_t>& vertices,
-                             const int triangleindex,
-                             vec3_t& facenormal,
-                             vec3_t& tangent,
-                             vec3_t& bitangent)
+static void kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
+                                    const std::vector<bspbin_vertex_t>& vertices,
+                                    const int triangleindex,
+                                    vec3_t& facenormal,
+                                    vec3_t& tangent,
+                                    vec3_t& bitangent)
 {
     const vec3_t& p0 = vertices[triangles[triangleindex].v[0]].v;
     const vec3_t& p1 = vertices[triangles[triangleindex].v[1]].v;
@@ -324,8 +326,8 @@ void kdbin_calculate_tangent(const std::vector<bspbin_triangle_t>& triangles,
 
 // Calculate the vertex normals and tangents.
 // Lengyel's algorithm for tangents and bitangents is used here
-void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
-                           const std::vector<bspbin_triangle_t>& triangles)
+static void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
+                                  const std::vector<bspbin_triangle_t>& triangles)
 {
     const unsigned int vertexcount = vertices.size();
     const unsigned int trianglecount = triangles.size();
@@ -369,23 +371,16 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
     {
         vertices[vindex].n = normals[vindex].Normalized();
         const vec3_t& n = vertices[vindex].n;
-        const vec3_t& t = tangents[vindex];
+        vec3_t t = tangents[vindex];
 
         // tangent
         // Gram-Schmidt orthogonalize
         vertices[vindex].t = (t - n * (n*t)).Normalized();
 
-        // the bitangent is only stored by its handedness in the w component (-1 or 1)
-        // Calculate handedness
-        vertices[vindex].w = (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f;
-
-        // assert(vertices[vindex].t.IsNormalized());
         if(!vertices[vindex].t.IsNormalized())
         {
-            vertices[vindex].t = vec3_t(1.0f, 0.0f, 0.0f);
             fprintf(stderr, "Failed to calculate vertex tangent in vertex %i\n", vindex);
-            fprintf(stderr, "%s V%3i v: %3.2f %3.2f %3.2f n: %3.2f %3.2f %3.2f t: %3.2f %3.2f %3.2f t': %3.2f %3.2f %3.2f b: %3.2f %3.2f %3.2f\n",
-                    vertices[vindex].t.IsNormalized()?"  ":"x ",
+            fprintf(stderr, "V%i v: %3.2f %3.2f %3.2f n: %3.2f %3.2f %3.2f t: %3.2f %3.2f %3.2f t before Gram-Schmidt: %3.2f %3.2f %3.2f b: %3.2f %3.2f %3.2f\n",
                     vindex,
                     vertices[vindex].v.x, vertices[vindex].v.y, vertices[vindex].v.z,
                     vertices[vindex].n.x, vertices[vindex].n.y, vertices[vindex].n.z,
@@ -393,11 +388,18 @@ void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
                     t.x, t.y, t.z,
                     bitangents[vindex].x, bitangents[vindex].y, bitangents[vindex].z
                    );
+            // FIXME we just just this as tangent vector.
+            vertices[vindex].t = vec3_t(1.0f, 0.0f, 0.0f);
+            t = vertices[vindex].t;
         }
+
+        // the bitangent is only stored by its handedness in the w component (-1 or 1)
+        // Calculate handedness
+        vertices[vindex].w = (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f;
     }
 }
 
-int kdbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpath)
+static int kdbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpath)
 {
     int i=0;
     std::vector<bspbin_texture_t>::const_iterator iter;
@@ -416,7 +418,7 @@ int kdbin_addtexture(std::vector<bspbin_texture_t>& textures, const char* texpat
     return textures.size()-1;
 }
 
-int kdbin_pushleaf(const CKDTree& tree,
+static int kdbin_pushleaf(const CKDTree& tree,
                    const CKDTree::CKDNode* leaf,
                    std::vector<bspbin_leaf_t>& leafs)
 {
@@ -432,7 +434,7 @@ int kdbin_pushleaf(const CKDTree& tree,
 }
 
 // returns true if the vertex position and uv coordinates are equal
-bool kdbin_compare_vertex_and_uv(const bspbin_vertex_t& vA,
+static bool kdbin_compare_vertex_and_uv(const bspbin_vertex_t& vA,
                                  const bspbin_vertex_t& vB,
                                  const float epsilon)
 {
@@ -442,7 +444,7 @@ bool kdbin_compare_vertex_and_uv(const bspbin_vertex_t& vA,
            (fabsf(vA.tv-vB.tv) < epsilon);
 }
 
-int kdbin_getnodes(const CKDTree& tree,
+static int kdbin_getnodes(const CKDTree& tree,
                    const CKDTree::CKDNode* node,
                    std::vector<bspbin_plane_t>& planes,
                    std::vector<bspbin_node_t>& nodes,
@@ -489,7 +491,11 @@ int kdbin_getnodes(const CKDTree& tree,
     return curpos;
 }
 
-void WriteLeafs(FILE* f, const std::vector<bspbin_leaf_t>& leafs)
+// Write leaf writes all leafs of the KDTree to the
+// file. This function can not be replaced by the generic
+// WriteLump function, because the bspbin_leaf_t structure
+// has a dynamic length.
+static void WriteLeafs(FILE* f, const std::vector<bspbin_leaf_t>& leafs)
 {
     uint32_t i;
     uint32_t trianglecount;
@@ -508,12 +514,12 @@ void WriteLeafs(FILE* f, const std::vector<bspbin_leaf_t>& leafs)
 }
 
 template<typename Lump>
-void WriteLump(FILE*f, const std::vector<Lump>& l)
+static void WriteLump(FILE*f, const std::vector<Lump>& l)
 {
     typename std::vector<Lump>::const_iterator iter;
     for(iter = l.begin();iter != l.end();iter++)
     {
-        Lump tl = (*iter);
+        const Lump& tl = (*iter);
         fwrite(&tl, sizeof(tl), 1, f);
     }
 }
@@ -541,7 +547,8 @@ leafs: for every leaf there is a trianglecount (uint32_t), followed
 */
 bool CKDTree::WriteToBinary(const std::string filepath)
 {
-    unsigned int i, j, k;
+    unsigned int i, j;
+    int k;
     FILE* f = fopen(filepath.c_str(), "wb");
     assert(f);
     if(!f)
@@ -581,7 +588,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
             thisvertex.tu = m_texcoords[m_triangles[i].texcoords[j]].x;
             thisvertex.tv = m_texcoords[m_triangles[i].texcoords[j]].y;
 
-            for(k = 0; k < vertices.size(); k++)
+            for(k = vertices.size()-1; k >= 0; k--)
             {
                 if(kdbin_compare_vertex_and_uv(vertices[k],
                                                thisvertex,
@@ -605,7 +612,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     fprintf(stderr, "\nVertices for file: %i\n", (int)vertices.size());
     if(vertices.size() > USHRT_MAX)
     {
-        fprintf(stderr, "Warning, more than %i vertices\n", USHRT_MAX);
+        fprintf(stderr, "Information: file has more than %i vertices\n", USHRT_MAX);
     }
 
     // The tree is stored with pointers in memory.
@@ -626,6 +633,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         spawn.rot = iter->rot;
         spawnpoints.push_back(spawn);
     }
+
     // Create tangent vectors for each vertex
     fprintf(stderr, "Creating tangent vectors\n");
     kdbin_create_tangents(vertices, triangles);
@@ -641,7 +649,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         bspbin_node_t nullnode;
         nullnode.children[0] = -1;
         nullnode.children[1] = -1;
-        nullnode.radius = 99999.999f; // FIXME: this needs a define or something
+        nullnode.radius = MAX_TRACE_DIST-1.0f;
         nullnode.sphere_origin = vec3_t::origin;
         nullnode.plane = 0;
         nodes.push_back(nullnode);
@@ -650,6 +658,8 @@ bool CKDTree::WriteToBinary(const std::string filepath)
         nullplane.d = 0;
         planes.push_back(nullplane);
     }
+
+    // Now we have all the required information to write the file.
 
     bspbin_direntry_t dirplane;
     bspbin_direntry_t dirtextures;
@@ -726,9 +736,9 @@ CKDTree::CKDNode::CKDNode(CKDTree* tree, const std::vector<int>& trianglesIn, co
 
     if(recursionDepth > tree->m_depth)
         tree->m_depth = recursionDepth;
-    if(recursionDepth > 35)
+    if(recursionDepth > KDTREE_MAX_RECURSION_DEPTH)
     {
-        fprintf(stderr, "Unable to compile polygon soup. Recursion depth too deep.");
+        fprintf(stderr, "Unable to compile polygon soup. Recursion depth too deep: %i.", recursionDepth);
         assert(0);
         exit(0);
     }
@@ -868,18 +878,18 @@ plane_t CKDTree::CKDNode::FindSplittingPlane(const CKDTree* tree, const std::vec
     }
 
     // sort the coordinates for a L1 median estimation
-    // this makes us robust against triangle outliers
+    // this makes us robust against vertex outliers
     std::sort(coords.begin(), coords.end());
     const float split = coords[coords.size()/2]; // median like
-    //const float split = (coords[coords.size()-1]+coords[0])*0.5f; //tchebyscheff like
     const vec3_t p(axis[kdAxis]*split); // point
     const vec3_t n(axis[kdAxis]); // normal vector
     return plane_t(p, n); // create plane from point and normal vector
 }
 
-void CKDTree::CKDNode::CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn) // Bounding Sphere für diesen Knoten berechnen
+// Bounding sphere for this node
+void CKDTree::CKDNode::CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn)
 {
-    vec3_t min(0,0,0), max(0,0,0);
+    vec3_t min(0.0f,0.0f,0.0f), max(0.0f,0.0f,0.0f);
     int i, j;
     const int tricount = (int)trianglesIn.size();
     int triindex; // triangle index
@@ -909,6 +919,13 @@ void CKDTree::CKDNode::CalculateSphere(const CKDTree* tree, const std::vector<in
     vec3_t maxmin = (max - min)*0.5f;
     m_sphere_origin = min + maxmin;
     m_sphere = maxmin.Abs();
+
+    if(m_sphere > MAX_TRACE_DIST)
+    {
+        fprintf(stderr, "Level geometry too large. Scale down the level. Max. distance: %f\n", MAX_TRACE_DIST);
+        assert(0);
+        exit(0);
+    }
 }
 
 vec3_t kd_tri_t::GetNormal(CKDTree* tree)
@@ -920,9 +937,9 @@ vec3_t kd_tri_t::GetNormal(CKDTree* tree)
 
 void kd_tri_t::GeneratePlane(CKDTree* tree)
 {
-    plane.SetupPlane(tree->m_vertices[vertices[2]],
+    plane.SetupPlane(tree->m_vertices[vertices[0]],
                      tree->m_vertices[vertices[1]],
-                     tree->m_vertices[vertices[0]]);
+                     tree->m_vertices[vertices[2]]);
 
 }
 

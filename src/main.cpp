@@ -22,8 +22,8 @@
 #define SCREEN_HEIGHT       768
 #define BPP                 32
 #define FULLSCREEN          0
-#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
-//#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
+//#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
+#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
 
 int main(int argc, char** argv)
 {
