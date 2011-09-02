@@ -1,6 +1,7 @@
 varying vec4 ShadowCoord;
 varying vec3 lightDir;
 varying vec3 normal;
+varying vec3 eyedir;
 
 // Vertex shader
 void main()
@@ -22,12 +23,11 @@ void main()
                           t.z, b.z, n.z);
 
     // light position to eye space
-    // vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
-    // light dir in eye space
-    // lightDir = vec3(lightpos - vPos);
-    lightDir = vec3(-vPos.xyz);
+    vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
+    lightDir = lightpos.xyz - vPos.xyz;
     // light dir in tangent space
     lightDir = tbnMatrix * normalize(lightDir);
     normal = n;
+    eyedir = -vPos.xyz;
 }
 

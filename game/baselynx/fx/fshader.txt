@@ -4,6 +4,7 @@ uniform sampler2DShadow ShadowMap;
 varying vec4 ShadowCoord; // pos in shadow space
 varying vec3 lightDir; // in tangent space
 varying vec3 normal; // in eye space
+varying vec3 eyedir; // in eye space
 
 // Fragment shader
 void main()
