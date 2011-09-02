@@ -26,7 +26,7 @@ CWorld::~CWorld(void)
 void CWorld::AddObj(CObj* obj, bool inthisframe)
 {
     assert(obj && !GetObj(obj->GetID()));
-    assert(GetObjCount() < USHRT_MAX);
+    assert(GetObjCount() < INT_MAX);
     if(!obj)
         return;
 
@@ -159,7 +159,6 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     float d;
     int numbumps = 4; // bump up to 4 times
     int bumpcount;
-    int blocked = 0; // assume no blocking initially
     int numplanes = 0; // and not sliding anything
     vec3_t original_velocity = vel; // store original velocity
     vec3_t primal_velocity = vel;
@@ -234,7 +233,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
         for(i=0; i<numplanes; i++)
         {
-            PM_ClipVelocity(original_velocity, planes[i], new_velocity, 1.01f);
+            PM_ClipVelocity(original_velocity, planes[i], new_velocity, 1.0f);
             for(j=0; j<numplanes; j++)
             {
                 if(j != i && !(planes[i] == planes[j]))
@@ -432,21 +431,21 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         CStream tempstream = stream->GetStream();
         stream->WriteAdvance(sizeof(uint32_t)); // An dieser Stelle sollten als DWORD die Updateflags stehen, diese kennen wir erst, nachdem wir sie geschrieben haben
 
-        // Zuerst in tempstream schreiben um gleichzeitig die updateflags zu erkennen
+        // Write to tempstream to check for updateflags
         DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, stream);
         DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, stream);
         DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, stream);
-        // [NEUE ATTRIBUTE HIER]
+        // [NEW ATTRIBUTES HERE]
 
         if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
             changes++;
 
-        assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // muss zwingend eingehalten werden
-        tempstream.WriteDWORD(updateflags); // Jetzt kennen wir die Updateflags und können sie in den tatsächlichen stream schreiben
+        assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // this has to be enforced
+        tempstream.WriteDWORD(updateflags); // Now we know the updateflags and can write them to the actual stream
 
-        // Alle Objekte schreiben
-        assert(GetObjCount() < USHRT_MAX);
-        stream->WriteWORD((uint16_t)GetObjCount());
+        // Write all objects
+        assert(GetObjCount() < INT_MAX);
+        stream->WriteDWORD((uint32_t)GetObjCount());
 
         obj_state_t obj_oldstate;
         obj_state_t* p_obj_oldstate;
@@ -462,7 +461,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
                     p_obj_oldstate = &obj_oldstate;
                 }
             }
-            stream->WriteWORD(obj->GetID());
+            stream->WriteDWORD(obj->GetID());
             if(obj->Serialize(true, stream, obj->GetID(), p_obj_oldstate))
                 changes++;
         }
@@ -472,8 +471,8 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         uint32_t updateflags;
         uint32_t worldid;
         std::string level;
-        uint16_t objcount;
-        uint16_t objid;
+        uint32_t objcount;
+        uint32_t objid;
 
         stream->ReadDWORD(&updateflags);
         assert(updateflags > 0);
@@ -504,16 +503,18 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
                 }
             }
         }
-        // [NEUE ATTRIBUTE HIER]
+        // new attributes here
         if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
             changes++;
 
-        stream->ReadWORD(&objcount);
+        stream->ReadDWORD(&objcount);
         assert(objcount < USHRT_MAX);
-        std::map<int,int> objread; // objekte die gelesen wurden, was hier nicht steht, muss gelöscht werden FIXME: hash_map verwenden?
+        // objread contains all read objects. every object that is not here, has
+        // to be deleted
+        std::map<int,int> objread;
         for(int i=0;i<objcount;i++)
         {
-            stream->ReadWORD(&objid);
+            stream->ReadDWORD(&objid);
             obj = GetObj(objid);
             if(!obj)
             {
@@ -523,10 +524,10 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             }
             else
                 changes += obj->Serialize(false, stream, objid) ? 1 : 0;
-            assert(objread.find(objid) == objread.end()); // darf nicht schon im stream sein
+            assert(objread.find(objid) == objread.end()); // is not supposed to be already in stream
             objread[obj->GetID()] = obj->GetID();
         }
-        // Alle Objekte löschen, die in dem neuen State nicht mehr vorhanden sind
+        // Delete all objects that are not in the latest state
         for(iter=m_objlist.begin();iter!=m_objlist.end();iter++)
         {
             obj = (*iter).second;
@@ -557,7 +558,7 @@ world_state_t CWorld::GetWorldState()
     return worldstate;
 }
 
-// world_state_t Struktur Methoden (für sicheren Zugriff auf Objekt Vektor in world_state_t)
+// world_state_t struct methods for managed and secure access
 
 void world_state_t::AddObjState(obj_state_t objstate, const int id)
 {

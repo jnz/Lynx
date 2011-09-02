@@ -133,6 +133,8 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                     difflen = 0.15f;
                 diff = dt*diff*force*1/(difflen*difflen*difflen);
                 diff += obj2->GetVel();
+                if(diff.AbsSquared()>25.0f)
+                    diff.SetLength(5.0f);
                 obj2->SetVel(diff);
             }
         }

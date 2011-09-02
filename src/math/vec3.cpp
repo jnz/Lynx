@@ -36,14 +36,11 @@ void vec3_t::Normalize(void)
 
 void vec3_t::SetLength(float scalelen)
 {
-    float length, ilength;
-
-    length = x*x+y*y+z*z;
-    length = sqrtf(length);
+    const float length = lynxmath::Sqrt(x*x+y*y+z*z);
 
     if(length > lynxmath::EPSILON)
     {
-        ilength = scalelen/length;
+        const float ilength = scalelen/length;
         x *= ilength;
         y *= ilength;
         z *= ilength;
@@ -52,15 +49,16 @@ void vec3_t::SetLength(float scalelen)
 
 vec3_t vec3_t::Normalized(void) const
 {
-    float f = Abs();
-    if(f < lynxmath::EPSILON)
-        return vec3_t(0, 0, 0);
-    return (*this)*(1.0f/f);
+    const float len = Abs();
+    if(len < lynxmath::EPSILON)
+        return vec3_t(0.0f, 0.0f, 0.0f);
+    const float ilen = 1.0f/len;
+    return vec3_t(x*ilen, y*ilen, z*ilen);
 }
 
 bool vec3_t::IsNormalized() const
 {
-    return fabsf(Abs()-1.0f) < lynxmath::EPSILON;
+    return fabsf(AbsSquared()-1.0f) < lynxmath::EPSILON;
 }
 
 bool vec3_t::IsNull() const
@@ -281,17 +279,18 @@ bool vec3_t::RayCylinderIntersect(const vec3_t& pStart, const vec3_t& pDir,
     const vec3_t pa = edgeEnd - edgeStart;
     const vec3_t s0 = pStart - edgeStart;
     const float pa_squared = pa.AbsSquared();
+    const float pa_isquared = 1.0f/pa_squared;
 
     // a
     const float pva = pDir * pa;
-    const float a = pDir.AbsSquared() - pva*pva/pa_squared;
+    const float a = pDir.AbsSquared() - pva*pva*pa_isquared;
 
     // b
-    const float b = s0*pDir - (s0*pa)*(pva)/pa_squared;
+    const float b = s0*pDir - (s0*pa)*(pva)*pa_isquared;
 
     // c
     const float ps0a = s0*pa;
-    const float c = s0.AbsSquared() - radius*radius - ps0a*ps0a/pa_squared;
+    const float c = s0.AbsSquared() - radius*radius - ps0a*ps0a*pa_isquared;
 
     const float dis = b*b - a*c;
     if(dis < 0)

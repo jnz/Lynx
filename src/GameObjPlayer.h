@@ -20,11 +20,9 @@ public:
 
 protected:
     void FireGun();
-    void FireRocket();
 
 private:
     bool m_prim_triggered; // if +fire active?
-    int m_fire_sound; // for sound spam prevention
     uint32_t m_prim_triggered_time;
     quaternion_t m_lookdir;
 };

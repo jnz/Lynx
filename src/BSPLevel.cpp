@@ -627,6 +627,7 @@ bool CBSPLevel::GetVertexIntersection(const int triangleindex,
     }
 }
 
+#define	DIST_EPSILON	(0.06f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
 {
     if(m_node == NULL)
@@ -639,7 +640,6 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     TraceSphere(trace, 0);
 }
 
-#define	DIST_EPSILON	(0.06f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
     if(node < 0) // have we reached a leaf?

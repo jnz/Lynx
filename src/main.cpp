@@ -131,6 +131,8 @@ int main(int argc, char** argv)
                 {
                 case SDLK_ESCAPE:
                     run = 0;
+                default:
+                    break;
                 }
                 break;
             case SDL_QUIT:

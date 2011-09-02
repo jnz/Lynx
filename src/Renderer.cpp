@@ -26,7 +26,6 @@ static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]
     0.5, 0.5, 0.5, 1.0 };
 
 // Local Render Functions
-static void RenderCube();
 static void BSP_RenderTree(const CBSPLevel* tree,
                            const vec3_t* origin,
                            const CFrustum* frustum);
@@ -612,6 +611,7 @@ void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum*
     tree->RenderGL(*origin, *frustum);
 }
 
+#if 0
 void RenderCube() // this is handy sometimes
 {
     glBegin(GL_QUADS);
@@ -647,8 +647,9 @@ void RenderCube() // this is handy sometimes
         glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
     glEnd();
 }
+#endif
 
-#ifdef DRAW_BBOX
+#if 0
 void DrawBBox(const vec3_t& min, const vec3_t& max)
 {
     glDisable(GL_TEXTURE_2D);

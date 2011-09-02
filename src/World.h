@@ -14,7 +14,7 @@ class CWorld;
 
 /*
     CWorld ist der wichtigste Kern in der Lynx Engine.
-    Der Zustand einer Welt wird Datenmäßig in der 
+    Der Zustand einer Welt wird Datenmäßig in der
     world_state_t Struktur festgehalten und von
     der CWorld Klasse verwaltet.
 

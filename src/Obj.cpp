@@ -331,9 +331,9 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
     if(write)
     {
         assert(GetID() == id);
-        assert(id < USHRT_MAX);
-        CStream tempstream = stream->GetStream(); // wir merken uns die stelle, an die die updateflags kommen
-        stream->WriteAdvance(sizeof(uint32_t)); // wir gehen sizeof(DWORD) vor
+        assert(id < INT_MAX);
+        CStream tempstream = stream->GetStream(); // we remember the position of the updateflags
+        stream->WriteAdvance(sizeof(uint32_t)); // we advance by sizeof(DWORD) bytes
 
         DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, stream);
         DeltaDiffVec3(&state.vel,               oldstate ? &oldstate->vel : NULL,           OBJ_STATE_VEL,          &updateflags, stream);
@@ -346,7 +346,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         DeltaDiffBytes(&state.flags,            oldstate ? &oldstate->flags : NULL,         OBJ_STATE_FLAGS,        &updateflags, stream, sizeof(state.flags));
         DeltaDiffString(&state.particles,       oldstate ? &oldstate->particles : NULL,     OBJ_STATE_PARTICLES,    &updateflags, stream);
 
-        tempstream.WriteDWORD(updateflags); // jetzt können wir die updateflags vor den eigentlichen daten schreiben
+        tempstream.WriteDWORD(updateflags); // now we can write the updateflags
 
         assert(oldstate ? 1 : (updateflags == OBJ_STATE_FULLUPDATE));
     }

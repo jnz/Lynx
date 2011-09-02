@@ -85,5 +85,6 @@ const vec3_t operator^(vec3_t const &a, vec3_t const &b);
 
 // dot product
 const float operator*(vec3_t const &a, vec3_t const &b);
+
 bool   operator==(vec3_t const &a, vec3_t const &b);
 bool   operator!=(vec3_t const &a, vec3_t const &b);

@@ -12,7 +12,6 @@ CGameObjPlayer::CGameObjPlayer(CWorld* world) : CGameObj(world)
 {
     m_prim_triggered = 0;
     m_prim_triggered_time = 0;
-    m_fire_sound = 0;
 }
 
 CGameObjPlayer::~CGameObjPlayer(void)
@@ -26,7 +25,7 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
-#define PLAYER_GUN_FIRESPEED            400
+#define PLAYER_GUN_FIRESPEED            350
 #define PLAYER_GUN_DAMAGE               28
 
 void CGameObjPlayer::OnCmdFire()
@@ -44,9 +43,9 @@ void CGameObjPlayer::FireGun()
     // remember the sound obj and only play a new sound if the old one
     // is deleted
     // THE SOUND SYSTEM SUCKS ATM FIXME
-    m_fire_sound = PlaySound(GetOrigin(),
-                             CLynx::GetBaseDirSound() + "rifle.ogg",
-                             PLAYER_GUN_FIRESPEED+10);
+    PlaySound(GetOrigin(),
+              CLynx::GetBaseDirSound() + "rifle.ogg",
+              PLAYER_GUN_FIRESPEED+10);
 
 
     world_obj_trace_t trace;
@@ -56,7 +55,6 @@ void CGameObjPlayer::FireGun()
     trace.dir = dir;
     trace.start = GetOrigin();
     trace.excludeobj = GetID();
-    // FIXME? can we shoot through walls with this code?
     if(GetWorld()->TraceObj(&trace))
     {
         CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
@@ -78,29 +76,6 @@ void CGameObjPlayer::FireGun()
             SpawnParticleDust(hitpoint, spheretrace.p.m_n);
         }
     }
-}
-
-void CGameObjPlayer::FireRocket()
-{
-    // we have to prevent sound spamming from the machine gun
-    // remember the sound obj and only play a new sound if the old one
-    // is deleted
-    if(GetWorld()->GetObj(m_fire_sound) == NULL)
-    {
-        m_fire_sound = PlaySound(GetOrigin(),
-                                 CLynx::GetBaseDirSound() + "rifle.ogg",
-                                 PLAYER_GUN_FIRESPEED/2);
-    }
-
-    vec3_t dir;
-    GetLookDir().GetVec3(&dir, NULL, NULL);
-    dir = -dir;
-
-    CGameObjRocket* rocket = new CGameObjRocket(GetWorld());
-    rocket->SetVel(dir*rocket->GetRocketSpeed());
-    rocket->SetOrigin(this->GetOrigin() + dir*this->GetRadius());
-    rocket->SetRot(GetLookDir());
-    GetWorld()->AddObj(rocket);
 }
 
 void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer)
