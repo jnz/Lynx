@@ -80,11 +80,13 @@ void CWorldClient::AddWorldToHistory()
     clstate.state = GetWorldState();
     clstate.localtime = CLynxSys::GetTicks();
     m_history.push_front(clstate);
-    assert(m_history.size() < 80);
+    if(m_history.size() > 80)
+        fprintf(stderr, "Client snapshot history buffer size is getting larger: %i\n", m_history.size());
     while(clstate.localtime - m_history.back().localtime > MAX_CLIENT_HISTORY)
         m_history.pop_back();
     while(m_history.size() > 80)
         m_history.pop_back();
+    assert(m_history.size() <= 80);
 }
 
 /*
