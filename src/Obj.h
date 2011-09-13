@@ -8,7 +8,7 @@ struct obj_state_t;
 #include "Stream.h"
 #include <string>
 #include "World.h"
-#include "ModelMD2.h"
+#include "ModelMD5.h"
 #include "Sound.h"
 #include <memory>
 #include "ParticleSystem.h"
@@ -118,8 +118,6 @@ public:
     void        SetResource(std::string resource);
     int16_t     GetAnimation() const;
     void        SetAnimation(int16_t animation);
-    int16_t     GetNextAnimation() const;
-    void        SetNextAnimation(int16_t animation);
     vec3_t      GetEyePos() const;
     void        SetEyePos(const vec3_t& eyepos);
     OBJFLAGTYPE GetFlags() const;
@@ -136,9 +134,8 @@ public:
     const matrix_t* GetRotMatrix() const { return &m; } // Direct access to the rotation matrix
 
     // Model Data
-    const CModelMD2* GetMesh() const { return m_mesh; }
-    md2_state_t*     GetMeshState() { return &m_mesh_state; }
-    int              GetAnimationFromName(const char* name) const;
+    CModelMD5*       GetMesh() const { return m_mesh; }
+    md5_state_t*     GetMeshState() { return &m_mesh_state; }
 
     // Sound Data
     const CSound*   GetSound() const { return m_sound; }
@@ -154,8 +151,8 @@ protected:
     obj_state_t state; // Core data
 
     // Animation extension
-    CModelMD2*  m_mesh;
-    md2_state_t m_mesh_state;
+    CModelMD5*  m_mesh;
+    md5_state_t m_mesh_state;
     void        UpdateAnimation();
 
     // Sound

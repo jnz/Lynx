@@ -116,22 +116,6 @@ void CObj::SetAnimation(int16_t animation)
     }
 }
 
-int16_t CObj::GetNextAnimation() const
-{
-    return state.nextanimation;
-}
-
-void CObj::SetNextAnimation(int16_t animation)
-{
-    if(animation != state.nextanimation)
-    {
-        state.nextanimation = animation;
-        assert(m_mesh);
-        if(m_mesh)
-            m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
-    }
-}
-
 vec3_t CObj::GetEyePos() const
 {
     return state.eyepos;
@@ -160,15 +144,6 @@ void CObj::AddFlags(OBJFLAGTYPE flags)
 void CObj::RemoveFlags(OBJFLAGTYPE flags)
 {
     state.flags = state.flags & ~flags;
-}
-
-int CObj::GetAnimationFromName(const char* name) const
-{
-    assert(m_mesh);
-    if(m_mesh)
-        return m_mesh->FindAnimation(name);
-    else
-        return -1;
 }
 
 void CObj::UpdateParticles()
@@ -420,14 +395,14 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
     if(state.resource == "")
         return;
 
-    if(state.resource.find(".md2") != std::string::npos)
+    if(state.resource.find(".md5") != std::string::npos)
     {
         m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
-        if(state.animation >= 0)
-            m_mesh->SetAnimation(&m_mesh_state, state.animation);
-        else
-            m_mesh->SetAnimation(&m_mesh_state, 0);
-        m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
+        // if(state.animation >= 0)
+        //     m_mesh->SetAnimation(&m_mesh_state, state.animation);
+        // else
+        //     m_mesh->SetAnimation(&m_mesh_state, 0);
+        // m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
     }
     else if(state.resource.find(".ogg") != std::string::npos)
     {

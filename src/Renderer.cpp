@@ -322,6 +322,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glActiveTexture(GL_TEXTURE0);
     }
+    //glUseProgram(0);
     DrawScene(frustum, world, localctrlid, false);
 
     glUseProgram(0); // don't use shader from here on FIXME
@@ -365,19 +366,21 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
     // Draw weapon
     // glDisable(GL_LIGHTING);
-    CModelMD2* viewmodel;
-    md2_state_t* viewmodelstate;
-    m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
-    if(viewmodel)
-    {
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glLoadIdentity();
-        glTranslatef(0,-2.0f,1.25f); // weapon offset
-        // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
+    //
+    // CModelMD2* viewmodel;
+    // md2_state_t* viewmodelstate;
+    // m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
+    // if(viewmodel)
+    // {
+    //     glClear(GL_DEPTH_BUFFER_BIT);
+    //     glLoadIdentity();
+    //     glTranslatef(0,-2.0f,1.25f); // weapon offset
+    //     // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
-        viewmodel->Render(viewmodelstate);
-        viewmodel->Animate(viewmodelstate, dt);
-    }
+    //     viewmodel->Render(viewmodelstate);
+    //     viewmodel->Animate(viewmodelstate, dt);
+    // }
+    //
     // glEnable(GL_LIGHTING);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen

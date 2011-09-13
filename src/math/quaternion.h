@@ -52,6 +52,8 @@ struct quaternion_t
 
     void Vec3Multiply(const vec3_t& vin, vec3_t* vout) const;
 
+    void ComputeW(); // compute w from x, y, z, assuming a normal quaternion
+
     static float ScalarMultiply(const quaternion_t &q1, const quaternion_t &q2);
     static void Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t);
 };

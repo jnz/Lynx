@@ -122,7 +122,8 @@ void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const 
 #define GRAVITY                (80.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 
-#define MAX_CLIP_PLANES   5
+#define MAX_CLIP_PLANES      5
+#define OVERCLIP            (1.001f)
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
@@ -233,7 +234,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
         for(i=0; i<numplanes; i++)
         {
-            PM_ClipVelocity(original_velocity, planes[i], new_velocity, 1.0f);
+            PM_ClipVelocity(original_velocity, planes[i], new_velocity, OVERCLIP);
             for(j=0; j<numplanes; j++)
             {
                 if(j != i && !(planes[i] == planes[j]))
@@ -512,7 +513,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         // objread contains all read objects. every object that is not here, has
         // to be deleted
         std::map<int,int> objread;
-        for(int i=0;i<objcount;i++)
+        for(unsigned int i=0;i<objcount;i++)
         {
             stream->ReadDWORD(&objid);
             obj = GetObj(objid);

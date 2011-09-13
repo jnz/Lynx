@@ -23,13 +23,6 @@ struct bsp_texture_batch_t
     int texidnormal; // normal map
 };
 
-// what data type should we use for the
-// VBO index buffer? for less than 0xffff vertices
-// uint16_t is sufficient
-typedef uint32_t vertexindex_t; // if you change this, change MY_GL_VERTEXINDEX_TYPE too
-#define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_INT
-// #define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_SHORT // for uint16_t vertexindex_t
-
 class CBSPLevel
 {
 public:

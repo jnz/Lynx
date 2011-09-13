@@ -86,19 +86,20 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
     {
         obj = (CGameObj*)(*iter).second;
 
+        // FIXME only think at fixed intervals, not every frame
         obj->m_think.DoThink(GetWorld()->GetLeveltime());
 
         GetWorld()->ObjMove(obj, dt);
         if(obj->IsClient())
         {
-            if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() >
-               1*lynxmath::EPSILON)
-                obj->SetNextAnimation(obj->GetAnimationFromName("run"));
-            else
-                obj->SetNextAnimation(0);
+            //if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() >
+               //1*lynxmath::EPSILON)
+                //obj->SetNextAnimation(obj->GetAnimationFromName("run"));
+            //else
+                //obj->SetNextAnimation(0);
 
             client = GetServer()->GetClient(obj->GetClientID());
-            if(client) // client evtl. disconnected, clientobj wird im nächsten frame automatisch entfernt
+            if(client) // safety check: maybe the object is associated with an invalid client id
             {
                 ProcessClientCmds((CGameObjPlayer*)obj, client);
                 ClientMouse(obj, client->lat, client->lon);

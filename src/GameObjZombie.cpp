@@ -7,9 +7,9 @@
 
 CGameObjZombie::CGameObjZombie(CWorld* world) : CGameObj(world)
 {
-    SetResource(CLynx::GetBaseDirModel() + "mdl1/tris.md2");
+    SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
     SetAnimation(0);
-    m_think.AddFunc(new CThinkFuncZombie(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
+    // m_think.AddFunc(new CThinkFuncZombie(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
     currenttarget = -1;
 }
 
@@ -43,8 +43,8 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         SetRot(TurnTo(dealer->GetOrigin()));
     }
     SetVel(vec3_t::origin);
-    SetAnimation(GetMesh()->FindAnimation("crdeath"));
-    SetNextAnimation(-1);
+    // SetAnimation(GetMesh()->FindAnimation("crdeath"));
+    // SetNextAnimation(-1);
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
@@ -123,13 +123,13 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
         vec3_t targetvel = dir*-16.0f;
         targetvel.y = zombie->GetVel().y; // preserve gravity
         zombie->SetVel(targetvel);
-        zombie->SetAnimation(zombie->GetMesh()->FindAnimation("run"));
+        // zombie->SetAnimation(zombie->GetMesh()->FindAnimation("run"));
     }
     else
     {
         zombie->SetVel(vec3_t::origin);
         zombie->SetAnimation(0);
-        zombie->SetAnimation(zombie->GetMesh()->FindAnimation("attack"));
+        // zombie->SetAnimation(zombie->GetMesh()->FindAnimation("attack"));
     }
 
     return false;

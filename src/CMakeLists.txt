@@ -58,14 +58,14 @@ set(lynx3d_SOURCES BSPLevel.cpp Client.cpp ClientHUD.cpp ClientInfo.cpp
     ParticleSystem.cpp ParticleSystemBlood.cpp ParticleSystemExplosion.cpp
     ParticleSystemDust.cpp Renderer.cpp ResourceManager.cpp Server.cpp
     Stream.cpp Sound.cpp Think.cpp World.cpp WorldClient.cpp lynx.cpp
-    lynxsys.cpp main.cpp)
+    ModelMD5.cpp lynxsys.cpp main.cpp)
 
 set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameLogic.cpp
     GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp GameZombie.cpp ModelMD2.cpp
     GameObjRocket.cpp NetMsg.cpp Obj.cpp ParticleSystem.cpp
     ParticleSystemBlood.cpp ParticleSystemDust.cpp ParticleSystemExplosion.cpp
     ResourceManager.cpp Server.cpp Sound.cpp Stream.cpp Think.cpp World.cpp
-    lynx.cpp lynxsys.cpp mainsv.cpp)
+    ModelMD5.cpp lynx.cpp lynxsys.cpp mainsv.cpp)
 
 add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})
 add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})

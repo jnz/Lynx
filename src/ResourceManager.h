@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 class CResourceManager;
-#include "ModelMD2.h"
+#include "ModelMD5.h"
 #include "Sound.h"
 
 class CWorld;
@@ -17,7 +17,7 @@ public:
     unsigned int GetTexture(std::string texname, bool noerrormsg=false);
     void UnloadAllTextures();
 
-    CModelMD2* GetModel(std::string mdlname);
+    CModelMD5* GetModel(std::string mdlname);
     void UnloadAllModels();
 
     CSound* GetSound(std::string sndname);
@@ -26,11 +26,10 @@ public:
     bool IsServer();
 
 private:
-    //unsigned int LoadTGA(std::string path);
     unsigned int LoadTexture(std::string path, bool noerrormsg=false);
 
     std::map<std::string, unsigned int> m_texmap;
-    std::map<std::string, CModelMD2*> m_modelmap;
+    std::map<std::string, CModelMD5*> m_modelmap;
     std::map<std::string, CSound*> m_soundmap;
 
     CWorld* m_world;

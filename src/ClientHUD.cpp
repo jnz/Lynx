@@ -41,16 +41,16 @@ void CClientHUD::Serialize(const bool write, CStream* stream, CResourceManager* 
 void CClientHUD::UpdateModel(CResourceManager* resman)
 {
     assert(resman);
-    CModelMD2* resmodel = resman->GetModel(CLynx::GetBaseDirModel() + weapon);
+    CModelMD5* resmodel = resman->GetModel(CLynx::GetBaseDirModel() + weapon);
     if(resmodel != m_model)
     {
         m_model = resmodel;
-        m_model->SetAnimation(&m_model_state, animation);
-        m_model->SetNextAnimation(&m_model_state, animation);
+        // m_model->SetAnimation(&m_model_state, animation);
+        // m_model->SetNextAnimation(&m_model_state, animation);
     }
 }
 
-void CClientHUD::GetModel(CModelMD2** model, md2_state_t** state)
+void CClientHUD::GetModel(CModelMD5** model, md5_state_t** state)
 {
     if(model)
         *model = m_model;

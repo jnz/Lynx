@@ -8,8 +8,6 @@
 #include <memory>
 #include "Renderer.h"
 
-#define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
-
 #define BSP_EPSILON         (0.003125f)
 
 #ifdef _DEBUG

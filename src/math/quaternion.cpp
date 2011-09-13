@@ -159,6 +159,17 @@ bool quaternion_t::IsNormalized() const
     return (fabs(x*x + y*y* + z*z + w*w - 1.0f) < lynxmath::EPSILON);
 }
 
+// compute w from x, y, z, assuming a normal quaternion
+void quaternion_t::ComputeW()
+{
+    const float t = 1.0f - (x*x) - (y*y) - (z*z);
+
+    if (t < 0.0f)
+        w = 0.0f;
+    else
+        w = -sqrt(t);
+}
+
 quaternion_t quaternion_t::operator *(const quaternion_t &q) const
 {
     const float rw = (w * q.w) - (x * q.x) - (y * q.y) - (z * q.z);
@@ -201,8 +212,17 @@ float quaternion_t::ScalarMultiply(const quaternion_t &q1, const quaternion_t &q
 
 void quaternion_t::Vec3Multiply(const vec3_t& vin, vec3_t* vout) const
 {
-    quaternion_t result = *this * quaternion_t(vin.x, vin.y, vin.z, 0) * Inverse();
-    *vout = vec3_t(result.x, result.y, result.z);
+    quaternion_t inv(-x, -y, -z, w);
+    inv.Normalize();
+
+    quaternion_t tmp((this->w * vin.x) + (this->y * vin.z) - (this->z * vin.y),
+                     (this->w * vin.y) + (this->z * vin.x) - (this->x * vin.z),
+                     (this->w * vin.z) + (this->x * vin.y) - (this->y * vin.x),
+                    -(this->x * vin.x) - (this->y * vin.y) - (this->z * vin.z));
+
+    vout->x = (tmp.x * inv.w) + (tmp.w * inv.x) + (tmp.y * inv.z) - (tmp.z * inv.y);
+    vout->y = (tmp.y * inv.w) + (tmp.w * inv.y) + (tmp.z * inv.x) - (tmp.x * inv.z);
+    vout->z = (tmp.z * inv.w) + (tmp.w * inv.z) + (tmp.x * inv.y) - (tmp.y * inv.x);
 }
 
 void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t)

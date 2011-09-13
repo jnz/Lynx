@@ -10,6 +10,14 @@
 #define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 7*sizeof(bspbin_direntry_t))
 #define MAX_TRACE_DIST      			99999.999f
 
+// what data type should we use for the
+// VBO index buffer? for less than 0xffff vertices
+// uint16_t is sufficient
+typedef uint32_t vertexindex_t; // if you change this, change MY_GL_VERTEXINDEX_TYPE too
+#define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_INT
+// #define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_SHORT // for uint16_t vertexindex_t
+#define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
+
 #pragma pack(push, 1) // manual padding
 
 struct bspbin_header_t
@@ -39,9 +47,9 @@ struct bspbin_texture_t
 struct bspbin_node_t
 {
     uint32_t plane;
-    int32_t children[2]; // don't change this to uint32_t, the negative sign is essential!
-    float radius;
-    vec3_t sphere_origin;
+    int32_t  children[2]; // don't change this to uint32_t, the negative sign is essential!
+    float    radius;
+    vec3_t   sphere_origin;
 };
 
 struct bspbin_triangle_t

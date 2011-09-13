@@ -67,15 +67,15 @@ void CResourceManager::UnloadAllTextures()
     m_texmap.clear();
 }
 
-CModelMD2* CResourceManager::GetModel(std::string mdlname)
+CModelMD5* CResourceManager::GetModel(std::string mdlname)
 {
-    std::map<std::string, CModelMD2*>::iterator iter;
-    CModelMD2* model;
+    std::map<std::string, CModelMD5*>::iterator iter;
+    CModelMD5* model;
 
     iter = m_modelmap.find(mdlname);
     if(iter == m_modelmap.end())
     {
-        model = new CModelMD2();
+        model = new CModelMD5();
         if(model->Load((char*)mdlname.c_str(), this, !IsServer()))
         {
             m_modelmap[mdlname] = model;
@@ -97,7 +97,7 @@ CModelMD2* CResourceManager::GetModel(std::string mdlname)
 
 void CResourceManager::UnloadAllModels()
 {
-    std::map<std::string, CModelMD2*>::iterator iter;
+    std::map<std::string, CModelMD5*>::iterator iter;
 
     for(iter=m_modelmap.begin();iter!=m_modelmap.end();iter++)
         delete (*iter).second;
