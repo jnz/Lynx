@@ -6,7 +6,6 @@ CClientHUD::CClientHUD(void)
 {
     animation = 0;
     m_model = NULL;
-    memset(&m_model_state, 0, sizeof(m_model_state));
 }
 
 CClientHUD::~CClientHUD(void)

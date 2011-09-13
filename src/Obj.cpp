@@ -29,7 +29,7 @@ CObj::CObj(CWorld* world)
 {
     assert(world);
     m_id = ++m_idpool;
-    assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als uint16_t übertragen
+    assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als uint16_t Ã¼bertragen
     state.radius = 2*lynxmath::SQRT_2;
     state.eyepos = vec3_t(0,0.5f,0);
     state.animation = 0;
@@ -397,7 +397,13 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
 
     if(state.resource.find(".md5") != std::string::npos)
     {
-        m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
+        CModelMD5* mesh = m_world->GetResourceManager()->GetModel(state.resource);
+        if(mesh != m_mesh && mesh)
+        {
+            m_mesh = mesh;
+            m_mesh->SetAnimation(&m_mesh_state, "idle1");
+        }
+
         // if(state.animation >= 0)
         //     m_mesh->SetAnimation(&m_mesh_state, state.animation);
         // else
