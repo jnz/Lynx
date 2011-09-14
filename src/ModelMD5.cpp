@@ -287,7 +287,7 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
     const float interp = state->time * state->animdata->frameRate;
     int i;
     assert(interp >= 0.0f && interp <= 1.0f);
-    assert(state->skel.size() == num_joints);
+    assert((int)state->skel.size() == num_joints);
 
     for (i = 0; i < num_joints; ++i)
     {

@@ -401,7 +401,7 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
         if(mesh != m_mesh && mesh)
         {
             m_mesh = mesh;
-            m_mesh->SetAnimation(&m_mesh_state, "idle1");
+            m_mesh->SetAnimation(&m_mesh_state, "run");
         }
 
         // if(state.animation >= 0)
