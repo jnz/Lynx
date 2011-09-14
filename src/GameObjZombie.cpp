@@ -128,7 +128,6 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
     else
     {
         zombie->SetVel(vec3_t::origin);
-        zombie->SetAnimation(0);
         zombie->SetAnimation(ANIMATION_ATTACK);
     }
 

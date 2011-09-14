@@ -55,9 +55,9 @@ struct md5_bbox_t
 /* MD5 mesh */
 struct md5_mesh_t
 {
-    md5_vertex_t *vertices;
-    md5_triangle_t *triangles;
-    md5_weight_t *weights;
+    std::vector<md5_vertex_t>   vertices;
+    std::vector<md5_triangle_t> triangles;
+    std::vector<md5_weight_t>   weights;
 
     int num_verts;
     int num_tris;
@@ -117,8 +117,8 @@ private:
     void    DeallocVertexBuffer();
     bool    UploadVertexBuffer(unsigned int vertexcount, unsigned int indexcount) const;
 
-    md5_joint_t* m_baseSkel;
-    md5_mesh_t*  m_meshes;
+    std::vector<md5_joint_t> m_baseSkel;
+    std::vector<md5_mesh_t>  m_meshes;
     int          m_num_joints;
     int          m_num_meshes;
 

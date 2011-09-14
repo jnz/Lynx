@@ -636,6 +636,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     }
     trace->f = MAX_TRACE_DIST;
     TraceSphere(trace, 0);
+    assert(trace->f == 0.0f || trace->f > 0.01f);
 }
 
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const

@@ -34,8 +34,6 @@ struct baseframe_joint_t
 
 CModelMD5::CModelMD5(void)
 {
-    m_baseSkel = NULL;
-    m_meshes = NULL;
     m_num_joints = 0;
     m_num_meshes = 0;
     m_max_verts = 0;
@@ -55,18 +53,8 @@ void CModelMD5::Unload()
 {
     DeallocVertexBuffer();
 
-    if(m_meshes)
-    {
-        assert(m_num_meshes > 0);
-        for(int i=0;i<m_num_meshes;i++)
-        {
-            SAFE_RELEASE_ARRAY(m_meshes[i].vertices);
-            SAFE_RELEASE_ARRAY(m_meshes[i].triangles);
-            SAFE_RELEASE_ARRAY(m_meshes[i].weights);
-        }
-    }
-    SAFE_RELEASE_ARRAY(m_meshes);
-    SAFE_RELEASE_ARRAY(m_baseSkel);
+    m_meshes.clear();
+    m_baseSkel.clear();
 
     m_num_joints = 0;
     m_num_meshes = 0;
@@ -224,7 +212,10 @@ void CModelMD5::Render(const md5_state_t* state)
     /* Draw each mesh of the model */
     for(int i = 0; i < m_num_meshes; ++i)
     {
-        PrepareMesh(&m_meshes[i], state->skel);
+        if(state->animdata)
+            PrepareMesh(&m_meshes[i], state->skel);
+        else
+            PrepareMesh(&m_meshes[i], m_baseSkel);
 
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
@@ -409,10 +400,10 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
         }
         else if(sscanf (buff, " numJoints %d", &m_num_joints) == 1)
         {
-            if(m_num_joints > 0 && m_baseSkel == NULL)
+            if(m_num_joints > 0 && m_baseSkel.size() == 0)
             {
                 /* Allocate memory for base skeleton joints */
-                m_baseSkel = new md5_joint_t[m_num_joints];
+                m_baseSkel.resize(m_num_joints);
             }
             else
             {
@@ -422,10 +413,10 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
         }
         else if(sscanf(buff, " numMeshes %d", &m_num_meshes) == 1)
         {
-            if(m_num_meshes > 0 && m_meshes == NULL)
+            if(m_num_meshes > 0 && m_meshes.size() == 0)
             {
                 /* Allocate memory for meshes */
-                m_meshes = new md5_mesh_t[m_num_meshes];
+                m_meshes.resize(m_num_meshes);
             }
             else
             {
@@ -438,6 +429,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
             /* Read each joint */
             for(i = 0;i < m_num_joints;i++)
             {
+                assert(i < (int)m_baseSkel.size());
                 md5_joint_t *joint = &m_baseSkel[i];
                 vec3_t tmppos;
 
@@ -523,7 +515,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                     if(mesh->num_verts > 0)
                     {
                         /* Allocate memory for vertices */
-                        mesh->vertices = new md5_vertex_t[mesh->num_verts];
+                        mesh->vertices.resize(mesh->num_verts);
                     }
 
                     if(mesh->num_verts > m_max_verts)
@@ -534,7 +526,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                     if(mesh->num_tris > 0)
                     {
                         /* Allocate memory for triangles */
-                        mesh->triangles = new md5_triangle_t[mesh->num_tris];
+                        mesh->triangles.resize(mesh->num_tris);
                     }
 
                     if(mesh->num_tris > m_max_tris)
@@ -545,7 +537,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                     if(mesh->num_weights > 0)
                     {
                         /* Allocate memory for vertex weights */
-                        mesh->weights = new md5_weight_t[mesh->num_weights];
+                        mesh->weights.resize(mesh->num_weights);
                     }
                 }
                 else if(sscanf (buff, " vert %d ( %f %f ) %d %d", &vert_index,
@@ -606,9 +598,9 @@ loaderr:
     return false;
 }
 
-static void BuildFrameSkeleton(const joint_info_t *jointInfos,
-		                       const baseframe_joint_t *baseFrame,
-		                       const float* animFrameData,
+static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
+		                       const std::vector<baseframe_joint_t>& baseFrame,
+		                       const std::vector<float>& animFrameData,
                                std::vector<md5_joint_t>& skelFrame,
 		                       int num_joints)
 {
@@ -735,9 +727,9 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
 {
     FILE* f = NULL;
     char buff[512];
-    joint_info_t *jointInfos = NULL;
-    baseframe_joint_t *baseFrame = NULL;
-    float *animFrameData = NULL;
+    std::vector<joint_info_t> jointInfos;
+    std::vector<baseframe_joint_t> baseFrame;
+    std::vector<float> animFrameData;
     int version;
     int numAnimatedComponents;
     int frame_index;
@@ -793,8 +785,8 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
                 }
 
                 /* Allocate temporary memory for building skeleton frames */
-                jointInfos = new joint_info_t[anim->num_joints];
-                baseFrame = new baseframe_joint_t[anim->num_joints];
+                jointInfos.resize(anim->num_joints);
+                baseFrame.resize(anim->num_joints);
             }
         }
         else if(sscanf (buff, " frameRate %d", &anim->frameRate) == 1)
@@ -806,7 +798,7 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
             if(numAnimatedComponents > 0)
             {
                 /* Allocate memory for animation frame data */
-                animFrameData = new float[numAnimatedComponents];
+                animFrameData.resize(numAnimatedComponents);
             }
         }
         else if(strncmp (buff, "hierarchy {", 11) == 0)
@@ -869,11 +861,6 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
     }
 
     fclose (f);
-
-    /* Free temporary data allocated */
-    SAFE_RELEASE(animFrameData);
-    SAFE_RELEASE(baseFrame);
-    SAFE_RELEASE(jointInfos);
 
     return true;
 }

@@ -370,13 +370,15 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(viewmodel)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
+        glPushMatrix(); // is this necessary?
         glLoadIdentity();
         glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
-        // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
+        //// glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
         viewmodel->Render(viewmodelstate);
         viewmodel->Animate(viewmodelstate, dt);
-     }
+        glPopMatrix();
+    }
     glDisable(GL_BLEND);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen
