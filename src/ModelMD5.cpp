@@ -215,7 +215,7 @@ void CModelMD5::Render(const md5_state_t* state)
         if(state->animdata)
             PrepareMesh(&m_meshes[i], state->skel);
         else
-            PrepareMesh(&m_meshes[i], m_baseSkel);
+            PrepareMesh(&m_meshes[i], m_baseSkel); // for static md5s with no animation
 
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);

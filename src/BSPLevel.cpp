@@ -8,7 +8,7 @@
 #include <memory>
 #include "Renderer.h"
 
-#define BSP_EPSILON         (0.003125f)
+#define BSP_EPSILON         (0.1f)
 
 #ifdef _DEBUG
 #include <crtdbg.h>
