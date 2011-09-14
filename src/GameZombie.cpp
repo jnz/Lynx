@@ -60,14 +60,14 @@ void CGameZombie::Notify(EventNewClientConnected e)
     player = new CGameObjPlayer(GetWorld());
     player->SetOrigin(spawn);
     player->SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
-    player->SetRadius(3.0f);
+    player->SetRadius(2.0f);
     player->SetAnimation(0);
-    player->SetEyePos(vec3_t(0,0.65f,0));
+    player->SetEyePos(vec3_t(0,1.65f,0));
     player->SetClientID(e.client->GetID());
 
     GetWorld()->AddObj(player, true); // set this argument to true, so that we are directly in the next serialize message
     e.client->m_obj = player->GetID(); // Link this object with the client
-    // e.client->hud.weapon = "rocket/rocketlauncher.md5mesh";
+    e.client->hud.weapon = "rocket/rocketlauncher.md5mesh";
 }
 
 void CGameZombie::Notify(EventClientDisconnected e)
@@ -92,11 +92,10 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
         GetWorld()->ObjMove(obj, dt);
         if(obj->IsClient())
         {
-            //if(vec3_t(obj->GetVel().x, 0.0f, obj->GetVel().z).AbsSquared() >
-               //1*lynxmath::EPSILON)
-                //obj->SetNextAnimation(obj->GetAnimationFromName("run"));
-            //else
-                //obj->SetNextAnimation(0);
+            if((obj->GetVel().x*obj->GetVel().x + obj->GetVel().z*obj->GetVel().z) > 0.25f)
+                obj->SetAnimation(ANIMATION_RUN);
+            else
+                obj->SetAnimation(ANIMATION_IDLE);
 
             client = GetServer()->GetClient(obj->GetClientID());
             if(client) // safety check: maybe the object is associated with an invalid client id
@@ -104,7 +103,9 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 ProcessClientCmds((CGameObjPlayer*)obj, client);
                 ClientMouse(obj, client->lat, client->lon);
 
-                // Tatsächliche Client Blickrichtung Berechnen und merken
+                // Calculate real view direction of the player.
+                // This is not the same as the player obj rotation quaternion,
+                // as the player can look up and down
                 const quaternion_t qlat(vec3_t::xAxis, client->lat*lynxmath::DEGTORAD);
                 const quaternion_t qlon(vec3_t::yAxis, client->lon*lynxmath::DEGTORAD);
                 ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);
@@ -123,16 +124,17 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 if(obj2->GetHealth() <= 0) // don't push dead bodies
                     continue;
 
-                // the force will decrease by 1/dist^2
+                // FIXME this code sucks
                 const float force = 75.0f; // not really a force, where f = ma
                 vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
                 float difflen = diff.AbsSquared();
                 if(difflen > 25.0f)
                     continue;
                 difflen = lynxmath::Sqrt(difflen);
-                if(difflen < 0.15f)
-                    difflen = 0.15f;
-                diff = dt*diff*force*1/(difflen*difflen*difflen);
+                if(difflen < 0.75f)
+                    difflen = 0.75f;
+                diff = dt*diff*force*1/(difflen*difflen);
+                diff.y = 0.0f;
                 diff += obj2->GetVel();
                 if(diff.AbsSquared()>25.0f)
                     diff.SetLength(5.0f);

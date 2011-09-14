@@ -16,6 +16,8 @@ void main()
     float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
 
     // gl_FragColor = texture2D(tex, gl_TexCoord[0].st);
-    gl_FragColor = (0.5 + shadow*nDotL*0.5) * texture2D(tex, gl_TexCoord[0].st);
+    vec4 texcolor = texture2D(tex, gl_TexCoord[0].st);
+    gl_FragColor = (0.5 + shadow*nDotL*0.5) * texcolor;
+    gl_FragColor.w = texcolor.w;
 }
 

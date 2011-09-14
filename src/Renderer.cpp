@@ -12,7 +12,7 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define PLANE_NEAR          0.3f
+#define PLANE_NEAR          0.1f
 #define PLANE_FAR           500.0f
 #define RENDERER_FOV        90.0f
 #define SHADOW_MAP_RATIO    1.0f
@@ -321,12 +321,12 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glActiveTexture(GL_TEXTURE0);
     }
+    glEnable(GL_BLEND);
     DrawScene(frustum, world, localctrlid, false);
 
-    glUseProgram(0); // don't use shader from here on FIXME
+    glUseProgram(0); // don't use shader from here on
     // Particle Draw
     glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);
     glDepthMask(false);
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
     {
@@ -363,6 +363,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     //}
 
     // Draw weapon
+    glUseProgram(m_program);
     CModelMD5* viewmodel;
     md5_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
@@ -370,7 +371,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
-        glTranslatef(0.5f, -2.5f, -0.0f); // weapon offset
+        glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
         // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
         viewmodel->Render(viewmodelstate);

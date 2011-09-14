@@ -50,6 +50,7 @@ typedef int16_t animation_t;         // animation id
 #define ANIMATION_IDLE2              3
 #define ANIMATION_RUN                4
 #define ANIMATION_ATTACK             5
+#define ANIMATION_FIRE               6
 
 union intfloat_u
 {

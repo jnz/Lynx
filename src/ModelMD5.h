@@ -83,11 +83,14 @@ struct md5_state_t
 {
     int curr_frame;
     int next_frame;
-    animation_t animation;
-    md5_anim_t* animdata;
+    animation_t animation; // animation id
+    md5_anim_t* animdata; // md5 animation data
     float time; // from 0.0 s to num_frames/framerate
 
+    // skel holds the data of the interpolated
+    // skeleton between two frames
     std::vector<md5_joint_t> skel;
+
 };
 
 class CModelMD5
@@ -103,12 +106,12 @@ public:
     void    Animate(md5_state_t* state, const float dt) const;
     void    SetAnimation(md5_state_t* state, const animation_t animation);
 
-    float   GetSphere() const { return 1.0f; }; // FIXME
+    float   GetSphere() const { return 2.0f; }; // FIXME
 
 private:
     bool    ReadAnimation(const animation_t animation, const std::string filepath); // animation = "run", "idle", "walk" etc.
     md5_anim_t* GetAnimation(const animation_t animation, bool createnew); // Get md5_anim_t associated with animation string or create a new one
-    void    RenderSkeleton(const md5_joint_t* skel) const;
+    void    RenderSkeleton(const std::vector<md5_joint_t>& skel) const;
     void    PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton);
     bool    AllocVertexBuffer();
     void    DeallocVertexBuffer();
@@ -119,12 +122,12 @@ private:
     int          m_num_joints;
     int          m_num_meshes;
 
-    // data for vertex buffer objects
     int          m_max_verts;
     int          m_max_tris;
-    unsigned int m_vbo;
-    unsigned int m_vboindex;
 
+    // data for vertex buffer objects
+    unsigned int      m_vbo;
+    unsigned int      m_vboindex;
     bspbin_vertex_t*  m_vertex_buffer;
     vertexindex_t*    m_vertex_index_buffer;
 

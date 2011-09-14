@@ -12,7 +12,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MD5_SCALE           (0.05f)
+#define MD5_SCALE           (0.065f)
+#define MD5_RESET_BASE_POSITION // keep the model base position at 0,0,0 during the animation
 
 /* Animation Joint info */
 struct joint_info_t
@@ -79,21 +80,22 @@ void CModelMD5::Unload()
     m_animations.clear();
 }
 
-void CModelMD5::RenderSkeleton(const md5_joint_t* skel) const
+void CModelMD5::RenderSkeleton(const std::vector<md5_joint_t>& skel) const
 {
     int i;
+    const int num_joints = (int)skel.size();
 
     glPointSize(5.0f);
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
-    for(i=0; i<m_num_joints; i++)
+    for(i=0; i<num_joints; i++)
         glVertex3fv(skel[i].pos.v);
     glEnd ();
     glPointSize(1.0f);
 
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_LINES);
-    for(i=0; i<m_num_joints; i++)
+    for(i=0; i<num_joints; i++)
     {
         if(skel[i].parent != -1)
         {
@@ -219,9 +221,6 @@ void CModelMD5::Render(const md5_state_t* state)
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
-    // glFrontFace(GL_CW);
-    // glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-
     /* Draw each mesh of the model */
     for(int i = 0; i < m_num_meshes; ++i)
     {
@@ -270,10 +269,10 @@ void CModelMD5::Render(const md5_state_t* state)
         glDisableClientState(GL_VERTEX_ARRAY);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // Debug: draw the interpolated md5 joints
+        // RenderSkeleton(state->skel);
     }
-    //RenderSkeleton(m_baseSkel);
-    //glFrontFace(GL_CCW);
-    //glPolygonMode (GL_FRONT, GL_FILL);
 }
 
 void CModelMD5::Animate(md5_state_t* state, const float dt) const
@@ -331,7 +330,6 @@ void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
         return;
     state->skel.resize(state->animdata->num_joints);
     Animate(state, 0.0f);
-    fprintf(stderr, "Anim\n");
 }
 
 void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton)
@@ -499,23 +497,24 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                             j++;
                         }
                     }
+                    assert(j < (int)sizeof(mesh->shader));
                     mesh->shader[j] = NULL;
                     if(loadtexture) // The server needs no texture
                     {
                         // disable error messages for the gettexture function
-                         std::string texpath(CLynx::GetDirectory(path) + CLynx::GetFilename(mesh->shader));
-                         if(texpath.length() > 0)
-                         {
-                             mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpg"), true);
-                             if(mesh->tex == 0) // let's try: jpeg
-                                 mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpeg"), true);
-                             if(mesh->tex == 0) // let's try: tga
-                                 mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "tga"), true);
-                             if(mesh->tex == 0)
-                             {
-                                 fprintf(stderr, "MD5 warning: no texture found for model: %s\n", texpath.c_str());
-                             }
-                         }
+                        std::string texpath(CLynx::GetDirectory(path) + CLynx::GetFilename(mesh->shader));
+                        if(texpath.length() > 0)
+                        {
+                            mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpg"), true);
+                            if(mesh->tex == 0) // let's try: jpeg
+                                mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpeg"), true);
+                            if(mesh->tex == 0) // let's try: tga
+                                mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "tga"), true);
+                            if(mesh->tex == 0)
+                            {
+                                fprintf(stderr, "MD5 warning: no texture found for model: %s\n", texpath.c_str());
+                            }
+                        }
                     }
 
                 }
@@ -585,6 +584,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
             curr_mesh++;
         }
     }
+    fclose(f);
 
     // thanks to m_max_tris and m_max_verts we know
     // how large our vertex buffer has to be
@@ -596,8 +596,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
     ReadAnimation(ANIMATION_IDLE2,  CLynx::GetDirectory(path) + "idle2.md5anim");
     ReadAnimation(ANIMATION_RUN,    CLynx::GetDirectory(path) + "run.md5anim");
     ReadAnimation(ANIMATION_ATTACK, CLynx::GetDirectory(path) + "attack.md5anim");
-
-    fclose (f);
+    ReadAnimation(ANIMATION_FIRE,   CLynx::GetDirectory(path) + "fire.md5anim");
 
     return true;
 
@@ -674,7 +673,11 @@ static void BuildFrameSkeleton(const joint_info_t *jointInfos,
         /* Has parent? */
         if (thisJoint->parent < 0)
         {
+#ifdef MD5_RESET_BASE_POSITION   // prevent model from floating
+            thisJoint->pos = vec3_t::origin;
+#else
             thisJoint->pos = animatedPos;
+#endif
             thisJoint->orient = animatedOrient;
         }
         else

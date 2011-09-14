@@ -27,7 +27,8 @@ static const anim_registry_t g_anim_registry[] =
     {ANIMATION_IDLE1,   "idle1"},
     {ANIMATION_IDLE2,   "idle2"},
     {ANIMATION_RUN,     "run"},
-    {ANIMATION_ATTACK,  "attack"}
+    {ANIMATION_ATTACK,  "attack"},
+    {ANIMATION_FIRE,    "fire"}
 };
 const int g_anim_count = sizeof(g_anim_registry)/sizeof(g_anim_registry[0]);
 
@@ -55,7 +56,8 @@ std::string CResourceManager::GetStringFromAnimation(animation_t animation)
 
 CResourceManager::CResourceManager(CWorld* world)
 {
-    // Keine Aufrufe in CWorld* world hinein (ist hier noch nicht fertig mit dem Konstruktor)
+    // Don't call stuff from CWorld* world from here,
+    // the world is not ready at this stage.
     assert(world);
     m_world = world;
 }
@@ -80,7 +82,6 @@ unsigned int CResourceManager::GetTexture(std::string texname, bool noerrormsg)
         return 0;
     }
 
-    fprintf(stderr, "Texture: %s\n", texname.c_str());
     std::map<std::string, unsigned int>::iterator iter;
     unsigned int texture;
 

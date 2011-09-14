@@ -120,7 +120,7 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
     {
         zombie->GetRot().GetVec3(&dir, NULL, NULL);
 
-        vec3_t targetvel = dir*-16.0f;
+        vec3_t targetvel = dir*-20.0f;
         targetvel.y = zombie->GetVel().y; // preserve gravity
         zombie->SetVel(targetvel);
         zombie->SetAnimation(ANIMATION_RUN);
