@@ -16,12 +16,11 @@
 #define OBJ_STATE_RADIUS         (1 <<  3)
 #define OBJ_STATE_RESOURCE       (1 <<  4)
 #define OBJ_STATE_ANIMATION      (1 <<  5)
-#define OBJ_STATE_NEXTANIMATION  (1 <<  6)
-#define OBJ_STATE_EYEPOS         (1 <<  7)
-#define OBJ_STATE_FLAGS          (1 <<  8)
-#define OBJ_STATE_PARTICLES      (1 <<  9)
+#define OBJ_STATE_EYEPOS         (1 <<  6)
+#define OBJ_STATE_FLAGS          (1 <<  7)
+#define OBJ_STATE_PARTICLES      (1 <<  8)
 
-#define OBJ_STATE_FULLUPDATE     ((1 <<10)-1)
+#define OBJ_STATE_FULLUPDATE     ((1 << 9)-1)
 
 int CObj::m_idpool = 0;
 
@@ -29,18 +28,16 @@ CObj::CObj(CWorld* world)
 {
     assert(world);
     m_id = ++m_idpool;
-    assert(m_id < USHRT_MAX); // Die id wird im Netzwerk als uint16_t übertragen
     state.radius = 2*lynxmath::SQRT_2;
     state.eyepos = vec3_t(0,0.5f,0);
-    state.animation = 0;
-    state.nextanimation = 0;
+    state.animation = ANIMATION_NONE;
     state.flags = 0;
     m_mesh = NULL;
     m_sound = NULL;
     m_world = world;
     UpdateMatrix();
 
-    // Local Attributes
+    // Local attributes
     m_locIsOnGround = false;
 }
 
@@ -101,17 +98,16 @@ void CObj::SetResource(std::string resource)
     }
 }
 
-int16_t CObj::GetAnimation() const
+animation_t CObj::GetAnimation() const
 {
     return state.animation;
 }
 
-void CObj::SetAnimation(int16_t animation)
+void CObj::SetAnimation(animation_t animation)
 {
     if(animation != state.animation)
     {
         state.animation = animation;
-        state.nextanimation = animation;
         UpdateAnimation();
     }
 }
@@ -316,7 +312,6 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         DeltaDiffFloat(&state.radius,           oldstate ? &oldstate->radius : NULL,        OBJ_STATE_RADIUS,       &updateflags, stream);
         DeltaDiffString(&state.resource,        oldstate ? &oldstate->resource : NULL,      OBJ_STATE_RESOURCE,     &updateflags, stream);
         DeltaDiffInt16(&state.animation,        oldstate ? &oldstate->animation : NULL,     OBJ_STATE_ANIMATION,    &updateflags, stream);
-        DeltaDiffInt16(&state.nextanimation,    oldstate ? &oldstate->nextanimation : NULL, OBJ_STATE_NEXTANIMATION,&updateflags, stream);
         DeltaDiffVec3(&state.eyepos,            oldstate ? &oldstate->eyepos : NULL,        OBJ_STATE_EYEPOS,       &updateflags, stream);
         DeltaDiffBytes(&state.flags,            oldstate ? &oldstate->flags : NULL,         OBJ_STATE_FLAGS,        &updateflags, stream, sizeof(state.flags));
         DeltaDiffString(&state.particles,       oldstate ? &oldstate->particles : NULL,     OBJ_STATE_PARTICLES,    &updateflags, stream);
@@ -344,8 +339,6 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             stream->ReadString(&state.resource);
         if(updateflags & OBJ_STATE_ANIMATION)
             stream->ReadInt16(&state.animation);
-        if(updateflags & OBJ_STATE_NEXTANIMATION)
-            stream->ReadInt16(&state.nextanimation);
         if(updateflags & OBJ_STATE_EYEPOS)
             stream->ReadVec3(&state.eyepos);
         if(updateflags & OBJ_STATE_FLAGS)
@@ -354,8 +347,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             stream->ReadString(&state.particles);
 
         m_id = id;
-        if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION ||
-            updateflags & OBJ_STATE_NEXTANIMATION)
+        if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION)
             UpdateAnimation();
         if(updateflags & OBJ_STATE_PARTICLES)
             UpdateParticles();
@@ -368,8 +360,7 @@ void CObj::SetObjState(const obj_state_t* objstate, int id)
 {
     m_id = id;
     bool resourcechange = objstate->resource != state.resource ||
-                          objstate->animation != state.animation ||
-                          objstate->nextanimation != state.nextanimation;
+                          objstate->animation != state.animation;
     bool rotationchange = objstate->rot != state.rot;
     bool particlechange = objstate->particles != state.particles;
 
@@ -397,18 +388,9 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
 
     if(state.resource.find(".md5") != std::string::npos)
     {
-        CModelMD5* mesh = m_world->GetResourceManager()->GetModel(state.resource);
-        if(mesh != m_mesh && mesh)
-        {
-            m_mesh = mesh;
-            m_mesh->SetAnimation(&m_mesh_state, "run");
-        }
-
-        // if(state.animation >= 0)
-        //     m_mesh->SetAnimation(&m_mesh_state, state.animation);
-        // else
-        //     m_mesh->SetAnimation(&m_mesh_state, 0);
-        // m_mesh->SetNextAnimation(&m_mesh_state, state.nextanimation);
+        m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
+        if(m_mesh)
+            m_mesh->SetAnimation(&m_mesh_state, state.animation);
     }
     else if(state.resource.find(".ogg") != std::string::npos)
     {

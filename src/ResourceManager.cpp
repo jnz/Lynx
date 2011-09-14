@@ -13,6 +13,46 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+// This is a registry to map the animation names to unique animation ids
+struct anim_registry_t
+{
+    animation_t id;
+    std::string name;
+};
+
+static const anim_registry_t g_anim_registry[] =
+{
+    {ANIMATION_NONE,    "NONE"},
+    {ANIMATION_IDLE,    "idle"},
+    {ANIMATION_IDLE1,   "idle1"},
+    {ANIMATION_IDLE2,   "idle2"},
+    {ANIMATION_RUN,     "run"},
+    {ANIMATION_ATTACK,  "attack"}
+};
+const int g_anim_count = sizeof(g_anim_registry)/sizeof(g_anim_registry[0]);
+
+animation_t CResourceManager::GetAnimationFromString(std::string animation_name)
+{
+    for(int i=0;i<g_anim_count;i++)
+    {
+        if(g_anim_registry[i].name == animation_name)
+            return g_anim_registry[i].id;
+    }
+    fprintf(stderr, "Animation: %s not found\n", animation_name.c_str());
+    return ANIMATION_NONE;
+}
+
+std::string CResourceManager::GetStringFromAnimation(animation_t animation)
+{
+    for(int i=0;i<g_anim_count;i++)
+    {
+        if(g_anim_registry[i].id == animation)
+            return g_anim_registry[i].name;
+    }
+    fprintf(stderr, "Animation: %i not found\n", animation);
+    return "Not found in g_anim_registry";
+}
+
 CResourceManager::CResourceManager(CWorld* world)
 {
     // Keine Aufrufe in CWorld* world hinein (ist hier noch nicht fertig mit dem Konstruktor)
@@ -40,6 +80,7 @@ unsigned int CResourceManager::GetTexture(std::string texname, bool noerrormsg)
         return 0;
     }
 
+    fprintf(stderr, "Texture: %s\n", texname.c_str());
     std::map<std::string, unsigned int>::iterator iter;
     unsigned int texture;
 

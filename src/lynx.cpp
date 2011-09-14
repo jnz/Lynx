@@ -56,6 +56,17 @@ std::string CLynx::GetDirectory(std::string path)
     return path.substr(0, pos+1);
 }
 
+std::string CLynx::GetFilename(std::string path)
+{
+    size_t pos;
+
+    pos = path.find_last_of("/\\");
+    if(pos == std::string::npos)
+        return path;
+
+    return path.substr(pos+1, std::string::npos);
+}
+
 std::string CLynx::FloatToString(float f, int precision)
 {
    std::ostringstream o;
@@ -77,7 +88,7 @@ std::string CLynx::GetRandNumInStr(const char* str, unsigned int maxnumber)
 {
     char tmpstr[512];
 
-    assert(strlen(str) < sizeof(tmpstr));
+    assert(strlen(str) < sizeof(tmpstr)-10);
     sprintf(tmpstr, str, CLynx::random(1, maxnumber));
     return std::string(tmpstr);
 }

@@ -672,8 +672,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                     minindex = i;
                 }
             }
-            if(!needs_edge_test)
-                continue;
+            //if(!needs_edge_test) // FIXME activate again?
+                //continue;
             if(GetEdgeIntersection(triangleindex,
                                    trace->start,
                                    trace->dir,
@@ -716,8 +716,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     // Prüfen, ob alles vor der Splitplane liegt
     plane_t tmpplane = m_plane[m_node[node].plane];
     tmpplane.m_d -= trace->radius;
-    locstart = tmpplane.Classify(trace->start, 0.01f);
-    locend = tmpplane.Classify(trace->start + trace->dir, 0.01f);
+    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
+    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
     if(locstart > POINT_ON_PLANE && locend > POINT_ON_PLANE)
     {
         TraceSphere(trace, m_node[node].children[0]);
@@ -726,8 +726,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 
     // Prüfen, ob alles hinter der Splitplane liegt
     tmpplane.m_d = m_plane[m_node[node].plane].m_d + trace->radius;
-    locstart = tmpplane.Classify(trace->start, 0.01f);
-    locend = tmpplane.Classify(trace->start + trace->dir, 0.01f);
+    locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
+    locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
     if(locstart < POINT_ON_PLANE && locend < POINT_ON_PLANE)
     {
         TraceSphere(trace, m_node[node].children[1]);

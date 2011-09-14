@@ -43,7 +43,6 @@ CModelMD5::CModelMD5(void)
     m_vboindex = 0;
     m_vertex_buffer = NULL;
     m_vertex_index_buffer = NULL;
-    m_tex = 0;
 }
 
 CModelMD5::~CModelMD5(void)
@@ -72,10 +71,9 @@ void CModelMD5::Unload()
     m_num_meshes = 0;
     m_max_verts = 0;
     m_max_tris = 0;
-    m_tex = 0;
 
     // Delete animations
-    std::map<std::string, md5_anim_t*>::iterator animiter;
+    std::map<animation_t, md5_anim_t*>::iterator animiter;
     for(animiter=m_animations.begin();animiter!=m_animations.end();animiter++)
         delete (*animiter).second;
     m_animations.clear();
@@ -217,16 +215,15 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
 
 void CModelMD5::Render(const md5_state_t* state)
 {
-    int i;
-
+    // we use the opengl coordinate system here and nothing else
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-    //glTranslatef(0.0f, 4.0f, 0.0f);
+
     // glFrontFace(GL_CW);
     // glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
 
     /* Draw each mesh of the model */
-    for(i = 0; i < m_num_meshes; ++i)
+    for(int i = 0; i < m_num_meshes; ++i)
     {
         PrepareMesh(&m_meshes[i], state->skel);
 
@@ -251,7 +248,7 @@ void CModelMD5::Render(const md5_state_t* state)
         //glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texidnormal);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_tex);
+        glBindTexture(GL_TEXTURE_2D, m_meshes[i].tex);
 
         glDrawElements(GL_TRIANGLES,
                        m_meshes[i].num_tris*3,
@@ -281,6 +278,9 @@ void CModelMD5::Render(const md5_state_t* state)
 
 void CModelMD5::Animate(md5_state_t* state, const float dt) const
 {
+    if(state->animdata == NULL)
+        return;
+
     const md5_joint_t* skelA = &(state->animdata->skelFrames[state->curr_frame])[0];
     const md5_joint_t* skelB = &(state->animdata->skelFrames[state->next_frame])[0];
     const int num_joints = state->animdata->num_joints;
@@ -303,10 +303,11 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
         quaternion_t::Slerp(&state->skel[i].orient, skelA[i].orient, skelB[i].orient, interp);
     }
 
+    const float frametime = 1.0f/state->animdata->frameRate;
     state->time += dt;
-    while(state->time >= 1.0f/state->animdata->frameRate)
+    while(state->time >= frametime)
     {
-        state->time = state->time - 1.0f/state->animdata->frameRate;
+        state->time = state->time - frametime;
         state->curr_frame++;
         state->next_frame++;
 
@@ -318,14 +319,14 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
     }
 }
 
-void CModelMD5::SetAnimation(md5_state_t* state, const std::string animation)
+void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
 {
     state->curr_frame = 0;
     state->next_frame = 1;
     state->animation = animation;
     state->animdata = GetAnimation(animation, false);
     state->time = 0.0f;
-    assert(state->animdata);
+    assert((animation != ANIMATION_NONE) ? (state->animdata!=NULL) : 1);
     if(!state->animdata)
         return;
     state->skel.resize(state->animdata->num_joints);
@@ -383,7 +384,6 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
     int version;
     int curr_mesh = 0;
     int i;
-    std::string texpath;
 
     f = fopen(path, "rb");
     if(!f)
@@ -499,6 +499,25 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                             j++;
                         }
                     }
+                    mesh->shader[j] = NULL;
+                    if(loadtexture) // The server needs no texture
+                    {
+                        // disable error messages for the gettexture function
+                         std::string texpath(CLynx::GetDirectory(path) + CLynx::GetFilename(mesh->shader));
+                         if(texpath.length() > 0)
+                         {
+                             mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpg"), true);
+                             if(mesh->tex == 0) // let's try: jpeg
+                                 mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpeg"), true);
+                             if(mesh->tex == 0) // let's try: tga
+                                 mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "tga"), true);
+                             if(mesh->tex == 0)
+                             {
+                                 fprintf(stderr, "MD5 warning: no texture found for model: %s\n", texpath.c_str());
+                             }
+                         }
+                    }
+
                 }
                 else if(sscanf (buff, " numverts %d", &mesh->num_verts) == 1)
                 {
@@ -567,16 +586,16 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
         }
     }
 
-    texpath = CLynx::ChangeFileExtension(path, "jpg");
-    if(loadtexture) // Server muss nicht die Textur laden (oder?)
-    {
-        m_tex = resman->GetTexture((char*)texpath.c_str());
-        AllocVertexBuffer(); // prepare vertex buffer
-    }
+    // thanks to m_max_tris and m_max_verts we know
+    // how large our vertex buffer has to be
+    if(loadtexture)
+        AllocVertexBuffer();
 
-    ReadAnimation("idle1", CLynx::GetDirectory(texpath) + "idle1.md5anim");
-    ReadAnimation("run", CLynx::GetDirectory(texpath) + "run.md5anim");
-    ReadAnimation("attack", CLynx::GetDirectory(texpath) + "attack.md5anim");
+    ReadAnimation(ANIMATION_IDLE,   CLynx::GetDirectory(path) + "idle.md5anim");
+    ReadAnimation(ANIMATION_IDLE1,  CLynx::GetDirectory(path) + "idle1.md5anim");
+    ReadAnimation(ANIMATION_IDLE2,  CLynx::GetDirectory(path) + "idle2.md5anim");
+    ReadAnimation(ANIMATION_RUN,    CLynx::GetDirectory(path) + "run.md5anim");
+    ReadAnimation(ANIMATION_ATTACK, CLynx::GetDirectory(path) + "attack.md5anim");
 
     fclose (f);
 
@@ -676,12 +695,13 @@ static void BuildFrameSkeleton(const joint_info_t *jointInfos,
     }
 }
 
-md5_anim_t* CModelMD5::GetAnimation(const std::string animation, bool createnew)
+md5_anim_t* CModelMD5::GetAnimation(const animation_t animation, bool createnew)
 {
-    std::map<std::string, md5_anim_t*>::iterator iter;
     md5_anim_t* panim;
+    if(animation == ANIMATION_NONE)
+        return NULL;
 
-    iter = m_animations.find(animation);
+    const std::map<animation_t, md5_anim_t*>::const_iterator iter = m_animations.find(animation);
     if(iter == m_animations.end())
     {
         if(createnew)
@@ -691,7 +711,7 @@ md5_anim_t* CModelMD5::GetAnimation(const std::string animation, bool createnew)
         }
         else
         {
-            fprintf(stderr, "%s: %s\n", "Animation not found", animation.c_str());
+            fprintf(stderr, "Animation not found: %s\n", CResourceManager::GetStringFromAnimation(animation).c_str());
             panim = NULL;
         }
     }
@@ -699,7 +719,7 @@ md5_anim_t* CModelMD5::GetAnimation(const std::string animation, bool createnew)
     {
         if(createnew)
         {
-            fprintf(stderr, "%s: %s\n", "Animation already loaded", animation.c_str());
+            fprintf(stderr, "Animation already loaded: %s\n", CResourceManager::GetStringFromAnimation(animation).c_str());
         }
 
         panim = (*iter).second;
@@ -708,7 +728,7 @@ md5_anim_t* CModelMD5::GetAnimation(const std::string animation, bool createnew)
     return panim;
 }
 
-bool CModelMD5::ReadAnimation(const std::string animation, const std::string filename)
+bool CModelMD5::ReadAnimation(const animation_t animation, const std::string filename)
 {
     FILE* f = NULL;
     char buff[512];
@@ -724,7 +744,7 @@ bool CModelMD5::ReadAnimation(const std::string animation, const std::string fil
     f = fopen(filename.c_str(), "rb");
     if(!f)
     {
-        fprintf (stderr, "error: couldn't open \"%s\"!\n", filename.c_str());
+        //fprintf (stderr, "error: couldn't open \"%s\"!\n", filename.c_str());
         return false;
     }
 

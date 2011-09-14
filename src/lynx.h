@@ -11,11 +11,10 @@
 
 #define LYNX_TITLE      "Lynx"
 #define LYNX_MAJOR      0
-#define LYNX_MINOR      1
+#define LYNX_MINOR      2
 
-
-#define SAFE_RELEASE(x) if(x) { delete x; x = NULL; }
-#define SAFE_RELEASE_ARRAY(x) if(x) { delete[] x; x = NULL; }
+#define SAFE_RELEASE(x) if((x)) { delete (x); (x) = NULL; }
+#define SAFE_RELEASE_ARRAY(x) if((x)) { delete[] (x); (x) = NULL; }
 
 class CLynx
 {
@@ -33,15 +32,24 @@ public:
     static std::string GetFileExtension(std::string path);
     static std::string ChangeFileExtension(std::string path, std::string newext);
     static std::string GetDirectory(std::string path);
+    static std::string GetFilename(std::string path);
 
     static std::string FloatToString(float f, int precision);
 
-    static float randf() { return (rand()%20000)*0.0001f-1.0f; } // FIXME srand aufruf sicherstellen
+    static float randf() { return (rand()%20000)*0.0001f-1.0f; } // FIXME make sure srand gets called
     static float randfabs() { return (rand()%10000)*0.0001f; }
 
     static int random(int min, int max);
     static std::string GetRandNumInStr(const char* str, unsigned int maxnumber); // replace %i in string with number from 1 - maxnumber
 };
+
+typedef int16_t animation_t;         // animation id
+#define ANIMATION_NONE               0
+#define ANIMATION_IDLE               1
+#define ANIMATION_IDLE1              2
+#define ANIMATION_IDLE2              3
+#define ANIMATION_RUN                4
+#define ANIMATION_ATTACK             5
 
 union intfloat_u
 {
@@ -51,3 +59,4 @@ union intfloat_u
 };
 
 #pragma warning(disable: 4996)
+

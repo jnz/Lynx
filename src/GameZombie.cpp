@@ -59,15 +59,15 @@ void CGameZombie::Notify(EventNewClientConnected e)
     vec3_t spawn = GetWorld()->GetBSP()->GetRandomSpawnPoint().point;
     player = new CGameObjPlayer(GetWorld());
     player->SetOrigin(spawn);
-    player->SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
+    player->SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
+    player->SetRadius(3.0f);
     player->SetAnimation(0);
     player->SetEyePos(vec3_t(0,0.65f,0));
     player->SetClientID(e.client->GetID());
 
-    GetWorld()->AddObj(player, true); // we set this argument to true, so that we are directly in the next serialize message
-    e.client->m_obj = player->GetID(); // Connect this object with the client
-    e.client->hud.weapon = "weapon/tris.md2";
-    e.client->hud.animation = HUD_WEAPON_IDLE_ANIMATION;
+    GetWorld()->AddObj(player, true); // set this argument to true, so that we are directly in the next serialize message
+    e.client->m_obj = player->GetID(); // Link this object with the client
+    // e.client->hud.weapon = "rocket/rocketlauncher.md5mesh";
 }
 
 void CGameZombie::Notify(EventClientDisconnected e)
@@ -86,7 +86,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
     {
         obj = (CGameObj*)(*iter).second;
 
-        // FIXME only think at fixed intervals, not every frame
+        // FIXME do this only think at fixed intervals, not every frame
         obj->m_think.DoThink(GetWorld()->GetLeveltime());
 
         GetWorld()->ObjMove(obj, dt);
@@ -104,7 +104,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 ProcessClientCmds((CGameObjPlayer*)obj, client);
                 ClientMouse(obj, client->lat, client->lon);
 
-                // Tatsächliche Client Blickrichtung Berechnen und merken
+                // TatsÃ¤chliche Client Blickrichtung Berechnen und merken
                 const quaternion_t qlat(vec3_t::xAxis, client->lat*lynxmath::DEGTORAD);
                 const quaternion_t qlon(vec3_t::yAxis, client->lon*lynxmath::DEGTORAD);
                 ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);

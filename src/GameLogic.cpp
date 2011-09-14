@@ -79,7 +79,7 @@ void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clc
         if(newdir.AbsSquared() > 0.1f)
             newdir.SetLength(28.0f); // Client Geschwindigkeit
         newdir.y += velocity.y;
-        newdir += jump * 85.0f;
+        newdir += jump * 40.0f;
         clientobj->SetVel(newdir);
     }
 }

@@ -220,8 +220,6 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
 {
     uint8_t* keystate = CLynxSys::GetKeyState();
     *forcesend = false;
-
-    // Client fire animation prediction
     bool firedown = false;
 
     if(keystate[SDLK_UP] || keystate[SDLK_w])

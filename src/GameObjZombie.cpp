@@ -8,7 +8,7 @@
 CGameObjZombie::CGameObjZombie(CWorld* world) : CGameObj(world)
 {
     SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
-    SetAnimation(0);
+    SetAnimation(ANIMATION_IDLE);
     m_think.AddFunc(new CThinkFuncZombie(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
     currenttarget = -1;
 }
@@ -123,13 +123,13 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
         vec3_t targetvel = dir*-16.0f;
         targetvel.y = zombie->GetVel().y; // preserve gravity
         zombie->SetVel(targetvel);
-        // zombie->SetAnimation(zombie->GetMesh()->FindAnimation("run"));
+        zombie->SetAnimation(ANIMATION_RUN);
     }
     else
     {
         zombie->SetVel(vec3_t::origin);
         zombie->SetAnimation(0);
-        // zombie->SetAnimation(zombie->GetMesh()->FindAnimation("attack"));
+        zombie->SetAnimation(ANIMATION_ATTACK);
     }
 
     return false;

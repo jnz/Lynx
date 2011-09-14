@@ -6,7 +6,6 @@
 #include "Renderer.h"
 #include "Frustum.h"
 #include <stdio.h>
-#include "ModelMD2.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -16,7 +15,7 @@
 #define PLANE_NEAR          0.3f
 #define PLANE_FAR           500.0f
 #define RENDERER_FOV        90.0f
-#define SHADOW_MAP_RATIO    0.5f
+#define SHADOW_MAP_RATIO    1.0f
 
 // Shadow mapping bias matrix
 static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]
@@ -322,7 +321,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glActiveTexture(GL_TEXTURE0);
     }
-    //glUseProgram(0);
     DrawScene(frustum, world, localctrlid, false);
 
     glUseProgram(0); // don't use shader from here on FIXME
@@ -344,15 +342,15 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
         obj->GetParticleSystem()->Update(dt, ticks);
 
-        // FIXME frustum test for particle system!
+        // FIXME use some kind of frustum test for the particle system!
         glPushMatrix();
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         obj->GetParticleSystem()->Render(side, up, dir);
         glPopMatrix();
     }
     glDepthMask(true);
-    glDisable(GL_BLEND);
     glColor4f(1,1,1,1);
+    glEnable(GL_LIGHTING);
 
     // Draw normals?
     //if(world && world->GetBSP())
@@ -365,23 +363,20 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     //}
 
     // Draw weapon
-    // glDisable(GL_LIGHTING);
-    //
-    // CModelMD2* viewmodel;
-    // md2_state_t* viewmodelstate;
-    // m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
-    // if(viewmodel)
-    // {
-    //     glClear(GL_DEPTH_BUFFER_BIT);
-    //     glLoadIdentity();
-    //     glTranslatef(0,-2.0f,1.25f); // weapon offset
-    //     // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
+    CModelMD5* viewmodel;
+    md5_state_t* viewmodelstate;
+    m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
+    if(viewmodel)
+    {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
+        glTranslatef(0.5f, -2.5f, -0.0f); // weapon offset
+        // glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
-    //     viewmodel->Render(viewmodelstate);
-    //     viewmodel->Animate(viewmodelstate, dt);
-    // }
-    //
-    // glEnable(GL_LIGHTING);
+        viewmodel->Render(viewmodelstate);
+        viewmodel->Animate(viewmodelstate, dt);
+     }
+    glDisable(GL_BLEND);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen
 	// The only problem is: it does not work

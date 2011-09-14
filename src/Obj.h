@@ -82,8 +82,7 @@ struct obj_state_t
 
     float           radius;
     std::string     resource;
-    int16_t         animation;
-    int16_t         nextanimation;
+    animation_t     animation;
     vec3_t          eyepos;
     OBJFLAGTYPE     flags;
     std::string     particles;      // Particlesystem bound to this object. The string looks something like this: "blood|dx=0.1,dy=0.6,dz=23".
@@ -98,7 +97,7 @@ public:
     int         GetID() const { return m_id; }
     virtual int GetType() { return 0; } // poor man's rtti
 
-    bool        Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
+    bool        Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurÃ¼ck, wenn sich objekt durch geÃ¤ndert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
 
     obj_state_t GetObjState() const { return state; }
     void        SetObjState(const obj_state_t* objstate, int id);
@@ -116,8 +115,8 @@ public:
     void        SetRadius(float radius);
     std::string GetResource() const;
     void        SetResource(std::string resource);
-    int16_t     GetAnimation() const;
-    void        SetAnimation(int16_t animation);
+    animation_t GetAnimation() const;
+    void        SetAnimation(animation_t animation);
     vec3_t      GetEyePos() const;
     void        SetEyePos(const vec3_t& eyepos);
     OBJFLAGTYPE GetFlags() const;

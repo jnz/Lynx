@@ -4,7 +4,6 @@
 
 CClientHUD::CClientHUD(void)
 {
-    animation = 0;
     m_model = NULL;
 }
 
@@ -18,20 +17,16 @@ void CClientHUD::Serialize(const bool write, CStream* stream, CResourceManager* 
     if(write)
     {
         stream->WriteString(weapon);
-        stream->WriteBYTE(animation);
     }
     else
     {
         std::string newweapon;
-        uint8_t newanimation;
 
         stream->ReadString(&newweapon);
-        stream->ReadBYTE(&newanimation);
 
-        if(newweapon != weapon || newanimation != animation)
+        if(newweapon != weapon)
         {
             weapon = newweapon;
-            animation = newanimation;
             UpdateModel(resman);
         }
     }
@@ -44,8 +39,7 @@ void CClientHUD::UpdateModel(CResourceManager* resman)
     if(resmodel != m_model)
     {
         m_model = resmodel;
-        // m_model->SetAnimation(&m_model_state, animation);
-        // m_model->SetNextAnimation(&m_model_state, animation);
+        m_model->SetAnimation(&m_model_state, ANIMATION_IDLE);
     }
 }
 

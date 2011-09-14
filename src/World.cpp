@@ -97,7 +97,7 @@ void CWorld::Update(const float dt, const uint32_t ticks)
         return;
 }
 
-#define STOP_EPSILON           (0.1f)
+#define STOP_EPSILON           (0.2f)
 
 void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const float overbounce)
 {
@@ -107,15 +107,15 @@ void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const 
 
     // Determine how far along plane to slide based on incoming direction.
     // Scale by overbounce factor.
-    backoff = in*normal  *  overbounce;
+    backoff = in*normal * overbounce;
 
     for(i=0; i<3; i++)
     {
         change = normal.v[i]*backoff;
         out.v[i] = in.v[i] - change;
-        // If out velocity is too small, zero it out.
-        if(out.v[i] > -STOP_EPSILON && out.v[i] < STOP_EPSILON)
-           out.v[i] = 0;
+
+        if(fabsf(out.v[i]) < STOP_EPSILON) // If out velocity is too small, zero it out.
+           out.v[i] = 0.0f;
     }
 }
 
@@ -150,7 +150,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     plane_t wallplane;
 
     bsp_sphere_trace_t trace;
-    trace.radius = obj->GetRadius();
+    trace.radius = obj->GetRadius()+0.01f;
 
     // quake style movement clipping
     vec3_t planes[MAX_CLIP_PLANES];
@@ -249,13 +249,13 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         }
 
         // Did we go all the way through plane set
-        if (i != numplanes)
+        if(i != numplanes)
         {   // go along this plane
             vel = new_velocity;
         }
         else
         {   // go along the crease
-            if (numplanes != 2)
+            if(numplanes != 2)
             {
                 vel = vec3_t::origin;
                 //fprintf(stderr, "Trapped 4, clip velocity, numplanes == %i\n", numplanes);
@@ -375,7 +375,7 @@ void CWorld::UpdatePendingObjs()
 {
     if(m_removeobj.size() > 0)
     {
-        // Zu löschende Objekte entfernen
+        // Zu lÃ¶schende Objekte entfernen
         std::list<int>::iterator remiter;
         OBJITER iter;
         for(remiter=m_removeobj.begin();remiter!=m_removeobj.end();remiter++)
@@ -390,7 +390,7 @@ void CWorld::UpdatePendingObjs()
 
     if(m_addobj.size() > 0)
     {
-        // Objekte für das Frame hinzufügen
+        // Objekte fÃ¼r das Frame hinzufÃ¼gen
         std::list<CObj*>::iterator additer;
         for(additer=m_addobj.begin();additer!=m_addobj.end();additer++)
         {
@@ -414,7 +414,7 @@ bool CWorld::LoadLevel(const std::string path)
 #define WORLD_STATE_LEVELTIME       (1 <<  1)
 #define WORLD_STATE_LEVEL           (1 <<  2)
 
-#define WORLD_STATE_NO_REAL_CHANGE  (WORLD_STATE_WORLDID|WORLD_STATE_LEVELTIME) // worldid und leveltime ändern sich sowieso immer
+#define WORLD_STATE_NO_REAL_CHANGE  (WORLD_STATE_WORLDID|WORLD_STATE_LEVELTIME) // worldid und leveltime Ã¤ndern sich sowieso immer
 #define WORLD_STATE_FULLUPDATE      ((1 <<  3)-1)
 
 bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstate)

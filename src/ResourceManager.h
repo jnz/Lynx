@@ -25,6 +25,9 @@ public:
 
     bool IsServer();
 
+    static animation_t GetAnimationFromString(std::string animation_name);
+    static std::string GetStringFromAnimation(animation_t animation);
+
 private:
     unsigned int LoadTexture(std::string path, bool noerrormsg=false);
 

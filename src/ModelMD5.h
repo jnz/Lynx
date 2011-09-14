@@ -64,6 +64,7 @@ struct md5_mesh_t
     int num_weights;
 
     char shader[256];
+    int tex;
 };
 
 /* Animation data */
@@ -82,7 +83,7 @@ struct md5_state_t
 {
     int curr_frame;
     int next_frame;
-    std::string animation; // string "run", "walk" etc.
+    animation_t animation;
     md5_anim_t* animdata;
     float time; // from 0.0 s to num_frames/framerate
 
@@ -100,23 +101,19 @@ public:
 
     void    Render(const md5_state_t* state);
     void    Animate(md5_state_t* state, const float dt) const;
-    void    SetAnimation(md5_state_t* state, const std::string animation);
+    void    SetAnimation(md5_state_t* state, const animation_t animation);
 
     float   GetSphere() const { return 1.0f; }; // FIXME
 
-protected:
+private:
+    bool    ReadAnimation(const animation_t animation, const std::string filepath); // animation = "run", "idle", "walk" etc.
+    md5_anim_t* GetAnimation(const animation_t animation, bool createnew); // Get md5_anim_t associated with animation string or create a new one
     void    RenderSkeleton(const md5_joint_t* skel) const;
-
     void    PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton);
-
     bool    AllocVertexBuffer();
     void    DeallocVertexBuffer();
     bool    UploadVertexBuffer(unsigned int vertexcount, unsigned int indexcount) const;
 
-    bool    ReadAnimation(const std::string animation, const std::string filepath); // animation = "run", "idle", "walk" etc.
-    md5_anim_t* GetAnimation(const std::string animation, bool createnew); // Get md5_anim_t associated with animation string or create a new one
-
-private:
     md5_joint_t* m_baseSkel;
     md5_mesh_t*  m_meshes;
     int          m_num_joints;
@@ -131,9 +128,8 @@ private:
     bspbin_vertex_t*  m_vertex_buffer;
     vertexindex_t*    m_vertex_index_buffer;
 
-    int          m_tex; // texture
-
-    // Animations
-    std::map<std::string, md5_anim_t*> m_animations;
+    // Animation map. Link between the lynx animation id and the raw animation
+    // data
+    std::map<animation_t, md5_anim_t*> m_animations;
 };
 
