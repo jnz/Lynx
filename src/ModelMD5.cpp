@@ -502,6 +502,8 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                                 mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "jpeg"), true);
                             if(mesh->tex == 0) // let's try: tga
                                 mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "tga"), true);
+                            if(mesh->tex == 0) // let's try: png
+                                mesh->tex = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "png"), true);
                             if(mesh->tex == 0)
                             {
                                 fprintf(stderr, "MD5 warning: no texture found for model: %s\n", texpath.c_str());
