@@ -28,7 +28,7 @@ CParticleSystemBlood::CParticleSystemBlood(const PROPERTYMAP& properties, CResou
         p.color = vec3_t(1,1,1);
         p.totallifetime = p.lifetime = 0.4f + CLynx::randfabs()*0.4f;
         p.origin = vec3_t::rand(0.4f,0.2f,0.4f) + dir*0.5f;
-        p.size = p.startsize = 0.8f;
+        p.size = p.startsize = 4.8f;
         p.vel = (dir + vec3_t::rand(1.5f, 1.5f, 1.5f)).Normalized() * 10.0f;
 
         m_particles.push_back(p);

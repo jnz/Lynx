@@ -111,7 +111,9 @@ unsigned int
         const char *filename,
         int force_channels,
         unsigned int reuse_texture_ID,
-        unsigned int flags
+        unsigned int flags,
+        unsigned int* pwidth,
+        unsigned int* pheight
     )
 {
     /*  variables   */
@@ -129,11 +131,15 @@ unsigned int
         if( tex_id )
         {
             /*  hey, it worked!!    */
+            *pwidth = 0;
+            *pheight = 0;
             return tex_id;
         }
     }
     /*  try to load the image   */
     img = SOIL_load_image( filename, &width, &height, &channels, force_channels );
+    *pwidth = width;
+    *pheight = height;
     /*  channels holds the original number of channels, which may have been forced  */
     if( (force_channels >= 1) && (force_channels <= 4) )
     {

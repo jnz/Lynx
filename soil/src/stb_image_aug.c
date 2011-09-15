@@ -3184,7 +3184,7 @@ static stbi_uc *psd_load(stbi *s, int *x, int *y, int *comp, int req_comp)
                 for (i = 0; i < pixelCount; i++) *p = channel == 3 ? 255 : 0, p += 4;
             } else {
                 // Read the data.
-                count = 0;
+                // count = 0;
                 for (i = 0; i < pixelCount; i++)
                     *p = get8(s), p += 4;
             }

@@ -485,6 +485,7 @@ void CBSPLevel::RenderNormals() const
         glVertex3fv((nscale*bitangent + m_vertex[vindex].v + bitanoff).v);
     }
     glEnd();
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 bool CBSPLevel::GetTriIntersection(const int triangleindex,

@@ -69,43 +69,79 @@ CResourceManager::~CResourceManager(void)
     UnloadAllSounds();
 }
 
-bool CResourceManager::IsServer()
+bool CResourceManager::IsServer() const
 {
     return !m_world->IsClient();
 }
 
-unsigned int CResourceManager::GetTexture(std::string texname, bool noerrormsg)
+unsigned int CResourceManager::GetTexture(const std::string texname, const bool noerrormsg)
 {
     if(IsServer())
     {
-        assert(0);
+        assert(0); // why do you call this function?
         return 0;
     }
 
-    std::map<std::string, unsigned int>::iterator iter;
-    unsigned int texture;
+    std::map<std::string, texture_t>::const_iterator iter;
+    unsigned int texture; // opengl texture id
 
     iter = m_texmap.find(texname);
     if(iter == m_texmap.end())
     {
-        texture = LoadTexture(texname, noerrormsg);
+        texture_t t;
+        t.path = texname;
+        texture = LoadTexture(texname, &t.width, &t.height, noerrormsg);
         if(texture != 0)
-            m_texmap[texname] = texture;
+        {
+            t.id = texture;
+            m_texmap[texname] = t;
+        }
     }
     else
     {
-        texture = (*iter).second;
+        texture = ((*iter).second).id;
     }
 
     return texture;
 }
 
+bool CResourceManager::GetTextureDimension(const std::string texname,
+                                           unsigned int* pwidth,
+                                           unsigned int* pheight) const
+{
+    assert(pwidth && pheight);
+    if(IsServer())
+    {
+        assert(0); // why do you call this function?
+        return 0;
+    }
+
+    std::map<std::string, texture_t>::const_iterator iter;
+
+    iter = m_texmap.find(texname);
+    if(iter == m_texmap.end())
+    {
+        *pwidth = 0;
+        *pheight = 0;
+        fprintf(stderr,
+                "GetTextureDimension: Texture not loaded: %s\n",
+                texname.c_str());
+        return false;
+    }
+    else
+    {
+        *pwidth = ((*iter).second).width;
+        *pheight = ((*iter).second).height;
+        return true;
+    }
+}
+
 void CResourceManager::UnloadAllTextures()
 {
-    std::map<std::string, unsigned int>::iterator iter;
+    std::map<std::string, texture_t>::iterator iter;
 
     for(iter=m_texmap.begin();iter!=m_texmap.end();iter++)
-        glDeleteTextures(1, &((*iter).second));
+        glDeleteTextures(1, &(((*iter).second).id));
     m_texmap.clear();
 }
 
@@ -187,8 +223,14 @@ void CResourceManager::UnloadAllSounds()
     m_soundmap.clear();
 }
 
-unsigned int CResourceManager::LoadTexture(std::string path, bool noerrormsg)
+unsigned int CResourceManager::LoadTexture(const std::string path,
+                                           unsigned int* pwidth,
+                                           unsigned int* pheight,
+                                           const bool noerrormsg)
 {
+    unsigned int width;
+    unsigned int height;
+
     unsigned int tex = SOIL_load_OGL_texture(
         path.c_str(),
         SOIL_LOAD_AUTO,
@@ -197,8 +239,14 @@ unsigned int CResourceManager::LoadTexture(std::string path, bool noerrormsg)
           SOIL_FLAG_INVERT_Y |
           SOIL_FLAG_NTSC_SAFE_RGB |
           SOIL_FLAG_COMPRESS_TO_DXT |
-          SOIL_FLAG_TEXTURE_REPEATS
+          SOIL_FLAG_TEXTURE_REPEATS,
+        &width,
+        &height
     );
+    if(pwidth)
+        *pwidth = width;
+    if(pheight)
+        *pheight = height;
 
     if(tex == 0 && !noerrormsg)
     {

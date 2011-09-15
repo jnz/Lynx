@@ -168,6 +168,8 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     if(packet)
     {
         int success = enet_peer_send(m_server, 0, packet);
+        if(success != 0)
+            fprintf(stdout, "Failed to send packet\n");
         assert(success == 0);
     }
     m_lastupdate = ticks;

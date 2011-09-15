@@ -41,6 +41,11 @@ CRenderer::CRenderer(CWorldClient* world)
     m_shadowMapUniform = 0;
     m_fboId = 0;
     m_depthTextureId = 0;
+
+    // Crosshair default
+    m_crosshair = 0;
+    m_crosshair_width = 0;
+    m_crosshair_height = 0;
 }
 
 CRenderer::~CRenderer(void)
@@ -155,6 +160,14 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         m_useShadows = false;
     }
     fprintf(stderr, "Shadow mapping active\n");
+
+    std::string pathcross = CLynx::GetBaseDirTexture() + "crosshair.tga";
+    m_crosshair = m_world->GetResourceManager()->GetTexture(pathcross);
+    if(m_crosshair == 0)
+        fprintf(stderr, "No crosshair found: %s\n", pathcross.c_str());
+    m_world->GetResourceManager()->GetTextureDimension(pathcross,
+             &m_crosshair_width, &m_crosshair_height);
+    fprintf(stderr, "Crosshair loaded: %ix%i\n", m_crosshair_width, m_crosshair_height);
 
     return true;
 }
@@ -352,15 +365,15 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glColor4f(1,1,1,1);
     glEnable(GL_LIGHTING);
 
-    // Draw normals?
-    //if(world && world->GetBSP())
-    //{
-    //    glClear(GL_DEPTH_BUFFER_BIT);
-    //    glDisable(GL_LIGHTING);
-    //    world->GetBSP()->RenderNormals();
-    //    glColor4f(1,1,1,1);
-    //    glEnable(GL_LIGHTING);
-    //}
+    // Draw normals
+    if(world && world->GetBSP())
+    {
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+        world->GetBSP()->RenderNormals();
+        glEnable(GL_LIGHTING);
+        glEnable(GL_DEPTH_TEST);
+    }
 
     // Draw weapon
     glUseProgram(m_program);
@@ -380,6 +393,41 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glPopMatrix();
     }
     glDisable(GL_BLEND);
+
+    // Draw HUD display
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glUseProgram(0);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+	glOrtho(0, m_width, m_height, 0, 0, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glColor4f(1,1,1,1);
+    glEnable(GL_BLEND);
+    glBindTexture(GL_TEXTURE_2D, m_crosshair);
+
+    glBegin(GL_QUADS);
+        glTexCoord2d(0,1);
+        glVertex3f((m_width - m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
+        glTexCoord2d(0,0);
+        glVertex3f((m_width - m_crosshair_width)/2, (m_height + m_crosshair_height)/2,0.0f);
+        glTexCoord2d(1,0);
+        glVertex3f((m_width + m_crosshair_width)/2, (m_height + m_crosshair_height)/2,0.0f);
+        glTexCoord2d(1,1);
+        glVertex3f((m_width + m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
+    glEnd();
+
+    glDisable(GL_BLEND);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
 
     // DEBUG only. this piece of code draw the depth buffer onscreen
 	// The only problem is: it does not work

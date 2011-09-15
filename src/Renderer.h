@@ -41,6 +41,10 @@ protected:
     void         PrepareShadowMap(const vec3_t& lightpos,
                                   const quaternion_t& lightrot,
                                   CWorld* world, int localctrlid);
+    // Crosshair
+    unsigned int m_crosshair; // crosshair texture
+    unsigned int m_crosshair_width;
+    unsigned int m_crosshair_height;
 
 private:
     int m_width, m_height;

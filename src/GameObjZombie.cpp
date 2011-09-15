@@ -45,13 +45,14 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
     SetVel(vec3_t::origin);
     // SetAnimation(GetMesh()->FindAnimation("crdeath"));
     // SetNextAnimation(-1);
+    SetAnimation(ANIMATION_ATTACK);
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
-                    GetWorld()->GetLeveltime() + 9000,
+                    GetWorld()->GetLeveltime() + 900,
                     GetWorld(),
                     this));
-    if(CLynx::randfabs() < 0.8f) // 80% change of sound playing
+    if(CLynx::randfabs() < 0.88f) // 88% change of sound playing
     {
         PlaySound(hitpoint, CLynx::GetBaseDirSound() + "monsterdie.ogg", 250);
     }
