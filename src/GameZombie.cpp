@@ -59,7 +59,7 @@ void CGameZombie::Notify(EventNewClientConnected e)
     vec3_t spawn = GetWorld()->GetBSP()->GetRandomSpawnPoint().point;
     player = new CGameObjPlayer(GetWorld());
     player->SetOrigin(spawn);
-    player->SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
+    player->SetResource(CLynx::GetBaseDirModel() + "marine/marine.md5mesh");
     player->SetRadius(2.0f);
     player->SetAnimation(0);
     player->SetEyePos(vec3_t(0,1.65f,0));
