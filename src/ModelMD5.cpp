@@ -171,7 +171,7 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
     glClientActiveTexture(GL_TEXTURE0);
     glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
     glClientActiveTexture(GL_TEXTURE1);
-    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(36));
+    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
     if(glGetError() != GL_NO_ERROR)
     {
@@ -230,12 +230,12 @@ void CModelMD5::Render(const md5_state_t* state)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
 
-        //glClientActiveTexture(GL_TEXTURE1);
-        //glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        //glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
+        glClientActiveTexture(GL_TEXTURE1);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
-        //glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_2D, m_texturebatch[i].texidnormal);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_meshes[i].tex);
@@ -245,12 +245,12 @@ void CModelMD5::Render(const md5_state_t* state)
                        MY_GL_VERTEXINDEX_TYPE,
                        BUFFER_OFFSET(0 * sizeof(vertexindex_t)));
 
-        //glActiveTexture(GL_TEXTURE1);
-        //glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
-        //glClientActiveTexture(GL_TEXTURE1);
-        //glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        //glDisable(GL_TEXTURE_2D);
+        glClientActiveTexture(GL_TEXTURE1);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
 
         glActiveTexture(GL_TEXTURE0);
         glClientActiveTexture(GL_TEXTURE0);
@@ -262,8 +262,49 @@ void CModelMD5::Render(const md5_state_t* state)
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Debug: draw the interpolated md5 joints
-        // RenderSkeleton(state->skel);
+        //RenderSkeleton(state->skel);
     }
+}
+
+void CModelMD5::RenderNormals(const md5_state_t* state)
+{
+    // Assume, this gets called after Render(), so we dont
+    // need to transform twice
+    glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
+    glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+
+    glDisable(GL_LIGHTING);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    for(int i = 0; i < m_num_meshes; ++i)
+    {
+        md5_mesh_t* mesh = &m_meshes[i];
+
+        if(state->animdata)
+            PrepareMesh(mesh, state->skel);
+        else
+            PrepareMesh(mesh, m_baseSkel); // for static md5s with no animation
+
+        for (int j = 0; j < mesh->num_verts; ++j)
+        {
+            const vec3_t& vertex = m_vertex_buffer[j].v;
+            const vec3_t& normal = m_vertex_buffer[j].n;
+
+            glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+            vec3_t to = ((vertex + 0.2f*normal));
+            vec3_t to2 = ((vertex + 0.25f*normal));
+            glBegin(GL_LINES);
+                glVertex3fv(vertex.v);
+                glVertex3fv(to.v);
+            glEnd();
+            glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
+            glBegin(GL_LINES);
+                glVertex3fv(to.v);
+                glVertex3fv(to2.v);
+            glEnd();
+        }
+    }
+    glEnable(GL_LIGHTING);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void CModelMD5::Animate(md5_state_t* state, const float dt) const
@@ -298,14 +339,11 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
     while(state->time >= frametime)
     {
         state->time = state->time - frametime;
-        state->curr_frame++;
-        state->next_frame++;
+        assert(state->time >= 0.0f);
 
-        const int maxFrames = state->animdata->num_frames - 1;
-        if(state->curr_frame > maxFrames)
-            state->curr_frame = 0;
-        if(state->next_frame > maxFrames)
-            state->next_frame = 0;
+        const int maxFrames = state->animdata->num_frames-1; // FIXME: is -1 correct?
+        state->curr_frame = ((state->curr_frame+1) % maxFrames);
+        state->next_frame = ((state->next_frame+1) % maxFrames);
     }
 }
 
@@ -323,9 +361,86 @@ void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
     Animate(state, 0.0f);
 }
 
+// Calculate the vertex position and the
+// normals in the bind pose (baseSkel)
+void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
+{
+    int i, j;
+    vec3_t wv;
+
+    /* Setup vertices */
+    for(i = 0; i < mesh->num_verts; ++i)
+    {
+        vec3_t finalVertex(0.0f, 0.0f, 0.0f);
+
+        /* Calculate final vertex to draw with weights */
+        for(j = 0; j < mesh->vertices[i].count; ++j)
+        {
+            const md5_weight_t *weight = &mesh->weights[mesh->vertices[i].start + j];
+            const md5_joint_t *joint = &m_baseSkel[weight->joint];
+
+            /* Calculate transformed vertex for this weight */
+            wv = joint->orient.Vec3Multiply(weight->pos);
+
+            /* The sum of all weight->bias should be 1.0 */
+            finalVertex += (joint->pos + wv) * weight->bias;
+        }
+
+        mesh->vertices[i].vertex = finalVertex;
+    }
+
+    // Compute the vertex normals in the mesh's bind pose
+    for(i = 0; i < mesh->num_tris; ++i)
+    {
+        md5_vertex_t& v0 = mesh->vertices[mesh->triangles[i].index[0]];
+        md5_vertex_t& v1 = mesh->vertices[mesh->triangles[i].index[1]];
+        md5_vertex_t& v2 = mesh->vertices[mesh->triangles[i].index[2]];
+
+        // cross product
+        const vec3_t normal = (v1.vertex - v0.vertex)^(v2.vertex - v0.vertex);
+
+        v0.normal += normal;
+        v1.normal += normal;
+        v2.normal += normal;
+    }
+
+    // Reset weight normal
+    for(i = 0; i< mesh->num_weights; i++)
+    {
+        md5_weight_t *weight = &mesh->weights[i];
+        weight->normal = vec3_t::origin;
+    }
+
+    // Normalize the normals
+    for(i = 0; i < mesh->num_verts; ++i)
+    {
+        mesh->vertices[i].normal.Normalize();
+
+        // Calculate the normal in joint-local space
+        // so the animated normal can be computed faster later
+        for(j = 0; j < mesh->vertices[i].count; ++j)
+        {
+            md5_weight_t *weight = &mesh->weights[mesh->vertices[i].start + j];
+            const md5_joint_t *joint = &m_baseSkel[weight->joint];
+
+            quaternion_t invq = joint->orient;
+            invq.Invert();
+            weight->normal += invq.Vec3Multiply(mesh->vertices[i].normal);
+        }
+    }
+
+    // Normalize the normal in joint local space
+    for(i = 0; i< mesh->num_weights; i++)
+    {
+        md5_weight_t *weight = &mesh->weights[i];
+        weight->normal.Normalize();
+    }
+}
+
 void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton)
 {
     int i, j, k;
+    vec3_t wv;
 
     /* Setup vertex indices */
     for(k = 0, i = 0; i < mesh->num_tris; ++i)
@@ -341,6 +456,7 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
     for (i = 0; i < mesh->num_verts; ++i)
     {
         vec3_t finalVertex(0.0f, 0.0f, 0.0f);
+        vec3_t finalNormal(0.0f, 0.0f, 1.0f);
 
         /* Calculate final vertex to draw with weights */
         for (j = 0; j < mesh->vertices[i].count; ++j)
@@ -349,16 +465,15 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
             const md5_joint_t *joint = &skeleton[weight->joint];
 
             /* Calculate transformed vertex for this weight */
-            vec3_t wv;
-            joint->orient.Vec3Multiply(weight->pos, &wv);
+            wv = joint->orient.Vec3Multiply(weight->pos);
 
             /* The sum of all weight->bias should be 1.0 */
-            finalVertex.x += (joint->pos.x + wv.x) * weight->bias;
-            finalVertex.y += (joint->pos.y + wv.y) * weight->bias;
-            finalVertex.z += (joint->pos.z + wv.z) * weight->bias;
+            finalVertex += (joint->pos + wv) * weight->bias;
+            finalNormal += joint->orient.Vec3Multiply(weight->normal) * weight->bias;
         }
 
         m_vertex_buffer[i].v = finalVertex;
+        m_vertex_buffer[i].n = finalNormal.Normalized();
         m_vertex_buffer[i].tu = mesh->vertices[i].u;
         m_vertex_buffer[i].tv = mesh->vertices[i].v;
     }
@@ -575,6 +690,8 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                 }
             }
 
+            // Lets prepare the normals in the bind pose
+            PrepareBindPoseNormals(mesh);
             curr_mesh++;
         }
     }
@@ -680,7 +797,7 @@ static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
             vec3_t rpos; /* Rotated position */
 
             /* Add positions */
-            parentJoint->orient.Vec3Multiply(animatedPos, &rpos);
+            rpos = parentJoint->orient.Vec3Multiply(animatedPos);
             thisJoint->pos.v[0] = rpos.v[0] + parentJoint->pos.v[0];
             thisJoint->pos.v[1] = rpos.v[1] + parentJoint->pos.v[1];
             thisJoint->pos.v[2] = rpos.v[2] + parentJoint->pos.v[2];
@@ -794,6 +911,7 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
         else if(sscanf (buff, " frameRate %d", &anim->frameRate) == 1)
         {
             //printf ("md5anim: animation's frame rate is %d\n", anim->frameRate);
+            anim->frameRate = 2;
         }
         else if(sscanf (buff, " numAnimatedComponents %d", &numAnimatedComponents) == 1)
         {

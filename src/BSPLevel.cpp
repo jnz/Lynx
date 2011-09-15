@@ -321,7 +321,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     glClientActiveTexture(GL_TEXTURE0);
     glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
     glClientActiveTexture(GL_TEXTURE1);
-    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(36));
+    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
     if(glGetError() != GL_NO_ERROR)
     {

@@ -36,7 +36,7 @@ public:
 
     static std::string FloatToString(float f, int precision);
 
-    static float randf() { return (rand()%20000)*0.0001f-1.0f; } // FIXME make sure srand gets called
+    static float randf() { return (rand()%20000)*0.0001f-1.0f; }
     static float randfabs() { return (rand()%10000)*0.0001f; }
 
     static int random(int min, int max);

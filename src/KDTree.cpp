@@ -388,7 +388,7 @@ static void kdbin_create_tangents(std::vector<bspbin_vertex_t>& vertices,
                     t.x, t.y, t.z,
                     bitangents[vindex].x, bitangents[vindex].y, bitangents[vindex].z
                    );
-            // FIXME we just just this as tangent vector.
+            // HACKHACKHACK we just just this as tangent vector.
             vertices[vindex].t = vec3_t(1.0f, 0.0f, 0.0f);
             t = vertices[vindex].t;
         }

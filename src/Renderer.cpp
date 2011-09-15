@@ -17,17 +17,14 @@
 #define RENDERER_FOV        90.0f
 #define SHADOW_MAP_RATIO    1.0f
 
+//#define DRAW_NORMALS
+
 // Shadow mapping bias matrix
 static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]
     0.5, 0.0, 0.0, 0.0,
     0.0, 0.5, 0.0, 0.0,
     0.0, 0.0, 0.5, 0.0,
     0.5, 0.5, 0.5, 1.0 };
-
-// Local Render Functions
-static void BSP_RenderTree(const CBSPLevel* tree,
-                           const vec3_t* origin,
-                           const CFrustum* frustum);
 
 CRenderer::CRenderer(CWorldClient* world)
 {
@@ -99,6 +96,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
+    glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -185,9 +183,10 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     CObj* obj;
     OBJITER iter;
 
+    // Draw the level
     if(/*!generateShadowMap && */world->GetBSP()->IsLoaded())
     {
-        BSP_RenderTree(world->GetBSP(), &frustum.pos, &frustum);
+        world->GetBSP()->RenderGL(frustum.pos, frustum);
     }
 
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
@@ -210,7 +209,14 @@ void CRenderer::DrawScene(const CFrustum& frustum,
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
         glMultMatrixf(obj->GetRotMatrix()->pm);
+#ifdef DRAW_NORMALS
+        glPushMatrix(); // stupid md5 rotations
+#endif
         obj->GetMesh()->Render(obj->GetMeshState());
+#ifdef DRAW_NORMALS
+        glPopMatrix();
+        obj->GetMesh()->RenderNormals(obj->GetMeshState());
+#endif
         glPopMatrix();
     }
 }
@@ -251,7 +257,6 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
     glClear(GL_DEPTH_BUFFER_BIT);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glCullFace(GL_FRONT);
-    glUseProgram(0); // no shader
     glPolygonOffset( 0, -1000.0f );
     glEnable(GL_POLYGON_OFFSET_FILL);
     glActiveTexture(GL_TEXTURE0);
@@ -291,28 +296,18 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
                   PLANE_NEAR,
                   PLANE_FAR);
 
-    // float l0lat=-30.0f, l0lon=-90.0f;
-    // vec3_t l0pos(16.14,-13.89,24.96);
-    // quaternion_t ql0lat(vec3_t::xAxis, l0lat*lynxmath::PI/180), ql0lon(vec3_t::yAxis, l0lon*lynxmath::PI/180);
-    // quaternion_t ql0rot(ql0lon*ql0lat);
-    // tmp: render from lightpos:
-    // const vec3_t campos = l0pos;
-    // const quaternion_t camrot = ql0rot;
-
     const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
-    const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
-    glEnable(GL_LIGHTING);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
-    glDisable(GL_LIGHTING);
+    //const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
+    //glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
     if(m_useShadows)
     {
-        //PrepareShadowMap(l0pos, ql0rot, world, localctrlid);
+        glUseProgram(0); // draw shadowmap with fixed function pipeline
         PrepareShadowMap(lightpos0,
                          camrot,
                          world,
                          localctrlid); // the player is the light
     }
-
+    glUseProgram(m_program); // activate shader
 
     stat_obj_hidden = 0;
     stat_obj_visible = 0;
@@ -323,7 +318,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(m_program);
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(m_tex, 0);
     glUniform1i(m_normalMap, 1);
@@ -334,10 +328,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glActiveTexture(GL_TEXTURE0);
     }
-    glEnable(GL_BLEND);
     DrawScene(frustum, world, localctrlid, false);
 
-    glUseProgram(0); // don't use shader from here on
+    glUseProgram(0); // don't use shader for particles
     // Particle Draw
     glDisable(GL_LIGHTING);
     glDepthMask(false);
@@ -366,6 +359,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glEnable(GL_LIGHTING);
 
     // Draw normals
+#ifdef DRAW_NORMALS
     if(world && world->GetBSP())
     {
         glDisable(GL_DEPTH_TEST);
@@ -374,6 +368,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
     }
+#endif
 
     // Draw weapon
     glUseProgram(m_program);
@@ -383,7 +378,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(viewmodel)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
-        glPushMatrix(); // is this necessary?
+        glPushMatrix(); // why is this necessary, hidden bug?
         glLoadIdentity();
         glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
         //// glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
@@ -392,7 +387,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         viewmodel->Animate(viewmodelstate, dt);
         glPopMatrix();
     }
-    glDisable(GL_BLEND);
 
     // Draw HUD display
     glDisable(GL_DEPTH_TEST);
@@ -406,7 +400,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glPushMatrix();
     glLoadIdentity();
     glColor4f(1,1,1,1);
-    glEnable(GL_BLEND);
     glBindTexture(GL_TEXTURE_2D, m_crosshair);
 
     glBegin(GL_QUADS);
@@ -420,7 +413,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glVertex3f((m_width + m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
     glEnd();
 
-    glDisable(GL_BLEND);
     glBindTexture(GL_TEXTURE_2D, 0);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -428,33 +420,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glPopMatrix();
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
-
-    // DEBUG only. this piece of code draw the depth buffer onscreen
-	// The only problem is: it does not work
-	// glActiveTexture(GL_TEXTURE7);
-	// glBindTexture(GL_TEXTURE_2D, 0);
-	// glActiveTexture(GL_TEXTURE0);
-    // glUseProgram(0);
-	// glClear(GL_DEPTH_BUFFER_BIT);
-	// glDisable(GL_LIGHTING);
-    // glMatrixMode(GL_PROJECTION);
-    // glLoadIdentity();
-    // glOrtho(-m_width/2,m_width/2,-m_height/2,m_height/2,1,20);
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
-    // glColor4f(1,1,1,1);
-    // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
-    // glEnable(GL_TEXTURE_2D);
-    // glTranslated(0,0,-1);
-    // glBegin(GL_QUADS);
-    // glTexCoord2d(0,0);glVertex3f(0,0,0);
-    // glTexCoord2d(1,0);glVertex3f(m_width/2,0,0);
-    // glTexCoord2d(1,1);glVertex3f(m_width/2,m_height/2,0);
-    // glTexCoord2d(0,1);glVertex3f(0,m_height/2,0);
-    // glEnd();
-	// glEnable(GL_LIGHTING);
-    // UpdatePerspective();
 
     SDL_GL_SwapBuffers();
 }
@@ -651,14 +616,7 @@ bool CRenderer::CreateShadowFBO()
     return true;
 }
 
-// FIXME what is this function good for? Why not call RenderGL directly
-void BSP_RenderTree(const CBSPLevel* tree, const vec3_t* origin, const CFrustum* frustum)
-{
-    if(!tree)
-        return;
-
-    tree->RenderGL(*origin, *frustum);
-}
+// Graveyard begins here
 
 #if 0
 void RenderCube() // this is handy sometimes
@@ -742,3 +700,30 @@ void DrawBBox(const vec3_t& min, const vec3_t& max)
 /*
     glGetFloatv(GL_MODELVIEW_MATRIX, &m.m[0][0]);
  */
+    // DEBUG only. this piece of code draw the depth buffer onscreen
+	// The only problem is: it does not work
+	// glActiveTexture(GL_TEXTURE7);
+	// glBindTexture(GL_TEXTURE_2D, 0);
+	// glActiveTexture(GL_TEXTURE0);
+    // glUseProgram(0);
+	// glClear(GL_DEPTH_BUFFER_BIT);
+	// glDisable(GL_LIGHTING);
+    // glMatrixMode(GL_PROJECTION);
+    // glLoadIdentity();
+    // glOrtho(-m_width/2,m_width/2,-m_height/2,m_height/2,1,20);
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
+    // glColor4f(1,1,1,1);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+    // glEnable(GL_TEXTURE_2D);
+    // glTranslated(0,0,-1);
+    // glBegin(GL_QUADS);
+    // glTexCoord2d(0,0);glVertex3f(0,0,0);
+    // glTexCoord2d(1,0);glVertex3f(m_width/2,0,0);
+    // glTexCoord2d(1,1);glVertex3f(m_width/2,m_height/2,0);
+    // glTexCoord2d(0,1);glVertex3f(0,m_height/2,0);
+    // glEnd();
+	// glEnable(GL_LIGHTING);
+    // UpdatePerspective();
+

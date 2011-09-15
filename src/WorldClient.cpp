@@ -13,7 +13,7 @@ CWorldClient::CWorldClient(void) : m_ghostobj(this)
     m_localobj = &m_ghostobj;
     m_ghostobj.SetOrigin(vec3_t(0,1000.0f,0));
 
-    m_interpworld.m_pbsp = &m_bsptree; // FIXME ist das sicher bei einem level change?
+    m_interpworld.m_pbsp = &m_bsptree; // FIXME is this save at a level change?
     m_interpworld.m_presman = &m_resman;
     m_interpworld.state1.localtime = 0;
     m_interpworld.state2.localtime = 0;

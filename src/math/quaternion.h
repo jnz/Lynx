@@ -50,7 +50,7 @@ struct quaternion_t
     quaternion_t operator *(const quaternion_t& q) const;
     quaternion_t operator =(const quaternion_t& q);
 
-    void Vec3Multiply(const vec3_t& vin, vec3_t* vout) const;
+    vec3_t Vec3Multiply(const vec3_t& vin) const;
 
     void ComputeW(); // compute w from x, y, z, assuming a normal quaternion
 

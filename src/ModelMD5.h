@@ -25,9 +25,13 @@ struct md5_joint_t
 struct md5_vertex_t
 {
     float u, v;
-
-    int start; /* start weight */
+    int start; /* start weight index */
     int count; /* weight count */
+
+    // Store the vertex and the normal in the bind pose.
+    // This is used for a simple normal calculation.
+    vec3_t vertex; // in bind pose
+    vec3_t normal; // in bind pose
 };
 
 /* Triangle */
@@ -43,6 +47,7 @@ struct md5_weight_t
     float bias;
 
     vec3_t pos;
+    vec3_t normal;
 };
 
 /* Bounding box */
@@ -103,6 +108,7 @@ public:
     void    Unload();
 
     void    Render(const md5_state_t* state);
+    void    RenderNormals(const md5_state_t* state);
     void    Animate(md5_state_t* state, const float dt) const;
     void    SetAnimation(md5_state_t* state, const animation_t animation);
 
@@ -112,6 +118,7 @@ private:
     bool    ReadAnimation(const animation_t animation, const std::string filepath); // animation = "run", "idle", "walk" etc.
     md5_anim_t* GetAnimation(const animation_t animation, bool createnew); // Get md5_anim_t associated with animation string or create a new one
     void    RenderSkeleton(const std::vector<md5_joint_t>& skel) const;
+    void    PrepareBindPoseNormals(md5_mesh_t *mesh);
     void    PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton);
     bool    AllocVertexBuffer();
     void    DeallocVertexBuffer();

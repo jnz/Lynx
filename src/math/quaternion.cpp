@@ -210,19 +210,19 @@ float quaternion_t::ScalarMultiply(const quaternion_t &q1, const quaternion_t &q
     return q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
 }
 
-void quaternion_t::Vec3Multiply(const vec3_t& vin, vec3_t* vout) const
+vec3_t quaternion_t::Vec3Multiply(const vec3_t& vin) const
 {
     quaternion_t inv(-x, -y, -z, w);
-    inv.Normalize();
+    //inv.Normalize();
 
     quaternion_t tmp((this->w * vin.x) + (this->y * vin.z) - (this->z * vin.y),
                      (this->w * vin.y) + (this->z * vin.x) - (this->x * vin.z),
                      (this->w * vin.z) + (this->x * vin.y) - (this->y * vin.x),
                     -(this->x * vin.x) - (this->y * vin.y) - (this->z * vin.z));
 
-    vout->x = (tmp.x * inv.w) + (tmp.w * inv.x) + (tmp.y * inv.z) - (tmp.z * inv.y);
-    vout->y = (tmp.y * inv.w) + (tmp.w * inv.y) + (tmp.z * inv.x) - (tmp.x * inv.z);
-    vout->z = (tmp.z * inv.w) + (tmp.w * inv.z) + (tmp.x * inv.y) - (tmp.y * inv.x);
+    return vec3_t( (tmp.x * inv.w) + (tmp.w * inv.x) + (tmp.y * inv.z) - (tmp.z * inv.y),
+                   (tmp.y * inv.w) + (tmp.w * inv.y) + (tmp.z * inv.x) - (tmp.x * inv.z),
+                   (tmp.z * inv.w) + (tmp.w * inv.z) + (tmp.x * inv.y) - (tmp.y * inv.x) );
 }
 
 void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t)

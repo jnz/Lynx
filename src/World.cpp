@@ -509,7 +509,6 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
             changes++;
 
         stream->ReadDWORD(&objcount);
-        assert(objcount < USHRT_MAX);
         // objread contains all read objects. every object that is not here, has
         // to be deleted
         std::map<int,int> objread;

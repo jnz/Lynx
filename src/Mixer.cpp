@@ -56,7 +56,6 @@ bool CMixer::Init()
 
 void CMixer::Shutdown()
 {
-    //Mix_HaltChannel(-1); // FIXME gehört das hier hin?
     Mix_CloseAudio();
 
 #ifndef __linux
