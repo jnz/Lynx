@@ -328,6 +328,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glActiveTexture(GL_TEXTURE0);
     }
+#ifdef DRAW_NORMALS
+    glUseProgram(0); // don't use shader for particles
+#endif
     DrawScene(frustum, world, localctrlid, false);
 
     glUseProgram(0); // don't use shader for particles

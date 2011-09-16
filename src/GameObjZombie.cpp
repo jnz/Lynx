@@ -8,9 +8,8 @@
 CGameObjZombie::CGameObjZombie(CWorld* world) : CGameObj(world)
 {
     SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
-    //SetAnimation(ANIMATION_IDLE);
-    SetAnimation(ANIMATION_RUN);
-    //m_think.AddFunc(new CThinkFuncZombie(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
+    SetAnimation(ANIMATION_IDLE);
+    m_think.AddFunc(new CThinkFuncZombie(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
     currenttarget = -1;
 }
 

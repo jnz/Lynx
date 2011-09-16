@@ -32,6 +32,9 @@ struct md5_vertex_t
     // This is used for a simple normal calculation.
     vec3_t vertex; // in bind pose
     vec3_t normal; // in bind pose
+    vec3_t tangent; // in bind pose
+    vec3_t bitangent; // in bind pose
+    float w; // bitangent w component -1.0f or 1.0f
 };
 
 /* Triangle */
@@ -48,6 +51,8 @@ struct md5_weight_t
 
     vec3_t pos;
     vec3_t normal;
+    vec3_t tangent;
+    vec3_t bitangent;
 };
 
 /* Bounding box */
@@ -70,6 +75,7 @@ struct md5_mesh_t
 
     char shader[256];
     int tex;
+    int texnormal;
 };
 
 /* Animation data */

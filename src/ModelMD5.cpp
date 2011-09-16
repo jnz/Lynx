@@ -235,7 +235,7 @@ void CModelMD5::Render(const md5_state_t* state)
         glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D, m_meshes[i].texnormal);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_meshes[i].tex);
@@ -288,6 +288,9 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
         {
             const vec3_t& vertex = m_vertex_buffer[j].v;
             const vec3_t& normal = m_vertex_buffer[j].n;
+            const vec3_t& tangent = m_vertex_buffer[j].t;
+            const float w = m_vertex_buffer[j].w;
+            const vec3_t bitangent = w * (normal ^ tangent);
 
             glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
             vec3_t to = ((vertex + 0.2f*normal));
@@ -296,7 +299,33 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
                 glVertex3fv(vertex.v);
                 glVertex3fv(to.v);
             glEnd();
+            glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+            glBegin(GL_LINES);
+                glVertex3fv(to.v);
+                glVertex3fv(to2.v);
+            glEnd();
+
             glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
+            to = ((vertex + 0.2f*tangent));
+            to2 = ((vertex + 0.25f*tangent));
+            glBegin(GL_LINES);
+                glVertex3fv(vertex.v);
+                glVertex3fv(to.v);
+            glEnd();
+            glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+            glBegin(GL_LINES);
+                glVertex3fv(to.v);
+                glVertex3fv(to2.v);
+            glEnd();
+
+            glColor4f(1.0f, 0.0f, 1.0f, 1.0f);
+            to = ((vertex + 0.2f*bitangent));
+            to2 = ((vertex + 0.25f*bitangent));
+            glBegin(GL_LINES);
+                glVertex3fv(vertex.v);
+                glVertex3fv(to.v);
+            glEnd();
+            glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
             glBegin(GL_LINES);
                 glVertex3fv(to.v);
                 glVertex3fv(to2.v);
@@ -361,6 +390,43 @@ void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
     Animate(state, 0.0f);
 }
 
+static void md5_calculate_tangent(const md5_vertex_t& v0,
+                                  const md5_vertex_t& v1,
+                                  const md5_vertex_t& v2,
+                                  vec3_t& facenormal,
+                                  vec3_t& tangent,
+                                  vec3_t& bitangent)
+{
+    const vec3_t& p0 = v0.vertex;
+    const vec3_t& p1 = v1.vertex;
+    const vec3_t& p2 = v2.vertex;
+    const float s1 = v1.u - v0.u;
+    const float s2 = v2.u - v0.u;
+    const float t1 = v1.v - v0.v;
+    const float t2 = v2.v - v0.v;
+    const float det = s1*t2 - s2*t1;
+    const vec3_t Q1(p1 - p0);
+    const vec3_t Q2(p2 - p0);
+    if(fabsf(det) <= lynxmath::EPSILON)
+    {
+        //fprintf(stderr, "Warning: Unable to compute tangent + bitangent\n");
+        tangent = vec3_t(1.0f, 0.0f, 0.0f);
+        bitangent = vec3_t(0.0f, 1.0f, 0.0f);
+        return;
+    }
+    const float idet = 1 / det;
+    tangent = vec3_t(idet*(t2*Q1.x - t1*Q2.x),
+                     idet*(t2*Q1.y - t1*Q2.y),
+                     idet*(t2*Q1.z - t1*Q2.z));
+    bitangent = vec3_t(idet*(-s2*Q1.x + s1*Q2.x),
+                       idet*(-s2*Q1.y + s1*Q2.y),
+                       idet*(-s2*Q1.z + s1*Q2.z));
+    facenormal = (p1-p0)^(p2-p0);
+
+    assert(tangent.Abs()>0.01f);
+    assert(bitangent.Abs()>0.01f);
+}
+
 // Calculate the vertex position and the
 // normals in the bind pose (baseSkel)
 void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
@@ -390,6 +456,7 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
     }
 
     // Compute the vertex normals in the mesh's bind pose
+    vec3_t normal, tangent, bitangent;
     for(i = 0; i < mesh->num_tris; ++i)
     {
         md5_vertex_t& v0 = mesh->vertices[mesh->triangles[i].index[0]];
@@ -397,11 +464,17 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
         md5_vertex_t& v2 = mesh->vertices[mesh->triangles[i].index[2]];
 
         // cross product
-        const vec3_t normal = (v1.vertex - v0.vertex)^(v2.vertex - v0.vertex);
+        md5_calculate_tangent(v0, v1, v2, normal, tangent, bitangent);
 
         v0.normal += normal;
         v1.normal += normal;
         v2.normal += normal;
+        v0.tangent += tangent;
+        v1.tangent += tangent;
+        v2.tangent += tangent;
+        v0.bitangent += bitangent;
+        v1.bitangent += bitangent;
+        v2.bitangent += bitangent;
     }
 
     // Reset weight normal
@@ -409,12 +482,17 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
     {
         md5_weight_t *weight = &mesh->weights[i];
         weight->normal = vec3_t::origin;
+        weight->tangent = vec3_t::origin;
+        weight->bitangent = vec3_t::origin;
     }
 
     // Normalize the normals
     for(i = 0; i < mesh->num_verts; ++i)
     {
         mesh->vertices[i].normal.Normalize();
+        mesh->vertices[i].tangent.Normalize();
+        mesh->vertices[i].bitangent.Normalize();
+        mesh->vertices[i].w = 1.0f; // FIXME not correct, should be something like (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f
 
         // Calculate the normal in joint-local space
         // so the animated normal can be computed faster later
@@ -426,6 +504,8 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
             quaternion_t invq = joint->orient;
             invq.Invert();
             weight->normal += invq.Vec3Multiply(mesh->vertices[i].normal);
+            weight->tangent += invq.Vec3Multiply(mesh->vertices[i].tangent);
+            weight->bitangent += invq.Vec3Multiply(mesh->vertices[i].bitangent);
         }
     }
 
@@ -434,6 +514,15 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
     {
         md5_weight_t *weight = &mesh->weights[i];
         weight->normal.Normalize();
+        weight->tangent.Normalize();
+        weight->bitangent.Normalize();
+
+        const vec3_t& n = weight->normal;
+        const vec3_t& t = weight->tangent;
+        // Gram-Schmidt
+        weight->tangent = (t - n * (n*t)).Normalized();
+        if(!weight->tangent.IsNormalized())
+            weight->tangent = vec3_t::yAxis;
     }
 }
 
@@ -456,7 +545,8 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
     for (i = 0; i < mesh->num_verts; ++i)
     {
         vec3_t finalVertex(0.0f, 0.0f, 0.0f);
-        vec3_t finalNormal(0.0f, 0.0f, 1.0f);
+        vec3_t finalNormal(0.0f, 0.0f, 0.0f);
+        vec3_t finalTangent(0.0f, 0.0f, 0.0f);
 
         /* Calculate final vertex to draw with weights */
         for (j = 0; j < mesh->vertices[i].count; ++j)
@@ -470,10 +560,13 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
             /* The sum of all weight->bias should be 1.0 */
             finalVertex += (joint->pos + wv) * weight->bias;
             finalNormal += joint->orient.Vec3Multiply(weight->normal) * weight->bias;
+            finalTangent += joint->orient.Vec3Multiply(weight->tangent) * weight->bias;
         }
 
         m_vertex_buffer[i].v = finalVertex;
         m_vertex_buffer[i].n = finalNormal.Normalized();
+        m_vertex_buffer[i].t = finalTangent.Normalized();
+        m_vertex_buffer[i].w = mesh->vertices[i].w;
         m_vertex_buffer[i].tu = mesh->vertices[i].u;
         m_vertex_buffer[i].tv = mesh->vertices[i].v;
     }
@@ -622,6 +715,19 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                             if(mesh->tex == 0)
                             {
                                 fprintf(stderr, "MD5 warning: no texture found for model: %s\n", texpath.c_str());
+                            }
+
+                            mesh->texnormal = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "_bump.jpg"), true);
+                            if(mesh->texnormal == 0) // let's try: jpeg
+                                mesh->texnormal = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "_bump.jpeg"), true);
+                            if(mesh->texnormal == 0) // let's try: tga
+                                mesh->texnormal = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "_bump.tga"), true);
+                            if(mesh->texnormal == 0) // let's try: png
+                                mesh->texnormal = resman->GetTexture(CLynx::ChangeFileExtension(texpath, "_bump.png"), true);
+                            if(mesh->texnormal == 0)
+                            {
+                                //fprintf(stderr, "MD5 warning: no normal texture found for model: %s\n", texpath.c_str());
+                                mesh->texnormal = resman->GetTexture(CLynx::GetBaseDirTexture() + "normal.jpg");
                             }
                         }
                     }
@@ -911,7 +1017,7 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
         else if(sscanf (buff, " frameRate %d", &anim->frameRate) == 1)
         {
             //printf ("md5anim: animation's frame rate is %d\n", anim->frameRate);
-            anim->frameRate = 2;
+            // anim->frameRate = 2;
         }
         else if(sscanf (buff, " numAnimatedComponents %d", &numAnimatedComponents) == 1)
         {
