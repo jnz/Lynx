@@ -268,8 +268,6 @@ void CModelMD5::Render(const md5_state_t* state)
 
 void CModelMD5::RenderNormals(const md5_state_t* state)
 {
-    // Assume, this gets called after Render(), so we dont
-    // need to transform twice
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
@@ -1017,7 +1015,7 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
         else if(sscanf (buff, " frameRate %d", &anim->frameRate) == 1)
         {
             //printf ("md5anim: animation's frame rate is %d\n", anim->frameRate);
-            // anim->frameRate = 2;
+            anim->frameRate = 2;
         }
         else if(sscanf (buff, " numAnimatedComponents %d", &numAnimatedComponents) == 1)
         {

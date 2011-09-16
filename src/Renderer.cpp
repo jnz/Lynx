@@ -18,6 +18,11 @@
 #define SHADOW_MAP_RATIO    1.0f
 
 //#define DRAW_NORMALS
+#define DRAW_SHADOWMAP // debug mode: draw a window with the cam perspective of the first light
+
+#ifdef DRAW_SHADOWMAP
+unsigned int g_fboShadowCamColor = 0; // debug
+#endif
 
 // Shadow mapping bias matrix
 static const float g_shadowBias[16] = { // Moving from unit cube [-1,1] to [0,1]
@@ -89,7 +94,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     m_width = width;
     m_height = height;
 
-    glClearColor(0.48f, 0.58f, 0.72f, 0.0f);
+    glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
@@ -97,7 +102,6 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     UpdatePerspective();
@@ -184,11 +188,12 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     OBJITER iter;
 
     // Draw the level
-    if(/*!generateShadowMap && */world->GetBSP()->IsLoaded())
+    if(/*!generateShadowMap &&*/ world->GetBSP()->IsLoaded())
     {
         world->GetBSP()->RenderGL(frustum.pos, frustum);
     }
 
+    // Draw every object
     for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
     {
         obj = (*iter).second;
@@ -236,10 +241,8 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                   RENDERER_FOV, (float)m_width/(float)m_height,
                   PLANE_NEAR,
                   PLANE_FAR);
-
     glViewport(0, 0, (int)(m_width * SHADOW_MAP_RATIO),
                      (int)(m_height * SHADOW_MAP_RATIO));
-    UpdatePerspective(); // FIXME remove me?
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(mviewlight.pm);
 
@@ -254,12 +257,16 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
 
     // Render to FBO
     glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+#ifndef DRAW_SHADOWMAP
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+#endif
     glCullFace(GL_FRONT);
     glPolygonOffset( 0, -1000.0f );
     glEnable(GL_POLYGON_OFFSET_FILL);
-    glActiveTexture(GL_TEXTURE0);
+    //glActiveTexture(GL_TEXTURE0);
 
     DrawScene(frustum, world, localctrlid, true);
 
@@ -267,10 +274,15 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, m_width, m_height);
+#ifndef DRAW_SHADOWMAP
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+#endif
     glCullFace(GL_BACK);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_BLEND);
 }
 
+// gets called every frame to draw the scene
 void CRenderer::Update(const float dt, const uint32_t ticks)
 {
     CObj* obj, *localctrl;
@@ -296,14 +308,16 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
                   PLANE_NEAR,
                   PLANE_FAR);
 
-    const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
-    //const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
-    //glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
+    //const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
+    const vec3_t lightpos0(-6.67,-9.41,4.1);
+    const quaternion_t lightrot0(0.06f,0.69f,0.06f,-0.72f);
+    const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
+    glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
     if(m_useShadows)
     {
         glUseProgram(0); // draw shadowmap with fixed function pipeline
         PrepareShadowMap(lightpos0,
-                         camrot,
+                         lightrot0,
                          world,
                          localctrlid); // the player is the light
     }
@@ -329,7 +343,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glActiveTexture(GL_TEXTURE0);
     }
 #ifdef DRAW_NORMALS
-    glUseProgram(0); // don't use shader for particles
+    glUseProgram(0); // use fixed pipeline for this debug mode
 #endif
     DrawScene(frustum, world, localctrlid, false);
 
@@ -343,6 +357,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
         if(obj->GetMesh())
         {
+            // Animate mesh is done in the particle loop
+            // and not in DrawScene, because DrawScene
+            // can be called multiple times per frame
             obj->GetMesh()->Animate(obj->GetMeshState(), dt);
         }
 
@@ -374,27 +391,28 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 #endif
 
     // Draw weapon
-    glUseProgram(m_program);
+    glUseProgram(0);
     CModelMD5* viewmodel;
     md5_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
+    glDisable(GL_LIGHTING);
     if(viewmodel)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
         glPushMatrix(); // why is this necessary, hidden bug?
         glLoadIdentity();
         glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
-        //// glScalef(-1.0f, 1.0f, 1.0f); // mirror weapon
 
         viewmodel->Render(viewmodelstate);
         viewmodel->Animate(viewmodelstate, dt);
         glPopMatrix();
     }
+    glEnable(GL_LIGHTING);
 
-    // Draw HUD display
+    // Draw HUD
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
-    glUseProgram(0);
+    glUseProgram(0); // no shader for HUD
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -415,6 +433,23 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glTexCoord2d(1,1);
         glVertex3f((m_width + m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
     glEnd();
+
+#ifdef DRAW_SHADOWMAP
+    //glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+    glBindTexture(GL_TEXTURE_2D, g_fboShadowCamColor);
+    const float shadowmap_debug_width = 200.0f;
+    const float shadowmap_debug_height = shadowmap_debug_width*(float)m_height/(float)m_width;
+    glBegin(GL_QUADS);
+        glTexCoord2d(0,1); // upper left
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glTexCoord2d(0,0); //lower left
+        glVertex3f(0.0f, shadowmap_debug_height, 0.0f);
+        glTexCoord2d(1,0); //lower right
+        glVertex3f(shadowmap_debug_width, shadowmap_debug_height, 0.0f);
+        glTexCoord2d(1,1); // upper right
+        glVertex3f(shadowmap_debug_width, 0.0f, 0.0f);
+    glEnd();
+#endif
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glMatrixMode(GL_PROJECTION);
@@ -592,15 +627,33 @@ bool CRenderer::CreateShadowFBO()
 
     // No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
     glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+
     glBindTexture(GL_TEXTURE_2D, 0);
+
+#ifdef DRAW_SHADOWMAP
+    glGenTextures(1, &g_fboShadowCamColor);
+    glBindTexture(GL_TEXTURE_2D, g_fboShadowCamColor);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapWidth, shadowMapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif
 
     // create a framebuffer object
     glGenFramebuffers(1, &m_fboId);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fboId);
 
+#ifdef DRAW_SHADOWMAP
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_fboShadowCamColor, 0);
+#else
     // Instruct openGL that we won't bind a color texture with the current FBO
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+#endif
 
     // attach the texture to FBO depth attachment point
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthTextureId, 0);

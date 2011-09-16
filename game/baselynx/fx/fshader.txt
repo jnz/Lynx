@@ -9,16 +9,6 @@ varying vec3 eyedir; // in eye space
 // Fragment shader
 void main()
 {
-/*
- *    vec3 n = normalize(normal);
- *    vec3 l = normalize(lightDir);
- *    float nDotL = max(0.0, dot(n, l));
- *
- *    vec4 texcolor = texture2D(tex, gl_TexCoord[0].st);
- *    gl_FragColor.xyz = (0.1 + nDotL*0.9) * texcolor.xyz;
- *    gl_FragColor.w = texcolor.w;
- */
-
     vec3 n = normalize(texture2D(normalMap, gl_TexCoord[0].st).xyz * 2.0 - 1.0);
     vec3 l = normalize(lightDir);
     float nDotL = max(0.0, dot(n, l));
@@ -26,7 +16,7 @@ void main()
     float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
 
     vec4 texcolor = texture2D(tex, gl_TexCoord[0].st);
-    gl_FragColor.xyz = (0.2 + shadow*nDotL*0.8) * texcolor.xyz;
+    gl_FragColor.xyz = (0.0 + shadow*nDotL*1.0) * texcolor.xyz;
     gl_FragColor.w = texcolor.w;
 }
 

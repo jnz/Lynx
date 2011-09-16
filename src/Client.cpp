@@ -255,8 +255,10 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     if(keystate[SDLK_e])
     {
         // FIXME temp hack to get local position and stats
-        vec3_t pos = GetLocalController()->GetOrigin();
-        fprintf(stderr, "[%.2f,%.2f,%.2f]\n", pos.x, pos.y, pos.z);
+        const vec3_t pos = GetLocalController()->GetOrigin();
+        const quaternion_t orient = GetLocalController()->GetRot();
+        fprintf(stderr, "(%.2f,%.2f,%.2f)\n", pos.x, pos.y, pos.z);
+        fprintf(stderr, "(%.2f,%.2f,%.2f,%.2f)\n", orient.x, orient.y, orient.z, orient.w);
         fprintf(stderr, "Network stats:\n");
         fprintf(stderr, "Mean round trip time: %i (msec)\n", m_server->roundTripTime);
         fprintf(stderr, "Incoming data total: %i (kbytes)\n", m_client->totalReceivedData/1024);
