@@ -22,8 +22,8 @@ void main()
                           t.z, b.z, n.z);
 
     // light position to eye space
-    // vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
-    lightDir = - vPos.xyz;
+    vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
+    lightDir = lightpos.xyz - vPos.xyz;
     lightDir = tbnMatrix * lightDir; // light dir in tangent space
     normal = n;
     eyedir = -vPos.xyz;

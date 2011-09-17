@@ -409,7 +409,7 @@ bool CWorld::LoadLevel(const std::string path)
     return success;
 }
 
-// DELTA COMPRESSION CODE (ugly atm) ------------------------------------
+// DELTA COMPRESSION CODE ------------------------------------
 
 #define WORLD_STATE_WORLDID         (1 <<  0)
 #define WORLD_STATE_LEVELTIME       (1 <<  1)

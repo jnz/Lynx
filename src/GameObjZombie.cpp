@@ -43,13 +43,11 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         SetRot(TurnTo(dealer->GetOrigin()));
     }
     SetVel(vec3_t::origin);
-    // SetAnimation(GetMesh()->FindAnimation("crdeath"));
-    // SetNextAnimation(-1);
     SetAnimation(ANIMATION_ATTACK);
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
-                    GetWorld()->GetLeveltime() + 900,
+                    GetWorld()->GetLeveltime() + 50,
                     GetWorld(),
                     this));
     if(CLynx::randfabs() < 0.88f) // 88% change of sound playing
@@ -117,7 +115,7 @@ bool CThinkFuncZombie::DoThink(uint32_t leveltime)
 
     zombie->SetRot(quaternion_t(qFrom, qTo, 0.5f));
 
-    if(dir.AbsSquared() > 22.0f)
+    if(dir.AbsSquared() > 42.0f)
     {
         zombie->GetRot().GetVec3(&dir, NULL, NULL);
 

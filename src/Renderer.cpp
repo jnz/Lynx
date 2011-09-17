@@ -105,6 +105,7 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     UpdatePerspective();
+    glLoadIdentity(); // identity for modelview matrix
 
     // Vertex Lighting
     float mat_specular[] = {1,1,1,1};
@@ -188,7 +189,7 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     OBJITER iter;
 
     // Draw the level
-    if(/*!generateShadowMap &&*/ world->GetBSP()->IsLoaded())
+    if(!generateShadowMap && world->GetBSP()->IsLoaded())
     {
         world->GetBSP()->RenderGL(frustum.pos, frustum);
     }
@@ -203,19 +204,20 @@ void CRenderer::DrawScene(const CFrustum& frustum,
            !obj->GetMesh())
             continue;
 
-		if(!frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+		if(!generateShadowMap && !frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
 		{
 			stat_obj_hidden++;
 			continue;
 		}
-        stat_obj_visible++;
+        if(!generateShadowMap)
+            stat_obj_visible++;
 
         glPushMatrix();
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
         glMultMatrixf(obj->GetRotMatrix()->pm);
 #ifdef DRAW_NORMALS
-        glPushMatrix(); // stupid md5 rotations
+        glPushMatrix(); // stupid id software coordinate system :)
 #endif
         obj->GetMesh()->Render(obj->GetMeshState());
 #ifdef DRAW_NORMALS
@@ -243,14 +245,17 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                   PLANE_FAR);
     glViewport(0, 0, (int)(m_width * SHADOW_MAP_RATIO),
                      (int)(m_height * SHADOW_MAP_RATIO));
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(mviewlight.pm);
-
-    static float projection[16];
+    float projection[16];
+    glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    //glOrtho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 5.0f);
     glGetFloatv(GL_PROJECTION_MATRIX, projection);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(mviewlight.pm); // set camera to light pos
+
     glMatrixMode(GL_TEXTURE);
     glActiveTexture(GL_TEXTURE7);
-    glLoadMatrixf(g_shadowBias);
+    glLoadMatrixf(g_shadowBias); // to map from -1..1 to 0..1
     glMultMatrixf(projection);
     glMultMatrixf(mviewlight.pm);
     glMatrixMode(GL_MODELVIEW);
@@ -263,10 +268,9 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
 #ifndef DRAW_SHADOWMAP
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 #endif
-    glCullFace(GL_FRONT);
-    glPolygonOffset( 0, -1000.0f );
+    //glCullFace(GL_FRONT);
+    glPolygonOffset( 1.1f, 4.0f );
     glEnable(GL_POLYGON_OFFSET_FILL);
-    //glActiveTexture(GL_TEXTURE0);
 
     DrawScene(frustum, world, localctrlid, true);
 
@@ -277,9 +281,11 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
 #ifndef DRAW_SHADOWMAP
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 #endif
-    glCullFace(GL_BACK);
+    //glCullFace(GL_BACK);
     glEnable(GL_LIGHTING);
     glEnable(GL_BLEND);
+
+    UpdatePerspective(); // restore standard projection
 }
 
 // gets called every frame to draw the scene
@@ -308,9 +314,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
                   PLANE_NEAR,
                   PLANE_FAR);
 
-    //const vec3_t lightpos0 = campos+up*0.8f-side*1.4f-dir*1.8f;
-    const vec3_t lightpos0(-6.67,-9.41,4.1);
-    const quaternion_t lightrot0(0.06f,0.69f,0.06f,-0.72f);
+    const vec3_t lightpos0(campos.x, campos.y + 35.0f, campos.z);
+    const quaternion_t qlat(vec3_t::xAxis, -90.0f*lynxmath::DEGTORAD);
+    const quaternion_t lightrot0(qlat);
     const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
     if(m_useShadows)
@@ -391,7 +397,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 #endif
 
     // Draw weapon
-    glUseProgram(0);
+    glUseProgram(m_program);
     CModelMD5* viewmodel;
     md5_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
@@ -471,7 +477,6 @@ void CRenderer::UpdatePerspective()
                     PLANE_NEAR,
                     PLANE_FAR);
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 }
 
 std::string ReadShader(std::string path)

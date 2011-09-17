@@ -13,10 +13,22 @@ void main()
     vec3 l = normalize(lightDir);
     float nDotL = max(0.0, dot(n, l));
 
-    float shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
+    float shadow;
+    vec4 ShadowCoordN = ShadowCoord / ShadowCoord.w;
+    if(ShadowCoordN.x > 1.0 || ShadowCoordN.x < 0.0 ||
+       ShadowCoordN.y > 1.0 || ShadowCoordN.y < 0.0 ||
+       ShadowCoord.z < 0.0)
+    {
+       shadow = 1.0;
+    }
+    else
+    {
+        shadow = shadow2DProj(ShadowMap, ShadowCoord).r;
+    }
 
     vec4 texcolor = texture2D(tex, gl_TexCoord[0].st);
-    gl_FragColor.xyz = (0.0 + shadow*nDotL*1.0) * texcolor.xyz;
+    gl_FragColor.xyz = (0.2 + shadow*nDotL*0.8) * texcolor.xyz;
     gl_FragColor.w = texcolor.w;
+
 }
 

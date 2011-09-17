@@ -240,17 +240,11 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         clcmdlist->push_back("+fire");
 
         // Weapon fire animation is client side only. Smells a bit like a hack, but works great
-        // m_world->m_hud.GetModel(&model, &model_state);
-        // CModelMD2* model;
-        // md5_state_t* model_state;
-        // if(model)
-        // {
-        //     if(CModelMD2::GetAnimation(model_state) == HUD_WEAPON_IDLE_ANIMATION)
-        //     {
-        //         model->SetAnimation(model_state, HUD_WEAPON_FIRE_ANIMATION);
-        //         model->SetNextAnimation(model_state, HUD_WEAPON_FIRE_ANIMATION);
-        //     }
-        // }
+        CModelMD5* model;
+        md5_state_t* model_state;
+        m_world->m_hud.GetModel(&model, &model_state);
+        if(model)
+            model->SetAnimation(model_state, ANIMATION_FIRE);
     }
     if(keystate[SDLK_e])
     {
@@ -280,14 +274,11 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
 
     if(!firedown)
     {
-        // CModelMD2* model;
-        // md5_state_t* model_state;
-        // m_world->m_hud.GetModel(&model, &model_state);
-        // if(model && CModelMD2::GetAnimation(model_state) == HUD_WEAPON_FIRE_ANIMATION)
-        // {
-        //     model->SetAnimation(model_state, HUD_WEAPON_IDLE_ANIMATION);
-        //     model->SetNextAnimation(model_state, HUD_WEAPON_IDLE_ANIMATION);
-        // }
+        CModelMD5* model;
+        md5_state_t* model_state;
+        m_world->m_hud.GetModel(&model, &model_state);
+        if(model)
+            model->SetAnimation(model_state, ANIMATION_IDLE);
     }
 }
 
