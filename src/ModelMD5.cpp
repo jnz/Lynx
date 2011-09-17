@@ -1015,7 +1015,6 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
         else if(sscanf (buff, " frameRate %d", &anim->frameRate) == 1)
         {
             //printf ("md5anim: animation's frame rate is %d\n", anim->frameRate);
-            anim->frameRate = 2;
         }
         else if(sscanf (buff, " numAnimatedComponents %d", &numAnimatedComponents) == 1)
         {

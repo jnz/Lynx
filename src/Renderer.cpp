@@ -18,7 +18,7 @@
 #define SHADOW_MAP_RATIO    1.0f
 
 //#define DRAW_NORMALS
-#define DRAW_SHADOWMAP // debug mode: draw a window with the cam perspective of the first light
+//#define DRAW_SHADOWMAP // debug mode: draw a window with the cam perspective of the first light
 
 #ifdef DRAW_SHADOWMAP
 unsigned int g_fboShadowCamColor = 0; // debug
@@ -247,8 +247,9 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                      (int)(m_height * SHADOW_MAP_RATIO));
     float projection[16];
     glMatrixMode(GL_PROJECTION);
+    //const float lightDistance = PLANE_FAR*0.1f;
     //glLoadIdentity();
-    //glOrtho(-5.0f, 5.0f, -5.0f, 5.0f, -5.0f, 5.0f);
+    //glOrtho(-35.0f, 35.0f, -35.0f, 35.0f, 0.0f, PLANE_FAR*0.1f); // dimension: light area in m
     glGetFloatv(GL_PROJECTION_MATRIX, projection);
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(mviewlight.pm); // set camera to light pos
@@ -314,9 +315,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
                   PLANE_NEAR,
                   PLANE_FAR);
 
-    const vec3_t lightpos0(campos.x, campos.y + 35.0f, campos.z);
-    const quaternion_t qlat(vec3_t::xAxis, -90.0f*lynxmath::DEGTORAD);
-    const quaternion_t lightrot0(qlat);
+    // light floating above the players head
+    const vec3_t lightpos0(campos + vec3_t(0,25.0f,0));
+    const quaternion_t lightrot0(quaternion_t(vec3_t::xAxis, -90.0f*lynxmath::DEGTORAD));
     const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
     if(m_useShadows)
