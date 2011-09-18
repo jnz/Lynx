@@ -87,13 +87,12 @@ struct world_obj_trace_t // Search for objects hit by a ray
     // Input
     vec3_t  start; // start point
     vec3_t  dir; // end point = start + dir
-    int     excludeobj; // Which object should be ignored
+    int     excludeobj_id; // Which object id should be ignored
 
     // Output
-    float   f; // impact = start + f*dir
     vec3_t  hitpoint;
     vec3_t  hitnormal;
-    int     objid;
+    CObj*   hitobj; // NULL, if no object was hit
 };
 
 // STL types for our object storage
@@ -133,7 +132,7 @@ public:
 
     void    ObjMove(CObj* obj, const float dt) const; // Move object and perform collision detection with level geometry
 
-    bool    TraceObj(world_obj_trace_t* trace);
+    bool    TraceObj(world_obj_trace_t* trace, const float maxdist); // returns true if something is hit
 
     world_state_t GetWorldState();
 
@@ -144,10 +143,10 @@ protected:
     CBSPLevel m_bsptree;
 
     OBJMAPTYPE m_objlist;
-    void    UpdatePendingObjs(); // Entfernt zu löschende Objekte und fügt neue hinzu (siehe m_addobj und removeobj)
-    void    DeleteAllObjs(); // Löscht alle Objekte aus m_objlist und gibt auch den Speicher frei
+    void    UpdatePendingObjs(); // Deletes objects and adds new objects (from m_addobj and m_removeobj list)
+    void    DeleteAllObjs(); // Delete everything
 
-    std::list<CObj*> m_addobj; // Liste von Objekten die im nächsten Frame hinzugefügt werden
-    std::list<int> m_removeobj; // Liste von Objekten die im nächsten Frame gelöscht werden
+    std::list<CObj*> m_addobj; // Objects that will be added by UpdatePendingObjs
+    std::list<int> m_removeobj; // Objects that will be deleted by UpdatePendingObjs
 };
 

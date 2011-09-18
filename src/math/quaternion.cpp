@@ -11,7 +11,7 @@ void quaternion_t::FromMatrix(const matrix_t &mx)
 
     if(tr > 0)
     {
-        const float S = sqrt(tr+1.0f) * 2.0f; // S=4*qw
+        const float S = lynxmath::Sqrt(tr+1.0f) * 2.0f; // S=4*qw
         w = 0.25f * S;
         x = (mx.m[1][2] - mx.m[2][1]) / S;
         y = (mx.m[2][0] - mx.m[0][2]) / S;
@@ -19,7 +19,7 @@ void quaternion_t::FromMatrix(const matrix_t &mx)
     }
     else if((mx.m[0][0] > mx.m[1][1])&&(mx.m[0][0] > mx.m[2][2]))
     {
-        const float S = sqrt(1.0f + mx.m[0][0] - mx.m[1][1] - mx.m[2][2]) * 2.0f; // S=4*qx
+        const float S = lynxmath::Sqrt(1.0f + mx.m[0][0] - mx.m[1][1] - mx.m[2][2]) * 2.0f; // S=4*qx
         w = (mx.m[1][2] - mx.m[2][1]) / S;
         x = 0.25f * S;
         y = (mx.m[1][0] + mx.m[0][1]) / S;
@@ -27,7 +27,7 @@ void quaternion_t::FromMatrix(const matrix_t &mx)
     }
     else if (mx.m[1][1] > mx.m[2][2])
     {
-        const float S = sqrt(1.0f + mx.m[1][1] - mx.m[0][0] - mx.m[2][2]) * 2.0f; // S=4*qy
+        const float S = lynxmath::Sqrt(1.0f + mx.m[1][1] - mx.m[0][0] - mx.m[2][2]) * 2.0f; // S=4*qy
         w = (mx.m[2][0] - mx.m[0][2]) / S;
         x = (mx.m[1][0] + mx.m[0][1]) / S;
         y = 0.25f * S;
@@ -35,7 +35,7 @@ void quaternion_t::FromMatrix(const matrix_t &mx)
     }
     else
     {
-        const float S = sqrt(1.0f + mx.m[2][2] - mx.m[0][0] - mx.m[1][1]) * 2.0f; // S=4*qz
+        const float S = lynxmath::Sqrt(1.0f + mx.m[2][2] - mx.m[0][0] - mx.m[1][1]) * 2.0f; // S=4*qz
         w = (mx.m[0][1] - mx.m[1][0]) / S;
         x = (mx.m[2][0] + mx.m[0][2]) / S;
         y = (mx.m[2][1] + mx.m[1][2]) / S;
@@ -144,10 +144,10 @@ quaternion_t quaternion_t::Inverse() const
 void quaternion_t::Normalize()
 {
     const float abssqr = x*x + y*y* + z*z + w*w;
-    if(fabs(abssqr - 1.0f) > lynxmath::EPSILON ||
-       fabs(abssqr) < lynxmath::EPSILON)
+    if(fabsf(abssqr - 1.0f) > lynxmath::EPSILON ||
+       fabsf(abssqr) < lynxmath::EPSILON)
         return;
-    const float invabs = 1/sqrt(abssqr);
+    const float invabs = lynxmath::InvSqrt(abssqr);
     x *= invabs;
     y *= invabs;
     z *= invabs;
@@ -156,7 +156,7 @@ void quaternion_t::Normalize()
 
 bool quaternion_t::IsNormalized() const
 {
-    return (fabs(x*x + y*y* + z*z + w*w - 1.0f) < lynxmath::EPSILON);
+    return (fabsf(x*x + y*y* + z*z + w*w - 1.0f) < lynxmath::EPSILON);
 }
 
 // compute w from x, y, z, assuming a normal quaternion
@@ -167,7 +167,7 @@ void quaternion_t::ComputeW()
     if (t < 0.0f)
         w = 0.0f;
     else
-        w = -sqrt(t);
+        w = -lynxmath::Sqrt(t);
 }
 
 quaternion_t quaternion_t::operator *(const quaternion_t &q) const
@@ -191,18 +191,18 @@ quaternion_t quaternion_t::operator =(const quaternion_t &q)
 
 bool operator == (const quaternion_t& a, const quaternion_t& b)
 {
-    return (fabs(a.x-b.x) < lynxmath::EPSILON) &&
-           (fabs(a.y-b.y) < lynxmath::EPSILON) &&
-           (fabs(a.z-b.z) < lynxmath::EPSILON) &&
-           (fabs(a.w-b.w) < lynxmath::EPSILON);
+    return (fabsf(a.x-b.x) < lynxmath::EPSILON) &&
+           (fabsf(a.y-b.y) < lynxmath::EPSILON) &&
+           (fabsf(a.z-b.z) < lynxmath::EPSILON) &&
+           (fabsf(a.w-b.w) < lynxmath::EPSILON);
 }
 
 bool operator != (const quaternion_t& a, const quaternion_t& b)
 {
-    return (fabs(a.x-b.x) >= lynxmath::EPSILON) ||
-           (fabs(a.y-b.y) >= lynxmath::EPSILON) ||
-           (fabs(a.z-b.z) >= lynxmath::EPSILON) ||
-           (fabs(a.w-b.w) >= lynxmath::EPSILON);
+    return (fabsf(a.x-b.x) >= lynxmath::EPSILON) ||
+           (fabsf(a.y-b.y) >= lynxmath::EPSILON) ||
+           (fabsf(a.z-b.z) >= lynxmath::EPSILON) ||
+           (fabsf(a.w-b.w) >= lynxmath::EPSILON);
 }
 
 float quaternion_t::ScalarMultiply(const quaternion_t &q1, const quaternion_t &q2)

@@ -16,6 +16,11 @@ float vec3_t::Abs(void) const
     return lynxmath::Sqrt(x*x+y*y+z*z);
 }
 
+float vec3_t::AbsFast(void) const
+{
+    return lynxmath::SqrtFast(x*x+y*y+z*z);
+}
+
 float vec3_t::AbsSquared(void) const
 {
     return x*x+y*y+z*z;
@@ -36,7 +41,7 @@ void vec3_t::Normalize(void)
 
 void vec3_t::SetLength(float scalelen)
 {
-    const float length = lynxmath::Sqrt(x*x+y*y+z*z);
+    const float length = Abs();
 
     if(length > lynxmath::EPSILON)
     {
@@ -106,7 +111,7 @@ vec3_t &vec3_t::operator *=(const float &f)
 
 vec3_t &vec3_t::operator /=(const float &f)
 {
-    float invf = 1/f;
+    const float invf = 1/f;
     x*=invf;
     y*=invf;
     z*=invf;
@@ -127,54 +132,43 @@ vec3_t vec3_t::operator -(void) const
 
 const vec3_t operator+(vec3_t const &a, vec3_t const &b)
 {
-    return vec3_t(
-        a.x+b.x,
-        a.y+b.y,
-        a.z+b.z
-    );
+    return vec3_t( a.x+b.x, a.y+b.y, a.z+b.z );
 }
 
 const vec3_t operator-(vec3_t const &a, vec3_t const &b)
 {
-    return vec3_t(
-        a.x-b.x,
-        a.y-b.y,
-        a.z-b.z
-    );
+    return vec3_t( a.x-b.x, a.y-b.y, a.z-b.z );
 }
 
 const vec3_t operator*(vec3_t const &v, float const &f)
 {
-    return vec3_t(
-        v.x*f,
-        v.y*f,
-        v.z*f
-    );
+    return vec3_t( v.x*f, v.y*f, v.z*f );
 }
 
 const vec3_t operator*(float const &f, vec3_t const &v)
 {
-    return vec3_t(
-        v.x*f,
-        v.y*f,
-        v.z*f
-    );
+    return vec3_t( v.x*f, v.y*f, v.z*f );
 }
 
 const vec3_t operator/(vec3_t const &v, float const &f)
 {
-    float fi = 1.0f / f;
-    return v*fi;
+    const float fi = 1.0f / f;
+    return vec3_t( v.x*fi, v.y*fi, v.z*fi );
 }
 
 // cross product
 const vec3_t operator^(vec3_t const &a, vec3_t const &b)
 {
-    return vec3_t(
-        (a.y*b.z-a.z*b.y),
-        (a.z*b.x-a.x*b.z),
-        (a.x*b.y-a.y*b.x)
-    );
+    return vec3_t( (a.y*b.z-a.z*b.y),
+                   (a.z*b.x-a.x*b.z),
+                   (a.x*b.y-a.y*b.x) );
+}
+
+const vec3_t vec3_t::cross(const vec3_t& a, const vec3_t& b)
+{
+    return vec3_t( (a.y*b.z-a.z*b.y),
+                   (a.z*b.x-a.x*b.z),
+                   (a.x*b.y-a.y*b.x) );
 }
 
 // dot product
@@ -185,18 +179,16 @@ const float operator*(vec3_t const &a, vec3_t const &b)
 
 bool operator==(vec3_t const &a, vec3_t const &b)
 {
-    if(fabs(a.x-b.x) < lynxmath::EPSILON)
-        if(fabs(a.y-b.y) < lynxmath::EPSILON)
-            if(fabs(a.z-b.z) < lynxmath::EPSILON)
-                return true;
-    return false;
+    return ( (fabs(a.x-b.x) < lynxmath::EPSILON) &&
+             (fabs(a.y-b.y) < lynxmath::EPSILON) &&
+             (fabs(a.z-b.z) < lynxmath::EPSILON) );
 }
 
 bool operator!=(vec3_t const &a, vec3_t const &b)
 {
-    return  (fabs(a.x-b.x) > lynxmath::EPSILON) ||
-            (fabs(a.y-b.y) > lynxmath::EPSILON) ||
-            (fabs(a.z-b.z) > lynxmath::EPSILON);
+    return ( (fabs(a.x-b.x) > lynxmath::EPSILON) ||
+             (fabs(a.y-b.y) > lynxmath::EPSILON) ||
+             (fabs(a.z-b.z) > lynxmath::EPSILON) );
 }
 
 void vec3_t::AngleVec3(const vec3_t& angles, vec3_t* forward, vec3_t* up, vec3_t* side)
@@ -308,10 +300,10 @@ bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pDir,
     // calculate in world space
     const vec3_t pEnd = pStart + pDir;
     const float a = (pEnd.x - pStart.x)*(pEnd.x - pStart.x) + (pEnd.y - pStart.y)*(pEnd.y - pStart.y) + (pEnd.z - pStart.z)*(pEnd.z - pStart.z);
-    const float b = 2*( (pEnd.x - pStart.x)*(pStart.x - pSphere.x) + (pEnd.y - pStart.y)*(pStart.y - pSphere.y) + (pEnd.z - pStart.z)*(pStart.z - pSphere.z) );
+    const float b = 2.0f*( (pEnd.x - pStart.x)*(pStart.x - pSphere.x) + (pEnd.y - pStart.y)*(pStart.y - pSphere.y) + (pEnd.z - pStart.z)*(pStart.z - pSphere.z) );
     const float c = pSphere.x*pSphere.x + pSphere.y*pSphere.y + pSphere.z*pSphere.z + pStart.x*pStart.x + pStart.y*pStart.y + pStart.z*pStart.z - 2*(pSphere.x*pStart.x + pSphere.y*pStart.y + pSphere.z*pStart.z) - radius*radius;
-    const float discrsquare = b*b - 4*a*c;
-    if(discrsquare <= 0)
+    const float discrsquare = b*b - 4.0f*a*c;
+    if(discrsquare <= 0.0f)
         return false;
 
     const float discr = lynxmath::Sqrt(discrsquare);

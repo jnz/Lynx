@@ -13,11 +13,11 @@ public:
     ~CStream(void);
 
     void SetBuffer(uint8_t* buffer, int size, int used=0);
-    bool Resize(int newsize); // Change buffer size. Buffer wird zerstört, wenn newsize < size
+    bool Resize(int newsize); // Change buffer size. Buffer gets destroyed, if newsize < size
     uint8_t* GetBuffer(); // pointer to raw bytes
     int GetBufferSize(); // total buffer size
 
-    CStream GetStream(); // Stream Objekt von aktueller Position holen
+    CStream GetStream(); // Get stream object from current position. This is NOT a deep copy, the stream points to the same memory region
 
     // WRITE FUNCTIONS
     void ResetWritePosition(); // Reset write pointer to start
@@ -38,7 +38,7 @@ public:
     void WriteBytes(const uint8_t* values, int len);
     uint16_t WriteString(const std::string& value); // Max Str len: 0xffff. return written bytes
     void WriteStream(const CStream& stream);
-    
+
     static size_t StringSize(const std::string& value); // size in bytes the string would occupy in the stream
 
     // READ FUNCTIONS
@@ -60,9 +60,9 @@ public:
     void ReadBytes(uint8_t* values, int len);
     void ReadString(std::string* value);
 
-protected:  
+protected:
     uint8_t* m_buffer;
-    bool m_foreign;
+    bool m_foreign; // if the buffer is foreign, we won't free the memory
     int m_size;
     int m_position;
     int m_used;

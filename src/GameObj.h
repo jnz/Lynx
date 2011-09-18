@@ -37,7 +37,7 @@ public:
 
     CThink m_think;
 
-    void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir);
+    void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir, const float size);
     void SpawnParticleDust(const vec3_t& location, const vec3_t& dir);
     void SpawnParticleExplosion(const vec3_t& location, const vec3_t& dir);
 

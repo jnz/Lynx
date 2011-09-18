@@ -11,25 +11,36 @@ namespace lynxmath
     const float DEGTORAD = PI / 180.0f;
     const float RADTODEG = 180.0f / PI;
 
-    inline float InvSqrt(float x) // Quake's fast invsqrt
+    inline float InvSqrtFast(float x) // reciprocal square root approximation: 1/sqrt(x)
     {
-#if 0
-        float xhalf = 0.5f * x;
-        int i = *(int*)&x; // store floating-point bits in integer
+        // the magic inv square root
+        const float xhalf = 0.5f * x;
+        long i = *(long*)&x;       // store floating-point bits in integer
         i = 0x5f3759d5 - (i >> 1); // initial guess for Newton's method
-        x = *(float*)&i; // convert new bits into float
-        x = x*(1.5f - xhalf*x*x); // One round of Newton's method
+        x = *(float*)&i;           // convert new bits into float
+        x = x*(1.5f - xhalf*x*x);  // One round of Newton's method
         return x;
-#else
-        return 1/sqrt(x);
-#endif
     }
+
+    inline float SqrtFast(float x) // square root approximation
+    {
+        // this time with better comments (from quake 3)
+        const float original_x = x;
+        const float xhalf = 0.5f * x;
+        long i = *(long*)&x;           // evil floating point bit level hacking
+        i = 0x5f3759d5 - (i >> 1);     // what the fuck?
+        x = *(float*)&i;
+        x = x*(1.5f - xhalf*x*x);
+        return original_x * x;         // x * 1/sqrt(x) = x*sqrt(x)/(sqrt(x)*sqrt(x)) = x*sqrt(x)/x = sqrt(x)
+    }
+
+    inline float InvSqrt(float x) // 1/sqrt(x)
+    {
+        return 1/sqrt(x);
+    }
+
     inline float Sqrt(float x)
     {
-#if 0
-        return x * InvSqrt(x);
-#else
         return sqrt(x);
-#endif
     }
 }

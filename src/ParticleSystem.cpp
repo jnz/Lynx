@@ -27,6 +27,8 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
 {
     glBindTexture(GL_TEXTURE_2D, m_texture);
 
+    // FIXME use vbos instead of this
+    glBegin(GL_QUADS);
     std::vector<particle_t>::const_iterator iter;
     for(iter = m_particles.begin();iter != m_particles.end(); iter++)
     {
@@ -40,8 +42,6 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         const vec3_t Q3 = -X - Y + iter->origin;
         const vec3_t Q4 =  X - Y + iter->origin;
 
-        glBegin(GL_QUADS);
-
         glColor4f(iter->color.x, iter->color.y, iter->color.z, iter->alpha);
 
         glTexCoord2f(1.0f, 1.0f);
@@ -53,8 +53,8 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         glTexCoord2f(1.0f, 0.0f);
         glVertex3fv(Q4.v);
 
-        glEnd();
     }
+    glEnd();
 }
 
 void CParticleSystem::Update(const float dt, const uint32_t ticks)
@@ -93,6 +93,7 @@ CParticleSystem* CParticleSystem::CreateSystem(std::string systemname,
     {
         return new CParticleSystemExplosion(properties, resman);
     }
+    fprintf(stderr, "Unknown particle system: %s\n", systemname.c_str());
     assert(0);
     return NULL;
 }
@@ -131,12 +132,12 @@ void CParticleSystem::SetPropertyMap(const std::string config, PROPERTYMAP& prop
             }
             else
             {
-                assert(0);
+                assert(0); // something is wrong in the config string
             }
         }
         else
         {
-            assert(0);
+            assert(0); // something is wrong in the config string
         }
     }
 }

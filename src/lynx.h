@@ -36,8 +36,8 @@ public:
 
     static std::string FloatToString(float f, int precision);
 
-    static float randf() { return (rand()%20000)*0.0001f-1.0f; }
-    static float randfabs() { return (rand()%10000)*0.0001f; }
+    static float randf() { return (rand()%20000)*0.0001f-1.0f; } // random -1.0f - 1.0f
+    static float randfabs() { return (rand()%10000)*0.0001f; } // random 0.0f - 1.0f
 
     static int random(int min, int max);
     static std::string GetRandNumInStr(const char* str, unsigned int maxnumber); // replace %i in string with number from 1 - maxnumber

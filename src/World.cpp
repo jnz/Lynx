@@ -306,69 +306,82 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     obj->SetVel(vel);
 }
 
-bool CWorld::TraceObj(world_obj_trace_t* trace)
+// returns true if something was hit (level or obj)
+// maxdist: max distance in world units.
+bool CWorld::TraceObj(world_obj_trace_t* trace, const float maxdist)
 {
     OBJITER iter;
     float minf = MAX_TRACE_DIST;
     float cf;
     CObj* obj;
-    CObj* ignore = GetObj(trace->excludeobj);
-    const float radius = ignore->GetRadius();
-    vec3_t origin;
-    int objhit = -1;
+    CObj* pobjhit = NULL;
 
+    // baaaad method. this code tests every (!) object in the world.
+    // FIXME: use some space partitioning method to speed things up.
     for(iter = ObjBegin(); iter != ObjEnd(); iter++)
     {
         obj = (*iter).second;
-        if(obj->GetFlags() & OBJ_FLAGS_GHOST)
+
+        if(obj->GetID() == trace->excludeobj_id ||  // normally the player that shoots
+           obj->GetFlags() & OBJ_FLAGS_GHOST ||     // ghost objects are not traceable
+           obj->GetRadius() == 0.0f)                // 0 radius objects too
             continue;
-        if(obj->GetID() == ignore->GetID() || obj->GetRadius() < lynxmath::EPSILON)
+
+        if((obj->GetOrigin() - trace->start).AbsFast() > maxdist) // object is too far away
             continue;
-        origin = obj->GetOrigin();
+
         if(!vec3_t::RaySphereIntersect(trace->start, trace->dir,
-                                   origin, obj->GetRadius(),
+                                   obj->GetOrigin(), obj->GetRadius(),
                                    &cf))
         {
             continue;
         }
 
-        if(cf >= -radius && cf < minf)
+        if(cf >= 0.0f && cf < minf)
         {
-            objhit = obj->GetID();
+            pobjhit = obj;
             minf = cf;
         }
     }
 
-    if(objhit == -1)
+    if(pobjhit == NULL) // okay, we've hit nothing
     {
-        trace->objid = -1;
-        trace->f = MAX_TRACE_DIST;
-        return false;
+        trace->hitobj = NULL;
+    }
+    else // we have hit an object
+    {
+        trace->hitpoint = trace->start + minf*trace->dir;
+        trace->hitnormal = (trace->hitpoint - pobjhit->GetOrigin()).Normalized();
+        trace->hitobj = pobjhit;
     }
 
+    // now check if there is something from the level in our way
     bsp_sphere_trace_t spheretrace;
     spheretrace.start = trace->start;
-    spheretrace.dir = trace->dir * minf;
-    spheretrace.radius = 0.01f;
+    spheretrace.dir = trace->dir.Normalized() * maxdist;
+    spheretrace.radius = 0.01f; // small epsilon
     GetBSP()->TraceSphere(&spheretrace);
-    if(spheretrace.f <= 1.0f)
+    if(spheretrace.f < 1.0f) // we have hit level geometry
     {
-        trace->f = spheretrace.f;
-        trace->hitpoint = spheretrace.start + spheretrace.f*spheretrace.dir;
-        trace->hitnormal = spheretrace.p.m_n;
-        trace->objid = -1;
+        const vec3_t hitpointlevel = spheretrace.start + spheretrace.f*spheretrace.dir;
+        if(trace->hitobj) // we have hit an object earlier
+        {
+            if((trace->hitpoint - trace->start).AbsFast() <
+               (hitpointlevel - trace->start).AbsFast())
+            {
+                return true; // the object is nearer than the level geometry
+            }
+        }
 
-        return false;
+        trace->hitpoint = hitpointlevel;
+        trace->hitnormal = spheretrace.p.m_n;
+        trace->hitobj = NULL;
+
+        return true;
     }
     else
     {
-        obj = GetObj(objhit);
-        trace->f = minf;
-        trace->hitpoint = trace->start + minf*trace->dir;
-        trace->hitnormal = (trace->hitpoint - obj->GetOrigin()).Normalized();
-        trace->objid = objhit;
-
-        return true;
+        return (trace->hitobj != NULL);
     }
 }
 

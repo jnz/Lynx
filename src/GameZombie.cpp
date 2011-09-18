@@ -130,7 +130,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 float difflen = diff.AbsSquared();
                 if(difflen > 25.0f)
                     continue;
-                difflen = lynxmath::Sqrt(difflen);
+                difflen = lynxmath::SqrtFast(difflen); // sqrtfast is ok here
                 if(difflen < 0.75f)
                     difflen = 0.75f;
                 diff = dt*diff*force*1/(difflen*difflen);

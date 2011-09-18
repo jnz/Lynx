@@ -25,8 +25,9 @@ void CGameObjPlayer::CmdFire(bool active)
     m_prim_triggered = active;
 }
 
-#define PLAYER_GUN_FIRESPEED            350
-#define PLAYER_GUN_DAMAGE               28
+#define PLAYER_GUN_FIRESPEED            350 // fire a shot every x [ms]
+#define PLAYER_GUN_DAMAGE               28  // damage points
+#define PLAYER_GUN_MAX_DIST             (120.0f)   // max. weapon range
 
 void CGameObjPlayer::OnCmdFire()
 {
@@ -39,14 +40,9 @@ void CGameObjPlayer::OnCmdFire()
 
 void CGameObjPlayer::FireGun()
 {
-    // we have to prevent sound spamming from the machine gun
-    // remember the sound obj and only play a new sound if the old one
-    // is deleted
-    // THE SOUND SYSTEM SUCKS ATM FIXME
     PlaySound(GetOrigin(),
               CLynx::GetBaseDirSound() + "rifle.ogg",
               PLAYER_GUN_FIRESPEED+10);
-
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -54,26 +50,21 @@ void CGameObjPlayer::FireGun()
     dir = -dir;
     trace.dir = dir;
     trace.start = GetOrigin();
-    trace.excludeobj = GetID();
-    if(GetWorld()->TraceObj(&trace))
+    trace.excludeobj_id = GetID();
+    if(GetWorld()->TraceObj(&trace, PLAYER_GUN_MAX_DIST))
     {
-        CGameObj* hitobj = (CGameObj*)GetWorld()->GetObj(trace.objid);
-        assert(hitobj);
-        if(hitobj)
-            hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this);
-    }
-    else
-    {
-        // Test with level geometry
-        bsp_sphere_trace_t spheretrace;
-        spheretrace.start = trace.start;
-        spheretrace.dir = dir * 800.0f;
-        spheretrace.radius = 0.01f;
-        GetWorld()->GetBSP()->TraceSphere(&spheretrace);
-        if(spheretrace.f < 1.0f)
+        if(trace.hitobj) // object hit
         {
-            vec3_t hitpoint = spheretrace.start + spheretrace.f * spheretrace.dir;
-            SpawnParticleDust(hitpoint, spheretrace.p.m_n);
+            // we have to check if this object is actually a CGameObj* and not only a CObj*.
+            if(trace.hitobj->GetType() > GAME_OBJ_TYPE_NONE)
+            {
+                CGameObj* hitobj = (CGameObj*)trace.hitobj;
+                hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this);
+            }
+        }
+        else // level geometry hit
+        {
+            SpawnParticleDust(trace.hitpoint, trace.hitnormal);
         }
     }
 }
@@ -82,6 +73,6 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
 {
     CGameObj::DealDamage(0, hitpoint, dir, dealer);
 
-    SpawnParticleBlood(hitpoint, dir);
+    SpawnParticleBlood(hitpoint, dir, 3.0f);
 }
 

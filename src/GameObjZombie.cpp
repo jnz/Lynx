@@ -25,8 +25,8 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
     if(GetHealth() > 0)
     {
         SetVel(dir*5.0f);
-        SpawnParticleBlood(hitpoint, dir);
-        if(CLynx::randfabs() < 0.50f)
+        SpawnParticleBlood(hitpoint, dir, 4.0f);
+        if(CLynx::randfabs() < 0.70f)
         {
             PlaySound(GetOrigin(),
                       CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterhit%i.ogg", 3),
@@ -35,15 +35,16 @@ void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         return;
     }
 
-    if(GetFlags() & OBJ_FLAGS_ELASTIC) // we use this flag to remember that zombie is dead
+    if(GetFlags() & OBJ_FLAGS_ELASTIC) // we use this flag to remember that this zombie is dead
         return;
 
+    SpawnParticleBlood(hitpoint, dir, 9.0f); // big splatter effect for death scene
     if(dealer)
     {
         SetRot(TurnTo(dealer->GetOrigin()));
     }
     SetVel(vec3_t::origin);
-    SetAnimation(ANIMATION_ATTACK);
+    SetAnimation(ANIMATION_NONE);
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
