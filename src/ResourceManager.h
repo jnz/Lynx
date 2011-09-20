@@ -16,11 +16,20 @@ struct texture_t
     std::string path; // file path
 };
 
+typedef enum
+{
+    LYNX_RESOURCE_TYPE_TEXTURE,
+    LYNX_RESOURCE_TYPE_MD5,
+    LYNX_RESOURCE_TYPE_SOUND
+} resource_type_t;
+
 class CResourceManager
 {
 public:
     CResourceManager(CWorld* world);
     ~CResourceManager(void);
+
+    void Precache(const std::string filename, const resource_type_t type); // just try to precache a resource for later use
 
     unsigned int GetTexture(const std::string texname, const bool noerrormsg=false);
     void UnloadAllTextures();
@@ -32,7 +41,7 @@ public:
     CModelMD5* GetModel(std::string mdlname);
     void UnloadAllModels();
 
-    CSound* GetSound(std::string sndname);
+    CSound* GetSound(const std::string sndname, const bool silent=false); // silent: no output if loading works
     void UnloadAllSounds();
 
     bool IsServer() const;

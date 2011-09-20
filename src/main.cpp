@@ -22,8 +22,8 @@
 #define SCREEN_HEIGHT       768
 #define BPP                 32
 #define FULLSCREEN          0
-#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
-//#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
+//#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
+#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
 
 int main(int argc, char** argv)
 {
@@ -88,6 +88,13 @@ int main(int argc, char** argv)
         fprintf(stderr, "Server running\n");
     }
 
+    // Startup renderer and mixer, before connecting to the client
+    // so we can give some feedback to the player while connecting
+    if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
+        return -1;
+
+    mixer.Init(); // we don't care, if it won't init
+
     fprintf(stderr, "Connecting to %s:%i\n", serveraddress, svport);
     if(!client.Connect(serveraddress, svport))
     {
@@ -95,11 +102,6 @@ int main(int argc, char** argv)
         assert(0);
         return -1;
     }
-
-    mixer.Init(); // we don't care, if it won't init
-
-    if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
-        return -1;
 
     SDL_WM_SetCaption(WINDOW_TITLE, NULL);
     SDL_ShowCursor(SDL_DISABLE);
@@ -150,7 +152,7 @@ int main(int argc, char** argv)
             svgame.Update(dt, time);
             server.Update(dt, time);
         }
-        if(client.IsConnected())
+        if(client.IsInGame())
         {
             worldcl.Update(dt, time);
         }

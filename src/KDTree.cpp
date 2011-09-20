@@ -30,9 +30,9 @@ CKDTree::~CKDTree(void)
 }
 
 #pragma warning(disable: 4244)
-bool CKDTree::Load(std::string file)
+bool CKDTree::Load(std::string file) // reading a wavefront obj file
 {
-    bool success = false; // failed to read file, if false
+    bool success = false; // failed to read file
     const char* DELIM = " \t\r\n";
     FILE* f;
     char line[2048];

@@ -24,6 +24,7 @@ struct vec3_t
 
     void Normalize(void);
     vec3_t Normalized(void) const;
+    vec3_t NormalizedFast(void) const;
     bool IsNormalized() const;
     void SetLength(float length);
 

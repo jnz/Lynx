@@ -74,11 +74,33 @@ bool CResourceManager::IsServer() const
     return !m_world->IsClient();
 }
 
+void CResourceManager::Precache(const std::string filename, const resource_type_t type)
+{
+    // only print the path for the client. does this make sense?
+    if(!IsServer())
+        fprintf(stderr, "Precache: %s\n", filename.c_str());
+
+    switch(type)
+    {
+        case LYNX_RESOURCE_TYPE_TEXTURE:
+            GetTexture(CLynx::GetBaseDirTexture() + filename, false);
+            break;
+        case LYNX_RESOURCE_TYPE_MD5:
+            GetModel(CLynx::GetBaseDirModel() + filename);
+            break;
+        case LYNX_RESOURCE_TYPE_SOUND:
+            GetSound(CLynx::GetBaseDirSound() + filename, true); // silent = true
+            break;
+        default:
+            fprintf(stderr, "Unknown resource type in precache function\n");
+            break;
+    };
+}
+
 unsigned int CResourceManager::GetTexture(const std::string texname, const bool noerrormsg)
 {
     if(IsServer())
     {
-        assert(0); // why do you call this function?
         return 0;
     }
 
@@ -112,7 +134,6 @@ bool CResourceManager::GetTextureDimension(const std::string texname,
     assert(pwidth && pheight);
     if(IsServer())
     {
-        assert(0); // why do you call this function?
         return 0;
     }
 
@@ -150,6 +171,9 @@ CModelMD5* CResourceManager::GetModel(std::string mdlname)
     std::map<std::string, CModelMD5*>::iterator iter;
     CModelMD5* model;
 
+    if(IsServer())
+        return NULL;
+    
     iter = m_modelmap.find(mdlname);
     if(iter == m_modelmap.end())
     {
@@ -182,7 +206,7 @@ void CResourceManager::UnloadAllModels()
     m_modelmap.clear();
 }
 
-CSound* CResourceManager::GetSound(std::string sndname)
+CSound* CResourceManager::GetSound(const std::string sndname, const bool silent)
 {
     if(IsServer())
         return NULL;
@@ -196,7 +220,8 @@ CSound* CResourceManager::GetSound(std::string sndname)
         sound = new CSound();
         if(sound->Load((char*)sndname.c_str()))
         {
-            fprintf(stderr, "Loaded sound: %s\n", sndname.c_str());
+            if(!silent)
+                fprintf(stderr, "Loaded sound: %s\n", sndname.c_str());
             m_soundmap[sndname] = sound;
         }
         else

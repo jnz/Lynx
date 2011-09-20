@@ -22,9 +22,10 @@ public:
     bool Connect(char* server, int port);
     void Shutdown();
 
-    bool IsConnecting() { return m_isconnecting && m_server; }
-    bool IsConnected() { return m_server && !m_isconnecting; }
-    bool IsRunning() { return (m_server != NULL); }
+    bool IsConnecting() { return m_isconnecting && m_server; } // are we trying to connect to a server?
+    bool IsConnected() { return m_server && !m_isconnecting; } // do we have a network connection
+    bool IsRunning() { return (m_server != NULL); } // if false, we are no longer connected
+    bool IsInGame() { return IsConnected() && m_world->GetBSP()->IsLoaded(); } // we are connected and playing on the server
 
     void Update(const float dt, const uint32_t ticks);
 
@@ -54,5 +55,5 @@ private:
     CWorldClient* m_world;
     CGameLogic* m_gamelogic;
 
-    uint32_t m_lastupdate;
+    uint32_t m_lastupdate; // last time we have sent the client state to the server
 };

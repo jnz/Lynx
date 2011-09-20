@@ -430,12 +430,12 @@ static void md5_calculate_tangent(const md5_vertex_t& v0,
 void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
 {
     int i, j;
-    vec3_t wv;
+    vec3_t finalVertex;
 
     /* Setup vertices */
     for(i = 0; i < mesh->num_verts; ++i)
     {
-        vec3_t finalVertex(0.0f, 0.0f, 0.0f);
+        finalVertex = vec3_t::origin;
 
         /* Calculate final vertex to draw with weights */
         for(j = 0; j < mesh->vertices[i].count; ++j)
@@ -444,7 +444,7 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
             const md5_joint_t *joint = &m_baseSkel[weight->joint];
 
             /* Calculate transformed vertex for this weight */
-            wv = joint->orient.Vec3Multiply(weight->pos);
+            const vec3_t wv = joint->orient.Vec3Multiply(weight->pos);
 
             /* The sum of all weight->bias should be 1.0 */
             finalVertex += (joint->pos + wv) * weight->bias;
@@ -527,7 +527,6 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
 void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton)
 {
     int i, j, k;
-    vec3_t wv;
 
     /* Setup vertex indices */
     for(k = 0, i = 0; i < mesh->num_tris; ++i)
@@ -537,14 +536,17 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
             m_vertex_index_buffer[k] = mesh->triangles[i].index[j];
         }
     }
-    assert(k <= m_max_tris*3);
+
+    vec3_t finalVertex;
+    vec3_t finalNormal;
+    vec3_t finalTangent;
 
     /* Setup vertices */
     for (i = 0; i < mesh->num_verts; ++i)
     {
-        vec3_t finalVertex(0.0f, 0.0f, 0.0f);
-        vec3_t finalNormal(0.0f, 0.0f, 0.0f);
-        vec3_t finalTangent(0.0f, 0.0f, 0.0f);
+        finalVertex = vec3_t::origin;
+        finalNormal = vec3_t::origin;
+        finalTangent = vec3_t::origin;
 
         /* Calculate final vertex to draw with weights */
         for (j = 0; j < mesh->vertices[i].count; ++j)
@@ -553,7 +555,7 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
             const md5_joint_t *joint = &skeleton[weight->joint];
 
             /* Calculate transformed vertex for this weight */
-            wv = joint->orient.Vec3Multiply(weight->pos);
+            const vec3_t wv = joint->orient.Vec3Multiply(weight->pos);
 
             /* The sum of all weight->bias should be 1.0 */
             finalVertex += (joint->pos + wv) * weight->bias;
@@ -562,8 +564,8 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
         }
 
         m_vertex_buffer[i].v = finalVertex;
-        m_vertex_buffer[i].n = finalNormal.Normalized();
-        m_vertex_buffer[i].t = finalTangent.Normalized();
+        m_vertex_buffer[i].n = finalNormal;
+        m_vertex_buffer[i].t = finalTangent;
         m_vertex_buffer[i].w = mesh->vertices[i].w;
         m_vertex_buffer[i].tu = mesh->vertices[i].u;
         m_vertex_buffer[i].tv = mesh->vertices[i].v;
@@ -650,6 +652,7 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                 {
                     // MD5 only stores x, y and z of the unit length quaternion
                     joint->orient.ComputeW(); // w = -sqrt(1 - x*x + y*y + z*z)
+
                     joint->pos.x =  tmppos.x * MD5_SCALE;
                     joint->pos.y =  tmppos.y * MD5_SCALE;
                     joint->pos.z =  tmppos.z * MD5_SCALE;
@@ -1042,14 +1045,26 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
             {
                 /* Read whole line */
                 fgets (buff, sizeof (buff), f);
+                vec3_t tmpposMin, tmpposMax;
 
                 /* Read bounding box */
                 sscanf (buff, " ( %f %f %f ) ( %f %f %f )",
-                        &anim->bboxes[i].min.v[0], &anim->bboxes[i].min.v[1],
-                        &anim->bboxes[i].min.v[2], &anim->bboxes[i].max.v[0],
-                        &anim->bboxes[i].max.v[1], &anim->bboxes[i].max.v[2]);
-                anim->bboxes[i].min *= MD5_SCALE;
-                anim->bboxes[i].max *= MD5_SCALE;
+                        &tmpposMin.v[0], &tmpposMin.v[1],
+                        &tmpposMin.v[2], &tmpposMax.v[0],
+                        &tmpposMax.v[1], &tmpposMax.v[2]);
+
+                //anim->bboxes[i].min.x =  tmpposMin.y * MD5_SCALE;
+                //anim->bboxes[i].min.y =  tmpposMin.z * MD5_SCALE;
+                //anim->bboxes[i].min.z = -tmpposMin.x * MD5_SCALE;
+                //anim->bboxes[i].max.x =  tmpposMax.y * MD5_SCALE;
+                //anim->bboxes[i].max.y =  tmpposMax.z * MD5_SCALE;
+                //anim->bboxes[i].max.z = -tmpposMax.x * MD5_SCALE;
+                anim->bboxes[i].min.x =  tmpposMin.x * MD5_SCALE;
+                anim->bboxes[i].min.y =  tmpposMin.y * MD5_SCALE;
+                anim->bboxes[i].min.z =  tmpposMin.z * MD5_SCALE;
+                anim->bboxes[i].max.x =  tmpposMax.x * MD5_SCALE;
+                anim->bboxes[i].max.y =  tmpposMax.y * MD5_SCALE;
+                anim->bboxes[i].max.z =  tmpposMax.z * MD5_SCALE;
             }
         }
         else if(strncmp (buff, "baseframe {", 10) == 0)
@@ -1058,15 +1073,19 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
             {
                 /* Read whole line */
                 fgets (buff, sizeof (buff), f);
+                vec3_t tmppos;
 
                 /* Read base frame joint */
                 if(sscanf (buff, " ( %f %f %f ) ( %f %f %f )",
-                            &baseFrame[i].pos.v[0], &baseFrame[i].pos.v[1],
-                            &baseFrame[i].pos.v[2], &baseFrame[i].orient.x,
-                            &baseFrame[i].orient.y, &baseFrame[i].orient.z) == 6)
+                            &tmppos.v[0], &tmppos.v[1], &tmppos.v[2],
+                            &baseFrame[i].orient.x, &baseFrame[i].orient.y,
+                            &baseFrame[i].orient.z) == 6)
                 {
                     /* Compute the w component */
-                    baseFrame[i].pos *= MD5_SCALE;
+                    baseFrame[i].pos = tmppos * MD5_SCALE;
+                    //baseFrame[i].pos.x =  tmppos.y * MD5_SCALE;
+                    //baseFrame[i].pos.y =  tmppos.z * MD5_SCALE;
+                    //baseFrame[i].pos.z = -tmppos.x * MD5_SCALE;
                     baseFrame[i].orient.ComputeW();
                 }
             }

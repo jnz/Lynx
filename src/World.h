@@ -106,47 +106,47 @@ public:
     CWorld(void);
     virtual ~CWorld(void);
 
-    virtual bool IsClient() const { return false; } // If the world is not a client, some operations are skipped, e.g. loading textures
+    virtual bool    IsClient() const { return false; } // If the world is not a client, some operations are skipped, e.g. loading textures
 
-    virtual void Update(const float dt, const uint32_t ticks); // Calculate a new frame.
+    virtual void    Update(const float dt, const uint32_t ticks); // Calculate a new frame.
 
-    void    AddObj(CObj* obj, bool inthisframe=false); // Add object to world. World will free the memory of CObj*.
-    void    DelObj(int objid); // Remove object from the world. Get deleted at the end of the frame.
+    void            AddObj(CObj* obj, bool inthisframe=false); // Add object to world. World will free the memory of CObj*.
+    void            DelObj(int objid); // Remove object from the world. Get deleted at the end of the frame.
 
-    CObj*   GetObj(int objid); // Search for object with this id.
+    CObj*           GetObj(int objid); // Search for object with this id.
 
-    int     GetObjCount() const { return (int)m_objlist.size(); } // Number of currently active objects.
-    OBJITER ObjBegin() { return m_objlist.begin(); } // Begin Iterator
-    OBJITER ObjEnd() { return m_objlist.end(); } // End Iterator
+    int             GetObjCount() const { return (int)m_objlist.size(); } // Number of currently active objects.
+    OBJITER         ObjBegin() { return m_objlist.begin(); } // Begin Iterator
+    OBJITER         ObjEnd() { return m_objlist.end(); } // End Iterator
 
     const std::vector<CObj*> GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const; // List is only valid for this frame!
 
-    virtual bool Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Serialize the world state to a byte stream. Returns true if the world has changed compared to the oldstate.
+    virtual bool    Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Serialize the world state to a byte stream. Returns true if the world has changed compared to the oldstate.
 
-    bool    LoadLevel(const std::string path); // Load the level from a .lbsp file
+    bool            LoadLevel(const std::string path); // Load the level from a .lbsp file
     const virtual CBSPLevel* GetBSP() const { return &m_bsptree; }
-    uint32_t   GetLeveltime() const { return state.leveltime; } // Leveltime in ms. Starts at 0 ms.
-    uint32_t   GetWorldID() const { return state.worldid; } // WorldID get incremented by 1 for each Update() call
+    uint32_t        GetLeveltime() const { return state.leveltime; } // Leveltime in ms. Starts at 0 ms.
+    uint32_t        GetWorldID() const { return state.worldid; } // WorldID get incremented by 1 for each Update() call
 
     virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
-    void    ObjMove(CObj* obj, const float dt) const; // Move object and perform collision detection with level geometry
+    void            ObjMove(CObj* obj, const float dt) const; // Move object and perform collision detection with level geometry
 
-    bool    TraceObj(world_obj_trace_t* trace, const float maxdist); // returns true if something is hit
+    bool            TraceObj(world_obj_trace_t* trace, const float maxdist); // returns true if something is hit
 
-    world_state_t GetWorldState();
+    world_state_t   GetWorldState();
 
 protected:
     CResourceManager m_resman;
-    world_state_t state;
-    uint32_t    m_leveltimestart;
-    CBSPLevel m_bsptree;
+    world_state_t   state;
+    uint32_t        m_leveltimestart;
+    CBSPLevel       m_bsptree;
 
-    OBJMAPTYPE m_objlist;
-    void    UpdatePendingObjs(); // Deletes objects and adds new objects (from m_addobj and m_removeobj list)
-    void    DeleteAllObjs(); // Delete everything
+    OBJMAPTYPE      m_objlist;
+    void            UpdatePendingObjs(); // Deletes objects and adds new objects (from m_addobj and m_removeobj list)
+    void            DeleteAllObjs(); // Delete everything
 
     std::list<CObj*> m_addobj; // Objects that will be added by UpdatePendingObjs
-    std::list<int> m_removeobj; // Objects that will be deleted by UpdatePendingObjs
+    std::list<int>  m_removeobj; // Objects that will be deleted by UpdatePendingObjs
 };
 

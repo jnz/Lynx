@@ -32,7 +32,7 @@ public:
     bool        Load(std::string file, CResourceManager* resman);
     void        Unload();
 
-    bool        IsLoaded() const { return m_vertex != NULL; }
+    bool        IsLoaded() const { return (m_trianglecount > 0); }
 
     std::string GetFilename() const { return m_filename; }
     int         GetLeafCount() const { return 0; }

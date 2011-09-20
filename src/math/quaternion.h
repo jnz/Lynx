@@ -13,15 +13,7 @@ struct quaternion_t
         *this = identity;
     }
 
-    quaternion_t(float _x, float _y, float _z, float _w)
-    {
-        x=_x; y=_y; z=_z; w=_w;
-    }
-
-    quaternion_t(const quaternion_t& src)
-    {
-        x=src.x; y=src.y; z=src.z; w=src.w;
-    }
+    quaternion_t(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
 
     quaternion_t(const vec3_t& v, float a) // v = axis, a = angle (rad)
     {

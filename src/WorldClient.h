@@ -3,16 +3,18 @@
 #include "ClientHUD.h"
 
 /*
+    FIXME: translate this
+
     CWorldClient ist dafür zuständig, den neuesten Zustand
     der Welt, die vom Server aus gesendet wird zu sammeln.
     D.h. CWorldClient stellt den aktuellsten Zustand der
     Server-Welt dar. Der Zustand setzt sich aus den gesammelten
     Delta-Msgs vom Server zusammen.
     Allerdings ist dieser aktuelle Zustand
-    ungünstig zum Rendern, da falls die Netzwerk-Verzögerungen 
+    ungünstig zum Rendern, da falls die Netzwerk-Verzögerungen
     schwanken es zu einer unregelmäßigen Darstellung kommt.
 
-    Sobald ein Welt-Zustand (world_client_state_t) 
+    Sobald ein Welt-Zustand (world_client_state_t)
     komplett ist, wird er im History-Buffer gespeichert.
     Diese Zustände im History Buffer werden mit ca. 100 ms
     Verzögerung interpoliert und können über

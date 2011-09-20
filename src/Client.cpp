@@ -60,6 +60,9 @@ bool CClient::Connect(char* server, int port)
     }
     m_isconnecting = true;
 
+    // Precaching important resources while connecting
+    m_gamelogic->Precache(m_world->GetResourceManager());
+
     return true;
 }
 

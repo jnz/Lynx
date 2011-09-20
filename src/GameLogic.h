@@ -17,6 +17,8 @@ public:
 
     virtual void ClientMove(CObj* clientobj, const std::vector<std::string>& clcmdlist); // Wird von CClient mitgenutzt
     virtual void ClientMouse(CObj* clientobj, float lat, float lon);
+    
+    virtual void Precache(CResourceManager* resman) {} // gets called by InitGame to preload resources
 
 protected:
     virtual void Notify(EventNewClientConnected);

@@ -13,7 +13,10 @@ public:
     virtual bool InitGame(const char* level);
     virtual void Update(const float dt, const uint32_t ticks);
 
+    virtual void Precache(CResourceManager* resman); // preload resources
+
 protected:
+
     virtual void Notify(EventNewClientConnected);
     virtual void Notify(EventClientDisconnected);
 

@@ -61,6 +61,12 @@ vec3_t vec3_t::Normalized(void) const
     return vec3_t(x*ilen, y*ilen, z*ilen);
 }
 
+vec3_t vec3_t::NormalizedFast(void) const
+{
+    const float ilen = 1.0f/AbsFast();
+    return vec3_t(x*ilen, y*ilen, z*ilen);
+}
+
 bool vec3_t::IsNormalized() const
 {
     return fabsf(AbsSquared()-1.0f) < lynxmath::EPSILON;

@@ -55,6 +55,8 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     if(!f)
         return false;
 
+    fprintf(stderr, "Loading level: %s\n", file.c_str());
+
     Unload();
     // This code has three sections:
     // Reading the header
@@ -233,9 +235,6 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         fprintf(stderr, "BSP: Not enough memory for index buffer array\n");
         return false;
     }
-
-    // Prepare indices grouped by texture
-    fprintf(stderr, "Creating index buffer\n");
 
     // we use this normal map, if no texture_bump.jpg is available
     int texnormal_fallback = resman->GetTexture(CLynx::GetBaseDirTexture() + "normal.jpg");
@@ -674,8 +673,8 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
                     minindex = i;
                 }
             }
-            //if(!needs_edge_test) // FIXME activate again?
-                //continue;
+            if(!needs_edge_test)
+                continue;
             if(GetEdgeIntersection(triangleindex,
                                    trace->start,
                                    trace->dir,

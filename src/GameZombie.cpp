@@ -17,6 +17,43 @@ CGameZombie::~CGameZombie(void)
 
 }
 
+// Precache functions
+struct gamezombie_precache_t
+{
+    std::string name; // descriptive name
+    std::string path; // path to resource
+    resource_type_t type; // see ResourceManager.h
+};
+
+static const gamezombie_precache_t g_game_zombie_precache[] =
+{
+    {"rocket viewmodel", "rocket/rocketlauncher.md5mesh", LYNX_RESOURCE_TYPE_MD5},
+    {"player model", "marine/marine.md5mesh", LYNX_RESOURCE_TYPE_MD5},
+    {"zombie model", "pinky/pinky.md5mesh", LYNX_RESOURCE_TYPE_MD5},
+    {"rifle sound", "rifle.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster hit sound 1", "monsterhit1.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster hit sound 2", "monsterhit2.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster hit sound 3", "monsterhit3.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster death sound", "monsterdie.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster startle sound", "monsterstartle1.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster startle sound", "monsterstartle2.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster startle sound", "monsterstartle3.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster attack sound 1", "monsterattack1.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"monster attack sound 2", "monsterattack2.ogg", LYNX_RESOURCE_TYPE_SOUND},
+
+    {"normal texture", "normal.jpg", LYNX_RESOURCE_TYPE_TEXTURE}
+};
+static const int g_game_zombie_precache_count = sizeof(g_game_zombie_precache) / sizeof(g_game_zombie_precache[0]);
+
+void CGameZombie::Precache(CResourceManager* resman)
+{
+    for(int i=0;i<g_game_zombie_precache_count;i++)
+    {
+        resman->Precache(g_game_zombie_precache[i].path,
+                         g_game_zombie_precache[i].type);
+    }
+}
+
 bool CGameZombie::InitGame(const char* level)
 {
     // Loading level
@@ -35,15 +72,11 @@ bool CGameZombie::InitGame(const char* level)
         return false;
     }
 
-    // n Testobjekte erstellen
+    // Spawn some zombies
     for(int i=0;i<1;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
         CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
-
-        fprintf(stderr, "Spawning zombie at: ");
-        point.point.Print();
-        fprintf(stderr, "\n");
 
         zombie->SetOrigin(point.point);
         zombie->SetRot(point.rot);
@@ -53,6 +86,7 @@ bool CGameZombie::InitGame(const char* level)
     return true;
 }
 
+// New client connected
 void CGameZombie::Notify(EventNewClientConnected e)
 {
     CGameObjPlayer* player;
@@ -116,6 +150,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
             OBJITER iter2;
             CGameObj* obj2;
             // FIXME use GameNearObj function?
+            // FIXME this code sucks
             for(iter2 = GetWorld()->ObjBegin();iter2!=GetWorld()->ObjEnd();iter2++)
             {
                 obj2 = (CGameObj*)(*iter2).second;
@@ -124,11 +159,10 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 if(obj2->GetHealth() <= 0) // don't push dead bodies
                     continue;
 
-                // FIXME this code sucks
                 const float force = 75.0f; // not really a force, where f = ma
                 vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
-                float difflen = diff.AbsSquared();
-                if(difflen > 25.0f)
+                float difflen = diff.AbsFast();
+                if(difflen > 5.0f)
                     continue;
                 difflen = lynxmath::SqrtFast(difflen); // sqrtfast is ok here
                 if(difflen < 0.75f)

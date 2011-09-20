@@ -162,15 +162,16 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         fprintf(stderr, "Init shadow mapping failed\n");
         m_useShadows = false;
     }
-    fprintf(stderr, "Shadow mapping active\n");
+    else
+        fprintf(stderr, "Shadow mapping active\n");
 
+    // loading the crosshair
     std::string pathcross = CLynx::GetBaseDirTexture() + "crosshair.tga";
     m_crosshair = m_world->GetResourceManager()->GetTexture(pathcross);
     if(m_crosshair == 0)
         fprintf(stderr, "No crosshair found: %s\n", pathcross.c_str());
     m_world->GetResourceManager()->GetTextureDimension(pathcross,
              &m_crosshair_width, &m_crosshair_height);
-    fprintf(stderr, "Crosshair loaded: %ix%i\n", m_crosshair_width, m_crosshair_height);
 
     return true;
 }
