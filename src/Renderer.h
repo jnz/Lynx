@@ -12,6 +12,7 @@ public:
     void Shutdown();
 
     void Update(const float dt, const uint32_t ticks);
+    void SwapBuffer() const;
 
     // Public Stats (FIXME)
     int stat_obj_visible;

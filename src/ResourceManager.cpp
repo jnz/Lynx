@@ -58,7 +58,6 @@ CResourceManager::CResourceManager(CWorld* world)
 {
     // Don't call stuff from CWorld* world from here,
     // the world is not ready at this stage.
-    assert(world);
     m_world = world;
 }
 
@@ -71,7 +70,10 @@ CResourceManager::~CResourceManager(void)
 
 bool CResourceManager::IsServer() const
 {
-    return !m_world->IsClient();
+    if(m_world)
+        return !m_world->IsClient();
+    else
+        return false;
 }
 
 void CResourceManager::Precache(const std::string filename, const resource_type_t type)

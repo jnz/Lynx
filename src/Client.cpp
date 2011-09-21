@@ -227,13 +227,13 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     *forcesend = false;
     bool firedown = false;
 
-    if(keystate[SDLK_UP] || keystate[SDLK_w])
+    if(/*keystate[SDLK_UP] || */keystate[SDLK_w])
         clcmdlist->push_back("+mf");
-    if(keystate[SDLK_DOWN] || keystate[SDLK_s])
+    if(/*keystate[SDLK_DOWN] || */keystate[SDLK_s])
         clcmdlist->push_back("+mb");
-    if(keystate[SDLK_LEFT] || keystate[SDLK_a])
+    if(/*keystate[SDLK_LEFT] || */keystate[SDLK_a])
         clcmdlist->push_back("+ml");
-    if(keystate[SDLK_RIGHT] || keystate[SDLK_d])
+    if(/*keystate[SDLK_RIGHT] || */keystate[SDLK_d])
         clcmdlist->push_back("+mr");
     if(keystate[SDLK_SPACE])
         clcmdlist->push_back("+jmp");

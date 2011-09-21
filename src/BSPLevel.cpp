@@ -293,6 +293,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     if(errcode != GL_NO_ERROR)
     {
         fprintf(stderr, "BSP: Failed to bind VBO: %i\n", errcode);
+        assert(0);
         Unload();
         return false;
     }

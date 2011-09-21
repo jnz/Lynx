@@ -466,7 +466,10 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glPopMatrix();
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
+}
 
+void CRenderer::SwapBuffer() const
+{
     SDL_GL_SwapBuffers();
 }
 
