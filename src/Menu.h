@@ -29,7 +29,8 @@ public:
 
     void          KeyDown();
     void          KeyUp();
-    void          KeyEnter();
+    void          KeyEnter(bool* should_we_quit);
+    void          KeyEsc();
 
 protected:
     void          DrawMenu() const;
@@ -54,5 +55,11 @@ private:
     bool              m_visible;
     unsigned int      m_phy_width; // physical game window width in pixel
     unsigned int      m_phy_height; // physical game window height in pixel
+
+    // constant resources
+    menu_bitmap_t     m_menu_background;
+    menu_bitmap_t     m_menu_lynx;
+    menu_bitmap_t     m_menu_bullet;
+
 };
 

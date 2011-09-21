@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
+#include <vector>
 #include "Menu.h"
 
 #ifdef _DEBUG
@@ -13,15 +14,20 @@
 
 //-Menu Global Stuff----------------------------------------------------
 
+// All coordinates are hardcoded for a virtual screen, the real
+// coordinates are calculated according to the current physical
+// screen resolution.
+
 #define VIRTUAL_WIDTH  800
 #define VIRTUAL_HEIGHT 600
 
 typedef enum
 {
-    MENU_FUNC_QUIT,
+    MENU_FUNC_HOST=1,
     MENU_FUNC_JOIN,
-    MENU_FUNC_HOST,
-    MENU_FUNC_CREDITS
+    MENU_FUNC_CREDITS,
+    MENU_FUNC_QUIT,
+    MENU_FUNC_MAIN
 } menu_function_t;
 
 typedef enum
@@ -32,55 +38,43 @@ typedef enum
 
 struct menu_item_t
 {
-    char* bitmappath;
-    menu_bitmap_t* bitmap;
+    // constructor for easy creation
+    menu_item_t(menu_bitmap_t _bitmap,
+                menu_item_type_t _type,
+                menu_function_t _func,
+                float _x,
+                float _y) :
+                       bitmap(_bitmap),
+                       type(_type),
+                       func(_func),
+                       x(_x),
+                       y(_y) {}
+
+    menu_bitmap_t bitmap;
     menu_item_type_t type;
     menu_function_t func;
+    float x;
+    float y;
 };
 
 struct menu_t
 {
-    //menu_item_t items[];
-    int itemcount;
+    std::vector<menu_item_t> items;  // selectable items
+    std::vector<menu_item_t> images; // static images
+    int parent;
 };
 
 enum
 {
-    MENU_MAIN,
-    MENU_CONNECT,
+    MENU_MAIN = 0,
+    MENU_HOST,
+    MENU_JOIN,
     MENU_CREDITS,
+    MENU_COUNT // make this the last item
 };
 
-menu_bitmap_t g_menu_background;
-menu_bitmap_t g_menu_lynx;
+std::vector<menu_t> g_menus; // yeah, we make this global
 
-menu_bitmap_t g_menu_bullet;
-
-menu_bitmap_t g_menu0_host;
-menu_bitmap_t g_menu0_join;
-menu_bitmap_t g_menu0_credits;
-menu_bitmap_t g_menu0_quit;
-
-//menu_item_t g_main_menu_items[] =
-//{
-    //{"path", NULL, MENU_BUTTON, MENU_FUNC_HOST},
-    //{"path", NULL, MENU_BUTTON, MENU_FUNC_JOIN}
-//};
-
-//menu_t g_main_menu[] =
-//{
-    //g_main_menu_items,
-    //4
-//};
-
-//menu_t g_menus[] =
-//{
-    //g_main_menu
-//};
-
-#define MENU_BUTTONS_OFFSET_X    275.0f
-#define MENU_BUTTONS_OFFSET_Y    235.0f
-#define MENU_BUTTONS_SPACE       1.0f
 
 //----------------------------------------------------------------------
 
@@ -112,50 +106,191 @@ void CMenu::Update(const float dt, const uint32_t ticks)
 
 void CMenu::DrawMenu() const
 {
-    DrawRect(g_menu_background.texture,
+    // Draw background
+    DrawRect(m_menu_background.texture,
              0, 0,
              m_phy_width,
              m_phy_height);
 
-    DrawRectVirtual(g_menu_lynx, 80.0f, 80.0f);
+    // Draw lynx logo
+    DrawRectVirtual(m_menu_lynx, 80.0f, 80.0f);
 
-    if(m_cur_menu == MENU_MAIN)
+    int i;
+    const menu_t& menu = g_menus[m_cur_menu];
+
+    // Draw static images
+    const int images = menu.images.size();
+    for(i = 0; i < images; i++)
     {
-        float y = MENU_BUTTONS_OFFSET_Y;
-
-        DrawRectVirtual(g_menu0_host,    MENU_BUTTONS_OFFSET_X, y); y+= g_menu0_host.height + MENU_BUTTONS_SPACE;
-        DrawRectVirtual(g_menu0_join,    MENU_BUTTONS_OFFSET_X, y); y+= g_menu0_join.height + MENU_BUTTONS_SPACE;
-        DrawRectVirtual(g_menu0_credits, MENU_BUTTONS_OFFSET_X, y); y+= g_menu0_credits.height + MENU_BUTTONS_SPACE;
-        DrawRectVirtual(g_menu0_quit,    MENU_BUTTONS_OFFSET_X, y); y+= g_menu0_quit.height + MENU_BUTTONS_SPACE;
-
-        DrawRectVirtual(g_menu_bullet,
-                        MENU_BUTTONS_OFFSET_X - g_menu_bullet.width,
-                        MENU_BUTTONS_OFFSET_Y + g_menu0_host.height*m_cursor );
+        const menu_item_t& item = menu.images[i];
+        DrawRectVirtual(item.bitmap, item.x, item.y);
     }
+
+    // Draw selectable (active) items
+    const int items = menu.items.size();
+    for(i = 0; i < items; i++)
+    {
+        const menu_item_t& item = menu.items[i];
+        DrawRectVirtual(item.bitmap, item.x, item.y);
+    }
+
+    // Draw cursor
+    const menu_item_t& active_item = menu.items[m_cursor];
+    const float bx = active_item.x - m_menu_bullet.width - 2.0f;
+    const float by = active_item.y + active_item.bitmap.height*0.5f - m_menu_bullet.height*0.5f;
+    DrawRectVirtual(m_menu_bullet, bx, by);
 }
 
 bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_height)
 {
     int error = 0; // if this ends up larger than 0, some texture was not loaded
 
+    m_phy_width = physical_width;
+    m_phy_height = physical_height;
+
+    g_menus.resize(MENU_COUNT);
+
+    // --------resources -------------------
+    menu_bitmap_t menu_return;
+
+    menu_bitmap_t menu0_host;
+    menu_bitmap_t menu0_join;
+    menu_bitmap_t menu0_credits;
+    menu_bitmap_t menu0_quit;
+
+    menu_bitmap_t menu2_creditsStatic;
+
     // loading resources -------------------
-    error += LoadBitmap("background.tga" , &g_menu_background);
-    error += LoadBitmap("lynx.tga"       , &g_menu_lynx);
-    error += LoadBitmap("bullet.tga"     , &g_menu_bullet);
-    error += LoadBitmap("host.tga"       , &g_menu0_host);
-    error += LoadBitmap("join.tga"       , &g_menu0_join);
-    error += LoadBitmap("credits.tga"    , &g_menu0_credits);
-    error += LoadBitmap("quit.tga"       , &g_menu0_quit);
+    error += LoadBitmap("background.png"      , &m_menu_background);
+    error += LoadBitmap("lynx.tga"            , &m_menu_lynx);
+    error += LoadBitmap("bullet.tga"          , &m_menu_bullet);
+
+    error += LoadBitmap("return.tga"          , &menu_return);
+
+    error += LoadBitmap("host.tga"            , &menu0_host);
+    error += LoadBitmap("join.tga"            , &menu0_join);
+    error += LoadBitmap("credits.tga"         , &menu0_credits);
+    error += LoadBitmap("quit.tga"            , &menu0_quit);
+
+    error += LoadBitmap("creditsStatic.tga"   , &menu2_creditsStatic);
 
     if(error > 0)
     {
         fprintf(stderr, "Failed to load menu resources.\n");
         return false;
     }
-    // -------------------------------------
 
-    m_phy_width = physical_width;
-    m_phy_height = physical_height;
+    float x = 275.0f;
+    float y = 235.0f;
+
+    // -------------------------------------
+    // Main menu
+
+    menu_t menu0; // main
+
+    menu0.parent = -1; // no parent
+    menu0.items.push_back(menu_item_t(
+                menu0_host,
+                MENU_BUTTON,
+                MENU_FUNC_HOST,
+                x, y)); y += menu0_host.height;
+    menu0.items.push_back(menu_item_t(
+                menu0_join,
+                MENU_BUTTON,
+                MENU_FUNC_JOIN,
+                x, y)); y += menu0_join.height;
+    menu0.items.push_back(menu_item_t(
+                menu0_credits,
+                MENU_BUTTON,
+                MENU_FUNC_CREDITS,
+                x, y)); y += menu0_credits.height;
+    menu0.items.push_back(menu_item_t(
+                menu0_quit,
+                MENU_BUTTON,
+                MENU_FUNC_QUIT,
+                x, y));
+
+    g_menus[MENU_MAIN] = menu0;
+
+    // -------------------------------------
+    // Host menu
+    y = 235.0f;
+
+    menu_t menu1_host; // host a game
+
+    menu1_host.parent = MENU_MAIN; // parent is main menu
+    menu1_host.items.push_back(menu_item_t(
+                menu0_host,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu0_host.height;
+    menu1_host.items.push_back(menu_item_t(
+                menu0_credits,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu0_credits.height;
+    menu1_host.items.push_back(menu_item_t(
+                menu0_join,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu0_join.height;
+    menu1_host.items.push_back(menu_item_t(
+                menu0_quit,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y));
+
+    g_menus[MENU_HOST] = menu1_host;
+
+    // -------------------------------------
+    // Join menu
+    y = 235.0f;
+
+    menu_t menu2_join; // join a game
+
+    menu2_join.parent = MENU_MAIN; // parent is main menu
+    menu2_join.items.push_back(menu_item_t(
+                menu0_join,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu0_join.height;
+    menu2_join.items.push_back(menu_item_t(
+                menu0_host,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu0_host.height;
+    menu2_join.items.push_back(menu_item_t(
+                menu0_credits,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu0_credits.height;
+    menu2_join.items.push_back(menu_item_t(
+                menu0_quit,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y));
+
+    g_menus[MENU_JOIN] = menu2_join;
+
+    // -------------------------------------
+    // Credits menu
+    y = 235.0f;
+
+    menu_t menu3_credits; // display some credits
+
+    menu3_credits.parent = MENU_MAIN; // parent is main menu
+    menu3_credits.images.push_back(menu_item_t(
+                menu2_creditsStatic,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu2_creditsStatic.height;
+    menu3_credits.items.push_back(menu_item_t(
+                menu_return,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y)); y += menu_return.height;
+
+    g_menus[MENU_CREDITS] = menu3_credits;
 
     return true;
 }
@@ -250,21 +385,83 @@ int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
 
 void CMenu::KeyDown()
 {
-    int items = 4;
+    if(!m_visible)
+        return;
+
+    const menu_t& menu = g_menus[m_cur_menu];
+    const int items = (int)menu.items.size();
 
     m_cursor = ++m_cursor%items;
 }
 
 void CMenu::KeyUp()
 {
-    int items = 4;
+    if(!m_visible)
+        return;
+
+    const menu_t& menu = g_menus[m_cur_menu];
+    const int items = (int)menu.items.size();
 
     m_cursor--;
     if(m_cursor < 0)
         m_cursor = items-1;
 }
 
-void CMenu::KeyEnter()
+void CMenu::KeyEnter(bool* should_we_quit)
 {
+    *should_we_quit = false;
 
+    if(!m_visible)
+        return;
+
+    const menu_t& menu = g_menus[m_cur_menu];
+    const menu_item_t& item = menu.items[m_cursor];
+    switch(item.func)
+    {
+        case MENU_FUNC_MAIN: // goto main menu
+            m_cur_menu = MENU_MAIN;
+            m_cursor = 0;
+            break;
+        case MENU_FUNC_HOST: // host a game dialog
+            m_cur_menu = MENU_HOST;
+            m_cursor = 0;
+            break;
+        case MENU_FUNC_JOIN: // join a game dialog
+            m_cur_menu = MENU_JOIN;
+            m_cursor = 0;
+            break;
+        case MENU_FUNC_CREDITS: // credits screen
+            m_cur_menu = MENU_CREDITS;
+            m_cursor = 0;
+            break;
+        case MENU_FUNC_QUIT: // quit game
+            *should_we_quit = true;
+            break;
+        default:
+            assert(0);
+            break;
+    }
 }
+
+void CMenu::KeyEsc()
+{
+    if(!m_visible) // invisible, make it active
+    {
+        Toggle();
+        return;
+    }
+
+    // go back one screen if not in main menu
+    // or, if in main menu: hide menu
+    const menu_t& menu = g_menus[m_cur_menu];
+
+    if(menu.parent == -1)
+    {
+        Toggle();
+        return;
+    }
+
+    m_cur_menu = menu.parent;
+    m_cursor = 0;
+}
+

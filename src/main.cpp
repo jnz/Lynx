@@ -23,8 +23,8 @@
 #define SCREEN_HEIGHT       768
 #define BPP                 32
 #define FULLSCREEN          0
-//#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
-#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
+#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
+//#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
 
 int main(int argc, char** argv)
 {
@@ -118,6 +118,8 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    bool should_we_quit = false; // set by CMenu functions
+
     SDL_WM_SetCaption(WINDOW_TITLE, NULL);
     SDL_ShowCursor(SDL_DISABLE);
     SDL_WM_GrabInput(SDL_GRAB_ON);
@@ -147,7 +149,7 @@ int main(int argc, char** argv)
                 switch(event.key.keysym.sym)
                 {
                 case SDLK_ESCAPE:
-                    menu.Toggle();
+                    menu.KeyEsc();
                     break;
                 case SDLK_F10:
                     run = 0;
@@ -157,6 +159,11 @@ int main(int argc, char** argv)
                     break;
                 case SDLK_UP:
                     menu.KeyUp();
+                    break;
+                case SDLK_RETURN:
+                    menu.KeyEnter(&should_we_quit);
+                    if(should_we_quit)
+                        run = 0;
                     break;
                 default:
                     break;
