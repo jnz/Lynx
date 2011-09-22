@@ -58,7 +58,7 @@ set(lynx3d_SOURCES BSPLevel.cpp Client.cpp ClientHUD.cpp ClientInfo.cpp
     ParticleSystem.cpp ParticleSystemBlood.cpp ParticleSystemExplosion.cpp
     ParticleSystemDust.cpp Renderer.cpp ResourceManager.cpp Server.cpp
     Stream.cpp Sound.cpp Think.cpp World.cpp WorldClient.cpp lynx.cpp
-    ModelMD5.cpp lynxsys.cpp Menu.cpp main.cpp)
+    ModelMD5.cpp lynxsys.cpp Menu.cpp Font.cpp main.cpp)
 
 set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameLogic.cpp
     GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp GameZombie.cpp

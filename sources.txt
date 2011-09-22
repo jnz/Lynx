@@ -1,4 +1,7 @@
-﻿Monster Sound Pack, Volume 1 www.opengameart.org by Ogrebane.
+﻿Lynx is using resources from the following sources:
+---------------------------------------------------
+
+Monster Sound Pack, Volume 1 www.opengameart.org by Ogrebane.
 http://opengameart.org/content/fire-spell-explosion
 
 Sponza Atrium model by Marko Dabrovic.
@@ -7,5 +10,8 @@ SOIL texture loading library by Jonathan Dummer.
 
 Tangent vector calculation code by Eric Lengyel.
 
-MP5 model by the Action Quake 2 team.
+Doom 3 md5mesh: pinky, marine and rocket launcher.
+
+Clint Bellanger's bitmap font from opengameart.
+http://opengameart.org/content/bitmap-font
 

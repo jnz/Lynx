@@ -2,6 +2,7 @@
 
 #include "Menu.h"
 #include "ResourceManager.h"
+#include "Font.h"
 
 // this struct is passed from the main control (main.cpp)
 // to the menu, so that the menu can create a game, join
@@ -35,6 +36,8 @@ typedef enum
     MENU_TEXT_FIELD
 } menu_item_type_t;
 
+#define MENU_MAX_TEXT_LEN     64
+
 // OpenGL texture + dimension
 struct menu_bitmap_t
 {
@@ -46,7 +49,7 @@ struct menu_bitmap_t
 // every menu has several items
 struct menu_item_t
 {
-    // constructor for easy creation
+    // constructor for button creation
     menu_item_t(menu_bitmap_t _bitmap,
                 menu_item_type_t _type,
                 menu_function_t _func,
@@ -56,13 +59,34 @@ struct menu_item_t
                        type(_type),
                        func(_func),
                        x(_x),
-                       y(_y) {}
+                       y(_y) { }
+    // constructor for textfield creation (extra parameters for text and text
+    // offset)
+    menu_item_t(menu_bitmap_t _bitmap,
+                menu_item_type_t _type,
+                menu_function_t _func,
+                float _x,
+                float _y,
+                const std::string _text,
+                float _textoffset_x,
+                float _textoffset_y) :
+                       bitmap(_bitmap),
+                       type(_type),
+                       func(_func),
+                       x(_x),
+                       y(_y),
+                       text(_text),
+                       textoffset_x(_textoffset_x),
+                       textoffset_y(_textoffset_y) { }
 
     menu_bitmap_t bitmap;
     menu_item_type_t type;
     menu_function_t func;
     float x;
     float y;
+    std::string text; // only used for text field items
+    float textoffset_x; // only used for text field items:
+    float textoffset_y; // draw inner text with this offset. 10 px or something is reasonable
 };
 
 // every menu has items (something the user can interact with)
@@ -99,11 +123,16 @@ public:
     void          KeyUp();
     void          KeyEnter();
     void          KeyEsc();
+    void          KeyAscii(unsigned char val, bool shift, bool ctrl);
+    void          KeyBackspace();
 
 protected:
     void          RenderGL() const;
 
     void          DrawMenu() const;
+    void          DrawFontVirtual(const std::string text,
+                                  const float x,
+                                  const float y) const;
     void          DrawRectVirtual(const menu_bitmap_t& bitmap,
                                   const float x,
                                   const float y) const; // aligned on a virtual screen (800x600)
@@ -119,6 +148,9 @@ protected:
 
     int               m_cur_menu; // current menu
     int               m_cursor; // current selected element
+
+    CFont             m_font; // To draw some text
+
 private:
     CResourceManager* m_resman;
 

@@ -23,8 +23,8 @@
 // </memory leak detection>
 
 #define WINDOW_TITLE        "Lynx"
-#define SCREEN_WIDTH        1024
-#define SCREEN_HEIGHT       768
+#define SCREEN_WIDTH        800
+#define SCREEN_HEIGHT       600
 #define BPP                 32
 #define FULLSCREEN          0
 #define SV_PORT             9999
@@ -190,26 +190,33 @@ int main(int argc, char** argv)
             switch(event.type)
             {
                 case SDL_KEYDOWN:
+                    // let KeyAscii figure out if it wants the key:
+                    g_menu.KeyAscii(event.key.keysym.sym & 127,
+                                    event.key.keysym.mod & KMOD_SHIFT,
+                                    event.key.keysym.mod & KMOD_CTRL);
                     switch(event.key.keysym.sym)
-                {
-                    case SDLK_ESCAPE:
-                        g_menu.KeyEsc();
-                        break;
-                    case SDLK_F10:
-                        g_run = 0;
-                        break;
-                    case SDLK_DOWN:
-                        g_menu.KeyDown();
-                        break;
-                    case SDLK_UP:
-                        g_menu.KeyUp();
-                        break;
-                    case SDLK_RETURN:
-                        g_menu.KeyEnter();
-                        break;
-                    default:
-                        break;
-                }
+                    {
+                        case SDLK_ESCAPE:
+                            g_menu.KeyEsc();
+                            break;
+                        case SDLK_F10:
+                            g_run = 0;
+                            break;
+                        case SDLK_DOWN:
+                            g_menu.KeyDown();
+                            break;
+                        case SDLK_UP:
+                            g_menu.KeyUp();
+                            break;
+                        case SDLK_RETURN:
+                            g_menu.KeyEnter();
+                            break;
+                        case SDLK_BACKSPACE:
+                            g_menu.KeyBackspace();
+                            break;
+                        default:
+                            break;
+                    }
                     break;
                 case SDL_QUIT:
                     g_run = 0;
@@ -450,7 +457,7 @@ bool menu_func_host(const char *levelname, const int svport, const bool join_as_
 
     // use default level and port
     if(lvl == NULL)
-        lvl = DEFAULT_LEVEL;
+        lvl = (char*)DEFAULT_LEVEL;
     if(port == 0)
         port = SV_PORT;
 

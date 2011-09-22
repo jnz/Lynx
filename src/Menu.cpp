@@ -73,7 +73,7 @@ void CMenu::DrawMenu() const
              m_phy_height);
 
     // Draw lynx logo
-    DrawRectVirtual(m_menu_lynx, 80.0f, 80.0f);
+    DrawRectVirtual(m_menu_lynx, 10.0f, 10.0f);
 
     int i;
     const menu_t& menu = m_menus[m_cur_menu];
@@ -92,6 +92,12 @@ void CMenu::DrawMenu() const
     {
         const menu_item_t& item = menu.items[i];
         DrawRectVirtual(item.bitmap, item.x, item.y);
+        if(item.type == MENU_TEXT_FIELD)
+        {
+            DrawFontVirtual(item.text,
+                            item.x + item.textoffset_x,
+                            item.y + item.textoffset_y);
+        }
     }
 
     // Draw cursor next to active item
@@ -108,12 +114,24 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 {
     int error = 0; // if this ends up larger than 0, some texture was not loaded
     m_animation = 0.0f;
-
     m_callback = callback;
     m_phy_width = physical_width;
     m_phy_height = physical_height;
-
     m_menus.resize(MENU_COUNT);
+
+    // Load a font
+    const std::string fontpath = CLynx::GetBaseDirTexture() + "font.png";
+    unsigned int fonttexwidth, fonttexheight;
+    unsigned int fonttex = GetResMan()->GetTexture(fontpath, false);
+    if(!fonttex)
+    {
+        assert(0);
+        return false;
+    }
+    GetResMan()->GetTextureDimension(fontpath,
+                                     &fonttexwidth,
+                                     &fonttexheight);
+    m_font.Init(fonttex, 16, 24, fonttexwidth, fonttexheight);
 
     // --------resources -------------------
     menu_bitmap_t menu_return;
@@ -126,7 +144,9 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     menu_bitmap_t menu1_start;
 
-    menu_bitmap_t menu2_creditsStatic;
+    menu_bitmap_t menu2_serveraddr;
+
+    menu_bitmap_t menu3_creditsStatic;
 
     // loading resources -------------------
     error += LoadBitmap("cube.jpg"            , &m_menu_background_cube);
@@ -144,7 +164,9 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     error += LoadBitmap("starthost.tga"       , &menu1_start);
 
-    error += LoadBitmap("creditsStatic.tga"   , &menu2_creditsStatic);
+    error += LoadBitmap("serveraddr.tga"      , &menu2_serveraddr);
+
+    error += LoadBitmap("creditsStatic.tga"   , &menu3_creditsStatic);
 
     if(error > 0)
     {
@@ -152,11 +174,11 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
         return false;
     }
 
-    float x = 275.0f;
-    float y = 235.0f;
-    // We need to scale the image height to the virtual screen
-    // real_image_height / m_phy_height = height / virtual_screen_height
-    const float scaleheight = VIRTUAL_HEIGHT/m_phy_height;
+    const float basey = 200.0f;
+    float x = 225.0f;
+    float y = basey;
+    // Add some space between the items:
+    const float scaleheight = 1.01f; // 1 % space between items
 
     // -------------------------------------
     // Main menu
@@ -189,7 +211,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     // -------------------------------------
     // Host menu
-    y = 235.0f;
+    y = basey;
 
     menu_t menu1_host; // host a game
 
@@ -209,28 +231,23 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     // -------------------------------------
     // Join menu
-    y = 235.0f;
+    y = basey;
 
     menu_t menu2_join; // join a game
 
     menu2_join.parent = MENU_MAIN; // parent is main menu
     menu2_join.items.push_back(menu_item_t(
-                menu0_join,
-                MENU_BUTTON,
+                menu2_serveraddr,
+                MENU_TEXT_FIELD,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu0_join.height * scaleheight;
+                x, y,
+                "localhost:9999", // default text for text field
+                60.0f,  // offset for text x
+                (menu2_serveraddr.height - m_font.GetHeight())/2 // vertical center
+                ));
+                y += menu2_serveraddr.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
-                menu0_host,
-                MENU_BUTTON,
-                MENU_FUNC_MAIN,
-                x, y)); y += menu0_host.height * scaleheight;
-    menu2_join.items.push_back(menu_item_t(
-                menu0_credits,
-                MENU_BUTTON,
-                MENU_FUNC_MAIN,
-                x, y)); y += menu0_credits.height * scaleheight;
-    menu2_join.items.push_back(menu_item_t(
-                menu0_quit,
+                menu_return,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
                 x, y));
@@ -239,16 +256,16 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     // -------------------------------------
     // Credits menu
-    y = 235.0f;
+    y = basey;
 
     menu_t menu3_credits; // display some credits
 
     menu3_credits.parent = MENU_MAIN; // parent is main menu
     menu3_credits.images.push_back(menu_item_t(
-                menu2_creditsStatic,
+                menu3_creditsStatic,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu2_creditsStatic.height * scaleheight;
+                x, y)); y += menu3_creditsStatic.height * scaleheight;
     menu3_credits.items.push_back(menu_item_t(
                 menu_return,
                 MENU_BUTTON,
@@ -293,17 +310,17 @@ void CMenu::DrawDefaultBackground()
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    gluPerspective(90.0f,
+    gluPerspective(120.0f,
                    (float)m_phy_width/(float)m_phy_height,
-                   0.3f, // near
-                   50.0f); // far
+                   0.1f, // near
+                   20.0f); // far
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
     glColor4f(1,1,1,1);
 	glBindTexture(GL_TEXTURE_2D, m_menu_background_cube.texture);
-    glTranslatef(0.0f, 0.0f, -2.0f);
+    glTranslatef(0.8f, 0.0f, -1.8f);
     glRotatef(m_animation, 0.0f, 1.0f, 0.0f);
     while(m_animation > 360.0f)
         m_animation -= 360.0f;
@@ -363,14 +380,21 @@ void CMenu::DrawRect(const unsigned int texture,
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void CMenu::DrawFontVirtual(const std::string text, const float x, const float y) const
+{
+    const float vx = x + (m_phy_width - VIRTUAL_WIDTH)/2;
+    const float vy = y + (m_phy_height - VIRTUAL_HEIGHT)/2;
+    m_font.DrawGL(vx, vy,
+                  0.0f, text.c_str());
+}
+
 void CMenu::DrawRectVirtual(const menu_bitmap_t& bitmap,
                             const float x,
                             const float y) const
 {
-    DrawRect(bitmap.texture, m_phy_width*x/VIRTUAL_WIDTH,
-                             m_phy_height*y/VIRTUAL_HEIGHT,
-                             bitmap.width,
-                             bitmap.height);
+    const float vx = x + (m_phy_width - VIRTUAL_WIDTH)/2;
+    const float vy = y + (m_phy_height - VIRTUAL_HEIGHT)/2;
+    DrawRect(bitmap.texture, vx, vy, bitmap.width, bitmap.height);
 }
 
 int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
@@ -469,6 +493,48 @@ void CMenu::KeyEnter()
             assert(0);
             break;
     }
+}
+
+void CMenu::KeyAscii(unsigned char val, bool shift, bool ctrl)
+{
+    if(!m_visible)
+        return;
+
+    // clip valid input range
+    if(val < 32 || val > 127)
+        return;
+    if(shift)
+        val = toupper(val);
+
+    menu_t& menu = m_menus[m_cur_menu];
+    menu_item_t& item = menu.items[m_cursor];
+
+    // only use this for text fields
+    if(item.type != MENU_TEXT_FIELD)
+        return;
+
+    if(item.text.length() > MENU_MAX_TEXT_LEN)
+        return;
+
+    char ascii[] = {(char)val, 0};
+    item.text += std::string(ascii);
+}
+
+void CMenu::KeyBackspace()
+{
+    if(!m_visible)
+        return;
+
+    menu_t& menu = m_menus[m_cur_menu];
+    menu_item_t& item = menu.items[m_cursor];
+
+    // only use this for text fields
+    if(item.type != MENU_TEXT_FIELD)
+        return;
+
+    int textlen = item.text.length();
+    if(textlen > 0)
+        item.text = item.text.substr(0, textlen-1);
 }
 
 void CMenu::KeyEsc()
