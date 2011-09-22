@@ -15,9 +15,9 @@ void main()
 
     float shadow;
     vec4 ShadowCoordN = ShadowCoord / ShadowCoord.w;
-    if(ShadowCoordN.x > 1.0 || ShadowCoordN.x < 0.0 ||
-       ShadowCoordN.y > 1.0 || ShadowCoordN.y < 0.0 ||
-       ShadowCoord.z < 0.0)
+    if(ShadowCoordN.x > 0.999 || ShadowCoordN.x < 0.001 ||
+       ShadowCoordN.y > 0.999 || ShadowCoordN.y < 0.001 ||
+       ShadowCoord.z < 0.001)
     {
        shadow = 1.0;
     }

@@ -1,6 +1,12 @@
 #pragma once
 #include <math.h>
 
+#if defined(WIN32) || defined(_WIN32)
+#define LYNX_INLINE    __forceinline
+#else
+#define LYNX_INLINE    inline
+#endif
+
 namespace lynxmath
 {
     const float PI = 3.141592654f;
@@ -11,7 +17,7 @@ namespace lynxmath
     const float DEGTORAD = PI / 180.0f;
     const float RADTODEG = 180.0f / PI;
 
-    inline float InvSqrtFast(float x) // reciprocal square root approximation: 1/sqrt(x)
+    LYNX_INLINE float InvSqrtFast(float x) // reciprocal square root approximation: 1/sqrt(x)
     {
         // the magic inv square root
         const float xhalf = 0.5f * x;
@@ -22,7 +28,7 @@ namespace lynxmath
         return x;
     }
 
-    inline float SqrtFast(float x) // square root approximation
+    LYNX_INLINE float SqrtFast(float x) // square root approximation
     {
         // this time with better comments (from quake 3)
         const float original_x = x;
@@ -34,13 +40,14 @@ namespace lynxmath
         return original_x * x;         // x * 1/sqrt(x) = x*sqrt(x)/(sqrt(x)*sqrt(x)) = x*sqrt(x)/x = sqrt(x)
     }
 
-    inline float InvSqrt(float x) // 1/sqrt(x)
+    LYNX_INLINE float InvSqrt(float x) // 1/sqrt(x)
     {
-        return 1/sqrt(x);
+        return 1.0f/sqrt(x);
     }
 
-    inline float Sqrt(float x)
+    LYNX_INLINE float Sqrt(float x)
     {
         return sqrt(x);
     }
 }
+

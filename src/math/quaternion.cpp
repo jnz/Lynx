@@ -210,18 +210,6 @@ float quaternion_t::ScalarMultiply(const quaternion_t &q1, const quaternion_t &q
     return q1.x * q2.x + q1.y * q2.y + q1.z * q2.z + q1.w * q2.w;
 }
 
-vec3_t quaternion_t::Vec3Multiply(const vec3_t& vin) const
-{
-    const float qx =  (w * vin.x) + (y * vin.z) - (z * vin.y);
-    const float qy =  (w * vin.y) + (z * vin.x) - (x * vin.z);
-    const float qz =  (w * vin.z) + (x * vin.y) - (y * vin.x);
-    const float qw = -(x * vin.x) - (y * vin.y) - (z * vin.z);
-
-    return vec3_t( (qx * w) + (qw * -x) + (qy * -z) - (qz * -y),
-                   (qy * w) + (qw * -y) + (qz * -x) - (qx * -z),
-                   (qz * w) + (qw * -z) + (qx * -y) - (qy * -x) );
-}
-
 void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t)
 {
     float to1[4];

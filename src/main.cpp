@@ -191,7 +191,7 @@ int main(int argc, char** argv)
             {
                 case SDL_KEYDOWN:
                     // let KeyAscii figure out if it wants the key:
-                    g_menu.KeyAscii(event.key.keysym.sym & 127,
+                    g_menu.KeyAscii(event.key.keysym.sym,
                                     event.key.keysym.mod & KMOD_SHIFT,
                                     event.key.keysym.mod & KMOD_CTRL);
                     switch(event.key.keysym.sym)

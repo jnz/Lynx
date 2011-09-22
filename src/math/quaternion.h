@@ -52,3 +52,16 @@ struct quaternion_t
 
 bool operator == (const quaternion_t& a, const quaternion_t& b);
 bool operator != (const quaternion_t& a, const quaternion_t& b);
+
+LYNX_INLINE vec3_t quaternion_t::Vec3Multiply(const vec3_t& vin) const
+{
+    const float qx =  (w * vin.x) + (y * vin.z) - (z * vin.y);
+    const float qy =  (w * vin.y) + (z * vin.x) - (x * vin.z);
+    const float qz =  (w * vin.z) + (x * vin.y) - (y * vin.x);
+    const float qw = -(x * vin.x) - (y * vin.y) - (z * vin.z);
+
+    return vec3_t( (qx * w) + (qw * -x) + (qy * -z) - (qz * -y),
+                   (qy * w) + (qw * -y) + (qz * -x) - (qx * -z),
+                   (qz * w) + (qw * -z) + (qx * -y) - (qy * -x) );
+}
+

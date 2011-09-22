@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mathconst.h"
+
 struct vec3_t
 {
     union
@@ -37,12 +39,6 @@ struct vec3_t
 
     static vec3_t Hermite(const vec3_t& p1, const vec3_t& p2, const vec3_t& t1, const vec3_t& t2, const float t); // Hermite curve (3D Game Programming p. 457)
 
-    /*
-        Quake style AngleVec3 (YXZ rotation)
-        angles x = pitch, y = yaw, z = roll
-        if angles is 0/0/0, forward points to (0,0,-1)
-    */
-    static void AngleVec3(const vec3_t& angles, vec3_t* forward, vec3_t* up, vec3_t* side);
     static float GetAngleDeg(const vec3_t& a, const vec3_t& b); // angle between a and b in degrees
 
     /*
@@ -66,7 +62,7 @@ struct vec3_t
     static const vec3_t yAxis;  // 0,1,0
     static const vec3_t zAxis;  // 0,0,1
 
-    static const vec3_t cross(const vec3_t& a, const vec3_t& b);
+    static vec3_t cross(const vec3_t& a, const vec3_t& b);
 
     void Print() const; // print x,y,z to stderr
 
@@ -77,20 +73,182 @@ struct vec3_t
     vec3_t  operator -  (void) const;
 };
 
-const vec3_t operator+(vec3_t const &a, vec3_t const &b);
-const vec3_t operator-(vec3_t const &a, vec3_t const &b);
+LYNX_INLINE float vec3_t::Abs(void) const
+{
+    return lynxmath::Sqrt(x*x+y*y+z*z);
+}
 
-const vec3_t operator*(vec3_t const &v, float const &f);
-const vec3_t operator*(float const &f, vec3_t const &v);
+LYNX_INLINE float vec3_t::AbsFast(void) const
+{
+    return lynxmath::SqrtFast(x*x+y*y+z*z);
+}
 
-const vec3_t operator/(vec3_t const &v, float const &f);
+LYNX_INLINE float vec3_t::AbsSquared(void) const
+{
+    return x*x+y*y+z*z;
+}
+
+LYNX_INLINE void vec3_t::Normalize(void)
+{
+    const float abssqr = x*x+y*y+z*z;
+
+    //if(abssqr > lynxmath::EPSILON)
+    //{
+        const float ilength = lynxmath::InvSqrt(abssqr);
+        x *= ilength;
+        y *= ilength;
+        z *= ilength;
+    //}
+}
+
+LYNX_INLINE void vec3_t::SetLength(float scalelen)
+{
+    const float length = Abs();
+
+    //if(length > lynxmath::EPSILON)
+    //{
+        const float ilength = scalelen/length;
+        x *= ilength;
+        y *= ilength;
+        z *= ilength;
+    //}
+}
+
+LYNX_INLINE vec3_t vec3_t::Normalized(void) const
+{
+    const float len = Abs();
+    //if(len < lynxmath::EPSILON)
+        //return vec3_t(0.0f, 0.0f, 0.0f);
+    const float ilen = 1.0f/len;
+    return vec3_t(x*ilen, y*ilen, z*ilen);
+}
+
+LYNX_INLINE vec3_t vec3_t::NormalizedFast(void) const
+{
+    const float ilen = 1.0f/AbsFast();
+    return vec3_t(x*ilen, y*ilen, z*ilen);
+}
+
+LYNX_INLINE bool vec3_t::IsNormalized() const
+{
+    return fabsf(Abs()-1.0f) < lynxmath::EPSILON;
+}
+
+LYNX_INLINE bool vec3_t::IsNull() const
+{
+    return x==0.0f && y==0.0f && z==0.0f;
+}
+
+LYNX_INLINE bool vec3_t::Equals(const vec3_t& cmp, const float epsilon) const
+{
+    return (fabs(x-cmp.x) < epsilon) &&
+           (fabs(y-cmp.y) < epsilon) &&
+           (fabs(z-cmp.z) < epsilon);
+}
+
+LYNX_INLINE bool vec3_t::IsInArea(const vec3_t& min, const vec3_t& max) const
+{
+    return  x >= min.x && x <= max.x &&
+            y >= min.y && y <= max.y &&
+            z >= min.z && z <= max.z;
+}
+
+LYNX_INLINE vec3_t &vec3_t::operator +=(const vec3_t &v)
+{
+    x+= v.x;
+    y+= v.y;
+    z+= v.z;
+    return *this;
+}
+
+LYNX_INLINE vec3_t &vec3_t::operator -=(const vec3_t &v)
+{
+    x-= v.x;
+    y-= v.y;
+    z-= v.z;
+    return *this;
+}
+
+LYNX_INLINE vec3_t &vec3_t::operator *=(const float &f)
+{
+    x*=f;
+    y*=f;
+    z*=f;
+    return *this;
+}
+
+LYNX_INLINE vec3_t &vec3_t::operator /=(const float &f)
+{
+    const float invf = 1/f;
+    x*=invf;
+    y*=invf;
+    z*=invf;
+    return *this;
+}
+
+LYNX_INLINE vec3_t vec3_t::operator -(void) const
+{
+    return vec3_t(-x, -y, -z);
+}
+
+LYNX_INLINE vec3_t operator+(vec3_t const &a, vec3_t const &b)
+{
+    return vec3_t( a.x+b.x, a.y+b.y, a.z+b.z );
+}
+
+LYNX_INLINE vec3_t operator-(vec3_t const &a, vec3_t const &b)
+{
+    return vec3_t( a.x-b.x, a.y-b.y, a.z-b.z );
+}
+
+LYNX_INLINE vec3_t operator*(vec3_t const &v, float const &f)
+{
+    return vec3_t( v.x*f, v.y*f, v.z*f );
+}
+
+LYNX_INLINE vec3_t operator*(float const &f, vec3_t const &v)
+{
+    return vec3_t( v.x*f, v.y*f, v.z*f );
+}
+
+LYNX_INLINE vec3_t operator/(vec3_t const &v, float const &f)
+{
+    const float fi = 1.0f / f;
+    return vec3_t( v.x*fi, v.y*fi, v.z*fi );
+}
 
 // cross product
-const vec3_t operator^(vec3_t const &a, vec3_t const &b);
+LYNX_INLINE vec3_t operator^(vec3_t const &a, vec3_t const &b)
+{
+    return vec3_t( (a.y*b.z-a.z*b.y),
+                   (a.z*b.x-a.x*b.z),
+                   (a.x*b.y-a.y*b.x) );
+}
+
+LYNX_INLINE vec3_t vec3_t::cross(const vec3_t& a, const vec3_t& b)
+{
+    return vec3_t( (a.y*b.z-a.z*b.y),
+                   (a.z*b.x-a.x*b.z),
+                   (a.x*b.y-a.y*b.x) );
+}
 
 // dot product
-const float operator*(vec3_t const &a, vec3_t const &b);
+LYNX_INLINE float operator*(vec3_t const &a, vec3_t const &b)
+{
+    return a.x*b.x+a.y*b.y+a.z*b.z;
+}
 
-bool   operator==(vec3_t const &a, vec3_t const &b);
-bool   operator!=(vec3_t const &a, vec3_t const &b);
+LYNX_INLINE bool operator==(vec3_t const &a, vec3_t const &b)
+{
+    return ( (fabs(a.x-b.x) < lynxmath::EPSILON) &&
+             (fabs(a.y-b.y) < lynxmath::EPSILON) &&
+             (fabs(a.z-b.z) < lynxmath::EPSILON) );
+}
+
+LYNX_INLINE bool operator!=(vec3_t const &a, vec3_t const &b)
+{
+    return ( (fabs(a.x-b.x) > lynxmath::EPSILON) ||
+             (fabs(a.y-b.y) > lynxmath::EPSILON) ||
+             (fabs(a.z-b.z) > lynxmath::EPSILON) );
+}
 
