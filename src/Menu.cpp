@@ -18,8 +18,8 @@
 // coordinates are calculated according to the current physical
 // screen resolution.
 
-#define VIRTUAL_WIDTH  800
-#define VIRTUAL_HEIGHT 600
+#define VIRTUAL_WIDTH  800.0f
+#define VIRTUAL_HEIGHT 600.0f
 
 enum
 {
@@ -27,9 +27,12 @@ enum
     MENU_HOST,
     MENU_JOIN,
     MENU_CREDITS,
+    MENU_LOADING,
     MENU_COUNT // make this the last item
 };
 
+//----------------------------------------------------------------------
+static void RenderCube();
 //----------------------------------------------------------------------
 
 CMenu::CMenu(void)
@@ -41,6 +44,7 @@ CMenu::CMenu(void)
     m_phy_height = 0;
     m_cur_menu = MENU_MAIN;
     m_cursor = 0;
+    m_animation = 0.0f;
 }
 
 CMenu::~CMenu(void)
@@ -52,6 +56,8 @@ CMenu::~CMenu(void)
 
 void CMenu::Update(const float dt, const uint32_t ticks)
 {
+    m_animation += dt * 25.0f; // deg per sec.
+
     if(!IsVisible())
         return;
 
@@ -88,17 +94,22 @@ void CMenu::DrawMenu() const
         DrawRectVirtual(item.bitmap, item.x, item.y);
     }
 
-    // Draw cursor
-    const menu_item_t& active_item = menu.items[m_cursor];
-    const float bx = active_item.x - m_menu_bullet.width - 2.0f;
-    const float by = active_item.y + active_item.bitmap.height*0.5f - m_menu_bullet.height*0.5f;
-    DrawRectVirtual(m_menu_bullet, bx, by);
+    // Draw cursor next to active item
+    if(menu.items.size() > 0)
+    {
+        const menu_item_t& active_item = menu.items[m_cursor];
+        const float bx = active_item.x - m_menu_bullet.width - 2.0f;
+        const float by = active_item.y + active_item.bitmap.height*0.5f - m_menu_bullet.height*0.5f;
+        DrawRectVirtual(m_menu_bullet, bx, by);
+    }
 }
 
-bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_height)
+bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_height, menu_engine_callback_t callback)
 {
     int error = 0; // if this ends up larger than 0, some texture was not loaded
+    m_animation = 0.0f;
 
+    m_callback = callback;
     m_phy_width = physical_width;
     m_phy_height = physical_height;
 
@@ -106,25 +117,32 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     // --------resources -------------------
     menu_bitmap_t menu_return;
+    menu_bitmap_t menu_loading;
 
     menu_bitmap_t menu0_host;
     menu_bitmap_t menu0_join;
     menu_bitmap_t menu0_credits;
     menu_bitmap_t menu0_quit;
 
+    menu_bitmap_t menu1_start;
+
     menu_bitmap_t menu2_creditsStatic;
 
     // loading resources -------------------
+    error += LoadBitmap("cube.jpg"            , &m_menu_background_cube);
     error += LoadBitmap("background.tga"      , &m_menu_background);
     error += LoadBitmap("lynx.tga"            , &m_menu_lynx);
     error += LoadBitmap("bullet.tga"          , &m_menu_bullet);
 
     error += LoadBitmap("return.tga"          , &menu_return);
+    error += LoadBitmap("loading.tga"         , &menu_loading);
 
     error += LoadBitmap("host.tga"            , &menu0_host);
     error += LoadBitmap("join.tga"            , &menu0_join);
     error += LoadBitmap("credits.tga"         , &menu0_credits);
     error += LoadBitmap("quit.tga"            , &menu0_quit);
+
+    error += LoadBitmap("starthost.tga"       , &menu1_start);
 
     error += LoadBitmap("creditsStatic.tga"   , &menu2_creditsStatic);
 
@@ -136,6 +154,9 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     float x = 275.0f;
     float y = 235.0f;
+    // We need to scale the image height to the virtual screen
+    // real_image_height / m_phy_height = height / virtual_screen_height
+    const float scaleheight = VIRTUAL_HEIGHT/m_phy_height;
 
     // -------------------------------------
     // Main menu
@@ -147,17 +168,17 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 menu0_host,
                 MENU_BUTTON,
                 MENU_FUNC_HOST,
-                x, y)); y += menu0_host.height;
+                x, y)); y += menu0_host.height * scaleheight;
     menu0.items.push_back(menu_item_t(
                 menu0_join,
                 MENU_BUTTON,
                 MENU_FUNC_JOIN,
-                x, y)); y += menu0_join.height;
+                x, y)); y += menu0_join.height * scaleheight;
     menu0.items.push_back(menu_item_t(
                 menu0_credits,
                 MENU_BUTTON,
                 MENU_FUNC_CREDITS,
-                x, y)); y += menu0_credits.height;
+                x, y)); y += menu0_credits.height * scaleheight;
     menu0.items.push_back(menu_item_t(
                 menu0_quit,
                 MENU_BUTTON,
@@ -174,22 +195,12 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     menu1_host.parent = MENU_MAIN; // parent is main menu
     menu1_host.items.push_back(menu_item_t(
-                menu0_host,
+                menu1_start,
                 MENU_BUTTON,
-                MENU_FUNC_MAIN,
-                x, y)); y += menu0_host.height;
+                MENU_FUNC_START_SERVER_AND_CLIENT,
+                x, y)); y += menu0_host.height * scaleheight;
     menu1_host.items.push_back(menu_item_t(
-                menu0_credits,
-                MENU_BUTTON,
-                MENU_FUNC_MAIN,
-                x, y)); y += menu0_credits.height;
-    menu1_host.items.push_back(menu_item_t(
-                menu0_join,
-                MENU_BUTTON,
-                MENU_FUNC_MAIN,
-                x, y)); y += menu0_join.height;
-    menu1_host.items.push_back(menu_item_t(
-                menu0_quit,
+                menu_return,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
                 x, y));
@@ -207,17 +218,17 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 menu0_join,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu0_join.height;
+                x, y)); y += menu0_join.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
                 menu0_host,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu0_host.height;
+                x, y)); y += menu0_host.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
                 menu0_credits,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu0_credits.height;
+                x, y)); y += menu0_credits.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
                 menu0_quit,
                 MENU_BUTTON,
@@ -237,14 +248,30 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 menu2_creditsStatic,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu2_creditsStatic.height;
+                x, y)); y += menu2_creditsStatic.height * scaleheight;
     menu3_credits.items.push_back(menu_item_t(
                 menu_return,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu_return.height;
+                x, y)); y += menu_return.height * scaleheight;
 
     m_menus[MENU_CREDITS] = menu3_credits;
+
+    // -------------------------------------
+    // Loading menu
+    x = (VIRTUAL_WIDTH - menu_loading.width)/2;
+    y = (VIRTUAL_HEIGHT - menu_loading.height)/2;
+
+    menu_t menu4_loading; // loading menu
+
+    menu4_loading.parent = MENU_MAIN; // parent is main menu
+    menu4_loading.images.push_back(menu_item_t(
+                menu_loading,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y));
+
+    m_menus[MENU_LOADING] = menu4_loading;
 
     return true;
 }
@@ -254,11 +281,47 @@ void CMenu::Unload()
 
 }
 
+
+void CMenu::DrawDefaultBackground()
+{
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(0); // no shader for menu
+
+    glDisable(GL_LIGHTING);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluPerspective(90.0f,
+                   (float)m_phy_width/(float)m_phy_height,
+                   0.3f, // near
+                   50.0f); // far
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glColor4f(1,1,1,1);
+	glBindTexture(GL_TEXTURE_2D, m_menu_background_cube.texture);
+    glTranslatef(0.0f, 0.0f, -2.0f);
+    glRotatef(m_animation, 0.0f, 1.0f, 0.0f);
+    while(m_animation > 360.0f)
+        m_animation -= 360.0f;
+    RenderCube();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glEnable(GL_LIGHTING);
+}
+
 void CMenu::RenderGL() const
 {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
-    glUseProgram(0); // no shader for HUD
+    glUseProgram(0); // no shader for menu
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -318,15 +381,19 @@ int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
     bitmap->texture = GetResMan()->GetTexture(bd + path);
     if(bitmap->texture)
     {
+        unsigned int tempwidth;
+        unsigned int tempheight;
         if(!GetResMan()->GetTextureDimension(bd + path,
-                                             &bitmap->width,
-                                             &bitmap->height))
+                                             &tempwidth,
+                                             &tempheight))
         {
             assert(0);
             return 1; // error
         }
         else
         {
+            bitmap->width = (float)tempwidth;
+            bitmap->height = (float)tempheight;
             return 0; // it worked
         }
     }
@@ -361,10 +428,8 @@ void CMenu::KeyUp()
         m_cursor = items-1;
 }
 
-void CMenu::KeyEnter(bool* should_we_quit)
+void CMenu::KeyEnter()
 {
-    *should_we_quit = false;
-
     if(!m_visible)
         return;
 
@@ -389,7 +454,16 @@ void CMenu::KeyEnter(bool* should_we_quit)
             m_cursor = 0;
             break;
         case MENU_FUNC_QUIT: // quit game
-            *should_we_quit = true;
+            m_callback.menu_func_quit();
+            break;
+        case MENU_FUNC_START_SERVER_AND_CLIENT:
+            m_cur_menu = MENU_LOADING;
+            m_cursor = 0;
+            DrawDefaultBackground();
+            RenderGL();
+            m_callback.menu_func_host(NULL, 0, true); // also join as client
+            m_cur_menu = MENU_MAIN;
+            MakeInvisible();
             break;
         default:
             assert(0);
@@ -419,3 +493,38 @@ void CMenu::KeyEsc()
     m_cursor = 0;
 }
 
+static void RenderCube() // this is handy sometimes
+{
+    glBegin(GL_QUADS);
+        // Front Face
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);  // Top Left Of The Texture and Quad
+        // Back Face
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);  // Bottom Left Of The Texture and Quad
+        // Top Face
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        // Bottom Face
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        // Right face
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);  // Top Left Of The Texture and Quad
+        glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);  // Bottom Left Of The Texture and Quad
+        // Left Face
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Bottom Left Of The Texture and Quad
+        glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);  // Bottom Right Of The Texture and Quad
+        glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);  // Top Right Of The Texture and Quad
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);  // Top Left Of The Texture and Quad
+    glEnd();
+}

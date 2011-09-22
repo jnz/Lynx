@@ -1,7 +1,7 @@
 #include "lynx.h"
 #include "lynxsys.h"
 #include <SDL/SDL.h>
- 
+
 #ifdef _DEBUG
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
@@ -9,7 +9,15 @@
 
 uint32_t CLynxSys::GetTicks()
 {
-    return SDL_GetTicks();
+	static uint32_t base; // sdl is using uint32_t
+	static bool initialized = false;
+
+	if(!initialized)
+	{
+		base = SDL_GetTicks();
+		initialized = true;
+	}
+    return (SDL_GetTicks() - base);
 }
 
 void CLynxSys::GetMouseDelta(int* dx, int* dy)

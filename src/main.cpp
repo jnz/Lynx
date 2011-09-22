@@ -27,6 +27,7 @@
 #define SCREEN_HEIGHT       768
 #define BPP                 32
 #define FULLSCREEN          0
+#define SV_PORT             9999
 #define DEFAULT_LEVEL       "testlvl/level1.lbsp"
 //#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
 
@@ -53,98 +54,80 @@ void shutdown(CWorld** worldsv,
               CGameZombie** clgame,
               CClient** client);
 
+bool menu_func_host(const char *levelname, const int svport, const bool join_as_client);
+bool menu_func_join(const char *svaddr, const int port);
+void menu_func_quit();
+
 bool initSDLMixer();
 void shutdownSDLMixer();
 bool initSDLvideo(int width, int height, int bpp, int fullscreen);
 
+// Global Game Components
+// These components are the core of the Lynx engine
+// ----------------------------------------------------
+// Menu
+CMenu g_menu;
+
+// Client
+CWorldClient* g_worldcl = NULL; // Model
+CRenderer* g_renderer   = NULL; // View
+CMixer* g_mixer         = NULL; // View
+CGameZombie* g_clgame   = NULL; // Controller
+CClient* g_client       = NULL; // Controller
+
+// Server
+CWorld* g_worldsv       = NULL; // Model
+CServer* g_server       = NULL; // Controller
+CGameZombie* g_svgame   = NULL; // Controller
+
+int g_run; // the app runs, as long as this is not zero
+// ----------------------------------------------------
+
 int main(int argc, char** argv)
 {
-    char* serveraddress = (char*)"localhost";
-    int svport = 9999;
-    bool startserver = true;
-    char* level = (char*)DEFAULT_LEVEL;
-
     fprintf(stderr, "%s version %i.%i\n", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
-    if(argc > 1) // connect to this server, disable local server
-    {
-        serveraddress = argv[1];
-        startserver = false;
-    }
-    if(argc > 2) // port
-    {
-        svport = atoi(argv[2]);
-    }
-    if(argc > 3) // level
-    {
-        level = argv[3];
-        fprintf(stderr, "Level: %s", level);
-    }
     srand((unsigned int)time(NULL));
 
     { // the { is for the visual studio dumpmemleak (memory leak detection) at the end
-    int run;
     float dt;
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
     SDL_Event event;
 
     // Game Modules
-    CMenu menu; // lynx menu
-
-    CWorldClient* worldcl = NULL; // Model
-    CRenderer* renderer   = NULL; // View
-    CMixer* mixer         = NULL; // View
-    CGameZombie* clgame   = NULL; // Controller
-    CClient* client       = NULL; // Controller
-
-    CWorld* worldsv       = NULL; // Model
-    CServer* server       = NULL; // Controller
-    CGameZombie* svgame   = NULL; // Controller
-
-    if(startserver)
-    {
-        restartserver(&worldsv, &server, &svgame, svport, level);
-    }
-
     // Startup SDL OpenGL window
     if(!initSDLvideo(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
     {
         assert(0);
         return -1;
     }
-
-    // Init sound mixer
-    initSDLMixer(); // we don't care, if it won't init. No sound for you.
+    SDL_WM_SetCaption(WINDOW_TITLE, NULL);
+    SDL_ShowCursor(SDL_DISABLE);
+    SDL_WM_GrabInput(SDL_GRAB_ON);
 
     // init menu
-    if(!menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT))
+    menu_engine_callback_t callback;
+    memset(&callback, 0, sizeof(callback));
+    callback.menu_func_host = menu_func_host;
+    callback.menu_func_join = menu_func_join;
+    callback.menu_func_quit = menu_func_quit;
+    if(!g_menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT, callback))
     {
         fprintf(stderr, "Failed to load menu\n");
         assert(0);
         return -1;
     }
+    // Draw the menu once, before we continue
+    g_menu.DrawDefaultBackground();
+    g_menu.Update(0.0f, 0);
+    SDL_GL_SwapBuffers();
 
-    if(!clconnect(&worldcl,
-                  &renderer,
-                  &mixer,
-                  &clgame,
-                  &client,
-                  serveraddress,
-                  svport))
-    {
-        fprintf(stderr, "Failed to connect\n");
-        assert(0);
-        return -1;
-    }
+    // Init sound mixer
+    initSDLMixer(); // we don't care, if it won't init. No sound for you.
 
-    bool should_we_quit = false; // set by CMenu functions
-
-    SDL_WM_SetCaption(WINDOW_TITLE, NULL);
-    SDL_ShowCursor(SDL_DISABLE);
-    SDL_WM_GrabInput(SDL_GRAB_ON);
-    run = 1;
+    g_run = 1;
     oldtime = fpstimer = CLynxSys::GetTicks();
-    while(run)
+    while(g_run)
     {
         time = CLynxSys::GetTicks();
         dt = 0.001f * (float)(time-oldtime);
@@ -153,77 +136,44 @@ int main(int argc, char** argv)
         if(time - fpstimer > 1000.0f)
         {
             char title[128];
-            sprintf(title, "lynx (FPS: %i)", (int)fpscounter);
+            sprintf(title, "Lynx (FPS: %i)", (int)fpscounter);
             SDL_WM_SetCaption(title, NULL);
             fpscounter = 0;
             fpstimer = time;
         }
 
-        while(SDL_PollEvent(&event))
+        // Update Server
+        if(g_worldsv)
         {
-            switch(event.type)
-            {
-            case SDL_KEYDOWN:
-                switch(event.key.keysym.sym)
-                {
-                case SDLK_ESCAPE:
-                    menu.KeyEsc();
-                    break;
-                case SDLK_F10:
-                    run = 0;
-                    break;
-                case SDLK_DOWN:
-                    menu.KeyDown();
-                    break;
-                case SDLK_UP:
-                    menu.KeyUp();
-                    break;
-                case SDLK_RETURN:
-                    menu.KeyEnter(&should_we_quit);
-                    if(should_we_quit)
-                        run = 0;
-                    break;
-                default:
-                    break;
-                }
-                break;
-            case SDL_QUIT:
-                run = 0;
-                break;
-            default:
-                break;
-            };
+            g_worldsv->Update(dt, time);
+            g_svgame->Update(dt, time);
+            g_server->Update(dt, time);
         }
 
         // Update Client
-        if(worldcl)
+        if(g_worldcl)
         {
-            mixer->Update(dt, time);
-            if(client->IsInGame())
-            {
-                worldcl->Update(dt, time);
-            }
-            client->Update(dt, time);
-            renderer->Update(dt, time);
+            g_mixer->Update(dt, time);
+            if(g_client->IsInGame())
+                g_worldcl->Update(dt, time);
+            g_client->Update(dt, time);
+            g_renderer->Update(dt, time);
 
-            if(!client->IsRunning())
+            if(!g_client->IsRunning())
             {
                 fprintf(stderr, "Disconnected\n");
-                if(!menu.IsVisible())
-                    menu.Toggle();
+                g_menu.MakeVisible(); // FIXME goto error screen
             }
         }
-
-        // Update Server
-        if(worldsv)
+        else
         {
-            worldsv->Update(dt, time);
-            svgame->Update(dt, time);
-            server->Update(dt, time);
+            // We have no gameplay background, let's clear the
+            // menu screen
+            g_menu.DrawDefaultBackground();
         }
 
         // Update Menu
-        menu.Update(dt, time);
+        g_menu.Update(dt, time);
 
         // Draw GL buffer
         SDL_GL_SwapBuffers();
@@ -233,17 +183,52 @@ int main(int argc, char** argv)
         const float dtrest = 1.0f/60.0f - dt;
         if(dtrest > 0.0f)
             SDL_Delay((uint32_t)(dtrest * 1000.0f));
+
+        // Handle system events
+        while(SDL_PollEvent(&event))
+        {
+            switch(event.type)
+            {
+                case SDL_KEYDOWN:
+                    switch(event.key.keysym.sym)
+                {
+                    case SDLK_ESCAPE:
+                        g_menu.KeyEsc();
+                        break;
+                    case SDLK_F10:
+                        g_run = 0;
+                        break;
+                    case SDLK_DOWN:
+                        g_menu.KeyDown();
+                        break;
+                    case SDLK_UP:
+                        g_menu.KeyUp();
+                        break;
+                    case SDLK_RETURN:
+                        g_menu.KeyEnter();
+                        break;
+                    default:
+                        break;
+                }
+                    break;
+                case SDL_QUIT:
+                    g_run = 0;
+                    break;
+                default:
+                    break;
+            };
+        }
     }
 
     shutdownSDLMixer();
-    shutdown(&worldsv,
-             &server,
-             &svgame,
-             &worldcl,
-             &renderer,
-             &mixer,
-             &clgame,
-             &client);
+    shutdown(&g_worldsv,
+             &g_server,
+             &g_svgame,
+             &g_worldcl,
+             &g_renderer,
+             &g_mixer,
+             &g_clgame,
+             &g_client);
     }
 #ifdef _WIN32
     _CrtDumpMemoryLeaks();
@@ -396,7 +381,8 @@ bool initSDLvideo(int width, int height, int bpp, int fullscreen)
         return false;
     }
 
-    glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
+    //glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
+    glClearColor(0.85f, 0.85f, 0.85f, 0.0f);
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
@@ -406,7 +392,7 @@ bool initSDLvideo(int width, int height, int bpp, int fullscreen)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    
+
     return true;
 }
 
@@ -453,108 +439,50 @@ void shutdownSDLMixer()
 #endif
 }
 
-	//SDLK_UNKNOWN              = 0,
-	//SDLK_FIRST                = 0,
-	//SDLK_BACKSPACE            = 8,
-	//SDLK_TAB                  = 9,
-	//SDLK_CLEAR                = 12,
-	//SDLK_RETURN               = 13,
-	//SDLK_PAUSE                = 19,
-	//SDLK_ESCAPE               = 27,
-	//SDLK_SPACE                = 32,
-	//SDLK_EXCLAIM              = 33,
-	//SDLK_QUOTEDBL             = 34,
-	//SDLK_HASH                 = 35,
-	//SDLK_DOLLAR               = 36,
-	//SDLK_AMPERSAND            = 38,
-	//SDLK_QUOTE                = 39,
-	//SDLK_LEFTPAREN            = 40,
-	//SDLK_RIGHTPAREN           = 41,
-	//SDLK_ASTERISK             = 42,
-	//SDLK_PLUS                 = 43,
-	//SDLK_COMMA                = 44,
-	//SDLK_MINUS                = 45,
-	//SDLK_PERIOD               = 46,
-	//SDLK_SLASH                = 47,
-	//SDLK_0                    = 48,
-	//SDLK_1                    = 49,
-	//SDLK_2                    = 50,
-	//SDLK_3                    = 51,
-	//SDLK_4                    = 52,
-	//SDLK_5                    = 53,
-	//SDLK_6                    = 54,
-	//SDLK_7                    = 55,
-	//SDLK_8                    = 56,
-	//SDLK_9                    = 57,
-	//SDLK_COLON                = 58,
-	//SDLK_SEMICOLON            = 59,
-	//SDLK_LESS                 = 60,
-	//SDLK_EQUALS               = 61,
-	//SDLK_GREATER              = 62,
-	//SDLK_QUESTION             = 63,
-	//SDLK_AT                   = 64,
-	//SDLK_LEFTBRACKET          = 91,
-	//SDLK_BACKSLASH            = 92,
-	//SDLK_RIGHTBRACKET         = 93,
-	//SDLK_CARET                = 94,
-	//SDLK_UNDERSCORE           = 95,
-	//SDLK_BACKQUOTE            = 96,
-	//SDLK_a                    = 97,
-	//SDLK_b                    = 98,
-	//SDLK_c                    = 99,
-	//SDLK_d                    = 100,
-	//SDLK_e                    = 101,
-	//SDLK_f                    = 102,
-	//SDLK_g                    = 103,
-	//SDLK_h                    = 104,
-	//SDLK_i                    = 105,
-	//SDLK_j                    = 106,
-	//SDLK_k                    = 107,
-	//SDLK_l                    = 108,
-	//SDLK_m                    = 109,
-	//SDLK_n                    = 110,
-	//SDLK_o                    = 111,
-	//SDLK_p                    = 112,
-	//SDLK_q                    = 113,
-	//SDLK_r                    = 114,
-	//SDLK_s                    = 115,
-	//SDLK_t                    = 116,
-	//SDLK_u                    = 117,
-	//SDLK_v                    = 118,
-	//SDLK_w                    = 119,
-	//SDLK_x                    = 120,
-	//SDLK_y                    = 121,
-	//SDLK_z                    = 122,
-	//SDLK_DELETE               = 127,
-	//SDLK_UP                   = 273,
-	//SDLK_DOWN                 = 274,
-	//SDLK_RIGHT                = 275,
-	//SDLK_LEFT                 = 276,
-	//SDLK_INSERT               = 277,
-	//SDLK_HOME                 = 278,
-	//SDLK_END                  = 279,
-	//SDLK_PAGEUP               = 280,
-	//SDLK_PAGEDOWN             = 281,
-	//SDLK_F1                   = 282,
-	//SDLK_F2                   = 283,
-	//SDLK_F3                   = 284,
-	//SDLK_F4                   = 285,
-	//SDLK_F5                   = 286,
-	//SDLK_F6                   = 287,
-	//SDLK_F7                   = 288,
-	//SDLK_F8                   = 289,
-	//SDLK_F9                   = 290,
-	//SDLK_F10                  = 291,
-	//SDLK_F11                  = 292,
-	//SDLK_F12                  = 293,
-	//SDLK_RSHIFT               = 303,
-	//SDLK_LSHIFT               = 304,
-	//SDLK_RCTRL                = 305,
-	//SDLK_LCTRL                = 306,
-	//SDLK_RALT                 = 307,
-	//SDLK_LALT                 = 308,
-	//SDLK_RMETA                = 309,
-	//SDLK_LMETA                = 310,
-	//SDLK_LSUPER               = 311,		[>*< Left "Windows" key <]
-	//SDLK_RSUPER               = 312,		[>*< Right "Windows" key <]
-	//SDLK_MODE                 = 313,		[>*< "Alt Gr" key <]
+bool menu_func_host(const char *levelname, const int svport, const bool join_as_client)
+{
+    char* lvl = (char*)levelname;
+    int port = svport;
+
+    // swap the buffer, so that the menu can display
+    // it's loading screen
+    SDL_GL_SwapBuffers();
+
+    // use default level and port
+    if(lvl == NULL)
+        lvl = DEFAULT_LEVEL;
+    if(port == 0)
+        port = SV_PORT;
+
+    if(!restartserver(&g_worldsv, &g_server, &g_svgame, port, lvl))
+        return false;
+
+    if(join_as_client)
+        return menu_func_join("localhost", port);
+    else
+        return true;
+}
+
+bool menu_func_join(const char *svaddr, const int port)
+{
+
+    if(!clconnect(&g_worldcl,
+                  &g_renderer,
+                  &g_mixer,
+                  &g_clgame,
+                  &g_client,
+                  svaddr,
+                  port))
+    {
+        fprintf(stderr, "Failed to connect\n");
+        return false;
+    }
+
+    return true;
+}
+
+void menu_func_quit()
+{
+    g_run = 0;
+}
+

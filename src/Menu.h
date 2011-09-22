@@ -3,28 +3,47 @@
 #include "Menu.h"
 #include "ResourceManager.h"
 
+// this struct is passed from the main control (main.cpp)
+// to the menu, so that the menu can create a game, join
+// a game a.s.o.
+struct menu_engine_callback_t
+{
+    bool (*menu_func_host) (const char *levelname, const int svport, const bool join_as_client);
+    bool (*menu_func_join) (const char *svaddr, const int port);
+    void (*menu_func_quit) ();
+};
+
+// every menu item has a func (function) value from here
+// depending on the func value (see KeyEnter), some
+// action is taken
 typedef enum
 {
     MENU_FUNC_HOST=1,
     MENU_FUNC_JOIN,
     MENU_FUNC_CREDITS,
     MENU_FUNC_QUIT,
+    MENU_FUNC_START_SERVER_AND_CLIENT,
     MENU_FUNC_MAIN
 } menu_function_t;
 
+// how should the menu item behave?
+// if the menu_item is a button, you can only press enter on it.
+// if it is a text field, you can enter something
 typedef enum
 {
     MENU_BUTTON,
     MENU_TEXT_FIELD
 } menu_item_type_t;
 
+// OpenGL texture + dimension
 struct menu_bitmap_t
 {
     unsigned int texture;
-    unsigned int width;
-    unsigned int height;
+    float width;
+    float height;
 };
 
+// every menu has several items
 struct menu_item_t
 {
     // constructor for easy creation
@@ -46,6 +65,10 @@ struct menu_item_t
     float y;
 };
 
+// every menu has items (something the user can interact with)
+// and images (static textures)
+// CMenu has a vector of menu_t. This is the main
+// data structure here.
 struct menu_t
 {
     std::vector<menu_item_t> items;  // selectable items
@@ -60,22 +83,26 @@ public:
     ~CMenu(void);
 
     bool          Init(const unsigned int physical_width,
-                       const unsigned int physical_height);
+                       const unsigned int physical_height,
+                       menu_engine_callback_t callback);
 
     void          Unload();
 
     void          Toggle() { m_visible = !m_visible; }
     bool          IsVisible() const { return m_visible; }
+    void          MakeVisible() { m_visible = true; }
+    void          MakeInvisible() { m_visible = false; }
     void          Update(const float dt, const uint32_t ticks);
-
-    virtual void  RenderGL() const;
+    void          DrawDefaultBackground();
 
     void          KeyDown();
     void          KeyUp();
-    void          KeyEnter(bool* should_we_quit);
+    void          KeyEnter();
     void          KeyEsc();
 
 protected:
+    void          RenderGL() const;
+
     void          DrawMenu() const;
     void          DrawRectVirtual(const menu_bitmap_t& bitmap,
                                   const float x,
@@ -95,15 +122,20 @@ protected:
 private:
     CResourceManager* m_resman;
 
+    menu_engine_callback_t m_callback; // engine flow interaction (e.g. quit game, join game etc.)
     bool              m_visible;
     unsigned int      m_phy_width; // physical game window width in pixel
     unsigned int      m_phy_height; // physical game window height in pixel
 
     // constant resources
+    menu_bitmap_t     m_menu_background_cube; // for default background
     menu_bitmap_t     m_menu_background;
     menu_bitmap_t     m_menu_lynx;
     menu_bitmap_t     m_menu_bullet;
 
     std::vector<menu_t> m_menus;
+
+    // animation
+    float             m_animation; // time for animations
 };
 
