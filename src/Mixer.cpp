@@ -23,45 +23,11 @@ CMixer::~CMixer(void)
 
 bool CMixer::Init()
 {
-    int status;
-
-    fprintf(stderr, "Sound mixer init...\n");
-    status = SDL_InitSubSystem(SDL_INIT_AUDIO);
-    if(status != 0)
-    {
-        fprintf(stderr, "SDL_mixer: Failed to init audio subsystem\n");
-        return false;
-    }
-
-#ifndef __linux
-    int flags = MIX_INIT_OGG;
-    status = Mix_Init(flags);
-    if((status&flags) != flags)
-    {
-        fprintf(stderr, "SDL_mixer: Failed to init SDL_mixer (%s)\n", Mix_GetError());
-        return false;
-    }
-#endif
-
-    // open 44.1KHz, signed 16bit, system byte order,
-    //      stereo audio, using 1024 byte chunks
-    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
-    {
-        fprintf(stderr, "Mix_OpenAudio error: %s\n", Mix_GetError());
-        exit(2);
-    }
-
     return true;
 }
 
 void CMixer::Shutdown()
 {
-    Mix_CloseAudio();
-
-#ifndef __linux
-    while(Mix_Init(0))
-        Mix_Quit();
-#endif
 }
 
 void CMixer::Update(const float dt, const uint32_t ticks)

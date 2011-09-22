@@ -30,6 +30,7 @@ public:
     ~CResourceManager(void);
 
     void Precache(const std::string filename, const resource_type_t type); // just try to precache a resource for later use
+    void Shutdown(); // unload everything
 
     unsigned int GetTexture(const std::string texname, const bool noerrormsg=false);
     void UnloadAllTextures();

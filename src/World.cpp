@@ -20,8 +20,19 @@ CWorld::CWorld(void) : m_resman(this)
 
 CWorld::~CWorld(void)
 {
-    DeleteAllObjs();
+    // RAII cleanup
 }
+
+/*
+ *void CWorld::Shutdown()
+ *{
+ *    DeleteAllObjs();
+ *    m_resman.Shutdown();
+ *    m_bsptree.Unload();
+ *    m_addobj.clear();
+ *    m_removeobj.clear();
+ *}
+ */
 
 void CWorld::AddObj(CObj* obj, bool inthisframe)
 {

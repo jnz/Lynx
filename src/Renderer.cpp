@@ -66,44 +66,9 @@ CRenderer::~CRenderer(void)
 
 bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 {
-    int status;
-    SDL_Surface* screen;
-
-    fprintf(stderr, "Initialising OpenGL subsystem...\n");
-    status = SDL_InitSubSystem(SDL_INIT_VIDEO);
-    assert(status == 0);
-    if(status)
-    {
-        fprintf(stderr, "Failed to init SDL OpenGL subsystem!\n");
-        return false;
-    }
-
-    screen = SDL_SetVideoMode(width, height, bpp,
-                SDL_HWSURFACE |
-                SDL_ANYFORMAT |
-                SDL_DOUBLEBUF |
-                SDL_OPENGL |
-                (fullscreen ? SDL_FULLSCREEN : 0));
-    assert(screen);
-    if(!screen)
-    {
-        fprintf(stderr, "Failed to set screen resolution mode: %i x %i", width, height);
-        return false;
-    }
-
     m_width = width;
     m_height = height;
 
-    glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
-    glClearDepth(1.0f);
-    glDepthFunc(GL_LEQUAL);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     UpdatePerspective();
     glLoadIdentity(); // identity for modelview matrix
 
@@ -125,23 +90,6 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
 
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
-
-    GLenum err = glewInit();
-    if(GLEW_OK != err)
-    {
-        fprintf(stderr, "GLEW init error: %s\n", glewGetErrorString(err));
-        return false;
-    }
-
-    if(glewIsSupported("GL_VERSION_2_0"))
-    {
-        fprintf(stderr, "OpenGL 2.0 support found\n");
-    }
-    else
-    {
-        fprintf(stderr, "Fatal error: No OpenGL 2.0 support\n");
-        return false;
-    }
 
     bool shader = InitShader();
     if(!shader)
@@ -466,11 +414,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glPopMatrix();
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
-}
-
-void CRenderer::SwapBuffer() const
-{
-    SDL_GL_SwapBuffers();
 }
 
 void CRenderer::UpdatePerspective()

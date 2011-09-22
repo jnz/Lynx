@@ -19,7 +19,7 @@ public:
     CClient(CWorldClient* world, CGameLogic* gamelogic);
     ~CClient(void);
 
-    bool Connect(char* server, int port);
+    bool Connect(const char* server, const int port);
     void Shutdown();
 
     bool IsConnecting() { return m_isconnecting && m_server; } // are we trying to connect to a server?

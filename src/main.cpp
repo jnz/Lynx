@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <assert.h>
 #include <SDL/SDL.h>
+#include <SDL/SDL_mixer.h>
+#include <GL/glew.h>
+#define NO_SDL_GLEXT
+#include <SDL/SDL_opengl.h>
 #include "lynxsys.h"
 #include <time.h>
 #include "Renderer.h"
@@ -26,6 +30,33 @@
 #define DEFAULT_LEVEL       "testlvl/level1.lbsp"
 //#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
 
+bool restartserver(CWorld** worldsv,
+                   CServer** server,
+                   CGameZombie** game,
+                   const int port,
+                   const char* level);
+
+bool clconnect(CWorldClient** worldcl,
+               CRenderer** renderer,
+               CMixer** mixer,
+               CGameZombie** clgame,
+               CClient** client,
+               const char* serveraddress,
+               const int serverport);
+
+void shutdown(CWorld** worldsv,
+              CServer** server,
+              CGameZombie** game,
+              CWorldClient** worldcl,
+              CRenderer** renderer,
+              CMixer** mixer,
+              CGameZombie** clgame,
+              CClient** client);
+
+bool initSDLMixer();
+void shutdownSDLMixer();
+bool initSDLvideo(int width, int height, int bpp, int fullscreen);
+
 int main(int argc, char** argv)
 {
     char* serveraddress = (char*)"localhost";
@@ -50,7 +81,7 @@ int main(int argc, char** argv)
     }
     srand((unsigned int)time(NULL));
 
-    { // the { is for the win32 visual studio dumpmemleak at the end
+    { // the { is for the visual studio dumpmemleak (memory leak detection) at the end
     int run;
     float dt;
     uint32_t time, oldtime;
@@ -58,49 +89,32 @@ int main(int argc, char** argv)
     SDL_Event event;
 
     // Game Modules
-    CMenu menu; // menu
+    CMenu menu; // lynx menu
 
-    CWorldClient worldcl; // Model
-    CRenderer renderer(&worldcl); // View
-    CMixer mixer(&worldcl); // View
-    CGameZombie clgame(&worldcl, NULL); // Controller
-    CClient client(&worldcl, &clgame); // Controller
+    CWorldClient* worldcl = NULL; // Model
+    CRenderer* renderer   = NULL; // View
+    CMixer* mixer         = NULL; // View
+    CGameZombie* clgame   = NULL; // Controller
+    CClient* client       = NULL; // Controller
 
-    CWorld worldsv; // Model
-    CServer server(&worldsv); // Controller
-    CGameZombie svgame(&worldsv, &server); // Controller
+    CWorld* worldsv       = NULL; // Model
+    CServer* server       = NULL; // Controller
+    CGameZombie* svgame   = NULL; // Controller
 
     if(startserver)
     {
-        ((CSubject<EventNewClientConnected>*)&server)->AddObserver(&svgame);
-        ((CSubject<EventClientDisconnected>*)&server)->AddObserver(&svgame);
-
-        fprintf(stderr, "Starting Server at port: %i\n", svport);
-        if(!server.Create(svport))
-        {
-            fprintf(stderr, "Failed to create server\n");
-            assert(0);
-            return -1;
-        }
-        if(!svgame.InitGame(level))
-        {
-            fprintf(stderr, "Failed to init game\n");
-            assert(0);
-            return -1;
-        }
-        fprintf(stderr, "Server running\n");
+        restartserver(&worldsv, &server, &svgame, svport, level);
     }
 
-    // Startup renderer and mixer, before connecting to the client
-    // so we can give some feedback to the player while connecting
-    if(!renderer.Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
+    // Startup SDL OpenGL window
+    if(!initSDLvideo(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
     {
         assert(0);
         return -1;
     }
 
     // Init sound mixer
-    mixer.Init(); // we don't care, if it won't init
+    initSDLMixer(); // we don't care, if it won't init. No sound for you.
 
     // init menu
     if(!menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -110,10 +124,15 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    fprintf(stderr, "Connecting to %s:%i\n", serveraddress, svport);
-    if(!client.Connect(serveraddress, svport))
+    if(!clconnect(&worldcl,
+                  &renderer,
+                  &mixer,
+                  &clgame,
+                  &client,
+                  serveraddress,
+                  svport))
     {
-        fprintf(stderr, "Failed to connect to server\n");
+        fprintf(stderr, "Failed to connect\n");
         assert(0);
         return -1;
     }
@@ -134,8 +153,7 @@ int main(int argc, char** argv)
         if(time - fpstimer > 1000.0f)
         {
             char title[128];
-            sprintf(title, "lynx (FPS: %i) vis: %i/%i",
-                (int)fpscounter, renderer.stat_obj_visible, renderer.stat_obj_hidden);
+            sprintf(title, "lynx (FPS: %i)", (int)fpscounter);
             SDL_WM_SetCaption(title, NULL);
             fpscounter = 0;
             fpstimer = time;
@@ -177,42 +195,262 @@ int main(int argc, char** argv)
             };
         }
 
-        // Update Game Classes
-        mixer.Update(dt, time);
-
-        if(startserver)
+        // Update Client
+        if(worldcl)
         {
-            worldsv.Update(dt, time);
-            svgame.Update(dt, time);
-            server.Update(dt, time);
-        }
-        if(client.IsInGame())
-        {
-            worldcl.Update(dt, time);
+            mixer->Update(dt, time);
+            if(client->IsInGame())
+            {
+                worldcl->Update(dt, time);
+            }
+            client->Update(dt, time);
+            renderer->Update(dt, time);
+
+            if(!client->IsRunning())
+            {
+                fprintf(stderr, "Disconnected\n");
+                if(!menu.IsVisible())
+                    menu.Toggle();
+            }
         }
 
-        client.Update(dt, time);
-        renderer.Update(dt, time);
+        // Update Server
+        if(worldsv)
+        {
+            worldsv->Update(dt, time);
+            svgame->Update(dt, time);
+            server->Update(dt, time);
+        }
+
+        // Update Menu
         menu.Update(dt, time);
-        renderer.SwapBuffer();
 
+        // Draw GL buffer
+        SDL_GL_SwapBuffers();
+
+        // Limit to 60 fps
         // so my notebook fan is quiet :-)
         const float dtrest = 1.0f/60.0f - dt;
         if(dtrest > 0.0f)
             SDL_Delay((uint32_t)(dtrest * 1000.0f));
-
-        if(!client.IsRunning())
-        {
-            fprintf(stderr, "Disconnected\n");
-            run = 0;
-        }
     }
+
+    shutdownSDLMixer();
+    shutdown(&worldsv,
+             &server,
+             &svgame,
+             &worldcl,
+             &renderer,
+             &mixer,
+             &clgame,
+             &client);
     }
 #ifdef _WIN32
     _CrtDumpMemoryLeaks();
 #endif
 
     return 0;
+}
+
+void shutdown(CWorld** worldsv,
+              CServer** server,
+              CGameZombie** game,
+              CWorldClient** worldcl,
+              CRenderer** renderer,
+              CMixer** mixer,
+              CGameZombie** clgame,
+              CClient** client)
+{
+    if(*client)
+        delete *client;
+    if(*clgame)
+        delete *clgame;
+    if(*renderer)
+        delete *renderer;
+    if(*mixer)
+        delete *mixer;
+    if(*worldcl)
+        delete *worldcl;
+    if(*game)
+        delete *game;
+    if(*server)
+        delete *server;
+    if(*worldsv)
+        delete *worldsv;
+}
+
+bool restartserver(CWorld** worldsv,
+                   CServer** server,
+                   CGameZombie** game,
+                   const int port,
+                   const char* level)
+{
+    if(*game)
+        delete *game;
+    if(*server)
+        delete *server;
+    if(*worldsv)
+        delete *worldsv;
+
+    *worldsv = new CWorld;
+    *server = new CServer(*worldsv);
+    *game = new CGameZombie(*worldsv, *server);
+
+    ((CSubject<EventNewClientConnected>*)*server)->AddObserver(*game);
+    ((CSubject<EventClientDisconnected>*)*server)->AddObserver(*game);
+
+    fprintf(stderr, "Starting Server at port: %i\n", port);
+    if(!(*server)->Create(port))
+    {
+        fprintf(stderr, "Failed to create server\n");
+        return false;
+    }
+    if(!(*game)->InitGame(level))
+    {
+        fprintf(stderr, "Failed to init game\n");
+        return false;
+    }
+    fprintf(stderr, "Server running\n");
+    return true;
+}
+
+bool clconnect(CWorldClient** worldcl,
+               CRenderer** renderer,
+               CMixer** mixer,
+               CGameZombie** clgame,
+               CClient** client,
+               const char* serveraddress,
+               const int serverport)
+{
+    if(*client)
+        delete *client;
+    if(*clgame)
+        delete *clgame;
+    if(*renderer)
+        delete *renderer;
+    if(*mixer)
+        delete *mixer;
+    if(*worldcl)
+        delete *worldcl;
+
+    *worldcl  = new CWorldClient;
+    *renderer = new CRenderer(*worldcl);
+    *mixer    = new CMixer(*worldcl);
+    *clgame   = new CGameZombie(*worldcl, NULL);
+    *client   = new CClient(*worldcl, *clgame);
+
+    (*mixer)->Init();
+    (*renderer)->Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN);
+
+    fprintf(stderr, "Connecting to %s:%i\n", serveraddress, serverport);
+    if(!(*client)->Connect(serveraddress, serverport))
+    {
+        fprintf(stderr, "Failed to connect to server\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool initSDLvideo(int width, int height, int bpp, int fullscreen)
+{
+    int status;
+    SDL_Surface* screen;
+
+    fprintf(stderr, "Initialising OpenGL subsystem...\n");
+    status = SDL_InitSubSystem(SDL_INIT_VIDEO);
+    assert(status == 0);
+    if(status)
+    {
+        fprintf(stderr, "Failed to init SDL OpenGL subsystem!\n");
+        return false;
+    }
+
+    screen = SDL_SetVideoMode(width, height, bpp,
+                SDL_HWSURFACE |
+                SDL_ANYFORMAT |
+                SDL_DOUBLEBUF |
+                SDL_OPENGL |
+                (fullscreen ? SDL_FULLSCREEN : 0));
+    assert(screen);
+    if(!screen)
+    {
+        fprintf(stderr, "Failed to set screen resolution mode: %i x %i", width, height);
+        return false;
+    }
+
+    GLenum err = glewInit();
+    if(GLEW_OK != err)
+    {
+        fprintf(stderr, "GLEW init error: %s\n", glewGetErrorString(err));
+        return false;
+    }
+
+    if(glewIsSupported("GL_VERSION_2_0"))
+    {
+        fprintf(stderr, "OpenGL 2.0 support found\n");
+    }
+    else
+    {
+        fprintf(stderr, "Fatal error: No OpenGL 2.0 support\n");
+        return false;
+    }
+
+    glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
+    glClearDepth(1.0f);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_CULL_FACE);
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    
+    return true;
+}
+
+bool initSDLMixer()
+{
+    int status;
+
+    fprintf(stderr, "Sound mixer init...\n");
+    status = SDL_InitSubSystem(SDL_INIT_AUDIO);
+    if(status != 0)
+    {
+        fprintf(stderr, "SDL_mixer: Failed to init audio subsystem\n");
+        return false;
+    }
+
+#ifndef __linux
+    int flags = MIX_INIT_OGG;
+    status = Mix_Init(flags);
+    if((status&flags) != flags)
+    {
+        fprintf(stderr, "SDL_mixer: Failed to init SDL_mixer (%s)\n", Mix_GetError());
+        return false;
+    }
+#endif
+
+    // open 44.1KHz, signed 16bit, system byte order,
+    //      stereo audio, using 1024 byte chunks
+    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
+    {
+        fprintf(stderr, "Mix_OpenAudio error: %s\n", Mix_GetError());
+        exit(2);
+    }
+
+    return true;
+}
+
+void shutdownSDLMixer()
+{
+    Mix_CloseAudio();
+
+#ifndef __linux
+    while(Mix_Init(0))
+        Mix_Quit();
+#endif
 }
 
 	//SDLK_UNKNOWN              = 0,

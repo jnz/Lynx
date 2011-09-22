@@ -63,6 +63,11 @@ CResourceManager::CResourceManager(CWorld* world)
 
 CResourceManager::~CResourceManager(void)
 {
+    Shutdown();
+}
+
+void CResourceManager::Shutdown()
+{
     UnloadAllModels();
     UnloadAllTextures();
     UnloadAllSounds();
@@ -175,7 +180,7 @@ CModelMD5* CResourceManager::GetModel(std::string mdlname)
 
     if(IsServer())
         return NULL;
-    
+
     iter = m_modelmap.find(mdlname);
     if(iter == m_modelmap.end())
     {

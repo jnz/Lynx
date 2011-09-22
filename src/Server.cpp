@@ -30,9 +30,8 @@ bool CServer::Create(int port)
     addr.host = ENET_HOST_ANY;
     addr.port = port;
 
-    // channellimit 5 (in theory only 1 channel is used, but lets play safe
-    // here)
-    m_server = enet_host_create(&addr, MAXCLIENTS, 5, 0, 0);
+    // channel limit 1
+    m_server = enet_host_create(&addr, MAXCLIENTS, 1, 0, 0);
     if(!m_server)
         return false;
 
@@ -132,7 +131,7 @@ void CServer::Update(const float dt, const uint32_t ticks)
             m_clientlist.erase(iter);
             event.peer->data = NULL;
             break;
-                
+
         case ENET_EVENT_TYPE_NONE:
             break;
         }

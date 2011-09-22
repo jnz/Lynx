@@ -33,7 +33,7 @@ CClient::~CClient(void)
     enet_deinitialize();
 }
 
-bool CClient::Connect(char* server, int port)
+bool CClient::Connect(const char* server, const int port)
 {
     ENetAddress address;
 

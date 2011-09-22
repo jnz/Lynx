@@ -21,49 +21,6 @@
 #define VIRTUAL_WIDTH  800
 #define VIRTUAL_HEIGHT 600
 
-typedef enum
-{
-    MENU_FUNC_HOST=1,
-    MENU_FUNC_JOIN,
-    MENU_FUNC_CREDITS,
-    MENU_FUNC_QUIT,
-    MENU_FUNC_MAIN
-} menu_function_t;
-
-typedef enum
-{
-    MENU_BUTTON,
-    MENU_TEXT_FIELD
-} menu_item_type_t;
-
-struct menu_item_t
-{
-    // constructor for easy creation
-    menu_item_t(menu_bitmap_t _bitmap,
-                menu_item_type_t _type,
-                menu_function_t _func,
-                float _x,
-                float _y) :
-                       bitmap(_bitmap),
-                       type(_type),
-                       func(_func),
-                       x(_x),
-                       y(_y) {}
-
-    menu_bitmap_t bitmap;
-    menu_item_type_t type;
-    menu_function_t func;
-    float x;
-    float y;
-};
-
-struct menu_t
-{
-    std::vector<menu_item_t> items;  // selectable items
-    std::vector<menu_item_t> images; // static images
-    int parent;
-};
-
 enum
 {
     MENU_MAIN = 0,
@@ -72,9 +29,6 @@ enum
     MENU_CREDITS,
     MENU_COUNT // make this the last item
 };
-
-std::vector<menu_t> g_menus; // yeah, we make this global
-
 
 //----------------------------------------------------------------------
 
@@ -116,7 +70,7 @@ void CMenu::DrawMenu() const
     DrawRectVirtual(m_menu_lynx, 80.0f, 80.0f);
 
     int i;
-    const menu_t& menu = g_menus[m_cur_menu];
+    const menu_t& menu = m_menus[m_cur_menu];
 
     // Draw static images
     const int images = menu.images.size();
@@ -148,7 +102,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
     m_phy_width = physical_width;
     m_phy_height = physical_height;
 
-    g_menus.resize(MENU_COUNT);
+    m_menus.resize(MENU_COUNT);
 
     // --------resources -------------------
     menu_bitmap_t menu_return;
@@ -161,7 +115,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
     menu_bitmap_t menu2_creditsStatic;
 
     // loading resources -------------------
-    error += LoadBitmap("background.png"      , &m_menu_background);
+    error += LoadBitmap("background.tga"      , &m_menu_background);
     error += LoadBitmap("lynx.tga"            , &m_menu_lynx);
     error += LoadBitmap("bullet.tga"          , &m_menu_bullet);
 
@@ -210,7 +164,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_FUNC_QUIT,
                 x, y));
 
-    g_menus[MENU_MAIN] = menu0;
+    m_menus[MENU_MAIN] = menu0;
 
     // -------------------------------------
     // Host menu
@@ -240,7 +194,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_FUNC_MAIN,
                 x, y));
 
-    g_menus[MENU_HOST] = menu1_host;
+    m_menus[MENU_HOST] = menu1_host;
 
     // -------------------------------------
     // Join menu
@@ -270,7 +224,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_FUNC_MAIN,
                 x, y));
 
-    g_menus[MENU_JOIN] = menu2_join;
+    m_menus[MENU_JOIN] = menu2_join;
 
     // -------------------------------------
     // Credits menu
@@ -290,7 +244,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_FUNC_MAIN,
                 x, y)); y += menu_return.height;
 
-    g_menus[MENU_CREDITS] = menu3_credits;
+    m_menus[MENU_CREDITS] = menu3_credits;
 
     return true;
 }
@@ -388,7 +342,7 @@ void CMenu::KeyDown()
     if(!m_visible)
         return;
 
-    const menu_t& menu = g_menus[m_cur_menu];
+    const menu_t& menu = m_menus[m_cur_menu];
     const int items = (int)menu.items.size();
 
     m_cursor = ++m_cursor%items;
@@ -399,7 +353,7 @@ void CMenu::KeyUp()
     if(!m_visible)
         return;
 
-    const menu_t& menu = g_menus[m_cur_menu];
+    const menu_t& menu = m_menus[m_cur_menu];
     const int items = (int)menu.items.size();
 
     m_cursor--;
@@ -414,7 +368,7 @@ void CMenu::KeyEnter(bool* should_we_quit)
     if(!m_visible)
         return;
 
-    const menu_t& menu = g_menus[m_cur_menu];
+    const menu_t& menu = m_menus[m_cur_menu];
     const menu_item_t& item = menu.items[m_cursor];
     switch(item.func)
     {
@@ -453,7 +407,7 @@ void CMenu::KeyEsc()
 
     // go back one screen if not in main menu
     // or, if in main menu: hide menu
-    const menu_t& menu = g_menus[m_cur_menu];
+    const menu_t& menu = m_menus[m_cur_menu];
 
     if(menu.parent == -1)
     {
