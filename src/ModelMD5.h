@@ -89,6 +89,19 @@ struct md5_anim_t
     std::vector<md5_bbox_t> bboxes;
 };
 
+struct md5_vbo_t
+{
+    md5_vbo_t();
+    ~md5_vbo_t();
+
+    bool Alloc(int num_verts, int num_tris);
+
+    unsigned int      vbo;
+    unsigned int      vboindex;
+    bspbin_vertex_t*  vertex_buffer;
+    vertexindex_t*    vertex_index_buffer;
+};
+
 /* md5 animation state */
 struct md5_state_t
 {
@@ -101,7 +114,7 @@ struct md5_state_t
     // skel holds the data of the interpolated
     // skeleton between two frames
     std::vector<md5_joint_t> skel;
-
+    std::vector<md5_vbo_t> vboman; // vbo manager, one m_vbo_t per mesh
 };
 
 class CModelMD5
@@ -113,39 +126,30 @@ public:
     bool    Load(char *path, CResourceManager* resman, bool loadtexture=true);
     void    Unload();
 
-    void    Render(const md5_state_t* state);
-    void    RenderNormals(const md5_state_t* state);
+    void    Render(const md5_state_t* state) const;
+    void    RenderNormals(const md5_state_t* state) const;
     void    Animate(md5_state_t* state, const float dt) const;
-    void    SetAnimation(md5_state_t* state, const animation_t animation);
+    void    SetAnimation(md5_state_t* state, const animation_t animation) const;
 
     float   GetSphere() const { return 2.0f; }; // FIXME
 
 private:
     bool    ReadAnimation(const animation_t animation, const std::string filepath); // animation = "run", "idle", "walk" etc.
+    md5_anim_t* GetAnimation(const animation_t animation) const; // const version, does not create a new md5_anim_t
     md5_anim_t* GetAnimation(const animation_t animation, bool createnew); // Get md5_anim_t associated with animation string or create a new one
     void    RenderSkeleton(const std::vector<md5_joint_t>& skel) const;
     void    PrepareBindPoseNormals(md5_mesh_t *mesh);
-    void    PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton);
-    bool    AllocVertexBuffer();
-    void    DeallocVertexBuffer();
-    bool    UploadVertexBuffer(unsigned int vertexcount, unsigned int indexcount) const;
+    // transform vertices according to current animation skeleton and upload to vbo
+    void    PrepareMesh(const md5_mesh_t *mesh,
+                        const std::vector<md5_joint_t>& skeleton,
+                        md5_vbo_t* vboman) const;
 
     std::vector<md5_joint_t> m_baseSkel;
     std::vector<md5_mesh_t>  m_meshes;
-    int          m_num_joints;
-    int          m_num_meshes;
+    int     m_num_joints;
+    int     m_num_meshes;
 
-    int          m_max_verts;
-    int          m_max_tris;
-
-    // data for vertex buffer objects
-    unsigned int      m_vbo;
-    unsigned int      m_vboindex;
-    bspbin_vertex_t*  m_vertex_buffer;
-    vertexindex_t*    m_vertex_index_buffer;
-
-    // Animation map. Link between the lynx animation id and the raw animation
-    // data
+    // Animation map. Link between the lynx animation id and the raw animation data
     std::map<animation_t, md5_anim_t*> m_animations;
 };
 

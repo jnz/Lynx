@@ -31,17 +31,61 @@ struct baseframe_joint_t
   quaternion_t orient;
 };
 
+/* automatic vbo cleanup */
+md5_vbo_t::md5_vbo_t()
+{
+    vbo = vboindex = 0;
+    vertex_buffer = NULL;
+    vertex_index_buffer = NULL;
+}
+
+md5_vbo_t::~md5_vbo_t()
+{
+    if(vbo > 0)
+    {
+        vbo = 0;
+        glDeleteBuffers(1, &vbo);
+    }
+
+    if(vboindex > 0)
+    {
+        glDeleteBuffers(1, &vboindex);
+        vboindex = 0;
+    }
+
+    SAFE_RELEASE_ARRAY(vertex_buffer);
+    SAFE_RELEASE_ARRAY(vertex_index_buffer);
+}
+
+bool md5_vbo_t::Alloc(int num_verts, int num_tris)
+{
+    assert(vertex_buffer == NULL && vertex_index_buffer == NULL &&
+           vbo == 0 && vboindex == 0);
+
+    vertex_buffer = new bspbin_vertex_t[num_verts];
+    vertex_index_buffer = new vertexindex_t[num_tris*3];
+
+    glGenBuffers(1, &vbo);
+    if(vbo < 1)
+    {
+        fprintf(stderr, "MD5: Failed to generate VBO\n");
+        return false;
+    }
+
+    glGenBuffers(1, &vboindex);
+    if(vboindex < 1)
+    {
+        fprintf(stderr, "MD5: Failed to generate index VBO\n");
+        return false;
+    }
+
+    return true;
+}
 
 CModelMD5::CModelMD5(void)
 {
     m_num_joints = 0;
     m_num_meshes = 0;
-    m_max_verts = 0;
-    m_max_tris = 0;
-    m_vbo = 0;
-    m_vboindex = 0;
-    m_vertex_buffer = NULL;
-    m_vertex_index_buffer = NULL;
 }
 
 CModelMD5::~CModelMD5(void)
@@ -51,15 +95,11 @@ CModelMD5::~CModelMD5(void)
 
 void CModelMD5::Unload()
 {
-    DeallocVertexBuffer();
-
     m_meshes.clear();
     m_baseSkel.clear();
 
     m_num_joints = 0;
     m_num_meshes = 0;
-    m_max_verts = 0;
-    m_max_tris = 0;
 
     // Delete animations
     std::map<animation_t, md5_anim_t*>::iterator animiter;
@@ -95,115 +135,7 @@ void CModelMD5::RenderSkeleton(const std::vector<md5_joint_t>& skel) const
     glColor3f(1.0f, 1.0f, 1.0f);
 }
 
-bool CModelMD5::AllocVertexBuffer()
-{
-    m_vertex_buffer = new bspbin_vertex_t[m_max_verts];
-    m_vertex_index_buffer = new vertexindex_t[m_max_tris*3];
-
-    glGenBuffers(1, &m_vbo);
-    if(m_vbo < 1)
-    {
-        fprintf(stderr, "MD5: Failed to generate VBO\n");
-        return false;
-    }
-
-    glGenBuffers(1, &m_vboindex);
-    if(m_vboindex < 1)
-    {
-        fprintf(stderr, "MD5: Failed to generate index VBO\n");
-        return false;
-    }
-
-    return true;
-}
-
-void CModelMD5::DeallocVertexBuffer()
-{
-    if(m_vbo > 0)
-    {
-        m_vbo = 0;
-        glDeleteBuffers(1, &m_vbo);
-    }
-
-    if(m_vboindex > 0)
-    {
-        glDeleteBuffers(1, &m_vboindex);
-        m_vboindex = 0;
-    }
-
-    SAFE_RELEASE_ARRAY(m_vertex_buffer);
-    SAFE_RELEASE_ARRAY(m_vertex_index_buffer);
-}
-
-bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexcount) const
-{
-    assert((int)vertexcount <= m_max_verts);
-    assert((int)indexcount <= m_max_tris*3);
-
-    int errcode;
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    errcode = glGetError();
-    if(errcode != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to bind VBO: %i\n", errcode);
-        return false;
-    }
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(bspbin_vertex_t) * vertexcount, NULL, GL_DYNAMIC_DRAW);
-    if(glGetError() != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to buffer data\n");
-        return false;
-    }
-
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(bspbin_vertex_t) * vertexcount, m_vertex_buffer);
-    if(glGetError() != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to upload VBO data\n");
-        return false;
-    }
-
-    // the following depends on the bspbin_vertex_t struct
-    // (byte offsets)
-    glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
-    glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
-    glClientActiveTexture(GL_TEXTURE0);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
-    glClientActiveTexture(GL_TEXTURE1);
-    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
-
-    if(glGetError() != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to init VBO\n");
-        return false;
-    }
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
-    if(glGetError() != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to bind index VBO\n");
-        return false;
-    }
-
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertexindex_t) * indexcount, NULL, GL_DYNAMIC_DRAW);
-    if(glGetError() != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to buffer index data\n");
-        return false;
-    }
-
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(vertexindex_t) * indexcount, m_vertex_index_buffer);
-    if(glGetError() != GL_NO_ERROR)
-    {
-        fprintf(stderr, "MD5: Failed to upload index VBO data\n");
-        return false;
-    }
-
-    return true;
-}
-
-void CModelMD5::Render(const md5_state_t* state)
+void CModelMD5::Render(const md5_state_t* state) const
 {
     // we use the opengl coordinate system here and nothing else
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
@@ -212,13 +144,8 @@ void CModelMD5::Render(const md5_state_t* state)
     /* Draw each mesh of the model */
     for(int i = 0; i < m_num_meshes; ++i)
     {
-        if(state->animdata)
-            PrepareMesh(&m_meshes[i], state->skel);
-        else
-            PrepareMesh(&m_meshes[i], m_baseSkel); // for static md5s with no animation
-
-        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
+        glBindBuffer(GL_ARRAY_BUFFER, state->vboman[i].vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->vboman[i].vboindex);
 
         glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
@@ -259,14 +186,15 @@ void CModelMD5::Render(const md5_state_t* state)
         glDisableClientState(GL_NORMAL_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
         // Debug: draw the interpolated md5 joints
         //RenderSkeleton(state->skel);
     }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void CModelMD5::RenderNormals(const md5_state_t* state)
+void CModelMD5::RenderNormals(const md5_state_t* state) const
 {
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
@@ -275,19 +203,14 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
     glBindTexture(GL_TEXTURE_2D, 0);
     for(int i = 0; i < m_num_meshes; ++i)
     {
-        md5_mesh_t* mesh = &m_meshes[i];
-
-        if(state->animdata)
-            PrepareMesh(mesh, state->skel);
-        else
-            PrepareMesh(mesh, m_baseSkel); // for static md5s with no animation
+        const md5_mesh_t* mesh = &m_meshes[i];
 
         for (int j = 0; j < mesh->num_verts; ++j)
         {
-            const vec3_t& vertex = m_vertex_buffer[j].v;
-            const vec3_t& normal = m_vertex_buffer[j].n;
-            const vec3_t& tangent = m_vertex_buffer[j].t;
-            const float w = m_vertex_buffer[j].w;
+            const vec3_t& vertex = state->vboman[i].vertex_buffer[j].v;
+            const vec3_t& normal = state->vboman[i].vertex_buffer[j].n;
+            const vec3_t& tangent = state->vboman[i].vertex_buffer[j].t;
+            const float w = state->vboman[i].vertex_buffer[j].w;
             const vec3_t bitangent = w * (normal ^ tangent);
 
             glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
@@ -366,25 +289,65 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
     while(state->time >= frametime)
     {
         state->time = state->time - frametime;
-        assert(state->time >= 0.0f);
 
         const int maxFrames = state->animdata->num_frames-1; // FIXME: is -1 correct?
         state->curr_frame = ((state->curr_frame+1) % maxFrames);
         state->next_frame = ((state->next_frame+1) % maxFrames);
     }
+
+    for(i = 0; i < m_num_meshes; i++)
+    {
+        PrepareMesh(&m_meshes[i], state->skel, &state->vboman[i]);
+    }
 }
 
-void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
+void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation) const
 {
     state->curr_frame = 0;
     state->next_frame = 1;
-    state->animation = animation;
-    state->animdata = GetAnimation(animation, false);
     state->time = 0.0f;
+
+    // prepare vertex buffer
+    if(state->vboman.size() != (size_t)m_num_meshes)
+    {
+        state->vboman.resize(m_num_meshes);
+        // allocate a vbo for every mesh
+        for(int i = 0; i < m_num_meshes; i++)
+        {
+            if(!state->vboman[i].Alloc(m_meshes[i].num_verts, m_meshes[i].num_tris))
+            {
+                // failed to create vbo: now this is a pretty bad situation
+                fprintf(stderr, "Failed to alloc vertex buffer for model\n");
+                state->animdata = NULL;
+                state->vboman.resize(0);
+                return;
+            }
+            // Setup vertex indices, we only need to do this once
+            int k = 0;
+            for(int j = 0; j < m_meshes[i].num_tris; j++)
+            {
+                state->vboman[i].vertex_index_buffer[k++] = m_meshes[i].triangles[j].index[0];
+                state->vboman[i].vertex_index_buffer[k++] = m_meshes[i].triangles[j].index[1];
+                state->vboman[i].vertex_index_buffer[k++] = m_meshes[i].triangles[j].index[2];
+            }
+
+        }
+    }
+
+    state->animdata = GetAnimation(animation);
     assert((animation != ANIMATION_NONE) ? (state->animdata!=NULL) : 1);
-    if(!state->animdata)
+    if(!state->animdata) // now animation, let's use the static mesh from baseSkel
+    {
+        // prepare static mesh
+        for(int i = 0; i < m_num_meshes; i++)
+            PrepareMesh(&m_meshes[i], m_baseSkel, &state->vboman[i]);
+
         return;
-    state->skel.resize(state->animdata->num_joints);
+    }
+    state->animation = animation;
+    if(state->skel.size() != (size_t)state->animdata->num_joints)
+        state->skel.resize(state->animdata->num_joints);
+
     Animate(state, 0.0f);
 }
 
@@ -524,18 +487,14 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
     }
 }
 
-void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton)
+// interpolate animation and upload data to vertex buffer
+// this is currently (23. Nov. 2011) the most expensive function
+// in Lynx
+void CModelMD5::PrepareMesh(const md5_mesh_t *mesh,
+                            const std::vector<md5_joint_t>& skeleton,
+                            md5_vbo_t* vboman) const
 {
-    int i, j, k;
-
-    /* Setup vertex indices */
-    for(k = 0, i = 0; i < mesh->num_tris; ++i)
-    {
-        for(j = 0; j < 3; ++j, ++k)
-        {
-            m_vertex_index_buffer[k] = mesh->triangles[i].index[j];
-        }
-    }
+    int i, j;
 
     vec3_t finalVertex;
     vec3_t finalNormal;
@@ -548,30 +507,37 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
         finalNormal = vec3_t::origin;
         finalTangent = vec3_t::origin;
 
+        const int weightstart = mesh->vertices[i].start;
+        const int weightcount = mesh->vertices[i].count;
         /* Calculate final vertex to draw with weights */
-        for (j = 0; j < mesh->vertices[i].count; ++j)
+        for (j = 0; j < weightcount; ++j) // for every weight in vertex
         {
-            const md5_weight_t *weight = &mesh->weights[mesh->vertices[i].start + j];
+            const md5_weight_t *weight = &mesh->weights[weightstart + j];
             const md5_joint_t *joint = &skeleton[weight->joint];
 
             /* Calculate transformed vertex for this weight */
             const vec3_t wv = joint->orient.Vec3Multiply(weight->pos);
 
             /* The sum of all weight->bias should be 1.0 */
-            finalVertex += (joint->pos + wv) * weight->bias;
-            finalNormal += joint->orient.Vec3Multiply(weight->normal) * weight->bias;
+            finalVertex  += (joint->pos + wv) * weight->bias;
+            finalNormal  += joint->orient.Vec3Multiply(weight->normal) * weight->bias;
             finalTangent += joint->orient.Vec3Multiply(weight->tangent) * weight->bias;
         }
 
-        m_vertex_buffer[i].v = finalVertex;
-        m_vertex_buffer[i].n = finalNormal;
-        m_vertex_buffer[i].t = finalTangent;
-        m_vertex_buffer[i].w = mesh->vertices[i].w;
-        m_vertex_buffer[i].tu = mesh->vertices[i].u;
-        m_vertex_buffer[i].tv = mesh->vertices[i].v;
+        vboman->vertex_buffer[i].v = finalVertex;
+        vboman->vertex_buffer[i].n = finalNormal;
+        vboman->vertex_buffer[i].t = finalTangent;
+        vboman->vertex_buffer[i].w = mesh->vertices[i].w;
+        vboman->vertex_buffer[i].tu = mesh->vertices[i].u;
+        vboman->vertex_buffer[i].tv = mesh->vertices[i].v;
     }
 
-    UploadVertexBuffer(mesh->num_verts, mesh->num_tris*3);
+    glBindBuffer(GL_ARRAY_BUFFER, vboman->vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(bspbin_vertex_t) * mesh->num_verts, NULL, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(bspbin_vertex_t) * mesh->num_verts, vboman->vertex_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboman->vboindex);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertexindex_t) * mesh->num_tris*3, NULL, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(vertexindex_t) * mesh->num_tris*3, vboman->vertex_index_buffer);
 }
 
 bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
@@ -741,9 +707,6 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                         /* Allocate memory for vertices */
                         mesh->vertices.resize(mesh->num_verts);
                     }
-
-                    if(mesh->num_verts > m_max_verts)
-                        m_max_verts = mesh->num_verts;
                 }
                 else if(sscanf (buff, " numtris %d", &mesh->num_tris) == 1)
                 {
@@ -752,9 +715,6 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
                         /* Allocate memory for triangles */
                         mesh->triangles.resize(mesh->num_tris);
                     }
-
-                    if(mesh->num_tris > m_max_tris)
-                        m_max_tris = mesh->num_tris;
                 }
                 else if(sscanf (buff, " numweights %d", &mesh->num_weights) == 1)
                 {
@@ -803,11 +763,6 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
         }
     }
     fclose(f);
-
-    // thanks to m_max_tris and m_max_verts we know
-    // how large our vertex buffer has to be
-    if(loadtexture)
-        AllocVertexBuffer();
 
     ReadAnimation(ANIMATION_IDLE,   CLynx::GetDirectory(path) + "idle.md5anim");
     ReadAnimation(ANIMATION_IDLE1,  CLynx::GetDirectory(path) + "idle1.md5anim");
@@ -916,6 +871,25 @@ static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
     }
 }
 
+md5_anim_t* CModelMD5::GetAnimation(const animation_t animation) const
+{
+    md5_anim_t* panim;
+    if(animation == ANIMATION_NONE)
+        return NULL;
+
+    const std::map<animation_t, md5_anim_t*>::const_iterator iter = m_animations.find(animation);
+    if(iter == m_animations.end())
+    {
+        fprintf(stderr, "Animation not found: %s\n", CResourceManager::GetStringFromAnimation(animation).c_str());
+        panim = NULL;
+    }
+    else
+    {
+        panim = (*iter).second;
+    }
+
+    return panim;
+}
 md5_anim_t* CModelMD5::GetAnimation(const animation_t animation, bool createnew)
 {
     md5_anim_t* panim;
