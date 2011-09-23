@@ -190,10 +190,13 @@ int main(int argc, char** argv)
             switch(event.type)
             {
                 case SDL_KEYDOWN:
-                    // let KeyAscii figure out if it wants the key:
-                    g_menu.KeyAscii(event.key.keysym.sym,
-                                    event.key.keysym.mod & KMOD_SHIFT,
-                                    event.key.keysym.mod & KMOD_CTRL);
+                    if(event.key.keysym.sym < 128)
+                    {
+                        // let KeyAscii figure out if it wants the key:
+                        g_menu.KeyAscii(event.key.keysym.sym,
+                                        event.key.keysym.mod & KMOD_SHIFT,
+                                        event.key.keysym.mod & KMOD_CTRL);
+                    }
                     switch(event.key.keysym.sym)
                     {
                         case SDLK_ESCAPE:

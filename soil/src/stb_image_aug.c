@@ -204,12 +204,12 @@ unsigned char *stbi_load_from_file(FILE *f, int *x, int *y, int *comp, int req_c
       return hdr_to_ldr(hdr, *x, *y, req_comp ? req_comp : *comp);
    }
    #endif
+    // test tga last because it's a crappy test!
+    if (stbi_tga_test_file(f))
+        return stbi_tga_load_from_file(f,x,y,comp,req_comp);
    for (i=0; i < max_loaders; ++i)
       if (loaders[i]->test_file(f))
          return loaders[i]->load_from_file(f,x,y,comp,req_comp);
-   // test tga last because it's a crappy test!
-   if (stbi_tga_test_file(f))
-      return stbi_tga_load_from_file(f,x,y,comp,req_comp);
    return epuc("unknown image type", "Image not of any known type, or corrupt");
 }
 #endif

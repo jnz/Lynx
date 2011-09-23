@@ -181,7 +181,7 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
 void CClient::OnReceive(CStream* stream)
 {
     uint8_t type;
-    uint16_t localobj;
+    uint32_t localobj;
 
     // fprintf(stderr, "%i Client Incoming data: %i bytes\n", CLynx::GetTicks()&255, stream->GetBytesToRead());
 
@@ -189,7 +189,7 @@ void CClient::OnReceive(CStream* stream)
     switch(type)
     {
     case NET_MSG_SERIALIZE_WORLD:
-        stream->ReadWORD(&localobj);
+        stream->ReadDWORD(&localobj);
         m_world->m_hud.Serialize(false, stream, m_world->GetResourceManager());
         m_world->Serialize(false, stream);
         m_world->SetLocalObj(localobj);

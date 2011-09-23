@@ -191,7 +191,7 @@ void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, CClientInfo* clie
         }
     }
 
-    clientobj->CmdFire(bFire);
+    clientobj->CmdFire(bFire, client);
 
     client->clcmdlist.clear();
 }

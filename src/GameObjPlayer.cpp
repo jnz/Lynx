@@ -1,7 +1,6 @@
 #include "GameObjPlayer.h"
 #include "GameObjZombie.h"
 #include "GameObjRocket.h"
-#include "ServerClient.h" // for SERVER_UPDATETIME in gun sound spam prevention
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -18,27 +17,24 @@ CGameObjPlayer::~CGameObjPlayer(void)
 {
 }
 
-void CGameObjPlayer::CmdFire(bool active)
-{
-    if(!m_prim_triggered && active)
-        OnCmdFire();
-    m_prim_triggered = active;
-}
-
-#define PLAYER_GUN_FIRESPEED            350 // fire a shot every x [ms]
+#define PLAYER_GUN_FIRESPEED            250 // fire a shot every x [ms]
 #define PLAYER_GUN_DAMAGE               28  // damage points
 #define PLAYER_GUN_MAX_DIST             (120.0f)   // max. weapon range
 
-void CGameObjPlayer::OnCmdFire()
+void CGameObjPlayer::CmdFire(bool active, CClientInfo* client)
 {
-    if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_GUN_FIRESPEED)
-        return;
-    m_prim_triggered_time = GetWorld()->GetLeveltime();
+    if(!m_prim_triggered && active)
+    {
+        if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_GUN_FIRESPEED)
+            return;
+        m_prim_triggered_time = GetWorld()->GetLeveltime();
 
-    FireGun();
+        FireGun(client);
+    }
+    m_prim_triggered = active;
 }
 
-void CGameObjPlayer::FireGun()
+void CGameObjPlayer::FireGun(CClientInfo* client)
 {
     PlaySound(GetOrigin(),
               CLynx::GetBaseDirSound() + "rifle.ogg",
@@ -59,7 +55,13 @@ void CGameObjPlayer::FireGun()
             if(trace.hitobj->GetType() > GAME_OBJ_TYPE_NONE)
             {
                 CGameObj* hitobj = (CGameObj*)trace.hitobj;
-                hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this);
+                bool killed;
+                hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this, killed);
+
+                if(killed)
+                {
+                    client->hud.score++;
+                }
             }
         }
         else // level geometry hit
@@ -69,10 +71,19 @@ void CGameObjPlayer::FireGun()
     }
 }
 
-void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer)
+void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer, bool& killed_me)
 {
-    CGameObj::DealDamage(0, hitpoint, dir, dealer);
+    CGameObj::DealDamage(damage, hitpoint, dir, dealer, killed_me);
 
-    SpawnParticleBlood(hitpoint, dir, 3.0f);
+    SpawnParticleBlood(hitpoint, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
+    if(killed_me)
+        Respawn();
+}
+
+void CGameObjPlayer::Respawn()
+{
+    vec3_t spawn = GetWorld()->GetBSP()->GetRandomSpawnPoint().point;
+    SetOrigin(spawn);
+    SetHealth(100);
 }
 

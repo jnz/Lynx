@@ -120,6 +120,8 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
         fprintf(stderr, "No crosshair found: %s\n", pathcross.c_str());
     m_world->GetResourceManager()->GetTextureDimension(pathcross,
              &m_crosshair_width, &m_crosshair_height);
+    // loading the font
+    m_font.Init("font.png", 16, 24, m_world->GetResourceManager());
 
     return true;
 }
@@ -389,6 +391,10 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glTexCoord2d(1,1);
         glVertex3f((m_width + m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
     glEnd();
+
+    char scorebuf[32];
+    sprintf(scorebuf, "%i", m_world->m_hud.score);
+    m_font.DrawGL(10.0f, m_height - 30.0f, 0.0f, scorebuf);
 
 #ifdef DRAW_SHADOWMAP
     //glBindTexture(GL_TEXTURE_2D, m_depthTextureId);

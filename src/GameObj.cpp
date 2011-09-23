@@ -19,6 +19,16 @@ CGameObj::~CGameObj(void)
 {
 }
 
+void CGameObj::DealDamage(int damage,
+                          const vec3_t& hitpoint,
+                          const vec3_t& dir,
+                          CGameObj* dealer,
+                          bool& killed_me)
+{
+    killed_me = (m_health > 0) && (m_health - damage <= 0);
+    AddHealth(-damage);
+}
+
 quaternion_t CGameObj::TurnTo(const vec3_t& location) const
 {
     const float dx = location.x - GetOrigin().x;

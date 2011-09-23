@@ -18,11 +18,15 @@ CGameObjZombie::~CGameObjZombie(void)
 
 }
 
-void CGameObjZombie::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer)
+void CGameObjZombie::DealDamage(int damage,
+                                const vec3_t& hitpoint,
+                                const vec3_t& dir,
+                                CGameObj* dealer,
+                                bool& killed_me)
 {
-    CGameObj::DealDamage(damage, hitpoint, dir, dealer);
+    CGameObj::DealDamage(damage, hitpoint, dir, dealer, killed_me);
 
-    if(GetHealth() > 0)
+    if(!killed_me)
     {
         SetVel(dir*5.0f);
         SpawnParticleBlood(hitpoint, dir, 4.0f);

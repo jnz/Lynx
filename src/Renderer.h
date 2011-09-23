@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WorldClient.h"
+#include "Font.h"
 
 class CRenderer
 {
@@ -45,6 +46,9 @@ protected:
     unsigned int m_crosshair; // crosshair texture
     unsigned int m_crosshair_width;
     unsigned int m_crosshair_height;
+
+    // Font
+    CFont        m_font;
 
 private:
     int m_width, m_height;

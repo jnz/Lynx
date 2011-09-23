@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
+#include "ResourceManager.h"
 #include "Font.h"
 
 #ifdef _DEBUG
@@ -39,6 +40,27 @@ void CFont::Init(const unsigned int textureid,
     m_height = height_texture;
 }
 
+bool CFont::Init(const std::string texturepath,
+                 const unsigned int width_char,
+                 const unsigned int height_char,
+                 CResourceManager* resman)
+{
+    const std::string fontpath = CLynx::GetBaseDirTexture() + texturepath;
+    unsigned int fonttexwidth, fonttexheight;
+    unsigned int fonttex = resman->GetTexture(fontpath, false);
+    if(!fonttex)
+    {
+        assert(0);
+        return false;
+    }
+    resman->GetTextureDimension(fontpath,
+                                &fonttexwidth,
+                                &fonttexheight);
+
+    Init(fonttex, width_char, height_char, fonttexwidth, fonttexheight);
+    return true;
+}
+
 void CFont::DrawGL(float x, float y, float z, const char* text) const
 {
     const float width = m_width_char; // in pixel
@@ -58,14 +80,15 @@ void CFont::DrawGL(float x, float y, float z, const char* text) const
 
         const float top = (uint8_t((ascii - 32) / chars_per_line)) * v;
         const float left = (uint8_t((ascii - 32) % chars_per_line)) * u;
+        const float eps = 0.5f/height;
 
         glTexCoord2d(left, 1.0f - top);
         glVertex3f(x, y, z);
 
-        glTexCoord2d(left, 1.0f - top - v);
+        glTexCoord2d(left, 1.0f - top - v + eps);
         glVertex3f(x, y+height, z);
 
-        glTexCoord2d(left + u, 1.0f - top - v);
+        glTexCoord2d(left + u, 1.0f - top - v + eps);
         glVertex3f(x+width, y+height, z);
 
         glTexCoord2d(left + u, 1.0f - top);

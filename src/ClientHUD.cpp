@@ -5,6 +5,7 @@
 CClientHUD::CClientHUD(void)
 {
     m_model = NULL;
+    score = 0;
 }
 
 CClientHUD::~CClientHUD(void)
@@ -17,12 +18,14 @@ void CClientHUD::Serialize(const bool write, CStream* stream, CResourceManager* 
     if(write)
     {
         stream->WriteString(weapon);
+        stream->WriteInt16(score);
     }
     else
     {
         std::string newweapon;
 
         stream->ReadString(&newweapon);
+        stream->ReadInt16(&score);
 
         if(newweapon != weapon)
         {

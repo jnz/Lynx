@@ -54,9 +54,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="ModelMD2.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="NetMsg.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -171,9 +168,6 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="GameLogic.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelMD2.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="NetMsg.h">

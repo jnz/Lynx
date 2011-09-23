@@ -4,8 +4,8 @@
 #include "Think.h"
 
 /*
-    CGameObj: Serverseitige/Spielelogicseitige Erweiterung
-    der CObj Klasse. Attribute werden nicht über das Netzwerk übertragen
+    CGameObj: Serverside game logic
+    Attributes in this class are not transmitted to the client.
  */
 
 #define GAME_OBJ_TYPE_NONE          0
@@ -33,7 +33,11 @@ public:
 
     quaternion_t TurnTo(const vec3_t& location) const; // rotation along yAxis.
 
-    virtual void DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer) { AddHealth(-damage); };
+    virtual void DealDamage(int damage,
+                            const vec3_t& hitpoint,
+                            const vec3_t& dir,
+                            CGameObj* dealer,
+                            bool& killed_me);
 
     CThink m_think;
 
@@ -59,3 +63,4 @@ public:
         return true;
     }
 };
+

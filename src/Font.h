@@ -14,6 +14,10 @@ public:
                        const unsigned int height_char,
                        const unsigned int width_texture,
                        const unsigned int height_texture);
+    bool          Init(const std::string texturepath,
+                       const unsigned int width_char,
+                       const unsigned int height_char,
+                       CResourceManager* resman);
 
     void          Unload();
 

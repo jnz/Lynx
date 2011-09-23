@@ -187,7 +187,7 @@ void CServer::OnReceive(CStream* stream, CClientInfo* client)
             }
             else
             {
-                fprintf(stderr, "SV: Reset client position\n");
+                fprintf(stderr, "SV: Not accepting client position\n");
             }
             obj->SetVel(vel);
 
@@ -283,7 +283,7 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     m_stream.ResetWritePosition();
 
     CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
-    m_stream.WriteWORD((uint16_t)localobj);
+    m_stream.WriteDWORD((uint32_t)localobj);
     client->hud.Serialize(true, &m_stream, NULL);
 
     std::map<uint32_t, world_state_t>::iterator iter;
@@ -300,9 +300,9 @@ bool CServer::SendWorldToClient(CClientInfo* client)
         world_state_t diffstate = (*iter).second;
         if(!m_world->Serialize(true, &m_stream, &diffstate))
         {
-            // Seit dem letzten bestätigtem Update vom Client hat sich nichts getan.
+            // No change since last update, client needs no update
             client->worldidACK = m_world->GetWorldID();
-            return true; // client benötigt kein update
+            return true;
         }
         // fprintf(stderr, "NET: Half update MTU: %i Bytes to be send: %i\n",
         //         client->GetPeer()->mtu,

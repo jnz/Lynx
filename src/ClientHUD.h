@@ -16,18 +16,19 @@ public:
     ~CClientHUD(void);
 
     std::string weapon;         // weapon model
+    int16_t score;              // current points
 
     /*
         Server side: calls Serialize(true, stream, NULL)
         Client side: calls Serialize(false, stream, resman), then the matching
-                     CModelMD2 gets loaded, so the renderer can quickly access
+                     CModelMD5 gets loaded, so the renderer can quickly access
                      the model by a GetModel() call.
      */
 
     void        Serialize(const bool write, CStream* stream, CResourceManager* resman);
 
     void        GetModel(CModelMD5** model, md5_state_t** state);
-    void        UpdateModel(CResourceManager* resman); // Load CModelMD2 for "weapon" and set animation
+    void        UpdateModel(CResourceManager* resman); // Load CModelMD5 for "weapon" and set animation
 
 protected:
     CModelMD5*  m_model;

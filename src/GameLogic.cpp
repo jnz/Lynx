@@ -91,3 +91,4 @@ void CGameLogic::ClientMouse(CObj* clientobj, float lat, float lon)
     quaternion_t qlon(vec3_t::yAxis, lon*lynxmath::DEGTORAD);
     clientobj->SetRot(qlon/**qlat*/);
 }
+

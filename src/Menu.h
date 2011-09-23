@@ -24,6 +24,7 @@ typedef enum
     MENU_FUNC_CREDITS,
     MENU_FUNC_QUIT,
     MENU_FUNC_START_SERVER_AND_CLIENT,
+    MENU_FUNC_CONNECT,
     MENU_FUNC_MAIN
 } menu_function_t;
 
@@ -130,9 +131,9 @@ protected:
     void          RenderGL() const;
 
     void          DrawMenu() const;
-    void          DrawFontVirtual(const std::string text,
-                                  const float x,
-                                  const float y) const;
+    void          DrawFontVirtual(std::string text,
+                                  float x,
+                                  float y) const;
     void          DrawRectVirtual(const menu_bitmap_t& bitmap,
                                   const float x,
                                   const float y) const; // aligned on a virtual screen (800x600)

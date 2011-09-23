@@ -20,6 +20,7 @@
 
 #define VIRTUAL_WIDTH  800.0f
 #define VIRTUAL_HEIGHT 600.0f
+#define TEXT_FIELD_MAX_CHARS_TO_DISPLAY    27
 
 enum
 {
@@ -30,6 +31,11 @@ enum
     MENU_LOADING,
     MENU_COUNT // make this the last item
 };
+
+// the character input system sucks, this whole character
+// input is something we shouldn't have to deal with.
+// SDL should provide us with something sane.
+int g_keyshift[256]; // characters when shift is pressed
 
 //----------------------------------------------------------------------
 static void RenderCube();
@@ -45,6 +51,35 @@ CMenu::CMenu(void)
     m_cur_menu = MENU_MAIN;
     m_cursor = 0;
     m_animation = 0.0f;
+
+    unsigned int i;
+    for(i=0;i<sizeof(g_keyshift)/sizeof(g_keyshift[0]);i++)
+        g_keyshift[i] = i;
+    for (i=0;i<sizeof(g_keyshift)/sizeof(g_keyshift[0]);i++)
+        g_keyshift[i] = i;
+    for (i='a';i<='z';i++)
+        g_keyshift[i] = i - 'a' + 'A';
+    g_keyshift[(int)'1'] = '!';
+    g_keyshift[(int)'2'] = '@';
+    g_keyshift[(int)'3'] = '#';
+    g_keyshift[(int)'4'] = '$';
+    g_keyshift[(int)'5'] = '%';
+    g_keyshift[(int)'6'] = '^';
+    g_keyshift[(int)'7'] = '&';
+    g_keyshift[(int)'8'] = '*';
+    g_keyshift[(int)'9'] = '(';
+    g_keyshift[(int)'0'] = ')';
+    g_keyshift[(int)'-'] = '_';
+    g_keyshift[(int)'='] = '+';
+    g_keyshift[(int)','] = '<';
+    g_keyshift[(int)'.'] = '>';
+    g_keyshift[(int)'/'] = '?';
+    g_keyshift[(int)';'] = ':';
+    g_keyshift[(int)'\''] = '"';
+    g_keyshift[(int)'['] = '{';
+    g_keyshift[(int)']'] = '}';
+    g_keyshift[(int)'`'] = '~';
+    g_keyshift[(int)'\\'] = '|';
 }
 
 CMenu::~CMenu(void)
@@ -120,18 +155,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
     m_menus.resize(MENU_COUNT);
 
     // Load a font
-    const std::string fontpath = CLynx::GetBaseDirTexture() + "font.png";
-    unsigned int fonttexwidth, fonttexheight;
-    unsigned int fonttex = GetResMan()->GetTexture(fontpath, false);
-    if(!fonttex)
-    {
-        assert(0);
-        return false;
-    }
-    GetResMan()->GetTextureDimension(fontpath,
-                                     &fonttexwidth,
-                                     &fonttexheight);
-    m_font.Init(fonttex, 16, 24, fonttexwidth, fonttexheight);
+    m_font.Init("font.png", 16, 24, GetResMan());
 
     // --------resources -------------------
     menu_bitmap_t menu_return;
@@ -145,6 +169,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
     menu_bitmap_t menu1_start;
 
     menu_bitmap_t menu2_serveraddr;
+    menu_bitmap_t menu2_connect;
 
     menu_bitmap_t menu3_creditsStatic;
 
@@ -165,6 +190,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
     error += LoadBitmap("starthost.tga"       , &menu1_start);
 
     error += LoadBitmap("serveraddr.tga"      , &menu2_serveraddr);
+    error += LoadBitmap("connect.tga"         , &menu2_connect);
 
     error += LoadBitmap("creditsStatic.tga"   , &menu3_creditsStatic);
 
@@ -241,11 +267,26 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_TEXT_FIELD,
                 MENU_FUNC_MAIN,
                 x, y,
-                "localhost:9999", // default text for text field
+                "localhost", // default text for text field: network address
                 60.0f,  // offset for text x
                 (menu2_serveraddr.height - m_font.GetHeight())/2 // vertical center
                 ));
                 y += menu2_serveraddr.height * scaleheight;
+    menu2_join.items.push_back(menu_item_t(
+                menu2_serveraddr,
+                MENU_TEXT_FIELD,
+                MENU_FUNC_MAIN,
+                x, y,
+                "9999", // default text for text field: port
+                60.0f,  // offset for text x
+                (menu2_serveraddr.height - m_font.GetHeight())/2 // vertical center
+                ));
+                y += menu2_serveraddr.height * scaleheight;
+    menu2_join.items.push_back(menu_item_t(
+                menu2_connect,
+                MENU_BUTTON,
+                MENU_FUNC_CONNECT,
+                x, y)); y += menu2_connect.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
                 menu_return,
                 MENU_BUTTON,
@@ -380,12 +421,19 @@ void CMenu::DrawRect(const unsigned int texture,
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void CMenu::DrawFontVirtual(const std::string text, const float x, const float y) const
+void CMenu::DrawFontVirtual(std::string text, float x, float y) const
 {
+    if(text.length() > TEXT_FIELD_MAX_CHARS_TO_DISPLAY)
+    {
+        const std::string indicator("...");
+        text = indicator + text.substr(text.length()-
+                                       TEXT_FIELD_MAX_CHARS_TO_DISPLAY+
+                                       indicator.length(),
+                                       text.length());
+    }
     const float vx = x + (m_phy_width - VIRTUAL_WIDTH)/2;
     const float vy = y + (m_phy_height - VIRTUAL_HEIGHT)/2;
-    m_font.DrawGL(vx, vy,
-                  0.0f, text.c_str());
+    m_font.DrawGL(vx, vy, 0.0f, text.c_str());
 }
 
 void CMenu::DrawRectVirtual(const menu_bitmap_t& bitmap,
@@ -489,6 +537,16 @@ void CMenu::KeyEnter()
             m_cur_menu = MENU_MAIN;
             MakeInvisible();
             break;
+        case MENU_FUNC_CONNECT:
+            m_cur_menu = MENU_LOADING;
+            m_cursor = 0;
+            DrawDefaultBackground();
+            RenderGL();
+            assert(0); // implement the correct host and port
+            m_callback.menu_func_join(NULL, 0);
+            m_cur_menu = MENU_MAIN;
+            MakeInvisible();
+            break;
         default:
             assert(0);
             break;
@@ -499,12 +557,9 @@ void CMenu::KeyAscii(unsigned char val, bool shift, bool ctrl)
 {
     if(!m_visible)
         return;
-
     // clip valid input range
     if(val < 32 || val > 127)
         return;
-    if(shift)
-        val = toupper(val);
 
     menu_t& menu = m_menus[m_cur_menu];
     menu_item_t& item = menu.items[m_cursor];
@@ -512,9 +567,10 @@ void CMenu::KeyAscii(unsigned char val, bool shift, bool ctrl)
     // only use this for text fields
     if(item.type != MENU_TEXT_FIELD)
         return;
-
     if(item.text.length() > MENU_MAX_TEXT_LEN)
         return;
+    if(shift) // shift table
+        val = g_keyshift[val];
 
     char ascii[] = {(char)val, 0};
     item.text += std::string(ascii);

@@ -10,7 +10,11 @@ public:
 
     virtual int     GetType() { return GAME_OBJ_TYPE_ZOMBIE; }
 
-    void            DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer);
+    virtual void    DealDamage(int damage,
+                               const vec3_t& hitpoint,
+                               const vec3_t& dir,
+                               CGameObj* dealer,
+                               bool& killed_me);
 
     void            FindVictim();
     int             currenttarget;
