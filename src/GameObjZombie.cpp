@@ -48,7 +48,7 @@ void CGameObjZombie::DealDamage(int damage,
         SetRot(TurnTo(dealer->GetOrigin()));
     }
     SetVel(vec3_t::origin);
-    SetAnimation(ANIMATION_NONE);
+    // SetAnimation(ANIMATION_IDLE); // FIXME we need a animation for a dying zombie
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(

@@ -70,7 +70,8 @@ struct menu_item_t
                 float _y,
                 const std::string _text,
                 float _textoffset_x,
-                float _textoffset_y) :
+                float _textoffset_y,
+                const std::string _fieldid) :
                        bitmap(_bitmap),
                        type(_type),
                        func(_func),
@@ -78,7 +79,8 @@ struct menu_item_t
                        y(_y),
                        text(_text),
                        textoffset_x(_textoffset_x),
-                       textoffset_y(_textoffset_y) { }
+                       textoffset_y(_textoffset_y),
+                       fieldid(_fieldid) { }
 
     menu_bitmap_t bitmap;
     menu_item_type_t type;
@@ -88,6 +90,7 @@ struct menu_item_t
     std::string text; // only used for text field items
     float textoffset_x; // only used for text field items:
     float textoffset_y; // draw inner text with this offset. 10 px or something is reasonable
+    std::string fieldid; // unique identifier for this field
 };
 
 // every menu has items (something the user can interact with)
@@ -151,6 +154,8 @@ protected:
     int               m_cursor; // current selected element
 
     CFont             m_font; // To draw some text
+
+    std::string       GetTextFieldValue(const std::string fieldid);
 
 private:
     CResourceManager* m_resman;

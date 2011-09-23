@@ -390,7 +390,9 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
     {
         m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
         if(m_mesh)
+        {
             m_mesh->SetAnimation(&m_mesh_state, state.animation);
+        }
     }
     else if(state.resource.find(".ogg") != std::string::npos)
     {

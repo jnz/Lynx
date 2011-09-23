@@ -269,7 +269,8 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 x, y,
                 "localhost", // default text for text field: network address
                 60.0f,  // offset for text x
-                (menu2_serveraddr.height - m_font.GetHeight())/2 // vertical center
+                (menu2_serveraddr.height - m_font.GetHeight())/2, // vertical center
+                "connect ip address" // text field name
                 ));
                 y += menu2_serveraddr.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
@@ -279,7 +280,8 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 x, y,
                 "9999", // default text for text field: port
                 60.0f,  // offset for text x
-                (menu2_serveraddr.height - m_font.GetHeight())/2 // vertical center
+                (menu2_serveraddr.height - m_font.GetHeight())/2, // vertical center
+                "connect ip port" // text field name
                 ));
                 y += menu2_serveraddr.height * scaleheight;
     menu2_join.items.push_back(menu_item_t(
@@ -445,6 +447,29 @@ void CMenu::DrawRectVirtual(const menu_bitmap_t& bitmap,
     DrawRect(bitmap.texture, vx, vy, bitmap.width, bitmap.height);
 }
 
+std::string CMenu::GetTextFieldValue(const std::string fieldid)
+{
+    int i, j;
+    const int menus = (int)m_menus.size();
+    for(i=0;i<menus;i++)
+    {
+        const menu_t& menu = m_menus[i];
+
+        const int items = menu.items.size();
+        for(j = 0; j < items; j++)
+        {
+            const menu_item_t& item = menu.items[j];
+            if(item.type == MENU_TEXT_FIELD)
+            {
+                if(item.fieldid == fieldid)
+                    return item.text;
+            }
+        }
+    }
+
+    return std::string("");
+}
+
 int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
 {
     const std::string bd = CLynx::GetBaseDirMenu(); // base dir for menu textures
@@ -542,8 +567,13 @@ void CMenu::KeyEnter()
             m_cursor = 0;
             DrawDefaultBackground();
             RenderGL();
-            assert(0); // implement the correct host and port
-            m_callback.menu_func_join(NULL, 0);
+
+            {
+                std::string ipaddress = GetTextFieldValue("connect ip address");
+                std::string ipport = GetTextFieldValue("connect ip port");
+                m_callback.menu_func_join(ipaddress.c_str(), atoi(ipport.c_str()));
+            }
+
             m_cur_menu = MENU_MAIN;
             MakeInvisible();
             break;
