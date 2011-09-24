@@ -7,14 +7,15 @@
 
 CGameObjRocket::CGameObjRocket(CWorld* world) : CGameObj(world)
 {
-    SetResource(CLynx::GetBaseDirModel() + "pknight/tris.md2");
-    SetAnimation(0);
-    SetRadius(0.1f);
+    SetOwner(0); // someone should take later the ownership
+    SetResource(CLynx::GetBaseDirModel() + "rocket/projectile.md5mesh");
+    SetAnimation(ANIMATION_NONE);
+    SetRadius(0.2f);
     // rocket think function:
     m_think.AddFunc(new CThinkFuncRocket(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
-    // remove the rocket after 5 seconds:
-    m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 5000, GetWorld(), this));
-    AddFlags(OBJ_FLAGS_NOGRAVITY);
+    // remove the rocket after 7 seconds:
+    m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 7000, GetWorld(), this));
+    AddFlags(OBJ_FLAGS_NOGRAVITY); // feynman would be angry, but this is what we like
 }
 
 CGameObjRocket::~CGameObjRocket(void)
@@ -31,8 +32,9 @@ void CGameObjRocket::OnHitWall(const vec3_t location, const vec3_t normal)
 bool CThinkFuncRocket::DoThink(uint32_t leveltime)
 {
     CGameObjRocket* rocket = (CGameObjRocket*)GetObj();
-    rocket->SpawnParticleDust(rocket->GetOrigin(), rocket->GetVel());
+    rocket->SpawnParticleRocket(rocket->GetOrigin(), -rocket->GetVel());
 
-    SetThinktime(leveltime + 250); // set next think
+    SetThinktime(leveltime + 250); // more particles in 250 ms
     return false;
 }
+

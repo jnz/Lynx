@@ -383,17 +383,18 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
     glBegin(GL_QUADS);
         glTexCoord2d(0,1);
-        glVertex3f((m_width - m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
+        glVertex3f((m_width - m_crosshair_width)*0.5f, (m_height - m_crosshair_height)*0.5f, 0.0f);
         glTexCoord2d(0,0);
-        glVertex3f((m_width - m_crosshair_width)/2, (m_height + m_crosshair_height)/2,0.0f);
+        glVertex3f((m_width - m_crosshair_width)*0.5f, (m_height + m_crosshair_height)*0.5f, 0.0f);
         glTexCoord2d(1,0);
-        glVertex3f((m_width + m_crosshair_width)/2, (m_height + m_crosshair_height)/2,0.0f);
+        glVertex3f((m_width + m_crosshair_width)*0.5f, (m_height + m_crosshair_height)*0.5f, 0.0f);
         glTexCoord2d(1,1);
-        glVertex3f((m_width + m_crosshair_width)/2, (m_height - m_crosshair_height)/2,0.0f);
+        glVertex3f((m_width + m_crosshair_width)*0.5f, (m_height - m_crosshair_height)*0.5f, 0.0f);
     glEnd();
 
+    // draw current score
     char scorebuf[32];
-    sprintf(scorebuf, "%i", m_world->m_hud.score);
+    sprintf(scorebuf, "Frags: %i", m_world->m_hud.score);
     m_font.DrawGL(10.0f, m_height - 30.0f, 0.0f, scorebuf);
 
 #ifdef DRAW_SHADOWMAP

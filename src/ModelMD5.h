@@ -92,6 +92,14 @@ struct md5_anim_t
 /* md5 animation state */
 struct md5_state_t
 {
+    md5_state_t()
+    {
+        curr_frame = 0;
+        next_frame = 1;
+        animation = ANIMATION_IDLE;
+        animdata = NULL;
+        time = 0.0f;
+    }
     int curr_frame;
     int next_frame;
     animation_t animation; // animation id
@@ -101,7 +109,6 @@ struct md5_state_t
     // skel holds the data of the interpolated
     // skeleton between two frames
     std::vector<md5_joint_t> skel;
-
 };
 
 class CModelMD5

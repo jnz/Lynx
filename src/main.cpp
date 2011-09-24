@@ -23,8 +23,8 @@
 // </memory leak detection>
 
 #define WINDOW_TITLE        "Lynx"
-#define SCREEN_WIDTH        800
-#define SCREEN_HEIGHT       600
+#define SCREEN_WIDTH        1024
+#define SCREEN_HEIGHT       768
 #define BPP                 32
 #define FULLSCREEN          0
 #define SV_PORT             9999

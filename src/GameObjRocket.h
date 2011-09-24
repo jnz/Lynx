@@ -15,6 +15,13 @@ public:
 
     // Rocket speed
     static float     GetRocketSpeed() { return 25.0f; }
+
+    // which player fired this rocket?
+    void             SetOwner(int objid) { m_owner = objid; }
+    int              GetOwner() { return m_owner; }
+
+protected:
+    int m_owner;
 };
 
 class CThinkFuncRocket : public CThinkFunc

@@ -443,7 +443,9 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
         /* Calculate final vertex to draw with weights */
         for(j = 0; j < mesh->vertices[i].count; ++j)
         {
+            assert(mesh->vertices[i].start + j < (int)mesh->weights.size());
             const md5_weight_t *weight = &mesh->weights[mesh->vertices[i].start + j];
+            assert(weight->joint < (int)m_baseSkel.size());
             const md5_joint_t *joint = &m_baseSkel[weight->joint];
 
             /* Calculate transformed vertex for this weight */
@@ -494,7 +496,7 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
         mesh->vertices[i].tangent.Normalize();
         mesh->vertices[i].bitangent.Normalize();
         mesh->vertices[i].w = 1.0f;
-        // FIXME not correct, should be something like 
+        // FIXME not correct, should be something like
         // (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f
 
         // Calculate the normal in joint-local space

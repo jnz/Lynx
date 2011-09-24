@@ -17,13 +17,13 @@ CParticleSystemDust::CParticleSystemDust(const PROPERTYMAP& properties, CResourc
     GetProperty(properties, "dx", &dir.x, 0);
     GetProperty(properties, "dy", &dir.y, 0);
     GetProperty(properties, "dz", &dir.z, -1.0f);
-    
+
     dir = dir.Normalized() * 12.0f;
 
     for(int i=0;i<particles;i++)
     {
         particle_t p;
-        
+
         p.startalpha = p.alpha = 1.0f;
         p.color = vec3_t(1,1,1);
         p.totallifetime = p.lifetime = 0.3f + CLynx::randfabs()*0.3f;

@@ -25,6 +25,7 @@ struct vec3_t
     float AbsFast(void) const; // absolute value of vector with fast sqrt (might be inaccurate)
 
     void Normalize(void);
+    void NormalizeFast(void);
     vec3_t Normalized(void) const;
     vec3_t NormalizedFast(void) const;
     bool IsNormalized() const;
@@ -95,6 +96,19 @@ LYNX_INLINE void vec3_t::Normalize(void)
     //if(abssqr > lynxmath::EPSILON)
     //{
         const float ilength = lynxmath::InvSqrt(abssqr);
+        x *= ilength;
+        y *= ilength;
+        z *= ilength;
+    //}
+}
+
+LYNX_INLINE void vec3_t::NormalizeFast(void)
+{
+    const float abssqr = x*x+y*y+z*z;
+
+    //if(abssqr > lynxmath::EPSILON)
+    //{
+        const float ilength = lynxmath::InvSqrtFast(abssqr);
         x *= ilength;
         y *= ilength;
         z *= ilength;

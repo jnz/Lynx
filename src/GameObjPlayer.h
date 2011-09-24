@@ -26,6 +26,7 @@ public:
 
 protected:
     void            FireGun(CClientInfo* client);
+    void            FireRocket(CClientInfo* client);
 
 private:
     bool            m_prim_triggered; // if +fire active?

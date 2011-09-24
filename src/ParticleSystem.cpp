@@ -2,6 +2,7 @@
 #include "ParticleSystemBlood.h"
 #include "ParticleSystemDust.h"
 #include "ParticleSystemExplosion.h"
+#include "ParticleSystemRocket.h"
 #include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
@@ -28,7 +29,6 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
     glBindTexture(GL_TEXTURE_2D, m_texture);
 
     // FIXME use vbos instead of this
-    glBegin(GL_QUADS);
     std::vector<particle_t>::const_iterator iter;
     for(iter = m_particles.begin();iter != m_particles.end(); iter++)
     {
@@ -44,6 +44,8 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
 
         glColor4f(iter->color.x, iter->color.y, iter->color.z, iter->alpha);
 
+        glBegin(GL_QUADS);
+
         glTexCoord2f(1.0f, 1.0f);
         glVertex3fv(Q1.v);
         glTexCoord2f(0.0f, 1.0f);
@@ -53,8 +55,9 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         glTexCoord2f(1.0f, 0.0f);
         glVertex3fv(Q4.v);
 
+        glEnd();
+
     }
-    glEnd();
 }
 
 void CParticleSystem::Update(const float dt, const uint32_t ticks)
@@ -71,7 +74,7 @@ void CParticleSystem::Update(const float dt, const uint32_t ticks)
         iter->vel.y -= gravity*dt;
         iter->lifetime -= dt;
         const float f = iter->lifetime / iter->totallifetime;
-        const float scale = sin(f * lynxmath::PI*0.5f);
+        const float scale = sin(f * lynxmath::PI);
         iter->alpha = iter->startalpha * scale;
         iter->size = scale * iter->startsize + 0.1f;
     }
@@ -92,6 +95,10 @@ CParticleSystem* CParticleSystem::CreateSystem(std::string systemname,
     else if(systemname == "expl")
     {
         return new CParticleSystemExplosion(properties, resman);
+    }
+    else if(systemname == "rock")
+    {
+        return new CParticleSystemRocket(properties, resman);
     }
     fprintf(stderr, "Unknown particle system: %s\n", systemname.c_str());
     assert(0);

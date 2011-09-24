@@ -21,6 +21,9 @@ CGameObjPlayer::~CGameObjPlayer(void)
 #define PLAYER_GUN_DAMAGE               28  // damage points
 #define PLAYER_GUN_MAX_DIST             (120.0f)   // max. weapon range
 
+#define PLAYER_ROCKET_FIRESPEED         650 // fire a shot every x [ms]
+#define PLAYER_ROCKET_DAMAGE            68  // splash damage
+
 void CGameObjPlayer::CmdFire(bool active, CClientInfo* client)
 {
     if(!m_prim_triggered && active)
@@ -29,7 +32,8 @@ void CGameObjPlayer::CmdFire(bool active, CClientInfo* client)
             return;
         m_prim_triggered_time = GetWorld()->GetLeveltime();
 
-        FireGun(client);
+        //FireGun(client);
+        FireRocket(client);
     }
     m_prim_triggered = active;
 }
@@ -69,6 +73,25 @@ void CGameObjPlayer::FireGun(CClientInfo* client)
             SpawnParticleDust(trace.hitpoint, trace.hitnormal);
         }
     }
+}
+
+void CGameObjPlayer::FireRocket(CClientInfo* client)
+{
+    PlaySound(GetOrigin(),
+              CLynx::GetBaseDirSound() + "rifle.ogg",
+              PLAYER_ROCKET_FIRESPEED+10);
+
+    vec3_t dir, up, side;
+    GetLookDir().GetVec3(&dir, &up, &side);
+    dir = -dir;
+
+    CGameObjRocket* rocket = new CGameObjRocket(GetWorld());
+
+    rocket->SetOrigin(GetOrigin() + GetEyePos() + dir*GetRadius() + side*0.5f + up*0.1f);
+    rocket->SetVel(dir * rocket->GetRocketSpeed());
+    rocket->SetRot(GetLookDir());
+    rocket->SetOwner(GetID()); // set rocket ownership to player entity
+    GetWorld()->AddObj(rocket); // godspeed little projectile
 }
 
 void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer, bool& killed_me)

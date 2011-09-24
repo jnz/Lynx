@@ -43,6 +43,7 @@ public:
 
     void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir, const float size);
     void SpawnParticleDust(const vec3_t& location, const vec3_t& dir);
+    void SpawnParticleRocket(const vec3_t& location, const vec3_t& dir);
     void SpawnParticleExplosion(const vec3_t& location, const vec3_t& dir);
 
     int PlaySound(const vec3_t& location, const std::string& soundpath, uint32_t lifetime); // id of sound obj

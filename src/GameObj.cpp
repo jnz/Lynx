@@ -3,6 +3,7 @@
 #include "ParticleSystemBlood.h"
 #include "ParticleSystemDust.h"
 #include "ParticleSystemExplosion.h"
+#include "ParticleSystemRocket.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -61,6 +62,19 @@ void CGameObj::SpawnParticleDust(const vec3_t& location, const vec3_t& dir)
     dust->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + DUST_LIFETIME, GetWorld(), dust));
     dust->AddFlags(OBJ_FLAGS_NOGRAVITY);
     GetWorld()->AddObj(dust);
+}
+
+void CGameObj::SpawnParticleRocket(const vec3_t& location, const vec3_t& dir)
+{
+    static const uint32_t ROCKETTRAIL_LIFETIME = 500; // ms
+
+    CGameObj* rockettrail = new CGameObj(GetWorld());
+    rockettrail->SetRadius(0.0f);
+    rockettrail->SetOrigin(location);
+    rockettrail->SetParticleSystem("rock|" + CParticleSystemRocket::GetConfigString(dir));
+    rockettrail->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + ROCKETTRAIL_LIFETIME, GetWorld(), rockettrail));
+    rockettrail->AddFlags(OBJ_FLAGS_NOGRAVITY);
+    GetWorld()->AddObj(rockettrail);
 }
 
 void CGameObj::SpawnParticleExplosion(const vec3_t& location, const vec3_t& dir)

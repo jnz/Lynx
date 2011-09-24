@@ -215,6 +215,9 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         if(f == 1.0f)
             break;
 
+        wallplane = trace.p;
+        wallhit = true;
+
         // Reduce amount of frametime (dt) left by total time left * fraction
         //  that we covered.
         time_left = time_left * (1-f);
@@ -225,11 +228,9 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
             groundhit = true;
 
         // if the y component is zero, it is a wall
-        if(fabsf(trace.p.m_n.v[1]) < 0.1f)
-        {
-            wallplane = trace.p;
-            wallhit = true;
-        }
+        // if(fabsf(trace.p.m_n.v[1]) < 0.1f)
+        // {
+        // }
 
         // Did we run out of planes to clip against?
         if(numplanes >= MAX_CLIP_PLANES)

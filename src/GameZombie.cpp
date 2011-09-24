@@ -73,7 +73,8 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    for(int i=0;i<1;i++)
+    const int zombocount = 0;
+    for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
         CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
@@ -95,7 +96,7 @@ void CGameZombie::Notify(EventNewClientConnected e)
     player->SetOrigin(spawn);
     player->SetResource(CLynx::GetBaseDirModel() + "marine/marine.md5mesh");
     player->SetRadius(2.0f);
-    player->SetAnimation(0);
+    player->SetAnimation(ANIMATION_IDLE);
     player->SetEyePos(vec3_t(0,1.65f,0));
     player->SetClientID(e.client->GetID());
 
