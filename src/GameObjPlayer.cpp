@@ -40,9 +40,9 @@ void CGameObjPlayer::CmdFire(bool active, CClientInfo* client)
 
 void CGameObjPlayer::FireGun(CClientInfo* client)
 {
-    PlaySound(GetOrigin(),
-              CLynx::GetBaseDirSound() + "rifle.ogg",
-              PLAYER_GUN_FIRESPEED+10);
+    CGameObj::CreateSoundObj(GetOrigin(),
+                        CLynx::GetBaseDirSound() + "rifle.ogg",
+                        PLAYER_GUN_FIRESPEED+10);
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -77,7 +77,7 @@ void CGameObjPlayer::FireGun(CClientInfo* client)
 
 void CGameObjPlayer::FireRocket(CClientInfo* client)
 {
-    PlaySound(GetOrigin(),
+    CreateSoundObj(GetOrigin(),
               CLynx::GetBaseDirSound() + "rifle.ogg",
               PLAYER_ROCKET_FIRESPEED+10);
 

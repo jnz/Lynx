@@ -155,11 +155,11 @@ void CRenderer::DrawScene(const CFrustum& frustum,
            !obj->GetMesh())
             continue;
 
-		if(!generateShadowMap && !frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-		{
-			stat_obj_hidden++;
-			continue;
-		}
+        if(!generateShadowMap && !frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
+        {
+            stat_obj_hidden++;
+            continue;
+        }
         if(!generateShadowMap)
             stat_obj_visible++;
 
@@ -374,7 +374,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-	glOrtho(0, m_width, m_height, 0, 0, 1);
+    glOrtho(0, m_width, m_height, 0, 0, 1);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -717,13 +717,13 @@ void DrawBBox(const vec3_t& min, const vec3_t& max)
     glGetFloatv(GL_MODELVIEW_MATRIX, &m.m[0][0]);
  */
     // DEBUG only. this piece of code draw the depth buffer onscreen
-	// The only problem is: it does not work
-	// glActiveTexture(GL_TEXTURE7);
-	// glBindTexture(GL_TEXTURE_2D, 0);
-	// glActiveTexture(GL_TEXTURE0);
+    // The only problem is: it does not work
+    // glActiveTexture(GL_TEXTURE7);
+    // glBindTexture(GL_TEXTURE_2D, 0);
+    // glActiveTexture(GL_TEXTURE0);
     // glUseProgram(0);
-	// glClear(GL_DEPTH_BUFFER_BIT);
-	// glDisable(GL_LIGHTING);
+    // glClear(GL_DEPTH_BUFFER_BIT);
+    // glDisable(GL_LIGHTING);
     // glMatrixMode(GL_PROJECTION);
     // glLoadIdentity();
     // glOrtho(-m_width/2,m_width/2,-m_height/2,m_height/2,1,20);
@@ -740,6 +740,6 @@ void DrawBBox(const vec3_t& min, const vec3_t& max)
     // glTexCoord2d(1,1);glVertex3f(m_width/2,m_height/2,0);
     // glTexCoord2d(0,1);glVertex3f(0,m_height/2,0);
     // glEnd();
-	// glEnable(GL_LIGHTING);
+    // glEnable(GL_LIGHTING);
     // UpdatePerspective();
 

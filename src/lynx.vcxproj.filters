@@ -126,9 +126,6 @@
     <ClCompile Include="Sound.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="GameObjRocket.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="ParticleSystemExplosion.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -143,6 +140,21 @@
     </ClCompile>
     <ClCompile Include="..\soil\src\stb_image_aug.c">
       <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelMD5.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleSystemRocket.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjRocket.cpp">
+      <Filter>GameZombie</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

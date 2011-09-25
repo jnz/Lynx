@@ -32,7 +32,7 @@ void CGameObjZombie::DealDamage(int damage,
         SpawnParticleBlood(hitpoint, dir, 4.0f);
         if(CLynx::randfabs() < 0.70f)
         {
-            PlaySound(GetOrigin(),
+            CreateSoundObj(GetOrigin(),
                       CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterhit%i.ogg", 3),
                       180);
         }
@@ -57,7 +57,7 @@ void CGameObjZombie::DealDamage(int damage,
                     this));
     if(CLynx::randfabs() < 0.88f) // 88% change of sound playing
     {
-        PlaySound(hitpoint, CLynx::GetBaseDirSound() + "monsterdie.ogg", 250);
+        CreateSoundObj(hitpoint, CLynx::GetBaseDirSound() + "monsterdie.ogg", 250);
     }
 }
 
@@ -73,7 +73,7 @@ void CGameObjZombie::FindVictim()
         currenttarget = victim->GetID();
         if(CLynx::randfabs() < 0.8f) // 80% change of sound playing
         {
-            PlaySound(GetOrigin(),
+            CreateSoundObj(GetOrigin(),
                       CLynx::GetBaseDirSound() + CLynx::GetRandNumInStr("monsterstartle%i.ogg", 3),
                       250);
         }

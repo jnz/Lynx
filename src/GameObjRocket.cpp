@@ -54,7 +54,7 @@ void CGameObjRocket::DestroyRocket(const vec3_t& location)
     m_think.RemoveAll(); // remove the safety delete thinkfunc, which might interrupt our fadeout
     m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 800, GetWorld(), this));
 
-    PlaySound(location,
+    CreateSoundObj(location,
               CLynx::GetBaseDirSound() + "rifle.ogg",
               800);
 }

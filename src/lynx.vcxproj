@@ -194,11 +194,15 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientHUD.cpp" />
     <ClCompile Include="ClientInfo.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="ModelMD5.cpp" />
     <ClCompile Include="NetMsg.cpp" />
     <ClCompile Include="Mixer.cpp" />
+    <ClCompile Include="ParticleSystemRocket.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="Obj.cpp" />
     <ClCompile Include="Renderer.cpp" />
