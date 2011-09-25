@@ -77,14 +77,14 @@ void CGameObj::SpawnParticleRocket(const vec3_t& location, const vec3_t& dir)
     GetWorld()->AddObj(rockettrail);
 }
 
-void CGameObj::SpawnParticleExplosion(const vec3_t& location, const vec3_t& dir)
+void CGameObj::SpawnParticleExplosion(const vec3_t& location, const float size)
 {
     static const uint32_t EXPL_LIFETIME = 800; // ms
 
     CGameObj* explosion = new CGameObj(GetWorld());
     explosion->SetRadius(0.0f);
     explosion->SetOrigin(location);
-    explosion->SetParticleSystem("expl|" + CParticleSystemExplosion::GetConfigString(dir));
+    explosion->SetParticleSystem("expl|" + CParticleSystemExplosion::GetConfigString(size));
     explosion->m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + EXPL_LIFETIME, GetWorld(), explosion));
     explosion->AddFlags(OBJ_FLAGS_NOGRAVITY);
     GetWorld()->AddObj(explosion);

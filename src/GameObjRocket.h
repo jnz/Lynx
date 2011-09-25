@@ -11,7 +11,7 @@ public:
     virtual int     GetType() { return GAME_OBJ_TYPE_ROCKET; }
 
     // Wallhit notification
-    virtual void     OnHitWall(const vec3_t location, const vec3_t normal);
+    virtual void     OnHitWall(const vec3_t& location, const vec3_t& normal);
 
     // Rocket speed
     static float     GetRocketSpeed() { return 25.0f; }
@@ -20,6 +20,7 @@ public:
     void             SetOwner(int objid) { m_owner = objid; }
     int              GetOwner() { return m_owner; }
 
+    void             DestroyRocket(const vec3_t& location);
 protected:
     int m_owner;
 };

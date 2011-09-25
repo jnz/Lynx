@@ -28,7 +28,7 @@ void CGameObjPlayer::CmdFire(bool active, CClientInfo* client)
 {
     if(!m_prim_triggered && active)
     {
-        if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_GUN_FIRESPEED)
+        if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_ROCKET_FIRESPEED)
             return;
         m_prim_triggered_time = GetWorld()->GetLeveltime();
 

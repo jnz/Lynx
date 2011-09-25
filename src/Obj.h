@@ -144,7 +144,7 @@ public:
     CParticleSystem* GetParticleSystem() { return m_particlesys.get(); }
 
     // Wallhit notification, called by World::ObjMove(...)
-    virtual void     OnHitWall(const vec3_t location, const vec3_t normal) {}
+    virtual void     OnHitWall(const vec3_t& location, const vec3_t& normal) {}
 
 protected:
     obj_state_t state; // Core data

@@ -163,7 +163,8 @@ void CObj::UpdateParticles()
                                         CParticleSystem::CreateSystem(
                                         psystem,
                                         properties,
-                                        GetWorld()->GetResourceManager()
+                                        GetWorld()->GetResourceManager(),
+                                        GetOrigin()
                                         ));
     }
     else
@@ -174,8 +175,6 @@ void CObj::UpdateParticles()
 
 void CObj::SetParticleSystem(const std::string psystem)
 {
-    // FIXME what is update good for?
-    // bool update = psystem != state.particles;
     state.particles = psystem;
     UpdateParticles();
 }

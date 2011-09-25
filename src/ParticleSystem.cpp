@@ -27,6 +27,7 @@ CParticleSystem::~CParticleSystem(void)
 void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t& dir)
 {
     glBindTexture(GL_TEXTURE_2D, m_texture);
+    glBegin(GL_QUADS);
 
     // FIXME use vbos instead of this
     std::vector<particle_t>::const_iterator iter;
@@ -44,8 +45,6 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
 
         glColor4f(iter->color.x, iter->color.y, iter->color.z, iter->alpha);
 
-        glBegin(GL_QUADS);
-
         glTexCoord2f(1.0f, 1.0f);
         glVertex3fv(Q1.v);
         glTexCoord2f(0.0f, 1.0f);
@@ -55,20 +54,29 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         glTexCoord2f(1.0f, 0.0f);
         glVertex3fv(Q4.v);
 
-        glEnd();
-
     }
+
+    glEnd();
 }
 
-void CParticleSystem::Update(const float dt, const uint32_t ticks)
+void CParticleSystem::Update(const float dt, const uint32_t ticks, const vec3_t& ownerpos)
 {
-    const float gravity = 25.5f;
+    const float gravity = GetGravity();
 
     std::vector<particle_t>::iterator iter;
     for(iter = m_particles.begin();iter != m_particles.end(); iter++)
     {
         if(iter->lifetime < 0.0f)
-            continue;
+        {
+            if(iter->respawn)
+            {
+                InitParticle(*iter, ownerpos);
+            }
+            else
+            {
+                continue;
+            }
+        }
 
         iter->origin = iter->origin + iter->vel*dt - vec3_t(0,dt*dt*0.5f*gravity,0);
         iter->vel.y -= gravity*dt;
@@ -82,23 +90,24 @@ void CParticleSystem::Update(const float dt, const uint32_t ticks)
 
 CParticleSystem* CParticleSystem::CreateSystem(std::string systemname,
                                                const PROPERTYMAP& properties,
-                                               CResourceManager* resman)
+                                               CResourceManager* resman,
+                                               const vec3_t& ownerpos)
 {
     if(systemname == "blood")
     {
-        return new CParticleSystemBlood(properties, resman);
+        return new CParticleSystemBlood(properties, resman, ownerpos);
     }
     else if(systemname == "dust")
     {
-        return new CParticleSystemDust(properties, resman);
+        return new CParticleSystemDust(properties, resman, ownerpos);
     }
     else if(systemname == "expl")
     {
-        return new CParticleSystemExplosion(properties, resman);
+        return new CParticleSystemExplosion(properties, resman, ownerpos);
     }
     else if(systemname == "rock")
     {
-        return new CParticleSystemRocket(properties, resman);
+        return new CParticleSystemRocket(properties, resman, ownerpos);
     }
     fprintf(stderr, "Unknown particle system: %s\n", systemname.c_str());
     assert(0);

@@ -324,13 +324,13 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
             continue;
 
-        obj->GetParticleSystem()->Update(dt, ticks);
+        obj->GetParticleSystem()->Update(dt, ticks, obj->GetOrigin());
 
         // FIXME use some kind of frustum test for the particle system!
-        glPushMatrix();
-        glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        //glPushMatrix();
+        //glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         obj->GetParticleSystem()->Render(side, up, dir);
-        glPopMatrix();
+        //glPopMatrix();
     }
     glDepthMask(true);
     glColor4f(1,1,1,1);
