@@ -9,7 +9,7 @@ public:
     CGameObjPlayer(CWorld* world);
     ~CGameObjPlayer(void);
 
-    virtual int     GetType() { return GAME_OBJ_TYPE_PLAYER; }
+    virtual int     GetType() const { return GAME_OBJ_TYPE_PLAYER; }
 
     void            CmdFire(bool active, CClientInfo* client); // Is cmd active?
 

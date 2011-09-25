@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "GameZombie.h"
 #include "GameObjZombie.h"
+#include "GameObjRocket.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -25,21 +26,23 @@ struct gamezombie_precache_t
     resource_type_t type; // see ResourceManager.h
 };
 
+// list of resources to load
 static const gamezombie_precache_t g_game_zombie_precache[] =
 {
-    {"rocket viewmodel", "rocket/rocketlauncher.md5mesh", LYNX_RESOURCE_TYPE_MD5},
-    {"player model", "marine/marine.md5mesh", LYNX_RESOURCE_TYPE_MD5},
-    {"zombie model", "pinky/pinky.md5mesh", LYNX_RESOURCE_TYPE_MD5},
-    {"rifle sound", "rifle.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster hit sound 1", "monsterhit1.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster hit sound 2", "monsterhit2.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster hit sound 3", "monsterhit3.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster death sound", "monsterdie.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster startle sound", "monsterstartle1.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster startle sound", "monsterstartle2.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster startle sound", "monsterstartle3.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster attack sound 1", "monsterattack1.ogg", LYNX_RESOURCE_TYPE_SOUND},
-    {"monster attack sound 2", "monsterattack2.ogg", LYNX_RESOURCE_TYPE_SOUND},
+    {"rocket viewmodel"       , "rocket/rocketlauncher.md5mesh" , LYNX_RESOURCE_TYPE_MD5}   ,
+    {"player model"           , "marine/marine.md5mesh"         , LYNX_RESOURCE_TYPE_MD5}   ,
+    {"zombie model"           , "pinky/pinky.md5mesh"           , LYNX_RESOURCE_TYPE_MD5}   ,
+    {"projectile"             , "rocket/projectile.md5mesh"     , LYNX_RESOURCE_TYPE_MD5}   ,
+    {"rifle sound"            , "rifle.ogg"                     , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster hit sound 1"    , "monsterhit1.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster hit sound 2"    , "monsterhit2.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster hit sound 3"    , "monsterhit3.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster death sound"    , "monsterdie.ogg"                , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster startle sound"  , "monsterstartle1.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster startle sound"  , "monsterstartle2.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster startle sound"  , "monsterstartle3.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster attack sound 1" , "monsterattack1.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
+    {"monster attack sound 2" , "monsterattack2.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
 
     {"normal texture", "normal.jpg", LYNX_RESOURCE_TYPE_TEXTURE}
 };
@@ -73,7 +76,7 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    const int zombocount = 0;
+    const int zombocount = 2;
     for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
@@ -174,6 +177,37 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 if(diff.AbsSquared()>25.0f)
                     diff.SetLength(5.0f);
                 obj2->SetVel(diff);
+            }
+        }
+        else if(obj->GetType() == GAME_OBJ_TYPE_ROCKET && !(obj->GetFlags()&OBJ_FLAGS_GHOST))
+        {
+            // FIXME: is this really something the game logic has to
+            // take care of every frame? there should be an event callback
+            // similar to the level geometry collision callback.
+
+            // Check if the rocket is near a player or a monster.
+            // if yes, explode and deal damage
+            std::vector<int> objtypes;
+            objtypes.push_back(GAME_OBJ_TYPE_PLAYER);
+            objtypes.push_back(GAME_OBJ_TYPE_ZOMBIE);
+            const std::vector<CObj*> nearobjlist =
+                GetWorld()->GetNearObjByTypeList(obj->GetOrigin(),
+                                                 obj->GetRadius(),
+                                                 obj->GetID(),
+                                                 objtypes);
+            if(nearobjlist.size() > 0) // we have hit something
+            {
+                // as a rocket is dealing splash damage, we need to include
+                // objects in a larger radius
+                const float splashradius = ((CGameObjRocket*)obj)->GetSplashDamageRadius();
+                const std::vector<CObj*> splashobjlist =
+                    GetWorld()->GetNearObjByTypeList(obj->GetOrigin(),
+                                                     splashradius,
+                                                     obj->GetID(),
+                                                     objtypes);
+                assert(nearobjlist.size() > 0);
+                ((CGameObjRocket*)obj)->DealDamageToNearbyObjs(splashobjlist);
+                ((CGameObjRocket*)obj)->DestroyRocket(obj->GetOrigin());
             }
         }
     }

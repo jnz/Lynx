@@ -49,15 +49,15 @@ namespace stdext
 }
 #endif
 
-#define WORLD_STATE_OBJMAPTYPE      stdext::hash_map<int, int>
-#define WORLD_STATE_OBJITER         stdext::hash_map<int, int>::iterator
-#define WORLD_STATE_CONSTOBJITER    stdext::hash_map<int, int>::const_iterator
+#define WORLD_STATE_OBJMAPTYPE    stdext::hash_map<int, int>
+#define WORLD_STATE_OBJITER       stdext::hash_map<int, int>::iterator
+#define WORLD_STATE_CONSTOBJITER  stdext::hash_map<int, int>::const_iterator
 
 struct world_state_t
 {
-    uint32_t   leveltime; // time in [ms]
-    uint32_t   worldid; // worldid increments every frame
-    std::string level; // path to level file
+    uint32_t    leveltime; // time in [ms]
+    uint32_t    worldid; // worldid increments every frame, unique world identifier
+    std::string level; // path to .lbsp level file
 
     // Everything to describe the current state of the game
     // is stored in this struct.
@@ -68,7 +68,6 @@ struct world_state_t
     // then you can access the obj_state_t in this way:
     //
     //  objstates[objindex[OBJID]]
-    //
 
     void        AddObjState(obj_state_t objstate, const int id);
     bool        ObjStateExists(const int id) const;
@@ -82,7 +81,7 @@ protected:
     WORLD_STATE_OBJMAPTYPE objindex; // ID to objstates index table. Key = obj id, value = index in objstates table
 };
 
-struct world_obj_trace_t // Search for objects hit by a ray
+struct world_obj_trace_t // Search for objects hit by a ray, used by the TraceObj function
 {
     // Input
     vec3_t  start; // start point
@@ -106,7 +105,8 @@ public:
     CWorld(void);
     virtual ~CWorld(void);
 
-    virtual bool    IsClient() const { return false; } // If the world is not a client, some operations are skipped, e.g. loading textures
+    // If the world is not a client, some operations can be skipped, e.g. loading textures
+    virtual bool    IsClient() const { return false; }
 
     virtual void    Update(const float dt, const uint32_t ticks); // Calculate a new frame.
 
@@ -115,13 +115,26 @@ public:
 
     CObj*           GetObj(int objid); // Search for object with this id.
 
-    int             GetObjCount() const { return (int)m_objlist.size(); } // Number of currently active objects.
+    // Number of currently active objects. Including ghost objects.
+    int             GetObjCount() const { return (int)m_objlist.size(); }
     OBJITER         ObjBegin() { return m_objlist.begin(); } // Begin Iterator
     OBJITER         ObjEnd() { return m_objlist.end(); } // End Iterator
 
-    const std::vector<CObj*> GetNearObj(const vec3_t& origin, const float radius, const int exclude, const int type) const; // List is only valid for this frame!
+    // Get objects within radius and the specific type, or every object if type is < 0
+    const std::vector<CObj*> GetNearObj(const vec3_t& origin,
+                                        const float radius,
+                                        const int exclude,
+                                        const int type) const;
 
-    virtual bool    Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL); // Serialize the world state to a byte stream. Returns true if the world has changed compared to the oldstate.
+    // Returns objects within radius, where the obj type is in objtypes array
+    const std::vector<CObj*> GetNearObjByTypeList(const vec3_t& origin,
+                                                  const float radius,
+                                                  const int exclude,
+                                                  const std::vector<int>& objtypes) const;
+
+    // Serialize the world state to a byte stream.
+    // Returns true if the world has changed compared to the oldstate.
+    virtual bool    Serialize(bool write, CStream* stream, const world_state_t* oldstate=NULL);
 
     bool            LoadLevel(const std::string path); // Load the level from a .lbsp file
     const virtual CBSPLevel* GetBSP() const { return &m_bsptree; }
@@ -130,9 +143,16 @@ public:
 
     virtual CResourceManager* GetResourceManager() { return &m_resman; }
 
-    void            ObjMove(CObj* obj, const float dt) const; // Move object and perform collision detection with level geometry
+    // Move object and perform collision detection with level geometry
+    void            ObjMove(CObj* obj, const float dt) const;
 
-    bool            TraceObj(world_obj_trace_t* trace, const float maxdist); // returns true if something is hit
+    // TraceObj is a core engine function to check if an object can travel along
+    // a vector or if it hits the level geometry.
+    // The level geometry is stored as a KD tree, so this call scales pretty
+    // well even if there are many triangles in the scene.
+    //
+    // returns true if something is hit.
+    bool            TraceObj(world_obj_trace_t* trace, const float maxdist);
 
     world_state_t   GetWorldState();
 

@@ -8,7 +8,7 @@ public:
     CGameObjZombie(CWorld* world);
     ~CGameObjZombie(void);
 
-    virtual int     GetType() { return GAME_OBJ_TYPE_ZOMBIE; }
+    virtual int     GetType() const { return GAME_OBJ_TYPE_ZOMBIE; }
 
     virtual void    DealDamage(int damage,
                                const vec3_t& hitpoint,

@@ -93,6 +93,40 @@ const std::vector<CObj*> CWorld::GetNearObj(const vec3_t& origin, const float ra
     return objlist;
 }
 
+// Returns objects within radius, where the obj type is in objtypes array
+const std::vector<CObj*> CWorld::GetNearObjByTypeList(const vec3_t& origin,
+                                                      const float radius,
+                                                      const int exclude,
+                                                      const std::vector<int>& objtypes) const
+{
+    // FIXME this function also should use some sort of binary space partitioning
+    // naive implementation:
+    std::vector<CObj*> objlist;
+    OBJITERCONST iter;
+    for(iter = m_objlist.begin(); iter != m_objlist.end(); iter++)
+    {
+        CObj* obj = (*iter).second;
+        if(obj->GetFlags() & OBJ_FLAGS_GHOST) // ignore ghosts always
+            continue;
+
+        if( ( obj->GetID() == exclude ) ||
+            ( (obj->GetOrigin() - origin).AbsFast() > radius + obj->GetRadius() ) )
+        {
+            continue;
+        }
+
+        // STL really sometimes creates an unreadable mess.
+        // Check the objtypes vector, if the type is in the list.
+        // If yes, the caller wants this obj in the return list.
+        for(std::vector<int>::const_iterator typeiter = objtypes.begin();
+            typeiter != objtypes.end(); typeiter++)
+        {
+            if(obj->GetType() == (*typeiter))
+                objlist.push_back(obj);
+        }
+    }
+    return objlist;
+}
 
 void CWorld::Update(const float dt, const uint32_t ticks)
 {

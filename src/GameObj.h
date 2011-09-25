@@ -21,7 +21,7 @@ public:
     CGameObj(CWorld* world);
     virtual ~CGameObj(void);
 
-    virtual int GetType() { return GAME_OBJ_TYPE_OBJ; }
+    virtual int GetType() const { return GAME_OBJ_TYPE_OBJ; }
 
     void SetClientID(int clientid) { m_clientid = clientid; }
     int GetClientID() { return m_clientid; }

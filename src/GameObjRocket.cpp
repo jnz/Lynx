@@ -12,12 +12,10 @@ CGameObjRocket::CGameObjRocket(CWorld* world) : CGameObj(world)
     SetResource(CLynx::GetBaseDirModel() + "rocket/projectile.md5mesh");
     SetAnimation(ANIMATION_NONE);
     SetRadius(0.2f);
-    // rocket think function:
-    // m_think.AddFunc(new CThinkFuncRocket(GetWorld()->GetLeveltime() + 50, GetWorld(), this));
 
     // remove the rocket after 14 seconds no matter what:
     m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 14000, GetWorld(), this));
-    AddFlags(OBJ_FLAGS_NOGRAVITY); // feynman would be angry, but this is what we like
+    AddFlags(OBJ_FLAGS_NOGRAVITY); // move in a straight line through the world
     // attach a nice smoke trail particle system to the rocket
     SetParticleSystem("rock|" + CParticleSystemRocket::GetConfigString(vec3_t(0.0f, 0.0f, 0.0f)));
 }
@@ -29,6 +27,18 @@ CGameObjRocket::~CGameObjRocket(void)
 
 void CGameObjRocket::OnHitWall(const vec3_t& location, const vec3_t& normal)
 {
+    std::vector<int> objtypes;
+    objtypes.push_back(GAME_OBJ_TYPE_PLAYER);
+    objtypes.push_back(GAME_OBJ_TYPE_ZOMBIE);
+
+    const float splashradius = GetSplashDamageRadius();
+    const std::vector<CObj*> splashobjlist =
+        GetWorld()->GetNearObjByTypeList(location,
+                                         splashradius,
+                                         GetID(),
+                                         objtypes);
+    DealDamageToNearbyObjs(splashobjlist);
+
     DestroyRocket(location);
 }
 
@@ -41,7 +51,7 @@ void CGameObjRocket::DestroyRocket(const vec3_t& location)
     // meanwhile the rocket is a ghost
     SetVel(vec3_t::origin); // no need to move anymore
     AddFlags(OBJ_FLAGS_GHOST); // this makes the rocket invisible, but not the particle system
-    m_think.RemoveAll();
+    m_think.RemoveAll(); // remove the safety delete thinkfunc, which might interrupt our fadeout
     m_think.AddFunc(new CThinkFuncRemoveMe(GetWorld()->GetLeveltime() + 800, GetWorld(), this));
 
     PlaySound(location,
@@ -49,11 +59,28 @@ void CGameObjRocket::DestroyRocket(const vec3_t& location)
               800);
 }
 
-bool CThinkFuncRocket::DoThink(uint32_t leveltime)
+void CGameObjRocket::DealDamageToNearbyObjs(const std::vector<CObj*>& nearobjs)
 {
-    //CGameObjRocket* rocket = (CGameObjRocket*)GetObj();
+    bool killed_me;
+    float damage;
+    const float base_damage = GetDamage();
 
-    SetThinktime(leveltime + 250);
-    return false;
+    // for every hit object:
+    for(std::vector<CObj*>::const_iterator hititer =
+            nearobjs.begin();
+            hititer != nearobjs.end();
+            hititer++)
+    {
+        CGameObj* hitobj = (CGameObj*)(*hititer);
+        assert(hitobj->GetType() > GAME_OBJ_TYPE_OBJ); // make sure we get valid types here
+        // now we deal some damage to the object
+
+        damage = base_damage; // FIXME implement splash damage
+        hitobj->DealDamage(damage,
+                           hitobj->GetOrigin(),
+                           vec3_t::origin,
+                           this,
+                           killed_me);
+    }
 }
 
