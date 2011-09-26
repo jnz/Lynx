@@ -60,7 +60,7 @@ struct menu_item_t
                        type(_type),
                        func(_func),
                        x(_x),
-                       y(_y) { }
+                       y(_y) { readonly = false; }
     // constructor for textfield creation (extra parameters for text and text
     // offset)
     menu_item_t(menu_bitmap_t _bitmap,
@@ -80,7 +80,7 @@ struct menu_item_t
                        text(_text),
                        textoffset_x(_textoffset_x),
                        textoffset_y(_textoffset_y),
-                       fieldid(_fieldid) { }
+                       fieldid(_fieldid) { readonly = false; }
 
     menu_bitmap_t bitmap;
     menu_item_type_t type;
@@ -91,6 +91,7 @@ struct menu_item_t
     float textoffset_x; // only used for text field items:
     float textoffset_y; // draw inner text with this offset. 10 px or something is reasonable
     std::string fieldid; // unique identifier for this field
+    bool readonly; // allow text input
 };
 
 // every menu has items (something the user can interact with)
@@ -122,6 +123,8 @@ public:
     void          MakeInvisible() { m_visible = false; }
     void          Update(const float dt, const uint32_t ticks);
     void          DrawDefaultBackground();
+
+    void          DisplayError(const std::string errormsg);
 
     void          KeyDown();
     void          KeyUp();
@@ -155,6 +158,7 @@ protected:
 
     CFont             m_font; // To draw some text
 
+    void              SetTextFieldValue(const std::string fieldid, const std::string text);
     std::string       GetTextFieldValue(const std::string fieldid);
 
 private:

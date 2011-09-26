@@ -146,15 +146,16 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     }
 
     // Draw every object
-    for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+    for(iter=world->ObjBegin();iter!=world->ObjEnd();++iter)
     {
         obj = (*iter).second;
 
-        if((obj->GetFlags() & OBJ_FLAGS_GHOST) ||
-            obj->GetID() == localctrlid ||
-           !obj->GetMesh())
+        if((obj->GetFlags() & OBJ_FLAGS_GHOST) || // ghosts are invisible - duh
+            obj->GetID() == localctrlid || // don't draw the player object
+           !obj->GetMesh()) // object has no md5 model
             continue;
 
+        // check if object is in view frustum
         if(!generateShadowMap && !frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
         {
             stat_obj_hidden++;
@@ -167,12 +168,9 @@ void CRenderer::DrawScene(const CFrustum& frustum,
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         glTranslatef(0.0f, -obj->GetRadius(), 0.0f);
         glMultMatrixf(obj->GetRotMatrix()->pm);
-#ifdef DRAW_NORMALS
-        glPushMatrix(); // stupid id software coordinate system :)
-#endif
+
         obj->GetMesh()->Render(obj->GetMeshState());
 #ifdef DRAW_NORMALS
-        glPopMatrix();
         obj->GetMesh()->RenderNormals(obj->GetMeshState());
 #endif
         glPopMatrix();
@@ -198,6 +196,7 @@ void CRenderer::PrepareShadowMap(const vec3_t& lightpos,
                      (int)(m_height * SHADOW_MAP_RATIO));
     float projection[16];
     glMatrixMode(GL_PROJECTION);
+    // Shadow mapping with ortho projection can be useful
     //const float lightDistance = PLANE_FAR*0.1f;
     //glLoadIdentity();
     //glOrtho(-35.0f, 35.0f, -35.0f, 35.0f, 0.0f, PLANE_FAR*0.1f); // dimension: light area in m
@@ -290,26 +289,27 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(m_tex, 0);
-    glUniform1i(m_normalMap, 1);
+    glActiveTexture(GL_TEXTURE0); // normal texture channel
+    glUniform1i(m_tex, 0); // good old textures: GL_TEXTURE0
+    glUniform1i(m_normalMap, 1); // normal maps are GL_TEXTURE1
     if(m_useShadows)
     {
         glUniform1i(m_shadowMapUniform, 7);
-        glActiveTexture(GL_TEXTURE7);
+        glActiveTexture(GL_TEXTURE7); // shadow mapping texture GL_TEXTURE7
         glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
         glActiveTexture(GL_TEXTURE0);
     }
 #ifdef DRAW_NORMALS
     glUseProgram(0); // use fixed pipeline for this debug mode
 #endif
+    // Main drawing
     DrawScene(frustum, world, localctrlid, false);
 
     glUseProgram(0); // don't use shader for particles
     // Particle Draw
     glDisable(GL_LIGHTING);
     glDepthMask(false);
-    for(iter=world->ObjBegin();iter!=world->ObjEnd();iter++)
+    for(iter=world->ObjBegin();iter!=world->ObjEnd();++iter)
     {
         obj = (*iter).second;
 
@@ -336,8 +336,8 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glColor4f(1,1,1,1);
     glEnable(GL_LIGHTING);
 
-    // Draw normals
 #ifdef DRAW_NORMALS
+    // Draw vertex normals of level geometry (not face normals)
     if(world && world->GetBSP())
     {
         glDisable(GL_DEPTH_TEST);
@@ -381,6 +381,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glColor4f(1,1,1,1);
     glBindTexture(GL_TEXTURE_2D, m_crosshair);
 
+    // Draw center crosshair
     glBegin(GL_QUADS);
         glTexCoord2d(0,1);
         glVertex3f((m_width - m_crosshair_width)*0.5f, (m_height - m_crosshair_height)*0.5f, 0.0f);

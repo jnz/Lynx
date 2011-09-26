@@ -59,7 +59,7 @@ public:
                                          const PROPERTYMAP& properties,
                                          CResourceManager* resman,
                                          const vec3_t& ownerpos);
-    static void SetPropertyMap(const std::string config, PROPERTYMAP& properties); // creates a PROPERTYMAP (to be used by CreateSystem) from a config string. config string example: "dx=0.1,dy=0.3,dz=0.5";
+    static void SetPropertyMap(const std::string& config, PROPERTYMAP& properties); // creates a PROPERTYMAP (to be used by CreateSystem) from a config string. config string example: "dx=0.1,dy=0.3,dz=0.5";
 
 protected:
     CParticleSystem(void);

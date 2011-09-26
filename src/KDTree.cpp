@@ -597,7 +597,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
                     break;
                 }
             }
-            if(k >= vertices.size()) // no matching vertex found
+            if((size_t)k >= vertices.size()) // no matching vertex found
             {
                 vertices.push_back(thisvertex);
                 k = vertices.size()-1;

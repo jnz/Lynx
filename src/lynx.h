@@ -45,13 +45,17 @@ public:
 };
 
 typedef int16_t animation_t;         // animation id
-#define ANIMATION_NONE               0
-#define ANIMATION_IDLE               1
-#define ANIMATION_IDLE1              2
-#define ANIMATION_IDLE2              3
-#define ANIMATION_RUN                4
-#define ANIMATION_ATTACK             5
-#define ANIMATION_FIRE               6
+enum
+{
+    ANIMATION_NONE = 0,
+    ANIMATION_IDLE,
+    ANIMATION_IDLE1,
+    ANIMATION_IDLE2,
+    ANIMATION_RUN,
+    ANIMATION_ATTACK,
+    ANIMATION_FIRE,
+    ANIMATION_COUNT // make this the last item
+};
 
 union intfloat_u
 {

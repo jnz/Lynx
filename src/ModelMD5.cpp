@@ -62,7 +62,7 @@ void CModelMD5::Unload()
 
     // Delete animations
     std::map<animation_t, md5_anim_t*>::iterator animiter;
-    for(animiter=m_animations.begin();animiter!=m_animations.end();animiter++)
+    for(animiter=m_animations.begin();animiter!=m_animations.end();++animiter)
         delete (*animiter).second;
     m_animations.clear();
 }
@@ -205,6 +205,7 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
 void CModelMD5::Render(const md5_state_t* state)
 {
     // we use the opengl coordinate system here and nothing else
+    glPushMatrix();
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
@@ -263,10 +264,12 @@ void CModelMD5::Render(const md5_state_t* state)
         // Debug: draw the interpolated md5 joints
         //RenderSkeleton(state->skel);
     }
+    glPopMatrix();
 }
 
 void CModelMD5::RenderNormals(const md5_state_t* state)
 {
+    glPushMatrix();
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
@@ -290,8 +293,8 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
             const vec3_t bitangent = w * (normal ^ tangent);
 
             glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-            vec3_t to = ((vertex + 0.2f*normal));
-            vec3_t to2 = ((vertex + 0.25f*normal));
+            vec3_t to = vertex + 0.2f*normal;
+            vec3_t to2 = vertex + 0.25f*normal;
             glBegin(GL_LINES);
                 glVertex3fv(vertex.v);
                 glVertex3fv(to.v);
@@ -303,8 +306,8 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
             glEnd();
 
             glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-            to = ((vertex + 0.2f*tangent));
-            to2 = ((vertex + 0.25f*tangent));
+            to = vertex + 0.2f*tangent;
+            to2 = vertex + 0.25f*tangent;
             glBegin(GL_LINES);
                 glVertex3fv(vertex.v);
                 glVertex3fv(to.v);
@@ -316,8 +319,8 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
             glEnd();
 
             glColor4f(1.0f, 0.0f, 1.0f, 1.0f);
-            to = ((vertex + 0.2f*bitangent));
-            to2 = ((vertex + 0.25f*bitangent));
+            to = vertex + 0.2f*bitangent;
+            to2 = vertex + 0.25f*bitangent;
             glBegin(GL_LINES);
                 glVertex3fv(vertex.v);
                 glVertex3fv(to.v);
@@ -331,6 +334,7 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
     }
     glEnable(GL_LIGHTING);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glPopMatrix();
 }
 
 void CModelMD5::Animate(md5_state_t* state, const float dt) const

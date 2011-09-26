@@ -83,7 +83,9 @@ std::string CObj::GetResource() const
 
 void CObj::SetResource(std::string resource)
 {
-    assert(resource.size() < USHRT_MAX);
+    // longer than 256 characters? technically no problem,
+    // but there is probably something wrong.
+    assert(resource.size() < 256);
     if(resource.size() >= USHRT_MAX)
         return;
 

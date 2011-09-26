@@ -61,22 +61,25 @@ void menu_func_quit();
 bool initSDLMixer();
 void shutdownSDLMixer();
 bool initSDLvideo(int width, int height, int bpp, int fullscreen);
+void handleSDLevents(); // process system events from SDL
 
 // Global Game Components
 // These components are the core of the Lynx engine
 // ----------------------------------------------------
 // Client
-CWorldClient* g_worldcl = NULL; // Model
-CRenderer* g_renderer   = NULL; // View
-CMixer* g_mixer         = NULL; // View
-CGameZombie* g_clgame   = NULL; // Controller
-CClient* g_client       = NULL; // Controller
+CWorldClient* g_worldcl = NULL; // Model, Game state management
+CRenderer* g_renderer   = NULL; // View, OpenGL rendering
+CMixer* g_mixer         = NULL; // View, Sound output
+CGameZombie* g_clgame   = NULL; // Controller, Client side interpolation
+CClient* g_client       = NULL; // Controller, Network
 
 // Server
-CWorld* g_worldsv       = NULL; // Model
-CServer* g_server       = NULL; // Controller
-CGameZombie* g_svgame   = NULL; // Controller
+CWorld* g_worldsv       = NULL; // Model, Server side game state
+CServer* g_server       = NULL; // Controller, Server network
+CGameZombie* g_svgame   = NULL; // Controller, Server game logic
 
+// Menu
+CMenu g_menu;
 int g_run; // the app runs, as long as this is not zero
 // ----------------------------------------------------
 
@@ -84,6 +87,7 @@ int main(int argc, char** argv)
 {
 #ifdef _DEBUG
     // Visual Studio CRT memory leak detection
+    // very useful, makes me sleep better :)
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
     fprintf(stderr, "%s version %i.%i\n", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
@@ -92,9 +96,6 @@ int main(int argc, char** argv)
     float dt;
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
-    SDL_Event event;
-    // Menu
-    CMenu menu;
 
     // Game Modules
     // Startup SDL OpenGL window
@@ -103,9 +104,6 @@ int main(int argc, char** argv)
         assert(0);
         return -1;
     }
-    SDL_WM_SetCaption(WINDOW_TITLE, NULL);
-    SDL_ShowCursor(SDL_DISABLE);
-    SDL_WM_GrabInput(SDL_GRAB_ON);
 
     // init menu
     menu_engine_callback_t callback;
@@ -113,16 +111,20 @@ int main(int argc, char** argv)
     callback.menu_func_host = menu_func_host;
     callback.menu_func_join = menu_func_join;
     callback.menu_func_quit = menu_func_quit;
-    if(!menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT, callback))
+    if(!g_menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT, callback))
     {
         fprintf(stderr, "Failed to load menu\n");
         assert(0);
         return -1;
     }
     // Draw the menu once, before we continue
-    menu.DrawDefaultBackground();
-    menu.Update(0.0f, 0);
+    g_menu.DrawDefaultBackground();
+    g_menu.Update(0.0f, 0);
     SDL_GL_SwapBuffers();
+
+    SDL_WM_SetCaption(WINDOW_TITLE, NULL);
+    SDL_ShowCursor(SDL_DISABLE);
+    SDL_WM_GrabInput(SDL_GRAB_ON);
 
     // Init sound mixer
     initSDLMixer(); // we don't care, if it won't init. No sound for you.
@@ -164,18 +166,28 @@ int main(int argc, char** argv)
             if(!g_client->IsRunning())
             {
                 fprintf(stderr, "Disconnected\n");
-                menu.MakeVisible(); // FIXME goto error screen
+                g_menu.DisplayError("Disconnected from server");
+                g_menu.MakeVisible();
+                shutdown(&g_worldsv,
+                         &g_server,
+                         &g_svgame,
+                         &g_worldcl,
+                         &g_renderer,
+                         &g_mixer,
+                         &g_clgame,
+                         &g_client);
             }
         }
         else
         {
             // We have no gameplay background, let's clear the
-            // menu screen
-            menu.DrawDefaultBackground();
+            // menu screen. Otherwise the game itself is our
+            // background - neat!
+            g_menu.DrawDefaultBackground();
         }
 
         // Update Menu
-        menu.Update(dt, time);
+        g_menu.Update(dt, time);
 
         // Draw GL buffer
         SDL_GL_SwapBuffers();
@@ -187,49 +199,7 @@ int main(int argc, char** argv)
             SDL_Delay((uint32_t)(dtrest * 1000.0f));
 
         // Handle system events
-        while(SDL_PollEvent(&event))
-        {
-            switch(event.type)
-            {
-                case SDL_KEYDOWN:
-                    if(event.key.keysym.sym < 128)
-                    {
-                        // let KeyAscii figure out if it wants the key:
-                        menu.KeyAscii(event.key.keysym.sym,
-                                        (bool)(event.key.keysym.mod & KMOD_SHIFT),
-                                        (bool)(event.key.keysym.mod & KMOD_CTRL));
-                    }
-                    switch(event.key.keysym.sym)
-                    {
-                        case SDLK_ESCAPE:
-                            menu.KeyEsc();
-                            break;
-                        case SDLK_F10:
-                            g_run = 0;
-                            break;
-                        case SDLK_DOWN:
-                            menu.KeyDown();
-                            break;
-                        case SDLK_UP:
-                            menu.KeyUp();
-                            break;
-                        case SDLK_RETURN:
-                            menu.KeyEnter();
-                            break;
-                        case SDLK_BACKSPACE:
-                            menu.KeyBackspace();
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case SDL_QUIT:
-                    g_run = 0;
-                    break;
-                default:
-                    break;
-            };
-        }
+        handleSDLevents();
     }
 
     shutdownSDLMixer();
@@ -245,6 +215,55 @@ int main(int argc, char** argv)
     return 0;
 }
 
+void handleSDLevents()
+{
+    SDL_Event event;
+
+    while(SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+        case SDL_KEYDOWN:
+            if(event.key.keysym.sym < 128)
+            {
+                // let KeyAscii figure out if it wants the key:
+                g_menu.KeyAscii(event.key.keysym.sym,
+                    (event.key.keysym.mod & KMOD_SHIFT) ? true : false,
+                    (event.key.keysym.mod & KMOD_CTRL) ? true : false);
+            }
+            switch(event.key.keysym.sym)
+            {
+            case SDLK_ESCAPE:
+                g_menu.KeyEsc();
+                break;
+            case SDLK_F10:
+                g_run = 0;
+                break;
+            case SDLK_DOWN:
+                g_menu.KeyDown();
+                break;
+            case SDLK_UP:
+                g_menu.KeyUp();
+                break;
+            case SDLK_RETURN:
+                g_menu.KeyEnter();
+                break;
+            case SDLK_BACKSPACE:
+                g_menu.KeyBackspace();
+                break;
+            default:
+                break;
+            }
+            break;
+        case SDL_QUIT:
+            g_run = 0;
+            break;
+        default:
+            break;
+        };
+    }
+}
+
 void shutdown(CWorld** worldsv,
               CServer** server,
               CGameZombie** game,
@@ -254,22 +273,14 @@ void shutdown(CWorld** worldsv,
               CGameZombie** clgame,
               CClient** client)
 {
-    if(*client)
-        delete *client;
-    if(*clgame)
-        delete *clgame;
-    if(*renderer)
-        delete *renderer;
-    if(*mixer)
-        delete *mixer;
-    if(*worldcl)
-        delete *worldcl;
-    if(*game)
-        delete *game;
-    if(*server)
-        delete *server;
-    if(*worldsv)
-        delete *worldsv;
+    SAFE_RELEASE(*client);
+    SAFE_RELEASE(*clgame);
+    SAFE_RELEASE(*renderer);
+    SAFE_RELEASE(*mixer);
+    SAFE_RELEASE(*worldcl);
+    SAFE_RELEASE(*game);
+    SAFE_RELEASE(*server);
+    SAFE_RELEASE(*worldsv);
 }
 
 bool restartserver(CWorld** worldsv,
@@ -278,12 +289,9 @@ bool restartserver(CWorld** worldsv,
                    const int port,
                    const char* level)
 {
-    if(*game)
-        delete *game;
-    if(*server)
-        delete *server;
-    if(*worldsv)
-        delete *worldsv;
+    if(*game) delete *game;
+    if(*server) delete *server;
+    if(*worldsv) delete *worldsv;
 
     *worldsv = new CWorld;
     *server = new CServer(*worldsv);
@@ -315,16 +323,11 @@ bool clconnect(CWorldClient** worldcl,
                const char* serveraddress,
                const int serverport)
 {
-    if(*client)
-        delete *client;
-    if(*clgame)
-        delete *clgame;
-    if(*renderer)
-        delete *renderer;
-    if(*mixer)
-        delete *mixer;
-    if(*worldcl)
-        delete *worldcl;
+    if(*client) delete *client;
+    if(*clgame) delete *clgame;
+    if(*renderer) delete *renderer;
+    if(*mixer) delete *mixer;
+    if(*worldcl) delete *worldcl;
 
     *worldcl  = new CWorldClient;
     *renderer = new CRenderer(*worldcl);
@@ -371,6 +374,7 @@ bool initSDLvideo(int width, int height, int bpp, int fullscreen)
         fprintf(stderr, "Failed to set screen resolution mode: %i x %i", width, height);
         return false;
     }
+    SDL_WM_SetCaption(WINDOW_TITLE, NULL);
 
     GLenum err = glewInit();
     if(GLEW_OK != err)

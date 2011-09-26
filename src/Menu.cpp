@@ -29,6 +29,7 @@ enum
     MENU_JOIN,
     MENU_CREDITS,
     MENU_LOADING,
+    MENU_ERROR_SCREEN,
     MENU_COUNT // make this the last item
 };
 
@@ -91,11 +92,10 @@ CMenu::~CMenu(void)
 
 void CMenu::Update(const float dt, const uint32_t ticks)
 {
-    m_animation += dt * 25.0f; // deg per sec.
-
     if(!IsVisible())
         return;
 
+    m_animation += dt * 25.0f; // magic menu animation speed in deg per sec.
     RenderGL();
 }
 
@@ -139,7 +139,7 @@ void CMenu::DrawMenu() const
     if(menu.items.size() > 0)
     {
         const menu_item_t& active_item = menu.items[m_cursor];
-        const float bx = active_item.x - m_menu_bullet.width - 2.0f;
+        const float bx = active_item.x - m_menu_bullet.width - 2.0f; // 2.0: some space between the bullet and the items
         const float by = active_item.y + active_item.bitmap.height*0.5f - m_menu_bullet.height*0.5f;
         DrawRectVirtual(m_menu_bullet, bx, by);
     }
@@ -201,7 +201,8 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
     }
 
     const float basey = 200.0f;
-    float x = 225.0f;
+    const float basex = 225.0f; // read as "base x", ok?
+    float x = basex;
     float y = basey;
     // Add some space between the items:
     const float scaleheight = 1.01f; // 1 % space between items
@@ -313,7 +314,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 menu_return,
                 MENU_BUTTON,
                 MENU_FUNC_MAIN,
-                x, y)); y += menu_return.height * scaleheight;
+                x, y)); //y += menu_return.height * scaleheight;
 
     m_menus[MENU_CREDITS] = menu3_credits;
 
@@ -333,6 +334,39 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
 
     m_menus[MENU_LOADING] = menu4_loading;
 
+    // -------------------------------------
+    // Error screen
+    x = (VIRTUAL_WIDTH - menu2_serveraddr.width)/2;
+    y = basey;
+
+    menu_t menu5_error; // loading menu
+
+    // To display any text on the error menu screen
+    // we use a text field that is set to readonly.
+    // Before we display the error screen to the user
+    // we set the textfield text.
+    menu5_error.parent = MENU_MAIN; // parent is main menu
+    menu5_error.items.push_back(menu_item_t(
+                menu2_serveraddr,
+                MENU_TEXT_FIELD,
+                MENU_FUNC_MAIN,
+                x, y,
+                "Error", // default text for text field: port
+                60.0f,  // offset for text x
+                (menu2_serveraddr.height - m_font.GetHeight())/2, // vertical center
+                "errormsg" // text field name
+                ));
+    menu5_error.items[menu5_error.items.size()-1].readonly = true;
+                y += menu2_serveraddr.height * scaleheight;
+    x = basex;
+    menu5_error.items.push_back(menu_item_t(
+                menu_return,
+                MENU_BUTTON,
+                MENU_FUNC_MAIN,
+                x, y));
+
+    m_menus[MENU_ERROR_SCREEN] = menu5_error;
+
     return true;
 }
 
@@ -340,7 +374,6 @@ void CMenu::Unload()
 {
 
 }
-
 
 void CMenu::DrawDefaultBackground()
 {
@@ -447,6 +480,29 @@ void CMenu::DrawRectVirtual(const menu_bitmap_t& bitmap,
     DrawRect(bitmap.texture, vx, vy, bitmap.width, bitmap.height);
 }
 
+void CMenu::SetTextFieldValue(const std::string fieldid, const std::string text)
+{
+    int i, j;
+    const int menus = (int)m_menus.size();
+    for(i=0;i<menus;i++)
+    {
+        menu_t& menu = m_menus[i];
+
+        const int items = menu.items.size();
+        for(j = 0; j < items; j++)
+        {
+            menu_item_t& item = menu.items[j];
+            if(item.type == MENU_TEXT_FIELD &&
+               item.fieldid == fieldid)
+            {
+                item.text = text;
+                return;
+            }
+        }
+    }
+    assert(0); // there is no field with fieldid. shame on the developer!
+}
+
 std::string CMenu::GetTextFieldValue(const std::string fieldid)
 {
     int i, j;
@@ -468,6 +524,19 @@ std::string CMenu::GetTextFieldValue(const std::string fieldid)
     }
 
     return std::string("");
+}
+
+void CMenu::DisplayError(const std::string errormsg)
+{
+    m_cur_menu = MENU_ERROR_SCREEN;
+    // select last item:
+    const menu_t& menu = m_menus[m_cur_menu];
+    m_cursor = menu.items.size()-1;
+
+    // "errormsg" is the id of the error text field
+    // and std::string errormsg is what we want
+    // to display
+    SetTextFieldValue("errormsg", errormsg);
 }
 
 int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
@@ -509,7 +578,8 @@ void CMenu::KeyDown()
     const menu_t& menu = m_menus[m_cur_menu];
     const int items = (int)menu.items.size();
 
-    m_cursor = ++m_cursor%items;
+    m_cursor++;
+    m_cursor = m_cursor%items;
 }
 
 void CMenu::KeyUp()
@@ -597,9 +667,13 @@ void CMenu::KeyAscii(unsigned char val, bool shift, bool ctrl)
     // only use this for text fields
     if(item.type != MENU_TEXT_FIELD)
         return;
+    // check if text is read only
+    if(item.readonly)
+        return;
+    // stop, if the user likes too much typing
     if(item.text.length() > MENU_MAX_TEXT_LEN)
         return;
-    if(shift) // shift table
+    if(shift) // our little toupper() function
         val = g_keyshift[val];
 
     char ascii[] = {(char)val, 0};
@@ -616,6 +690,9 @@ void CMenu::KeyBackspace()
 
     // only use this for text fields
     if(item.type != MENU_TEXT_FIELD)
+        return;
+    // check for read only
+    if(item.readonly)
         return;
 
     int textlen = item.text.length();

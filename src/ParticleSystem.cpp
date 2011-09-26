@@ -31,7 +31,7 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
 
     // FIXME use vbos instead of this
     std::vector<particle_t>::const_iterator iter;
-    for(iter = m_particles.begin();iter != m_particles.end(); iter++)
+    for(iter = m_particles.begin();iter != m_particles.end(); ++iter)
     {
         if(iter->lifetime < 0.0f)
             continue;
@@ -64,7 +64,7 @@ void CParticleSystem::Update(const float dt, const uint32_t ticks, const vec3_t&
     const float gravity = GetGravity();
 
     std::vector<particle_t>::iterator iter;
-    for(iter = m_particles.begin();iter != m_particles.end(); iter++)
+    for(iter = m_particles.begin();iter != m_particles.end(); ++iter)
     {
         if(iter->lifetime < 0.0f)
         {
@@ -126,7 +126,7 @@ bool CParticleSystem::GetProperty(const PROPERTYMAP& properties, std::string key
     return true;
 }
 
-void CParticleSystem::SetPropertyMap(const std::string config, PROPERTYMAP& properties)
+void CParticleSystem::SetPropertyMap(const std::string& config, PROPERTYMAP& properties)
 {
     if(config.size() < 1)
         return;
