@@ -20,19 +20,16 @@ CWorld::CWorld(void) : m_resman(this)
 
 CWorld::~CWorld(void)
 {
-    // RAII cleanup
+    Shutdown();
 }
 
-/*
- *void CWorld::Shutdown()
- *{
- *    DeleteAllObjs();
- *    m_resman.Shutdown();
- *    m_bsptree.Unload();
- *    m_addobj.clear();
- *    m_removeobj.clear();
- *}
- */
+void CWorld::Shutdown()
+{
+    DeleteAllObjs();
+    assert(m_objlist.size()==0);
+    assert(m_addobj.size()==0);
+    assert(m_removeobj.size()==0);
+}
 
 void CWorld::AddObj(CObj* obj, bool inthisframe)
 {
@@ -67,6 +64,7 @@ void CWorld::DeleteAllObjs()
 {
     OBJITER iter;
 
+    UpdatePendingObjs(); // clear pending queues
     for(iter = ObjBegin();iter!=ObjEnd();iter++)
         delete (*iter).second;
     m_objlist.clear();
@@ -435,7 +433,7 @@ void CWorld::UpdatePendingObjs()
 {
     if(m_removeobj.size() > 0)
     {
-        // Zu löschende Objekte entfernen
+        // remove objects from queue
         std::list<int>::iterator remiter;
         OBJITER iter;
         for(remiter=m_removeobj.begin();remiter!=m_removeobj.end();remiter++)
@@ -450,10 +448,11 @@ void CWorld::UpdatePendingObjs()
 
     if(m_addobj.size() > 0)
     {
-        // Objekte für das Frame hinzufügen
-        std::list<CObj*>::iterator additer;
+        // add pending objects
+        std::list<CObj*>::const_iterator additer;
         for(additer=m_addobj.begin();additer!=m_addobj.end();additer++)
         {
+            assert(GetObj((*additer)->GetID()) == NULL);
             m_objlist[(*additer)->GetID()] = (*additer);
         }
         m_addobj.clear();

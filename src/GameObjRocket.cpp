@@ -76,7 +76,7 @@ void CGameObjRocket::DealDamageToNearbyObjs(const std::vector<CObj*>& nearobjs)
         // now we deal some damage to the object
 
         damage = base_damage; // FIXME implement splash damage
-        hitobj->DealDamage(damage,
+        hitobj->DealDamage((int)(damage+0.5f),
                            hitobj->GetOrigin(),
                            vec3_t::origin,
                            this,

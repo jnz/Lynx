@@ -65,9 +65,6 @@ bool initSDLvideo(int width, int height, int bpp, int fullscreen);
 // Global Game Components
 // These components are the core of the Lynx engine
 // ----------------------------------------------------
-// Menu
-CMenu g_menu;
-
 // Client
 CWorldClient* g_worldcl = NULL; // Model
 CRenderer* g_renderer   = NULL; // View
@@ -93,6 +90,8 @@ int main(int argc, char** argv)
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
     SDL_Event event;
+    // Menu
+    CMenu menu;
 
     // Game Modules
     // Startup SDL OpenGL window
@@ -111,15 +110,15 @@ int main(int argc, char** argv)
     callback.menu_func_host = menu_func_host;
     callback.menu_func_join = menu_func_join;
     callback.menu_func_quit = menu_func_quit;
-    if(!g_menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT, callback))
+    if(!menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT, callback))
     {
         fprintf(stderr, "Failed to load menu\n");
         assert(0);
         return -1;
     }
     // Draw the menu once, before we continue
-    g_menu.DrawDefaultBackground();
-    g_menu.Update(0.0f, 0);
+    menu.DrawDefaultBackground();
+    menu.Update(0.0f, 0);
     SDL_GL_SwapBuffers();
 
     // Init sound mixer
@@ -162,18 +161,18 @@ int main(int argc, char** argv)
             if(!g_client->IsRunning())
             {
                 fprintf(stderr, "Disconnected\n");
-                g_menu.MakeVisible(); // FIXME goto error screen
+                menu.MakeVisible(); // FIXME goto error screen
             }
         }
         else
         {
             // We have no gameplay background, let's clear the
             // menu screen
-            g_menu.DrawDefaultBackground();
+            menu.DrawDefaultBackground();
         }
 
         // Update Menu
-        g_menu.Update(dt, time);
+        menu.Update(dt, time);
 
         // Draw GL buffer
         SDL_GL_SwapBuffers();
@@ -193,29 +192,29 @@ int main(int argc, char** argv)
                     if(event.key.keysym.sym < 128)
                     {
                         // let KeyAscii figure out if it wants the key:
-                        g_menu.KeyAscii(event.key.keysym.sym,
-                                        event.key.keysym.mod & KMOD_SHIFT,
-                                        event.key.keysym.mod & KMOD_CTRL);
+                        menu.KeyAscii(event.key.keysym.sym,
+                                        (bool)(event.key.keysym.mod & KMOD_SHIFT),
+                                        (bool)(event.key.keysym.mod & KMOD_CTRL));
                     }
                     switch(event.key.keysym.sym)
                     {
                         case SDLK_ESCAPE:
-                            g_menu.KeyEsc();
+                            menu.KeyEsc();
                             break;
                         case SDLK_F10:
                             g_run = 0;
                             break;
                         case SDLK_DOWN:
-                            g_menu.KeyDown();
+                            menu.KeyDown();
                             break;
                         case SDLK_UP:
-                            g_menu.KeyUp();
+                            menu.KeyUp();
                             break;
                         case SDLK_RETURN:
-                            g_menu.KeyEnter();
+                            menu.KeyEnter();
                             break;
                         case SDLK_BACKSPACE:
-                            g_menu.KeyBackspace();
+                            menu.KeyBackspace();
                             break;
                         default:
                             break;

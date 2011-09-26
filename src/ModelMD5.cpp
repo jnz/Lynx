@@ -829,10 +829,10 @@ loaderr:
 }
 
 static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
-		                       const std::vector<baseframe_joint_t>& baseFrame,
-		                       const std::vector<float>& animFrameData,
+                               const std::vector<baseframe_joint_t>& baseFrame,
+                               const std::vector<float>& animFrameData,
                                std::vector<md5_joint_t>& skelFrame,
-		                       int num_joints)
+                               int num_joints)
 {
     int i;
     assert((int)skelFrame.size() == num_joints);

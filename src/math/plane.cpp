@@ -11,11 +11,6 @@ bool operator!=(plane_t const &a, plane_t const &b)
     return (fabsf(a.m_d - b.m_d) > lynxmath::EPSILON) || !(a.m_n == b.m_n);
 }
 
-plane_t::plane_t(void)
-{
-    m_d = 0.0f;
-}
-
 plane_t::plane_t(vec3_t p1, vec3_t p2, vec3_t p3)
 {
     SetupPlane(p1, p2, p3);
@@ -62,10 +57,8 @@ void plane_t::SetupPlane(float a, float b, float c, float d)
 
 bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const
 {
-    float q;
-
-    q = m_n * v;
-    if(fabs(q) < lynxmath::EPSILON)
+    const float q = m_n * v;
+    if(fabsf(q) < lynxmath::EPSILON)
         return false;
 
     *f = -(m_n * p + m_d) / q;
@@ -79,7 +72,7 @@ float plane_t::GetDistFromPlane(const vec3_t& p) const
 
 pointplane_t plane_t::Classify(const vec3_t& p, const float epsilon) const
 {
-    float f = p*m_n + m_d; // GetDistFromPlane
+    const float f = p*m_n + m_d; // GetDistFromPlane
     if(f > epsilon)
         return POINTPLANE_FRONT;
     else if(f < -epsilon)

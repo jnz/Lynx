@@ -45,10 +45,10 @@ link_libraries (
     SDLmain # Sadly not included in SDL_LIBRARY variable
 )
 
-set(lynx3d_SOIL ../soil/src/SOIL.c
-                ../soil/src/image_DXT.c
-                ../soil/src/image_helper.c
-                ../soil/src/stb_image_aug.c)
+set(lynx3d_SOIL ../soil/src/SOIL.cpp
+                ../soil/src/image_DXT.cpp
+                ../soil/src/image_helper.cpp
+                ../soil/src/stb_image_aug.cpp)
 
 set(lynx3d_MATH math/matrix.cpp math/plane.cpp math/quaternion.cpp math/vec3.cpp)
 

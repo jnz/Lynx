@@ -105,6 +105,8 @@ public:
     CWorld(void);
     virtual ~CWorld(void);
 
+    void            Shutdown();
+
     // If the world is not a client, some operations can be skipped, e.g. loading textures
     virtual bool    IsClient() const { return false; }
 

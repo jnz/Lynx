@@ -21,8 +21,8 @@ CGameZombie::~CGameZombie(void)
 // Precache functions
 struct gamezombie_precache_t
 {
-    std::string name; // descriptive name
-    std::string path; // path to resource
+    char* name; // descriptive name
+    char* path; // path to resource
     resource_type_t type; // see ResourceManager.h
 };
 
@@ -76,7 +76,7 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    const int zombocount = 2;
+    const int zombocount = 2; // this is zombo.count
     for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
@@ -100,7 +100,7 @@ void CGameZombie::Notify(EventNewClientConnected e)
     player->SetResource(CLynx::GetBaseDirModel() + "marine/marine.md5mesh");
     player->SetRadius(2.0f);
     player->SetAnimation(ANIMATION_IDLE);
-    player->SetEyePos(vec3_t(0,1.65f,0));
+    player->SetEyePos(vec3_t(0,1.65f,0)); // FIXME player eye height should not be a magic number
     player->SetClientID(e.client->GetID());
 
     GetWorld()->AddObj(player, true); // set this argument to true, so that we are directly in the next serialize message

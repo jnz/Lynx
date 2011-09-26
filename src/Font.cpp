@@ -63,8 +63,8 @@ bool CFont::Init(const std::string texturepath,
 
 void CFont::DrawGL(float x, float y, float z, const char* text) const
 {
-    const float width = m_width_char; // in pixel
-    const float height = m_height_char; // in pixel
+    const float width = (float)m_width_char; // in pixel
+    const float height = (float)m_height_char; // in pixel
     const int chars_per_line = m_width / m_width_char;
     const float u = (float)(m_width_char)/(float)m_width; // from 0..1
     const float v = (float)(m_height_char)/(float)m_height; // from 0..1

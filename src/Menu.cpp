@@ -104,8 +104,8 @@ void CMenu::DrawMenu() const
     // Draw background
     DrawRect(m_menu_background.texture,
              0, 0,
-             m_phy_width,
-             m_phy_height);
+             (float)m_phy_width,
+             (float)m_phy_height);
 
     // Draw lynx logo
     DrawRectVirtual(m_menu_lynx, 10.0f, 10.0f);
@@ -362,7 +362,7 @@ void CMenu::DrawDefaultBackground()
     glLoadIdentity();
 
     glColor4f(1,1,1,1);
-	glBindTexture(GL_TEXTURE_2D, m_menu_background_cube.texture);
+    glBindTexture(GL_TEXTURE_2D, m_menu_background_cube.texture);
     glTranslatef(0.8f, 0.0f, -1.8f);
     glRotatef(m_animation, 0.0f, 1.0f, 0.0f);
     while(m_animation > 360.0f)
@@ -385,7 +385,7 @@ void CMenu::RenderGL() const
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-	glOrtho(0, m_phy_width, m_phy_height, 0, 0, 1);
+    glOrtho(0, m_phy_width, m_phy_height, 0, 0, 1);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();

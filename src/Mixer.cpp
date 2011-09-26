@@ -47,24 +47,24 @@ void CMixer::Update(const float dt, const uint32_t ticks)
             CObj* localplayer = m_world->GetLocalObj();
             if(success && localplayer)
             {
-				// Distance to sound source
+                // Distance to sound source
                 const vec3_t diff = localplayer->GetOrigin() - obj->GetOrigin();
                 const float dist = std::min(diff.Abs(), SOUND_MAX_DIST);
                 int volume = (int)(dist*255/SOUND_MAX_DIST);
-				if(volume > 255)
-					volume = 255;
+                if(volume > 255)
+                    volume = 255;
 
-				uint16_t angle; // 0-360 deg. for Mix_SetPosition
-				vec3_t playerlook; // player is looking in this direction
-				float fAlpha; // riwi to sound source
-				float fBeta; // riwi look dir
-				m_world->GetLocalController()->GetDir(&playerlook, NULL, NULL);
+                uint16_t angle; // 0-360 deg. for Mix_SetPosition
+                vec3_t playerlook; // player is looking in this direction
+                float fAlpha; // riwi to sound source
+                float fBeta; // riwi look dir
+                m_world->GetLocalController()->GetDir(&playerlook, NULL, NULL);
 
-				fAlpha = atan2(diff.x, -diff.z);
-				fBeta = atan2(playerlook.x, -playerlook.z);
-				angle = (uint16_t)((fAlpha - fBeta)*180/lynxmath::PI);
-				Mix_SetPosition(obj->GetSoundState()->cur_channel,
-							    angle, (uint8_t)volume);
+                fAlpha = atan2(diff.x, -diff.z);
+                fBeta = atan2(playerlook.x, -playerlook.z);
+                angle = (uint16_t)((fAlpha - fBeta)*180/lynxmath::PI);
+                Mix_SetPosition(obj->GetSoundState()->cur_channel,
+                                angle, (uint8_t)volume);
             }
         }
     }
