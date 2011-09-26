@@ -82,10 +82,13 @@ int g_run; // the app runs, as long as this is not zero
 
 int main(int argc, char** argv)
 {
+#ifdef _DEBUG
+    // Visual Studio CRT memory leak detection
+    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
     fprintf(stderr, "%s version %i.%i\n", LYNX_TITLE, LYNX_MAJOR, LYNX_MINOR);
     srand((unsigned int)time(NULL));
 
-    { // the { is for the visual studio dumpmemleak (memory leak detection) at the end
     float dt;
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
@@ -238,10 +241,6 @@ int main(int argc, char** argv)
              &g_mixer,
              &g_clgame,
              &g_client);
-    }
-#ifdef _WIN32
-    _CrtDumpMemoryLeaks();
-#endif
 
     return 0;
 }
