@@ -48,7 +48,7 @@ public:
     bool Inverse(matrix_t* out); // *out can be the matrix itself. this method is btw. not that expensive.
     float Det() const;
 
-    void GetRow(int row, float* f4) const;
+    void GetRow(unsigned int row, float* f4) const;
 
     void SetZeroMatrix();
     void SetIdentity();

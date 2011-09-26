@@ -135,6 +135,11 @@ int main(int argc, char** argv)
     {
         time = CLynxSys::GetTicks();
         dt = 0.001f * (float)(time-oldtime);
+        if(dt > 0.150f)
+        {
+            fprintf(stderr, "Warning: Frame time too large: %f\n", dt);
+            dt = 0.150f;
+        }
         oldtime = time;
         fpscounter++;
         if(time - fpstimer > 1000.0f)
@@ -376,6 +381,7 @@ bool initSDLvideo(int width, int height, int bpp, int fullscreen)
     }
     SDL_WM_SetCaption(WINDOW_TITLE, NULL);
 
+    fprintf(stderr, "Checking graphic hardware capabilities...\n");
     GLenum err = glewInit();
     if(GLEW_OK != err)
     {

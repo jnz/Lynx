@@ -139,7 +139,7 @@ bool CResourceManager::GetTextureDimension(const std::string texname,
                                            unsigned int* pheight) const
 {
     assert(pwidth && pheight);
-    if(IsServer())
+    if(IsServer() || pwidth == NULL || pheight == NULL)
     {
         return 0;
     }

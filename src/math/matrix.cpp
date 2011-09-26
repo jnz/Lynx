@@ -640,7 +640,7 @@ void matrix_t::GetVec3Cam(vec3_t* dir, vec3_t* up, vec3_t* side)
     }
 }
 
-void matrix_t::GetRow(int row, float* f4) const
+void matrix_t::GetRow( unsigned int row, float* f4 ) const
 {
     assert(row >= 0 && row <= 3);
 

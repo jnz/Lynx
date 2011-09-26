@@ -38,6 +38,9 @@ void CClientHUD::Serialize(const bool write, CStream* stream, CResourceManager* 
 void CClientHUD::UpdateModel(CResourceManager* resman)
 {
     assert(resman);
+    if(!resman)
+        return;
+
     CModelMD5* resmodel = resman->GetModel(CLynx::GetBaseDirModel() + weapon);
     if(resmodel != m_model)
     {

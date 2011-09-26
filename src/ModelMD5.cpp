@@ -342,6 +342,8 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
     if(state->animdata == NULL)
         return;
 
+    assert(state->animdata->skelFrames.size() >= 2);
+
     const md5_joint_t* skelA = &(state->animdata->skelFrames[state->curr_frame])[0];
     const md5_joint_t* skelB = &(state->animdata->skelFrames[state->next_frame])[0];
     const int num_joints = state->animdata->num_joints;
@@ -364,6 +366,8 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
         quaternion_t::Slerp(&state->skel[i].orient, skelA[i].orient, skelB[i].orient, interp);
     }
 
+    assert(state->animdata->frameRate > 0);
+
     const float frametime = 1.0f/state->animdata->frameRate;
     state->time += dt;
     while(state->time >= frametime)
@@ -380,7 +384,10 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
 void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
 {
     if(state->animation == animation)
+    {
+        assert(0);
         return;
+    }
 
     state->curr_frame = 0;
     state->next_frame = 1;
@@ -827,7 +834,8 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
     return true;
 
 loaderr:
-    fclose(f);
+    if(f)
+        fclose(f);
     Unload();
     return false;
 }

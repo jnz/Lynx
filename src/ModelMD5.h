@@ -96,7 +96,7 @@ struct md5_state_t
     {
         curr_frame = 0;
         next_frame = 1;
-        animation = ANIMATION_IDLE;
+        animation = ANIMATION_NONE;
         animdata = NULL;
         time = 0.0f;
     }

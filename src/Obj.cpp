@@ -390,6 +390,7 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
     if(state.resource.find(".md5") != std::string::npos)
     {
         m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
+        assert(m_mesh);
         if(m_mesh)
         {
             m_mesh->SetAnimation(&m_mesh_state, state.animation);
