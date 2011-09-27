@@ -17,6 +17,11 @@ namespace lynxmath
     const float DEGTORAD = PI / 180.0f;
     const float RADTODEG = 180.0f / PI;
 
+    // once key open question is:
+    // is this fast square root stuff really faster than
+    // a normal sqrt(x) call? this stuff was used in the 90s quake engine
+    // but we don't use 486 and Pentium I CPUs anymore.
+
     LYNX_INLINE float InvSqrtFast(float x) // reciprocal square root approximation: 1/sqrt(x)
     {
         // the magic inv square root

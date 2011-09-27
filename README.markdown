@@ -84,18 +84,16 @@ Start a dedicated server at port 9999:
 
 > lynx3dsv 9999
 
-Load a level in Lynx
-====================
+Create a level in Lynx
+======================
 
-You need to have your geometry available as Wavefront .obj file.
+You need to have your geometry available as Wavefront .obj file with embedded
+texture coordinates. Make sure the face normals are exported too.
+The usemtl keyword in the .obj file points directly to the texture file. No .mtl
+files are supported.
 Then you need to convert this .obj file to a .lbsp file with the kdcompile
-helper program. kdcompile reads the .obj file and writes a Lynx compatible
+helper program.  kdcompile reads the .obj file and writes a Lynx compatible
 .lbsp file.
 
 > kdcompile mylevel.obj mylevel.lbsp
-
-Then you need to place the .lbsp in your baselynx/level/ folder.
-Start the lynx server with the level path as the 3rd argument:
-
-> lynx3dsv 9999 mylevel/mylevel.lbsp
 

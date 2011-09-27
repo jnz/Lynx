@@ -13,7 +13,6 @@
 CGameObj::CGameObj(CWorld* world) : CObj(world)
 {
     m_health = 100;
-    m_clientid = -1;
 }
 
 CGameObj::~CGameObj(void)

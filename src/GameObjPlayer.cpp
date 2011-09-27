@@ -7,42 +7,126 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
+// <weapon registry>
+static const CWeapon g_weapon_registry[] =
+{
+    { WEAPON_NONE   , "NULL"            , 0  , ""                              , 1000 , 0.0f   , -1 },
+    { WEAPON_ROCKET , "Rocket Launcher" , 80 , "rocket/rocketlauncher.md5mesh" , 600  , 100.0f , 30 },
+    { WEAPON_GUN    , "Machine Gun"     , 28 , "rocket/rocketlauncher.md5mesh" , 300  , 120.0f , 15 }
+};
+const unsigned int g_weapon_count = sizeof(g_weapon_registry)/sizeof(g_weapon_registry[0]);
+const int CGameObjPlayer::GetWeaponInfoByType(weapon_type_t weapon)
+{
+    for(unsigned int i=0;i<g_weapon_count;i++)
+        if(g_weapon_registry[i].type == weapon)
+            return i;
+
+    assert(0); // something stupid happened
+    return 0;
+}
+// </weapon registry>
+
 CGameObjPlayer::CGameObjPlayer(CWorld* world) : CGameObj(world)
 {
     m_prim_triggered = 0;
     m_prim_triggered_time = 0;
+
+    m_clientid = -1;
+    m_weapon_id = GetWeaponInfoByType(WEAPON_NONE);
 }
 
 CGameObjPlayer::~CGameObjPlayer(void)
 {
+
 }
 
-#define PLAYER_GUN_FIRESPEED            250 // fire a shot every x [ms]
-#define PLAYER_GUN_DAMAGE               28  // damage points
-#define PLAYER_GUN_MAX_DIST             (120.0f)   // max. weapon range
+const CWeapon* CGameObjPlayer::GetWeapon()
+{
+    assert(m_weapon_id < (int)g_weapon_count);
 
-#define PLAYER_ROCKET_FIRESPEED         650 // fire a shot every x [ms]
-#define PLAYER_ROCKET_DAMAGE            68  // splash damage
+    // make sure we always return something to work with
+    if(m_weapon_id < 0)
+    {
+        assert(0); // double check this
+        return &g_weapon_registry[0]; // return NULL weapon
+    }
 
-void CGameObjPlayer::CmdFire(bool active, CClientInfo* client)
+    return &g_weapon_registry[m_weapon_id];
+}
+
+void CGameObjPlayer::SetClientID(CGameLogic* logic, int clientid)
+{
+    m_gamelogic = logic;
+    m_clientid = clientid;
+}
+
+bool CGameObjPlayer::IsClient()
+{
+    return GetClientID() != -1;
+}
+
+CClientInfo* CGameObjPlayer::GetClient()
+{
+    assert(IsClient());
+    if(!IsClient() || m_gamelogic == NULL)
+        return NULL;
+
+    assert(m_gamelogic->GetServer());
+    CClientInfo* client = m_gamelogic->GetServer()->GetClient(GetClientID());
+    assert(client);
+    return client;
+}
+
+// Weapon stuff
+
+void CGameObjPlayer::ActivateRocket()
+{
+    CClientInfo* client = GetClient();
+    assert(client);
+
+    m_weapon_id = GetWeaponInfoByType(WEAPON_ROCKET);
+    client->hud.weapon = GetWeapon()->resource;
+}
+
+void CGameObjPlayer::ActivateGun()
+{
+    CClientInfo* client = GetClient();
+    assert(client);
+
+    m_weapon_id = GetWeaponInfoByType(WEAPON_GUN);
+    client->hud.weapon = GetWeapon()->resource;
+}
+
+void CGameObjPlayer::CmdFire(bool active)
 {
     if(!m_prim_triggered && active)
     {
-        if(GetWorld()->GetLeveltime() - m_prim_triggered_time < PLAYER_ROCKET_FIRESPEED)
+        int timedelta = GetWorld()->GetLeveltime() - m_prim_triggered_time;
+        if(timedelta < GetWeapon()->firespeed)
             return;
         m_prim_triggered_time = GetWorld()->GetLeveltime();
 
-        //FireGun(client);
-        FireRocket(client);
+        switch(GetWeapon()->type)
+        {
+            case WEAPON_ROCKET:
+                FireRocket();
+                break;
+            case WEAPON_GUN:
+                FireGun();
+                break;
+            default:
+                assert(0); // handle this?
+                break;
+        }
     }
     m_prim_triggered = active;
 }
 
-void CGameObjPlayer::FireGun(CClientInfo* client)
+void CGameObjPlayer::FireGun()
 {
     CGameObj::CreateSoundObj(GetOrigin(),
                         CLynx::GetBaseDirSound() + "rifle.ogg",
-                        PLAYER_GUN_FIRESPEED+10);
+                        GetWeapon()->firespeed+10);
 
     world_obj_trace_t trace;
     vec3_t dir;
@@ -51,7 +135,7 @@ void CGameObjPlayer::FireGun(CClientInfo* client)
     trace.dir = dir;
     trace.start = GetOrigin();
     trace.excludeobj_id = GetID();
-    if(GetWorld()->TraceObj(&trace, PLAYER_GUN_MAX_DIST))
+    if(GetWorld()->TraceObj(&trace, GetWeapon()->maxdist)) // hit something
     {
         if(trace.hitobj) // object hit
         {
@@ -60,11 +144,18 @@ void CGameObjPlayer::FireGun(CClientInfo* client)
             {
                 CGameObj* hitobj = (CGameObj*)trace.hitobj;
                 bool killed;
-                hitobj->DealDamage(PLAYER_GUN_DAMAGE, trace.hitpoint, trace.dir, this, killed);
+                hitobj->DealDamage(GetWeapon()->damage,
+                                   trace.hitpoint,
+                                   trace.dir,
+                                   this,
+                                   killed);
 
                 if(killed)
                 {
-                    client->hud.score++;
+                    assert(IsClient());
+                    CClientInfo* client = GetClient();
+                    if(client)
+                        client->hud.score++;
                 }
             }
         }
@@ -75,11 +166,11 @@ void CGameObjPlayer::FireGun(CClientInfo* client)
     }
 }
 
-void CGameObjPlayer::FireRocket(CClientInfo* client)
+void CGameObjPlayer::FireRocket()
 {
     CreateSoundObj(GetOrigin(),
               CLynx::GetBaseDirSound() + "rifle.ogg",
-              PLAYER_ROCKET_FIRESPEED+10);
+              GetWeapon()->firespeed+10);
 
     vec3_t dir, up, side;
     GetLookDir().GetVec3(&dir, &up, &side);

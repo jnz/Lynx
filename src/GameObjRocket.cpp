@@ -1,5 +1,6 @@
 #include "GameObjRocket.h"
 #include "ParticleSystemRocket.h"
+#include "GameObjPlayer.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -64,6 +65,29 @@ void CGameObjRocket::DealDamageToNearbyObjs(const std::vector<CObj*>& nearobjs)
     bool killed_me;
     float damage;
     const float base_damage = GetDamage();
+    CGameObjPlayer* player;
+    CClientInfo* client; // to modify the client HUD
+
+    // let's figure out who fired this rocket
+    player = (CGameObjPlayer*)GetWorld()->GetObj(GetOwner());
+    if(player)
+    {
+        if(player->GetType() != GAME_OBJ_TYPE_PLAYER)
+        {
+            assert(0); // is this ok?
+            player = NULL;
+        }
+        else
+        {
+            client = player->GetClient();
+            if(!client)
+                player = NULL;
+        }
+    }
+    else
+    {
+        client = NULL;
+    }
 
     // for every hit object:
     for(std::vector<CObj*>::const_iterator hititer =
@@ -81,6 +105,18 @@ void CGameObjRocket::DealDamageToNearbyObjs(const std::vector<CObj*>& nearobjs)
                            vec3_t::origin,
                            this,
                            killed_me);
+        if(!killed_me || !player) // object is not dead or no owner, continue
+            continue;
+        if(hitobj->GetID() == player->GetID())
+        {
+            client->hud.score--; // self kill, too bad
+        }
+        else
+        {
+            // we have killed someone, we should give the
+            // original owner of the rocket some credit points
+            client->hud.score++;
+        }
     }
 }
 

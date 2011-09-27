@@ -97,6 +97,10 @@ int main(int argc, char** argv)
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
 
+    // we want key repeat. CLynxSys::GetKeyState remembers
+    // if a key has been pressed by the user or by auto repeat.
+    if(SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL) != 0)
+        fprintf(stderr, "Failed to set key repeat\n");
     // Game Modules
     // Startup SDL OpenGL window
     if(!initSDLvideo(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
@@ -189,6 +193,8 @@ int main(int argc, char** argv)
             // menu screen. Otherwise the game itself is our
             // background - neat!
             g_menu.DrawDefaultBackground();
+            // but since we are not in a game, we don't need > 100 fps
+            SDL_Delay(30);
         }
 
         // Update Menu
@@ -228,6 +234,9 @@ void handleSDLevents()
     {
         switch(event.type)
         {
+        case SDL_KEYUP:
+            CLynxSys::GetKeyState(event.key.keysym.sym, false /*keydown*/, true /*keyup*/);
+            break;
         case SDL_KEYDOWN:
             if(event.key.keysym.sym < 128)
             {
@@ -236,6 +245,8 @@ void handleSDLevents()
                     (event.key.keysym.mod & KMOD_SHIFT) ? true : false,
                     (event.key.keysym.mod & KMOD_CTRL) ? true : false);
             }
+            CLynxSys::GetKeyState(event.key.keysym.sym, true /*keydown*/, false /*keyup*/);
+
             switch(event.key.keysym.sym)
             {
             case SDLK_ESCAPE:
@@ -278,14 +289,17 @@ void shutdown(CWorld** worldsv,
               CGameZombie** clgame,
               CClient** client)
 {
-    SAFE_RELEASE(*client);
-    SAFE_RELEASE(*clgame);
-    SAFE_RELEASE(*renderer);
-    SAFE_RELEASE(*mixer);
-    SAFE_RELEASE(*worldcl);
-    SAFE_RELEASE(*game);
-    SAFE_RELEASE(*server);
-    SAFE_RELEASE(*worldsv);
+    // Client cleanup
+    SAFE_RELEASE(*clgame); // first remove the game
+    SAFE_RELEASE(*client); // then the network
+    SAFE_RELEASE(*renderer); // then the renderer
+    SAFE_RELEASE(*mixer); // no one cares about the sound
+    SAFE_RELEASE(*worldcl); // last item should be the game world
+
+    // Server cleanup
+    SAFE_RELEASE(*game); // first step: stop the game logic
+    SAFE_RELEASE(*server); // then the network
+    SAFE_RELEASE(*worldsv); // finally the game world
 }
 
 bool restartserver(CWorld** worldsv,

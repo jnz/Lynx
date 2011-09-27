@@ -33,6 +33,11 @@ void CFont::Init(const unsigned int textureid,
                  const unsigned int width_texture,
                  const unsigned int height_texture)
 {
+    glBindTexture(GL_TEXTURE_2D, textureid);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     m_texture = textureid;
     m_width_char = width_char;
     m_height_char = height_char;

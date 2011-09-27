@@ -21,7 +21,6 @@ CGameZombie::~CGameZombie(void)
 // Precache functions
 struct gamezombie_precache_t
 {
-    char* name; // descriptive name
     char* path; // path to resource
     resource_type_t type; // see ResourceManager.h
 };
@@ -29,22 +28,22 @@ struct gamezombie_precache_t
 // list of resources to load
 static const gamezombie_precache_t g_game_zombie_precache[] =
 {
-    {"rocket viewmodel"       , "rocket/rocketlauncher.md5mesh" , LYNX_RESOURCE_TYPE_MD5}   ,
-    {"player model"           , "marine/marine.md5mesh"         , LYNX_RESOURCE_TYPE_MD5}   ,
-    {"zombie model"           , "pinky/pinky.md5mesh"           , LYNX_RESOURCE_TYPE_MD5}   ,
-    {"projectile"             , "rocket/projectile.md5mesh"     , LYNX_RESOURCE_TYPE_MD5}   ,
-    {"rifle sound"            , "rifle.ogg"                     , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster hit sound 1"    , "monsterhit1.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster hit sound 2"    , "monsterhit2.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster hit sound 3"    , "monsterhit3.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster death sound"    , "monsterdie.ogg"                , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster startle sound"  , "monsterstartle1.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster startle sound"  , "monsterstartle2.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster startle sound"  , "monsterstartle3.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster attack sound 1" , "monsterattack1.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
-    {"monster attack sound 2" , "monsterattack2.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"rocket/rocketlauncher.md5mesh" , LYNX_RESOURCE_TYPE_MD5}   ,
+    {(char*)"marine/marine.md5mesh"         , LYNX_RESOURCE_TYPE_MD5}   ,
+    {(char*)"pinky/pinky.md5mesh"           , LYNX_RESOURCE_TYPE_MD5}   ,
+    {(char*)"rocket/projectile.md5mesh"     , LYNX_RESOURCE_TYPE_MD5}   ,
+    {(char*)"rifle.ogg"                     , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterhit1.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterhit2.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterhit3.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterdie.ogg"                , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterstartle1.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterstartle2.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterstartle3.ogg"           , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterattack1.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
+    {(char*)"monsterattack2.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
 
-    {"normal texture", "normal.jpg", LYNX_RESOURCE_TYPE_TEXTURE}
+    {(char*)"normal.jpg", LYNX_RESOURCE_TYPE_TEXTURE}
 };
 static const int g_game_zombie_precache_count = sizeof(g_game_zombie_precache) / sizeof(g_game_zombie_precache[0]);
 
@@ -96,22 +95,33 @@ void CGameZombie::Notify(EventNewClientConnected e)
     CGameObjPlayer* player;
     vec3_t spawn = GetWorld()->GetBSP()->GetRandomSpawnPoint().point;
     player = new CGameObjPlayer(GetWorld());
+    player->SetClientID(this, e.client->GetID()); // let's do this early
+
     player->SetOrigin(spawn);
     player->SetResource(CLynx::GetBaseDirModel() + "marine/marine.md5mesh");
     player->SetRadius(2.0f);
     player->SetAnimation(ANIMATION_IDLE);
     player->SetEyePos(vec3_t(0,1.65f,0)); // FIXME player eye height should not be a magic number
-    player->SetClientID(e.client->GetID());
 
     GetWorld()->AddObj(player, true); // set this argument to true, so that we are directly in the next serialize message
     e.client->m_obj = player->GetID(); // Link this object with the client
-    e.client->hud.weapon = "rocket/rocketlauncher.md5mesh";
+
+    player->ActivateRocket(); // give this man a gun
 }
 
 void CGameZombie::Notify(EventClientDisconnected e)
 {
+    CGameObjPlayer* player = (CGameObjPlayer*)GetWorld()->GetObj(e.client->m_obj);
+    assert(player->GetType() == GAME_OBJ_TYPE_PLAYER);
+    player->SetClientID(this, -1);
     GetWorld()->DelObj(e.client->m_obj);
     e.client->m_obj = 0;
+
+    // in case of confusion: the player object is unlinked from
+    // the network client info, because the object will
+    // be destroyed at the end of the frame. but in the
+    // meantime something could happen with the player object.
+    // so we make sure no one gets an invalid CClientInfo* pointer.
 }
 
 void CGameZombie::Update(const float dt, const uint32_t ticks)
@@ -128,14 +138,15 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
         obj->m_think.DoThink(GetWorld()->GetLeveltime());
 
         GetWorld()->ObjMove(obj, dt);
-        if(obj->IsClient())
+        if(obj->GetType() == GAME_OBJ_TYPE_PLAYER)
         {
+            // set player animation to run, if horizontal speed is > 0
             if((obj->GetVel().x*obj->GetVel().x + obj->GetVel().z*obj->GetVel().z) > 0.25f)
                 obj->SetAnimation(ANIMATION_RUN);
             else
                 obj->SetAnimation(ANIMATION_IDLE);
 
-            client = GetServer()->GetClient(obj->GetClientID());
+            client = ((CGameObjPlayer*)obj)->GetClient();
             if(client) // safety check: maybe the object is associated with an invalid client id
             {
                 ProcessClientCmds((CGameObjPlayer*)obj, client);
@@ -155,6 +166,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
             CGameObj* obj2;
             // FIXME use GameNearObj function?
             // FIXME this code sucks
+            // FIXME FIXME FIXME
             for(iter2 = GetWorld()->ObjBegin();iter2!=GetWorld()->ObjEnd();iter2++)
             {
                 obj2 = (CGameObj*)(*iter2).second;
@@ -224,9 +236,16 @@ void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, CClientInfo* clie
         {
             bFire = true;
         }
+        else if((*iter) == "weapon_gun")
+        {
+        }
+        else if((*iter) == "weapon_rocket")
+        {
+        }
+
     }
 
-    clientobj->CmdFire(bFire, client);
+    clientobj->CmdFire(bFire);
 
     client->clcmdlist.clear();
 }

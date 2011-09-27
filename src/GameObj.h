@@ -8,11 +8,15 @@
     Attributes in this class are not transmitted to the client.
  */
 
-#define GAME_OBJ_TYPE_NONE          0
-#define GAME_OBJ_TYPE_OBJ           1
-#define GAME_OBJ_TYPE_ZOMBIE        2
-#define GAME_OBJ_TYPE_PLAYER        3
-#define GAME_OBJ_TYPE_ROCKET        4
+enum
+{
+    GAME_OBJ_TYPE_NONE        = 0, // make sure this is zero
+    GAME_OBJ_TYPE_OBJ         = 1, // make sure this is one
+    GAME_OBJ_TYPE_ZOMBIE,
+    GAME_OBJ_TYPE_PLAYER,
+    GAME_OBJ_TYPE_ROCKET,
+    GAME_OBJ_LAST // last item
+};
 
 class CGameObj :
     public CObj
@@ -22,10 +26,6 @@ public:
     virtual ~CGameObj(void);
 
     virtual int GetType() const { return GAME_OBJ_TYPE_OBJ; }
-
-    void SetClientID(int clientid) { m_clientid = clientid; }
-    int GetClientID() { return m_clientid; }
-    bool IsClient() { return m_clientid != -1; }
 
     int GetHealth() { return m_health; }
     void SetHealth(int health) { m_health = health; }
@@ -39,7 +39,7 @@ public:
                             CGameObj* dealer,
                             bool& killed_me);
 
-    CThink m_think;
+    CThink m_think; // schedule events for the future
 
     void SpawnParticleBlood(const vec3_t& location, const vec3_t& dir, const float size);
     void SpawnParticleDust(const vec3_t& location, const vec3_t& dir);
@@ -50,7 +50,6 @@ public:
 
 private:
     int m_health;
-    int m_clientid;
 };
 
 class CThinkFuncRemoveMe : public CThinkFunc

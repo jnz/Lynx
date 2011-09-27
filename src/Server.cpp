@@ -83,6 +83,8 @@ void CServer::Update(const float dt, const uint32_t ticks)
         {
         case ENET_EVENT_TYPE_CONNECT:
             clientinfo = new CClientInfo(event.peer);
+            event.peer->data = clientinfo;
+            m_clientlist[clientinfo->GetID()] = clientinfo;
             // Fire Event
             {
             char hostname[64];
@@ -97,8 +99,6 @@ void CServer::Update(const float dt, const uint32_t ticks)
             CSubject<EventNewClientConnected>::NotifyAll(e);
             }
 
-            event.peer->data = clientinfo;
-            m_clientlist[clientinfo->GetID()] = clientinfo;
             break;
 
         case ENET_EVENT_TYPE_RECEIVE:
@@ -283,8 +283,8 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     m_stream.ResetWritePosition();
 
     CNetMsg::WriteHeader(&m_stream, NET_MSG_SERIALIZE_WORLD); // Writing Header
-    m_stream.WriteDWORD((uint32_t)localobj);
-    client->hud.Serialize(true, &m_stream, NULL);
+    m_stream.WriteDWORD((uint32_t)localobj); // which object is linked to the player
+    client->hud.Serialize(true, &m_stream, NULL); // player head up display information
 
     std::map<uint32_t, world_state_t>::iterator iter;
     iter = m_history.find(client->worldidACK);

@@ -227,13 +227,19 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     *forcesend = false;
     bool firedown = false;
 
-    if(/*keystate[SDLK_UP] || */keystate[SDLK_w])
+    /*
+     * keystate[key] is 0 if not pressed.
+     * keystate[key] is 1 if pressed once.
+     * keystate[key] is > 1 if auto-key repeat is active.
+     */
+
+    if(keystate[SDLK_w])
         clcmdlist->push_back("+mf");
-    if(/*keystate[SDLK_DOWN] || */keystate[SDLK_s])
+    if(keystate[SDLK_s])
         clcmdlist->push_back("+mb");
-    if(/*keystate[SDLK_LEFT] || */keystate[SDLK_a])
+    if(keystate[SDLK_a])
         clcmdlist->push_back("+ml");
-    if(/*keystate[SDLK_RIGHT] || */keystate[SDLK_d])
+    if(keystate[SDLK_d])
         clcmdlist->push_back("+mr");
     if(keystate[SDLK_SPACE])
         clcmdlist->push_back("+jmp");
@@ -242,7 +248,7 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         firedown = true;
         clcmdlist->push_back("+fire");
 
-        // Weapon fire animation is client side only. Smells a bit like a hack, but works great
+        // Weapon animation is client side only.
         CModelMD5* model;
         md5_state_t* model_state;
         m_world->m_hud.GetModel(&model, &model_state);
@@ -263,13 +269,13 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         fprintf(stderr, "Incoming packets total: %i\n", m_client->totalReceivedPackets);
         fprintf(stderr, "Outgoing data total: %i\n", m_client->totalSentPackets);
     }
-    if(keystate[SDLK_q])
+    if(keystate[SDLK_q]) // FIXME: only for debugging, unstuck player
     {
         vec3_t pos = GetLocalController()->GetOrigin();
         pos.y += 0.5f;
         GetLocalController()->SetOrigin(pos);
     }
-    if(keystate[SDLK_r])
+    if(keystate[SDLK_r]) // FIXME: debug method: respawn
     {
         bspbin_spawn_t spawn = m_world->GetBSP()->GetRandomSpawnPoint();
         GetLocalController()->SetOrigin(spawn.point);
@@ -281,7 +287,9 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         md5_state_t* model_state;
         m_world->m_hud.GetModel(&model, &model_state);
         if(model)
+        {
             model->SetAnimation(model_state, ANIMATION_IDLE);
+        }
     }
 }
 

@@ -43,7 +43,27 @@ bool CLynxSys::MouseMiddleDown()
     return SDL_BUTTON(s) == SDL_BUTTON_MIDDLE;
 }
 
-uint8_t* CLynxSys::GetKeyState()
+// if you only call GetKeyState with
+// key = 0, you get a map of currently pressed keys
+// if you set a value for key > 0, the map will be changed
+// according to keydown and keyup
+uint8_t* CLynxSys::GetKeyState(unsigned int key, bool keydown, bool keyup)
 {
-    return SDL_GetKeyState(NULL);
+	static bool initialized = false;
+	static uint8_t keymap[SDLK_LAST];
+	if(!initialized)
+    {
+        memset(keymap, 0, sizeof(keymap));
+        initialized = true;
+    }
+
+    if(key > 0)
+    {
+        assert(key < SDLK_LAST);
+        assert((int)keydown + (int)keyup == 1);
+        assert((int)keymap[key] + (int)keydown - (int)keyup >= 0);
+        keymap[key] += (int)keydown - (int)keyup;
+    }
+
+    return keymap;
 }

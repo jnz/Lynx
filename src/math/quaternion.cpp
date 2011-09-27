@@ -238,7 +238,7 @@ void quaternion_t::Slerp(quaternion_t *pDest, const quaternion_t& q1, const quat
     if(cosom > 1)
         cosom = 1;
 
-    if(fabsf(cosom) < 0.999)
+    if(fabsf(cosom) < 0.99f)
     {
         // standard case (slerp)
         omega = (float)acos(cosom);
