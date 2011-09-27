@@ -394,9 +394,11 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glEnd();
 
     // draw current score
-    char scorebuf[32];
-    sprintf(scorebuf, "Frags: %i", m_world->m_hud.score);
-    m_font.DrawGL(10.0f, m_height - 30.0f, 0.0f, scorebuf);
+    char hudtextbuf[64];
+    sprintf(hudtextbuf, "Frags: %i", m_world->m_hud.score);
+    m_font.DrawGL(10.0f, m_height - 30.0f, 0.0f, hudtextbuf);
+    sprintf(hudtextbuf, "%i", m_world->m_hud.health);
+    m_font.DrawGL(10.0f, m_height - 35.0f - (float)m_font.GetHeight(), 0.0f, hudtextbuf);
 
 #ifdef DRAW_SHADOWMAP
     //glBindTexture(GL_TEXTURE_2D, m_depthTextureId);

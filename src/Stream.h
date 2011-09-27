@@ -29,6 +29,7 @@ public:
     void WriteInt16(int16_t value);
     void WriteWORD(uint16_t value);
     void WriteBYTE(uint8_t value);
+    void WriteChar(int8_t value); // note: char as in plain c, no unicode
     void WriteFloat(float value);
     void WriteAngle3(const vec3_t& value); // 3 Bytes
     void WritePos6(const vec3_t& value); // 6 Bytes
@@ -51,6 +52,7 @@ public:
     void ReadInt16(int16_t* value);
     void ReadWORD(uint16_t* value);
     void ReadBYTE(uint8_t* value);
+    void ReadChar(int8_t* value); // note: char as in plain c, no unicode
     void ReadFloat(float* value);
     void ReadAngle3(vec3_t* value); // 3 Bytes
     void ReadPos6(vec3_t* value); // 6 Bytes

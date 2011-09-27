@@ -81,6 +81,9 @@ CClientInfo* CGameObjPlayer::GetClient()
 
 void CGameObjPlayer::ActivateRocket()
 {
+    if(GetWeapon()->type == WEAPON_ROCKET)
+        return;
+
     CClientInfo* client = GetClient();
     assert(client);
 
@@ -90,6 +93,9 @@ void CGameObjPlayer::ActivateRocket()
 
 void CGameObjPlayer::ActivateGun()
 {
+    if(GetWeapon()->type == WEAPON_GUN)
+        return;
+
     CClientInfo* client = GetClient();
     assert(client);
 
@@ -189,9 +195,21 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
 {
     CGameObj::DealDamage(damage, hitpoint, dir, dealer, killed_me);
 
-    SpawnParticleBlood(hitpoint, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
+    if(damage > 0)
+    {
+        //SpawnParticleBlood(hitpoint, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
+        // Experimental: spawn blood in front of player's face
+        // to get visual feedback on damage
+        SpawnParticleBlood(GetOrigin()+GetEyePos(), dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
+    }
+
     if(killed_me)
         Respawn();
+
+    // Update the HUD, OO design is super sweet in the game logic area
+    CClientInfo* client = GetClient();
+    if(client)
+        client->hud.health = GetHealth();
 }
 
 void CGameObjPlayer::Respawn()
@@ -199,5 +217,15 @@ void CGameObjPlayer::Respawn()
     vec3_t spawn = GetWorld()->GetBSP()->GetRandomSpawnPoint().point;
     SetOrigin(spawn);
     SetHealth(100);
+}
+
+void CGameObjPlayer::InitHUD()
+{
+    CClientInfo* client = GetClient();
+    assert(client);
+
+    client->hud.health = GetHealth();
+    client->hud.score = 0;
+    client->hud.weapon = GetWeapon()->resource;
 }
 

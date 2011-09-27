@@ -47,6 +47,8 @@ public:
 
     void            Respawn();
 
+    void            InitHUD();
+
     // Network related: access to client HUD
     int             GetClientID() { return m_clientid; }
     void            SetClientID(CGameLogic* logic, int clientid);

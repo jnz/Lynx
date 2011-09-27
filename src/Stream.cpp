@@ -166,6 +166,13 @@ void CStream::WriteBYTE(uint8_t value)
     m_used += sizeof(value);
 }
 
+void CStream::WriteChar(int8_t value)
+{
+    assert(m_used + (int)sizeof(value) <= m_size);
+    *((int8_t*)(m_buffer+m_used)) = value;
+    m_used += sizeof(value);
+}
+
 void CStream::WriteFloat(float value)
 {
     assert(m_used + (int)sizeof(value) <= m_size);
@@ -277,6 +284,13 @@ void CStream::ReadBYTE(uint8_t* value)
     assert(m_position + 1 <= m_used);
     *value = *((uint8_t*)(m_buffer+m_position));
     m_position += sizeof(uint8_t);
+}
+
+void CStream::ReadChar(int8_t* value)
+{
+    assert(m_position + 1 <= m_used);
+    *value = *((int8_t*)(m_buffer+m_position));
+    m_position += sizeof(int8_t);
 }
 
 void CStream::ReadFloat(float* value)

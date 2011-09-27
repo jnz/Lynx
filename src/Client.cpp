@@ -255,6 +255,14 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         if(model)
             model->SetAnimation(model_state, ANIMATION_FIRE);
     }
+    if(keystate[SDLK_1])
+    {
+        clcmdlist->push_back("w_rocket");
+    }
+    if(keystate[SDLK_2])
+    {
+        clcmdlist->push_back("w_gun");
+    }
     if(keystate[SDLK_e])
     {
         // FIXME temp hack to get local position and stats

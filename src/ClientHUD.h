@@ -17,6 +17,7 @@ public:
 
     std::string weapon;         // weapon model
     int16_t score;              // current points
+    int8_t health;              // health
 
     /*
         Server side: calls Serialize(true, stream, NULL)

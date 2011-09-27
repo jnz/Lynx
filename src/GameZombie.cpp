@@ -106,6 +106,7 @@ void CGameZombie::Notify(EventNewClientConnected e)
     GetWorld()->AddObj(player, true); // set this argument to true, so that we are directly in the next serialize message
     e.client->m_obj = player->GetID(); // Link this object with the client
 
+    player->InitHUD();
     player->ActivateRocket(); // give this man a gun
 }
 
@@ -236,11 +237,13 @@ void CGameZombie::ProcessClientCmds(CGameObjPlayer* clientobj, CClientInfo* clie
         {
             bFire = true;
         }
-        else if((*iter) == "weapon_gun")
+        else if((*iter) == "w_rocket")
         {
+            clientobj->ActivateRocket();
         }
-        else if((*iter) == "weapon_rocket")
+        else if((*iter) == "w_gun")
         {
+            clientobj->ActivateGun();
         }
 
     }
