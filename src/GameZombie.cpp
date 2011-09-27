@@ -29,6 +29,7 @@ struct gamezombie_precache_t
 static const gamezombie_precache_t g_game_zombie_precache[] =
 {
     {(char*)"rocket/rocketlauncher.md5mesh" , LYNX_RESOURCE_TYPE_MD5}   ,
+    {(char*)"gun/gun.md5mesh"               , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"marine/marine.md5mesh"         , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"pinky/pinky.md5mesh"           , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"rocket/projectile.md5mesh"     , LYNX_RESOURCE_TYPE_MD5}   ,

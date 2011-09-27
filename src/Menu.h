@@ -124,7 +124,9 @@ public:
     void          Update(const float dt, const uint32_t ticks);
     void          DrawDefaultBackground();
 
+    void          DisplayMain();
     void          DisplayError(const std::string errormsg);
+    void          DisplayLoadingScreen();
 
     void          KeyDown();
     void          KeyUp();

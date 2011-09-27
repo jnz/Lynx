@@ -8,6 +8,8 @@
 class CModelMD5;
 #include "ResourceManager.h"
 
+#define BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK //FIXME translate some doom3 models in the code... the pain... remove this ASAP... ASAP!
+
 /* This code is based upon the great MD5 documentation
  * and source code by David Henry */
 
@@ -154,5 +156,10 @@ private:
     // Animation map. Link between the lynx animation id and the raw animation
     // data
     std::map<animation_t, md5_anim_t*> m_animations;
+
+#ifdef BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK
+    vec3_t m_big_stupid_doom3_rocketlauncher_hack_offset;
+#endif
+
 };
 

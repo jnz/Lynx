@@ -60,9 +60,11 @@ uint8_t* CLynxSys::GetKeyState(unsigned int key, bool keydown, bool keyup)
     if(key > 0)
     {
         assert(key < SDLK_LAST);
-        assert((int)keydown + (int)keyup == 1);
-        assert((int)keymap[key] + (int)keydown - (int)keyup >= 0);
-        keymap[key] += (int)keydown - (int)keyup;
+        assert((int)keydown + (int)keyup == 1); // xor: keydown OR keyup
+        if(keydown)
+            keymap[key]++;
+        if(keyup)
+            keymap[key] = 0;
     }
 
     return keymap;

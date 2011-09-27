@@ -526,6 +526,18 @@ std::string CMenu::GetTextFieldValue(const std::string fieldid)
     return std::string("");
 }
 
+void CMenu::DisplayMain()
+{
+    m_cur_menu = MENU_MAIN;
+    m_cursor = 0;
+}
+
+void CMenu::DisplayLoadingScreen()
+{
+    m_cur_menu = MENU_LOADING;
+    m_cursor = 0;
+}
+
 void CMenu::DisplayError(const std::string errormsg)
 {
     m_cur_menu = MENU_ERROR_SCREEN;

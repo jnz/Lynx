@@ -12,7 +12,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MD5_SCALE           (0.065f)
+#define MD5_SCALE           (1.0f)   // scale while loading
+#define MD5_SCALE_F         (0.065f) // scale by glScalef
 #define MD5_RESET_BASE_POSITION // keep the model base position at 0,0,0 during the animation
 
 /* Animation Joint info */
@@ -165,12 +166,12 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
 
     // the following depends on the bspbin_vertex_t struct
     // (byte offsets)
-    glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
-    glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
-    glClientActiveTexture(GL_TEXTURE0);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
-    glClientActiveTexture(GL_TEXTURE1);
-    glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
+    //glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
+    //glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
+    //glClientActiveTexture(GL_TEXTURE0);
+    //glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
+    //glClientActiveTexture(GL_TEXTURE1);
+    //glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
     if(glGetError() != GL_NO_ERROR)
     {
@@ -206,6 +207,12 @@ void CModelMD5::Render(const md5_state_t* state)
 {
     // we use the opengl coordinate system here and nothing else
     glPushMatrix();
+#ifdef BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK
+    glTranslatef(m_big_stupid_doom3_rocketlauncher_hack_offset.x,
+                 m_big_stupid_doom3_rocketlauncher_hack_offset.y,
+                 m_big_stupid_doom3_rocketlauncher_hack_offset.z);
+#endif
+    glScalef(MD5_SCALE_F, MD5_SCALE_F, MD5_SCALE_F);
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
@@ -262,7 +269,7 @@ void CModelMD5::Render(const md5_state_t* state)
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Debug: draw the interpolated md5 joints
-        //RenderSkeleton(state->skel);
+        // RenderSkeleton(state->skel);
     }
     glPopMatrix();
 }
@@ -270,6 +277,7 @@ void CModelMD5::Render(const md5_state_t* state)
 void CModelMD5::RenderNormals(const md5_state_t* state)
 {
     glPushMatrix();
+    glScalef(MD5_SCALE_F, MD5_SCALE_F, MD5_SCALE_F);
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
 
@@ -430,7 +438,7 @@ static void md5_calculate_tangent(const md5_vertex_t& v0,
     bitangent = vec3_t(idet*(-s2*Q1.x + s1*Q2.x),
                        idet*(-s2*Q1.y + s1*Q2.y),
                        idet*(-s2*Q1.z + s1*Q2.z));
-    facenormal = (p1-p0)^(p2-p0);
+    facenormal = (p2-p0)^(p1-p0);
 
     assert(tangent.Abs()>0.01f);
     assert(bitangent.Abs()>0.01f);
@@ -594,6 +602,16 @@ bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
     int version;
     int curr_mesh = 0;
     int i;
+
+#ifdef BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK
+    std::string path_hack = path;
+    if(path_hack.find("rocketlauncher") != std::string::npos)
+    {
+        m_big_stupid_doom3_rocketlauncher_hack_offset.y -= 3.7f;
+        m_big_stupid_doom3_rocketlauncher_hack_offset.x += 0.5f;
+        m_big_stupid_doom3_rocketlauncher_hack_offset.z -= 0.0f;
+    }
+#endif
 
     f = fopen(path, "rb");
     if(!f)
@@ -905,7 +923,8 @@ static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
         if (thisJoint->parent < 0)
         {
 #ifdef MD5_RESET_BASE_POSITION   // prevent model from floating
-            thisJoint->pos = vec3_t::origin;
+            assert(baseFrame.size()>0);
+            thisJoint->pos = baseFrame[0].pos;
 #else
             thisJoint->pos = animatedPos;
 #endif

@@ -48,6 +48,7 @@ void CClientHUD::UpdateModel(CResourceManager* resman)
     if(resmodel != m_model)
     {
         m_model = resmodel;
+        m_model->SetAnimation(&m_model_state, ANIMATION_NONE);
         m_model->SetAnimation(&m_model_state, ANIMATION_IDLE);
     }
 }

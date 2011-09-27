@@ -10,10 +10,12 @@
 // <weapon registry>
 static const CWeapon g_weapon_registry[] =
 {
-    { WEAPON_NONE   , "NULL"            , 0  , ""                              , 1000 , 0.0f   , -1 },
-    { WEAPON_ROCKET , "Rocket Launcher" , 80 , "rocket/rocketlauncher.md5mesh" , 600  , 100.0f , 30 },
-    { WEAPON_GUN    , "Machine Gun"     , 28 , "rocket/rocketlauncher.md5mesh" , 300  , 120.0f , 15 }
+//    id              Readable name        dmg  MD5 model                         rate   range    ammo
+    { WEAPON_NONE   , "NULL"            ,    0  , ""                              , 1000 , 0.0f   , -1 },
+    { WEAPON_ROCKET , "Rocket Launcher" ,   80  , "rocket/rocketlauncher.md5mesh" ,  800 , 100.0f , 30 },
+    { WEAPON_GUN    , "Machine Gun"     ,  100  , "gun/gun.md5mesh"               , 1200 , 120.0f , 15 }
 };
+
 const unsigned int g_weapon_count = sizeof(g_weapon_registry)/sizeof(g_weapon_registry[0]);
 const int CGameObjPlayer::GetWeaponInfoByType(weapon_type_t weapon)
 {
@@ -145,7 +147,8 @@ void CGameObjPlayer::FireGun()
     {
         if(trace.hitobj) // object hit
         {
-            // we have to check if this object is actually a CGameObj* and not only a CObj*.
+            // we have to check if this object is actually
+            // a CGameObj* and not only a CObj*.
             if(trace.hitobj->GetType() > GAME_OBJ_TYPE_NONE)
             {
                 CGameObj* hitobj = (CGameObj*)trace.hitobj;

@@ -17,8 +17,8 @@
 #define RENDERER_FOV        90.0f
 #define SHADOW_MAP_RATIO    1.0f
 
-//#define DRAW_NORMALS
-//#define DRAW_SHADOWMAP // debug mode: draw a window with the cam perspective of the first light
+// #define DRAW_NORMALS
+// #define DRAW_SHADOWMAP // debug mode: draw a window with the cam perspective of the first light
 
 #ifdef DRAW_SHADOWMAP
 unsigned int g_fboShadowCamColor = 0; // debug
@@ -359,7 +359,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         glClear(GL_DEPTH_BUFFER_BIT);
         glPushMatrix(); // why is this necessary, hidden bug?
         glLoadIdentity();
-        glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
+        //glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
 
         viewmodel->Render(viewmodelstate);
         viewmodel->Animate(viewmodelstate, dt);

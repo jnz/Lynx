@@ -97,10 +97,6 @@ int main(int argc, char** argv)
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
 
-    // we want key repeat. CLynxSys::GetKeyState remembers
-    // if a key has been pressed by the user or by auto repeat.
-    if(SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL) != 0)
-        fprintf(stderr, "Failed to set key repeat\n");
     // Game Modules
     // Startup SDL OpenGL window
     if(!initSDLvideo(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN))
@@ -122,16 +118,25 @@ int main(int argc, char** argv)
         return -1;
     }
     // Draw the menu once, before we continue
+    g_menu.DisplayLoadingScreen();
     g_menu.DrawDefaultBackground();
     g_menu.Update(0.0f, 0);
     SDL_GL_SwapBuffers();
+    // Ok, now we have something on the screen, now we can load the rest
 
     SDL_WM_SetCaption(WINDOW_TITLE, NULL);
     SDL_ShowCursor(SDL_DISABLE);
     SDL_WM_GrabInput(SDL_GRAB_ON);
+    // we want key repeat. CLynxSys::GetKeyState remembers
+    // if a key has been pressed by the user or by auto repeat.
+    if(SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL) != 0)
+        fprintf(stderr, "Failed to set key repeat\n");
 
     // Init sound mixer
     initSDLMixer(); // we don't care, if it won't init. No sound for you.
+
+    // Now we are finished with loading, activate the main menu
+    g_menu.DisplayMain();
 
     g_run = 1;
     oldtime = fpstimer = CLynxSys::GetTicks();
