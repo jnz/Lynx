@@ -140,12 +140,18 @@ cvar_t* CConfig::GetVarFloat(const std::string& name, const float default_value,
 int CConfig::GetVarAsInt(const std::string& name, const int default_value, bool createnew)
 {
     const cvar_t* cvar = GetVarFloat(name, (float)default_value, createnew);
-    return (int)(cvar->value+0.5f);
+    if(cvar == NULL)
+        return default_value;
+    else
+        return (int)(cvar->value+0.5f);
 }
 
 std::string CConfig::GetVarAsStr(const std::string& name, const std::string& default_value, bool createnew)
 {
     const cvar_t* cvar = GetVar(name, default_value, createnew);
-    return cvar->string;
+    if(cvar == NULL)
+        return default_value;
+    else
+        return cvar->string;
 }
 

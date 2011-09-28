@@ -492,7 +492,7 @@ bool menu_func_host(const char *levelname, const int svport, const bool join_as_
         lvl = levelname;
     else
         lvl = DEFAULT_LEVEL;
-    
+
     // swap the buffer, so that the menu can display
     // it's loading screen
     SDL_GL_SwapBuffers();
