@@ -12,6 +12,8 @@
 
 #pragma warning(disable: 4244)
 
+CConfig CLynx::cfg; // global config
+
 float CLynx::AngleMod(float a)
 {
     // from quake 2
@@ -77,6 +79,12 @@ std::string CLynx::FloatToString(float f, int precision)
        return "";
    }
    return o.str();
+}
+
+bool CLynx::IsFloat(float f)
+{
+   std::ostringstream o;
+   return (o << f);
 }
 
 int CLynx::random(int min, int max)

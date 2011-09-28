@@ -9,6 +9,8 @@
 #include <limits.h>
 #include <stdint.h>		// Visual Studio < 2010 has no stdint.h, google stdint.h and place it somewhere to be found
 
+#include "Config.h"     // Lynx config system
+
 #define LYNX_TITLE      "Lynx"
 #define LYNX_MAJOR      0
 #define LYNX_MINOR      2
@@ -36,12 +38,15 @@ public:
     static std::string GetFilename(std::string path);
 
     static std::string FloatToString(float f, int precision);
+    static bool        IsFloat(float f);
 
     static float randf() { return (rand()%20000)*0.0001f-1.0f; } // random -1.0f - 1.0f
     static float randfabs() { return (rand()%10000)*0.0001f; } // random 0.0f - 1.0f
 
     static int random(int min, int max);
     static std::string GetRandNumInStr(const char* str, unsigned int maxnumber); // replace %i in string with number from 1 - maxnumber
+
+    static CConfig cfg; // global static config system
 };
 
 typedef int16_t animation_t;         // animation id

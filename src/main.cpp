@@ -23,12 +23,12 @@
 // </memory leak detection>
 
 #define WINDOW_TITLE        "Lynx"
-#define SCREEN_WIDTH        1024
-#define SCREEN_HEIGHT       768
-#define BPP                 32
-#define FULLSCREEN          0
-#define SV_PORT             9999
-#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
+#define SCREEN_WIDTH        (CLynx::cfg.GetVarAsInt("width", 800, true))
+#define SCREEN_HEIGHT       (CLynx::cfg.GetVarAsInt("height", 600, true))
+#define BPP                 (CLynx::cfg.GetVarAsInt("bpp", 32, true)) // bits per pixel
+#define FULLSCREEN          (CLynx::cfg.GetVarAsInt("fullscreen", 0, true)) // 0 = no fullscreen, 1 = fullscreen
+#define SV_PORT             (CLynx::cfg.GetVarAsInt("port", 9999, true))
+#define DEFAULT_LEVEL       (CLynx::cfg.GetVarAsStr("level", "testlvl/level1.lbsp", true))
 //#define DEFAULT_LEVEL       "sponza/sponza.lbsp"
 
 bool restartserver(CWorld** worldsv,
@@ -96,6 +96,10 @@ int main(int argc, char** argv)
     float dt;
     uint32_t time, oldtime;
     uint32_t fpstimer, fpscounter=0;
+
+    // Load config file
+    if(!CLynx::cfg.AddFile( "game.cfg" ))
+        fprintf(stderr, "Failed to open config file.\n"); // bad, but not critical
 
     // Game Modules
     // Startup SDL OpenGL window
@@ -478,20 +482,22 @@ void shutdownSDLMixer()
 
 bool menu_func_host(const char *levelname, const int svport, const bool join_as_client)
 {
-    char* lvl = (char*)levelname;
+    std::string lvl;
     int port = svport;
 
+    // use default level and port
+    if(port == 0)
+        port = SV_PORT;
+    if(levelname && strlen(levelname) > 0)
+        lvl = levelname;
+    else
+        lvl = DEFAULT_LEVEL;
+    
     // swap the buffer, so that the menu can display
     // it's loading screen
     SDL_GL_SwapBuffers();
 
-    // use default level and port
-    if(lvl == NULL)
-        lvl = (char*)DEFAULT_LEVEL;
-    if(port == 0)
-        port = SV_PORT;
-
-    if(!restartserver(&g_worldsv, &g_server, &g_svgame, port, lvl))
+    if(!restartserver(&g_worldsv, &g_server, &g_svgame, port, lvl.c_str()))
         return false;
 
     if(join_as_client)

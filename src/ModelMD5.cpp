@@ -19,17 +19,17 @@
 /* Animation Joint info */
 struct joint_info_t
 {
-  char name[64];
-  int parent;
-  int flags;
-  int startIndex;
+    char name[64];
+    int parent;
+    int flags;
+    int startIndex;
 };
 
 /* Animation Base frame joint */
 struct baseframe_joint_t
 {
-  vec3_t pos;
-  quaternion_t orient;
+    vec3_t pos;
+    quaternion_t orient;
 };
 
 CModelMD5::CModelMD5(void)

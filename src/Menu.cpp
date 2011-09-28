@@ -268,7 +268,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_TEXT_FIELD,
                 MENU_FUNC_MAIN,
                 x, y,
-                "localhost", // default text for text field: network address
+                (CLynx::cfg.GetVarAsStr("default_server", "localhost", true)), // default text for text field: network address
                 60.0f,  // offset for text x
                 (menu2_serveraddr.height - m_font.GetHeight())/2, // vertical center
                 "connect ip address" // text field name
@@ -279,7 +279,7 @@ bool CMenu::Init(const unsigned int physical_width, const unsigned int physical_
                 MENU_TEXT_FIELD,
                 MENU_FUNC_MAIN,
                 x, y,
-                "9999", // default text for text field: port
+                (CLynx::cfg.GetVarAsStr("port", "9999", true)), // default text for text field: port
                 60.0f,  // offset for text x
                 (menu2_serveraddr.height - m_font.GetHeight())/2, // vertical center
                 "connect ip port" // text field name
