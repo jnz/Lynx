@@ -43,7 +43,10 @@ public:
     CKDTree(void);
     ~CKDTree(void);
 
-    bool        Load(std::string file); // Lädt den Level aus Wavefront .obj Dateien. Texturen werden über den ResourceManager geladen
+    // lightmap is a .obj file with the same geometry, but texture coordinates are for the lightmap
+    bool        Load(const std::string& file,
+                     const std::string& lightmap);
+
     void        Unload();
     std::string GetFilename() const; // Aktuell geladener Pfad zu Level
 
@@ -84,6 +87,7 @@ public:
     std::vector<vec3_t>         m_vertices; // Vertices from obj file
     // std::vector<vec3_t>         m_normals; // Vertex normals
     std::vector<vec3_t>         m_texcoords; // FIXME vec2_t would be sufficient
+    std::vector<vec3_t>         m_lightmapcoords; // FIXME vec2_t would be sufficient
     std::vector<kd_tri_t>       m_triangles; // Triangles from obj file
     CKDNode*                    m_root; // Starting node
     int                         m_estimatedtexturecount; // how many textures are used in the obj file?
@@ -91,7 +95,8 @@ public:
     bool        WriteToBinary(const std::string filepath);
 
 protected:
-    // void        CalculateVertexNormals();
+    bool        LoadLightmapCoordinates(const std::string& lightmappath,
+                                        std::vector<vec3_t>& lightcoords);
 
 private:
     int         m_nodecount; // increased by every CKDNode constructor

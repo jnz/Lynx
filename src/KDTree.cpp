@@ -29,8 +29,35 @@ CKDTree::~CKDTree(void)
     Unload();
 }
 
+// We load this object file only to read the texture coordinates
+bool CKDTree::LoadLightmapCoordinates(const std::string& lightmappath,
+                                      std::vector<vec3_t>& lightcoords)
+{
+    char line[2048];
+    vec3_t v;
+    FILE* f = fopen(lightmappath.c_str(), "rt");
+    if(!f)
+        return false;
+
+    while(!feof(f))
+    {
+        fgets(line, sizeof(line), f);
+
+        if(sscanf(line, "vt %f %f %f", &v.x, &v.y, &v.z) != 3)
+        {
+            if(sscanf(line, "vt %f %f", &v.x, &v.y) != 2)
+                continue;
+        }
+
+        lightcoords.push_back(v);
+    }
+
+    return true;
+}
+
 #pragma warning(disable: 4244)
-bool CKDTree::Load(std::string file) // reading a wavefront obj file
+bool CKDTree::Load(const std::string& file,
+                   const std::string& lightmap) // reading a wavefront obj file
 {
     bool success = false; // failed to read file
     const char* DELIM = " \t\r\n";
@@ -43,8 +70,14 @@ bool CKDTree::Load(std::string file) // reading a wavefront obj file
     kd_tri_t triangle;
     std::string texpath;
     std::vector<int> alltriangles; // indices of all triangles, used for the init of the root node
+    std::vector<vec3_t> lightmapcoords;
+    bool lightmaploaded;
 
     Unload();
+
+    lightmaploaded = LoadLightmapCoordinates(lightmap, m_lightmapcoords);
+    if(!lightmaploaded)
+        fprintf(stderr, "Failed to open lightmap geometry file\n");
 
     f = fopen(file.c_str(), "rt");
     if(!f)
@@ -129,6 +162,16 @@ bool CKDTree::Load(std::string file) // reading a wavefront obj file
                     (int)m_vertices.size(),
                     (int)m_triangles.size());
 
+    if(lightmaploaded)
+    {
+        if(m_lightmapcoords.size() != m_texcoords.size())
+        {
+            fprintf(stderr, "Lightmap does not match level geometry\n");
+            assert(0);
+            goto cleanup;
+        }
+    }
+
     if(m_spawnpoints.size() < 1)
     {
         fprintf(stderr, "Warning: No spawn points found. Adding default spawn point at: 0.0 0.0 0.0\n");
@@ -188,6 +231,7 @@ void CKDTree::Unload()
     m_vertices.clear();
     // m_normals.clear();
     m_texcoords.clear();
+    m_lightmapcoords.clear();
     m_triangles.clear();
 
     m_nodecount = 0;
@@ -276,6 +320,8 @@ polyplane_t CKDTree::TestTriangle(const int triindex, const plane_t& plane) cons
             break;
         case POINTPLANE_BACK:
             allfront = 0;
+            break;
+        default:
             break;
         }
     }
@@ -547,6 +593,7 @@ leafs: for every leaf there is a trianglecount (uint32_t), followed
 */
 bool CKDTree::WriteToBinary(const std::string filepath)
 {
+    bool uselightmap = (m_lightmapcoords.size() > 0);
     unsigned int i, j;
     int k;
     FILE* f = fopen(filepath.c_str(), "wb");
@@ -587,7 +634,18 @@ bool CKDTree::WriteToBinary(const std::string filepath)
             // thisvertex.n = m_normals[m_triangles[i].vertices[j]];
             thisvertex.tu = m_texcoords[m_triangles[i].texcoords[j]].x;
             thisvertex.tv = m_texcoords[m_triangles[i].texcoords[j]].y;
+            if(uselightmap) // should we add lightmap coordinates?
+            {
+                thisvertex.tlightu = m_lightmapcoords[m_triangles[i].texcoords[j]].x;
+                thisvertex.tlightv = m_lightmapcoords[m_triangles[i].texcoords[j]].y;
+            }
+            else
+            {
+                thisvertex.tlightu = 0.0f;
+                thisvertex.tlightv = 0.0f;
+            }
 
+            // try to reuse vertices for several faces
             for(k = vertices.size()-1; k >= 0; k--)
             {
                 if(kdbin_compare_vertex_and_uv(vertices[k],
@@ -672,6 +730,7 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     bspbin_header_t header;
     header.magic = BSPBIN_MAGIC;
     header.version = BSPBIN_VERSION;
+    header.lightmap = uselightmap ? 1 : 0;
 
     unsigned int headeroffset = BSPBIN_HEADER_LEN;
 
@@ -715,6 +774,12 @@ bool CKDTree::WriteToBinary(const std::string filepath)
     fwrite(&endmark, sizeof(endmark), 1, f);
 
     fclose(f);
+
+    if(uselightmap)
+        fprintf(stderr, "Lightmap coordinates included.\n");
+    else
+        fprintf(stderr, "NO lightmap coordinates included.\n");
+
 
     return true;
 }

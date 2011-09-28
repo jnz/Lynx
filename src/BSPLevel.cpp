@@ -17,6 +17,8 @@
 
 CBSPLevel::CBSPLevel(void)
 {
+    m_uselightmap = false;
+    m_lightmap = 0;
     m_plane = NULL;
     m_tex = NULL;
     m_texid = NULL;
@@ -76,6 +78,27 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
     {
         fprintf(stderr, "BSP: Wrong Lynx BSP file format version. Expecting: %i, got: %i\n", BSPBIN_VERSION, header.version);
         return false;
+    }
+    if(header.lightmap)
+    {
+        m_uselightmap = true;
+
+        if(resman)
+        {
+            std::string lightmappath = CLynx::GetDirectory(file) + "lightmap.jpg";
+            m_lightmap = resman->GetTexture(lightmappath);
+            assert(m_lightmap);
+            if(m_lightmap == 0)
+            {
+                fprintf(stderr, "No lightmap for level found: %s\n", lightmappath.c_str());
+                return false;
+            }
+        }
+    }
+    else
+    {
+        m_uselightmap = false;
+        fprintf(stderr, "Information: No lightmap in lbsp file\n");
     }
 
     // Reading file allocation table
@@ -140,6 +163,7 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
         fread(&kdplane, sizeof(kdplane), 1, f);
         if(kdplane.type > 2)
         {
+            assert(0); // let me see this
             Unload();
             fprintf(stderr, "BSP: Unknown plane type\n");
             return false;
@@ -367,6 +391,9 @@ bool CBSPLevel::Load(std::string file, CResourceManager* resman)
 
 void CBSPLevel::Unload()
 {
+    m_uselightmap = false;
+    m_lightmap = 0;
+
     SAFE_RELEASE_ARRAY(m_plane);
     SAFE_RELEASE_ARRAY(m_tex);
     SAFE_RELEASE_ARRAY(m_texid);
@@ -428,6 +455,16 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
+    if(m_uselightmap)
+    {
+        glClientActiveTexture(GL_TEXTURE2);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32+16));
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, m_lightmap);
+    }
+
     const uint32_t batchcount = m_texturebatch.size();
     for(uint32_t i=0; i<batchcount; i++)
     {
@@ -449,6 +486,16 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
     glClientActiveTexture(GL_TEXTURE1);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisable(GL_TEXTURE_2D);
+
+    if(m_uselightmap)
+    {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glClientActiveTexture(GL_TEXTURE2);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
+    }
 
     glActiveTexture(GL_TEXTURE0);
     glClientActiveTexture(GL_TEXTURE0);

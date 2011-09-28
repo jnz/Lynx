@@ -44,7 +44,7 @@ static const gamezombie_precache_t g_game_zombie_precache[] =
     {(char*)"monsterattack1.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
     {(char*)"monsterattack2.ogg"            , LYNX_RESOURCE_TYPE_SOUND} ,
 
-    {(char*)"normal.jpg", LYNX_RESOURCE_TYPE_TEXTURE}
+    {(char*)"normal.jpg"                    , LYNX_RESOURCE_TYPE_TEXTURE}
 };
 static const int g_game_zombie_precache_count = sizeof(g_game_zombie_precache) / sizeof(g_game_zombie_precache[0]);
 

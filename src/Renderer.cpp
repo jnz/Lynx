@@ -142,7 +142,9 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     // Draw the level
     if(!generateShadowMap && world->GetBSP()->IsLoaded())
     {
+        glUniform1i(m_uselightmap, 1);
         world->GetBSP()->RenderGL(frustum.pos, frustum);
+        glUniform1i(m_uselightmap, 0);
     }
 
     // Draw every object
@@ -292,6 +294,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glActiveTexture(GL_TEXTURE0); // normal texture channel
     glUniform1i(m_tex, 0); // good old textures: GL_TEXTURE0
     glUniform1i(m_normalMap, 1); // normal maps are GL_TEXTURE1
+    glUniform1i(m_lightmap, 2); // lightmap
     if(m_useShadows)
     {
         glUniform1i(m_shadowMapUniform, 7);
@@ -545,10 +548,14 @@ bool CRenderer::InitShader()
     }
     m_shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
     m_tex = glGetUniformLocation(m_program, "tex");
+    m_lightmap = glGetUniformLocation(m_program, "lightmap");
+    m_uselightmap = glGetUniformLocation(m_program, "uselightmap");
     m_normalMap = glGetUniformLocation(m_program, "normalMap");
     glUniform1i(m_shadowMapUniform, 7);
     glUniform1i(m_normalMap, 1);
     glUniform1i(m_tex, 0);
+    glUniform1i(m_lightmap, 1);
+    glUniform1i(m_uselightmap, 0);
     glUseProgram(0);
 
     int isValid;

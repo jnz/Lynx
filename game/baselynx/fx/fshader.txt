@@ -1,6 +1,8 @@
 uniform sampler2D normalMap;
 uniform sampler2D tex;
+uniform sampler2D lightmap;
 uniform sampler2DShadow ShadowMap;
+uniform int uselightmap;
 varying vec4 ShadowCoord; // pos in shadow space
 varying vec3 lightDir; // in tangent space
 varying vec3 normal; // in eye space
@@ -27,7 +29,13 @@ void main()
     }
 
     vec4 texcolor = texture2D(tex, gl_TexCoord[0].st);
-    gl_FragColor.xyz = (0.2 + shadow*nDotL*0.8) * texcolor.xyz;
+    vec4 lightmapcolor = texture2D(lightmap, gl_TexCoord[2].st);
+    if(uselightmap > 0) // FIXME: not elegant
+    {
+        gl_FragColor.xyz = (0.8 + shadow*nDotL*0.2) * texcolor.xyz * lightmapcolor.xyz;
+    }
+    else
+        gl_FragColor.xyz = (0.2 + shadow*nDotL*0.8) * texcolor.xyz;
     gl_FragColor.w = texcolor.w;
 
 }

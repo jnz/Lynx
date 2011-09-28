@@ -70,6 +70,8 @@ protected:
                                       vec3_t* normal,
                                       vec3_t* hitpoint) const;
 
+    bool                m_uselightmap;
+    int                 m_lightmap; // lightmap texture id
     // Data
     plane_t*            m_plane;
     bspbin_texture_t*   m_tex;

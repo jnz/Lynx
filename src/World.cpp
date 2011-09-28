@@ -162,12 +162,13 @@ void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const 
     }
 }
 
-#define GRAVITY                (80.00f) // should this be a world property?
+#define GRAVITY                (30.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 
 #define MAX_CLIP_PLANES      5
 #define OVERCLIP            (1.01f)
 #define F_SCALE             (0.98f)
+#define MAX_VELOCITY        (35.0f)
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
@@ -197,9 +198,15 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     trace.radius = obj->GetRadius()+0.01f;
 
     // quake style movement clipping
+    vec3_t vel = obj->GetVel();
+    if(vel.AbsFast() > MAX_VELOCITY) // clip max velocity
+    {
+        fprintf(stderr, "Velocity too high\n");
+        vel.SetLength(MAX_VELOCITY);
+    }
+
     vec3_t planes[MAX_CLIP_PLANES];
     vec3_t pos = obj->GetOrigin();
-    vec3_t vel = obj->GetVel();
     vec3_t dir;
     float d;
     int numbumps = 4; // bump up to 4 times

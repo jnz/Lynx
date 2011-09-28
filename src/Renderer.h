@@ -32,6 +32,8 @@ protected:
     unsigned int m_program;
     unsigned int m_tex; // tex0
     unsigned int m_normalMap; // tex1
+    unsigned int m_lightmap; // tex2
+    unsigned int m_uselightmap; // uniform int
 
     // Shadow
     bool         m_useShadows;

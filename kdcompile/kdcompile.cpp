@@ -8,6 +8,7 @@ int main(int argc, char** argv)
 {
     string path_in, path_out;
     CKDTree tree;
+    string path_lightmap;
 
     cout << "lynx kdcompile\n";
     cout << "Compiling a WaveFront .obj to a binary Lynx level.\n";
@@ -22,7 +23,8 @@ int main(int argc, char** argv)
     path_out = argv[2];
 
     cout << "Loading polygon soup from " << path_in << endl;
-    if(!tree.Load(path_in))
+    path_lightmap = "lightmap.obj";
+    if(!tree.Load(path_in, path_lightmap))
     {
         cout << "Failed to open input file" << endl;
         return -1;

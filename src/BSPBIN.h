@@ -5,14 +5,13 @@
 #include "math/quaternion.h"
 #include <vector>
 
-#define BSPBIN_MAGIC                    0x12051982
-#define BSPBIN_VERSION                  6
+#define BSPBIN_MAGIC                    0x12051982 // my birthday :)
+#define BSPBIN_VERSION                  7
 #define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 7*sizeof(bspbin_direntry_t))
 #define MAX_TRACE_DIST      			99999.999f
 
 // what data type should we use for the
-// VBO index buffer? for less than 0xffff vertices
-// uint16_t is sufficient
+// VBO index buffer?
 typedef uint32_t vertexindex_t; // if you change this, change MY_GL_VERTEXINDEX_TYPE too
 #define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_INT
 // #define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_SHORT // for uint16_t vertexindex_t
@@ -24,6 +23,7 @@ struct bspbin_header_t
 {
     uint32_t magic;
     uint32_t version;
+    uint8_t  lightmap; // > 0 lightmap included
 };
 
 struct bspbin_direntry_t
@@ -65,6 +65,7 @@ struct bspbin_vertex_t // if you change this, you need to change the VBO code (B
     float tu, tv;
     vec3_t t; // tangent
     float w; // value to compute bitangent vector: Bitangent = w * (Normal x Tangent)
+    float tlightu, tlightv; // lightmap coordinates
 };
 
 struct bspbin_spawn_t
