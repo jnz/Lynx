@@ -55,11 +55,19 @@ void plane_t::SetupPlane(float a, float b, float c, float d)
     m_n.Normalize();
 }
 
+vec3_t plane_t::Project(const vec3_t& point) const
+{
+    float h = GetDistFromPlane(point);
+    return vec3_t(point.x - m_n.x * h,
+                  point.y - m_n.y * h,
+                  point.z - m_n.z * h);
+}
+
 bool plane_t::GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const
 {
     const float q = m_n * v;
     if(fabsf(q) < lynxmath::EPSILON)
-        return false;
+        return false; // no intersection, plane and line are parallel
 
     *f = -(m_n * p + m_d) / q;
     return true;

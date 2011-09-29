@@ -20,6 +20,8 @@ struct plane_t
     void SetupPlane(vec3_t n, float d);
     void SetupPlane(float a, float b, float c, float d);
 
+    vec3_t Project(const vec3_t& point) const;
+
     bool GetIntersection(float *f, const vec3_t& p, const vec3_t& v) const;
     float GetDistFromPlane(const vec3_t& p) const;
     pointplane_t Classify(const vec3_t& p, const float epsilon = lynxmath::EPSILON) const;

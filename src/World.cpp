@@ -331,23 +331,15 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     if(GetBSP()->IsSphereStuck(pos, obj->GetRadius()))
     {
         // OK something went wrong with our movement
-
-        // let's see if our original position was OK
-        // If it is also stuck (if cond. here), then
-        // the TryUnstuck function will set the obj->Origin to something
-        // that is hopefully OK.
-        // otherwise we just use the old obj position before
-        if(GetBSP()->IsSphereStuck(obj->GetOrigin(), obj->GetRadius()))
+        obj->SetOrigin(pos);
+        if(TryUnstuck(obj))
         {
-            if(TryUnstuck(obj))
-            {
-                fprintf(stderr, "Object successfully unstuck\n");
-            }
-            else
-            {
-                fprintf(stderr, "Failed to unstuck object\n");
-                assert(0); // uh oh, should not happen
-            }
+            fprintf(stderr, "Object successfully unstuck\n");
+        }
+        else
+        {
+            fprintf(stderr, "Failed to unstuck object\n");
+            assert(0); // uh oh, should not happen
         }
         pos = obj->GetOrigin(); // this is either the original position or some position from TryUnstuck()
     }

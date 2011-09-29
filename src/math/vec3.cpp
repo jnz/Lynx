@@ -100,3 +100,32 @@ bool vec3_t::RaySphereIntersect(const vec3_t& pStart, const vec3_t& pDir,
     return true;
 }
 
+// Source: Dan Sunday
+bool vec3_t::IsPointInsideTriangle(const vec3_t& v0,
+                                   const vec3_t& v1,
+                                   const vec3_t& v2,
+                                   const vec3_t& point)
+{
+    const vec3_t u = v1 - v0;
+    const vec3_t v = v2 - v0;
+    const vec3_t w = point - v0;
+
+    const float uu = vec3_t::dot(u, u);
+    const float uv = vec3_t::dot(u, v);
+    const float vv = vec3_t::dot(v, v);
+    const float wu = vec3_t::dot(w, u);
+    const float wv = vec3_t::dot(w, v);
+
+    const float d = uv * uv - uu * vv;
+
+    float invD = 1 / d;
+    float s = (uv * wv - vv * wu) * invD;
+    if (s < 0 || s > 1)
+        return false;
+    float t = (uv * wu - uu * wv) * invD;
+    if (t < 0 || (s + t) > 1)
+        return false;
+
+    return true;
+}
+

@@ -535,9 +535,9 @@ void CBSPLevel::RenderNormals() const
 }
 
 // Static test
-bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
-                                        const vec3_t& sphere_pos,
-                                        const float sphere_radius) const
+bool CBSPLevel::SphereTriangleIntersectStatic(const int triangleindex,
+                                              const vec3_t& sphere_pos,
+                                              const float sphere_radius) const
 {
     const unsigned int vertexindex1 = m_triangle[triangleindex].v[0];
     const unsigned int vertexindex2 = m_triangle[triangleindex].v[1];
@@ -590,145 +590,103 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
     return !separated;
 }
 
-bool CBSPLevel::GetTriIntersection(const int triangleindex,
-                                   const vec3_t& start,
-                                   const vec3_t& dir,
-                                   float* f,
-                                   const float offset,
-                                   plane_t* hitplane,
-                                   bool& needs_edge_test) const
+bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
+                                        const vec3_t& sphere_pos,
+                                        const float sphere_radius,
+                                        const vec3_t& dir,
+                                        float* f,
+                                        vec3_t* hitnormal) const
 {
     float cf;
+    int i;
+
     const int vertexindex1 = m_triangle[triangleindex].v[0];
     const int vertexindex2 = m_triangle[triangleindex].v[1];
     const int vertexindex3 = m_triangle[triangleindex].v[2];
     const vec3_t& P0 = m_vertex[vertexindex1].v;
     const vec3_t& P1 = m_vertex[vertexindex2].v;
     const vec3_t& P2 = m_vertex[vertexindex3].v;
-    plane_t polyplane(P0, P1, P2); // Polygon Ebene  -  why don't we precalculate the triangle normal vector?
-    float dsave = polyplane.m_d;
-    polyplane.m_d -= offset; // Plane shift
+    plane_t plane(P0, P1, P2); // triangle plane
+    plane.m_d -= sphere_radius; // plane shift
 
-    bool hit = polyplane.GetIntersection(&cf, start, dir);
-    if(!hit || cf > 1.0f || cf < 0.0f)
+    // Using methods from Eric Lengyel's math book.
+    *f = MAX_TRACE_DIST;
+
+    // Step 1) triangle face
+    const bool not_parallel = plane.GetIntersection(&cf, sphere_pos, dir);
+    if(not_parallel && cf >= 0.0f)
     {
-        needs_edge_test = !(cf > 1.0f);
-        return false;
+        // calculate the hitpoint
+        vec3_t hitpoint = sphere_pos + dir*cf - plane.m_n*sphere_radius;
+
+        // check if we are inside the triangle
+        // Barycentric coordinates (math for 3d game programming p. 144)
+        const vec3_t R = hitpoint - P0;
+        const vec3_t Q1 = P1 - P0;
+        const vec3_t Q2 = P2 - P0;
+        const float Q1Q2 = Q1*Q2;
+        const float Q1_sqr = Q1.AbsSquared();
+        const float Q2_sqr = Q2.AbsSquared();
+        const float invdet = 1/(Q1_sqr*Q2_sqr - Q1Q2*Q1Q2);
+        const float RQ1 = R * Q1;
+        const float RQ2 = R * Q2;
+        const float w1 = invdet*(Q2_sqr*RQ1 - Q1Q2*RQ2);
+        const float w2 = invdet*(-Q1Q2*RQ1  + Q1_sqr*RQ2);
+
+        if(w1 >= 0 && w2 >= 0 && (w1 + w2 <= 1))
+        {
+            *f = cf;
+            *hitnormal = plane.m_n;
+            return true; // skip edge and vertex, it must take place before them
+        }
     }
-    vec3_t tmpintersect = start + dir*cf - polyplane.m_n*offset;
-    *f = cf;
 
-    // Berechnung über Barycentric coordinates (math for 3d game programming p. 144)
-    const vec3_t R = tmpintersect - P0;
-    const vec3_t Q1 = P1 - P0;
-    const vec3_t Q2 = P2 - P0;
-    const float Q1Q2 = Q1*Q2;
-    const float Q1_sqr = Q1.AbsSquared();
-    const float Q2_sqr = Q2.AbsSquared();
-    const float invdet = 1/(Q1_sqr*Q2_sqr - Q1Q2*Q1Q2);
-    const float RQ1 = R * Q1;
-    const float RQ2 = R * Q2;
-    const float w1 = invdet*(Q2_sqr*RQ1 - Q1Q2*RQ2);
-    const float w2 = invdet*(-Q1Q2*RQ1  + Q1_sqr*RQ2);
-
-    hit = w1 >= 0 && w2 >= 0 && (w1 + w2 <= 1);
-    if(hit)
+    // Step 2) Edge detection
+    for(i=0;i<3;i++) // for every edge of triangle
     {
-        polyplane.m_d = dsave;
-        *hitplane = polyplane;
-    }
-    needs_edge_test = !hit;
-
-    return hit;
-}
-
-bool CBSPLevel::GetEdgeIntersection(const int triangleindex,
-                                    const vec3_t& start,
-                                    const vec3_t& dir,
-                                    float* f,
-                                    const float radius,
-                                    vec3_t* normal,
-                                    vec3_t* hitpoint) const
-{
-    float minf = MAX_TRACE_DIST;
-    float cf;
-    int minindex = -1;
-    for(int i=0;i<3;i++) // for every edge of triangle
-    {
-        const vec3_t fromvec = m_vertex[m_triangle[triangleindex].v[i]].v;
-        const vec3_t tovec = m_vertex[m_triangle[triangleindex].v[(i+1)%3]].v;
-        if(!vec3_t::RayCylinderIntersect(start,
+        const vec3_t& fromvec = m_vertex[m_triangle[triangleindex].v[i]].v;
+        const vec3_t& tovec = m_vertex[m_triangle[triangleindex].v[(i+1)%3]].v;
+        if(!vec3_t::RayCylinderIntersect(sphere_pos,
                                          dir,
                                          fromvec,
                                          tovec,
-                                         radius,
+                                         sphere_radius,
                                          &cf)) continue;
-        if(cf < minf && cf >= 0.0f)
+        if(cf < *f && cf >= 0.0f)
         {
-            minf = cf;
-            minindex = i;
+            *f = cf;
+
+            const vec3_t hitpoint = sphere_pos + dir*cf;
+            *hitnormal = (((fromvec-hitpoint)^(tovec-hitpoint)) ^ (tovec-fromvec)).Normalized();
         }
     }
-    if(minf <= 1.0f && minindex >= 0)
-    {
-        *hitpoint = start + minf*dir;
-        const vec3_t* a = &m_vertex[m_triangle[triangleindex].v[minindex]].v;
-        const vec3_t* b = &m_vertex[m_triangle[triangleindex].v[(minindex+1)%3]].v;
 
-        *normal = ((*a-*hitpoint)^(*b-*hitpoint)) ^ (*b-*a);
-        normal->Normalize();
-        *f = minf;
-        return true;
-    }
-    else
+    // Step 3) Vertex detection
+    for(i=0;i<3;i++) // for every vertex of triangle
     {
-        return false;
-    }
-}
-
-bool CBSPLevel::GetVertexIntersection(const int triangleindex,
-                                      const vec3_t& start,
-                                      const vec3_t& dir,
-                                      float* f,
-                                      const float radius,
-                                      vec3_t* normal,
-                                      vec3_t* hitpoint) const
-{
-    float minf = MAX_TRACE_DIST;
-    float cf;
-    int minindex = -1;
-    for(int i=0;i<3;i++) // for every vertex of triangle
-    {
-        const vec3_t v = m_vertex[m_triangle[triangleindex].v[i]].v;
-        if(!vec3_t::RaySphereIntersect(start,
+        const vec3_t& v = m_vertex[m_triangle[triangleindex].v[i]].v;
+        if(!vec3_t::RaySphereIntersect(sphere_pos,
                                        dir,
                                        v,
-                                       radius,
+                                       sphere_radius,
                                        &cf))
         {
             continue;
         }
-        if(cf < minf && cf >= 0.0f)
+        if(cf < *f && cf >= 0.0f)
         {
-            minindex = i;
-            minf = cf;
+            *f = cf;
+
+            const vec3_t hitpoint = sphere_pos + dir*cf;
+            *hitnormal = hitpoint - v;
+            hitnormal->Normalize();
         }
     }
-    if(minf <= 1.0f && minindex >= 0)
-    {
-        *hitpoint = start + minf*dir;
-        *normal = *hitpoint - m_vertex[m_triangle[triangleindex].v[minindex]].v;
-        normal->Normalize();
-        *f = minf;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+
+    return *f != MAX_TRACE_DIST;
 }
 
-#define	DIST_EPSILON	(0.06f)
+#define DIST_EPSILON    (0.01f)
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
 {
     if(m_node == NULL)
@@ -751,65 +709,40 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         const unsigned int trianglecount = m_leaf[leafindex].triangles.size();
         float cf;
         float minf = trace->f;
-        int minindex = -1;
         plane_t hitplane;
+        vec3_t hitnormal;
         vec3_t hitpoint;
         vec3_t normal;
-        bool needs_edge_test;
         for(unsigned int i=0;i<trianglecount;i++)
         {
             triangleindex = m_leaf[leafindex].triangles[i];
-            // - Check for triangle inner area
-            // - Check for all three triangle edges
-            // - Check for all three triangles vertices
-            if(GetTriIntersection(triangleindex,
-                                  trace->start,
-                                  trace->dir,
-                                  &cf,
-                                  trace->radius,
-                                  &hitplane,
-                                  needs_edge_test))
+            if(SphereTriangleIntersect(triangleindex,
+                                       trace->start,
+                                       trace->radius,
+                                       trace->dir,
+                                       &cf,
+                                       &hitnormal))
             {
+                // safety shift along the trace path.
+                // this keeps the object DIST_EPSILON away from
+                // the plane along the plane normal.
+                float df = DIST_EPSILON/(hitnormal * trace->dir);
+                if(df > 0.0f)
+                    df = 0.0f;
+                if(cf + df <= DIST_EPSILON)
+                    cf = 0.0f;
+                else
+                    cf = cf + df;
+
                 if(cf < minf)
                 {
+                    hitpoint = trace->start + trace->dir*cf;
+                    hitplane.SetupPlane(hitpoint, hitnormal);
+                    trace->p = hitplane;
+                    trace->f = cf;
                     minf = cf;
-                    minindex = i;
                 }
             }
-            if(!needs_edge_test)
-                continue;
-            if(GetEdgeIntersection(triangleindex,
-                                   trace->start,
-                                   trace->dir,
-                                   &cf, trace->radius,
-                                   &normal, &hitpoint) ||
-                GetVertexIntersection(triangleindex,
-                                   trace->start,
-                                   trace->dir,
-                                   &cf, trace->radius,
-                                   &normal, &hitpoint))
-            {
-                if(cf < minf)
-                {
-                    minf = cf;
-                    minindex = i;
-                    hitplane.SetupPlane(hitpoint, normal);
-                }
-            }
-        }
-        if(minindex != -1)
-        {
-            // safety shift along the trace path.
-            // this keeps the object DIST_EPSILON away from
-            // the plane along the plane normal.
-            float df = DIST_EPSILON/(hitplane.m_n * trace->dir);
-            if(df > 0.0f)
-                df = 0.0f;
-            if(minf + df <= DIST_EPSILON)
-                trace->f = 0.0f;
-            else
-                trace->f = minf + df;
-            trace->p = hitplane;
         }
         return;
     }
@@ -869,7 +802,7 @@ bool CBSPLevel::IsSphereStuck(const vec3_t& position, const float radius, const 
         for(unsigned int i=0;i<trianglecount;i++)
         {
             triangleindex = m_leaf[leafindex].triangles[i];
-            if(SphereTriangleIntersect(triangleindex, position, radius))
+            if(SphereTriangleIntersectStatic(triangleindex, position, radius))
                 return true;
         }
         return false;

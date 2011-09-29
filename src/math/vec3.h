@@ -43,6 +43,10 @@ struct vec3_t
 
     static float GetAngleDeg(const vec3_t& a, const vec3_t& b); // angle between a and b in degrees
 
+    static bool IsPointInsideTriangle(const vec3_t& v0,
+                                      const vec3_t& v1,
+                                      const vec3_t& v2,
+                                      const vec3_t& point);
     /*
         Helper function: Intersection of ray with cylinder.
         Returns: true, in f is the scale factor to the hit point.

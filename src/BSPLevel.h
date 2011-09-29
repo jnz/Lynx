@@ -50,32 +50,19 @@ protected:
     void        TraceSphere(bsp_sphere_trace_t* trace, const int node) const;
     bool        IsSphereStuck(const vec3_t& position, const float radius, const int node) const;
 
-    bool        SphereTriangleIntersect(const int triangleindex,
+    // Static check
+    bool        SphereTriangleIntersectStatic(const int triangleindex,
+                                              const vec3_t& sphere_pos,
+                                              const float sphere_radius) const; // used by IsSphereStuck
+
+    // Sweeping check
+    inline bool SphereTriangleIntersect(const int triangleindex,
                                         const vec3_t& sphere_pos,
-                                        const float sphere_radius) const; // used by IsSphereStuck
+                                        const float sphere_radius,
+                                        const vec3_t& dir,
+                                        float* f,
+                                        vec3_t* hitnormal) const;
 
-    inline bool GetTriIntersection(const int triangleindex,
-                                   const vec3_t& start,
-                                   const vec3_t& dir,
-                                   float* f,
-                                   const float offset,
-                                   plane_t* hitplane,
-                                   bool& needs_edge_test) const;
-
-    inline bool GetEdgeIntersection(const int triangleindex,
-                                    const vec3_t& start,
-                                    const vec3_t& dir,
-                                    float* f,
-                                    const float radius,
-                                    vec3_t* normal,
-                                    vec3_t* hitpoint) const;
-    inline bool GetVertexIntersection(const int triangleindex,
-                                      const vec3_t& start,
-                                      const vec3_t& dir,
-                                      float* f,
-                                      const float radius,
-                                      vec3_t* normal,
-                                      vec3_t* hitpoint) const;
 
     bool                m_uselightmap;
     int                 m_lightmap; // lightmap texture id
