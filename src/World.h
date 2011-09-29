@@ -147,6 +147,7 @@ public:
 
     // Move object and perform collision detection with level geometry
     void            ObjMove(CObj* obj, const float dt) const;
+    bool            TryUnstuck(CObj* obj) const; // find a position that is not in the world geometry
 
     // TraceObj is a core engine function to check if an object can travel along
     // a vector or if it hits the level geometry.

@@ -168,7 +168,7 @@ const static vec3_t gravity(0, -GRAVITY, 0);
 #define MAX_CLIP_PLANES      5
 #define OVERCLIP            (1.01f)
 #define F_SCALE             (0.98f)
-#define MAX_VELOCITY        (35.0f) // 35 m/s = 126 km/h
+#define MAX_VELOCITY        (55.0f) // m/s
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
@@ -180,7 +180,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
     plane_t wallplane;
 
     bsp_sphere_trace_t trace;
-    trace.radius = obj->GetRadius()+0.01f;
+    trace.radius = obj->GetRadius();
 
     // quake style movement clipping
     vec3_t vel = obj->GetVel();
@@ -330,13 +330,65 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     if(GetBSP()->IsSphereStuck(pos, obj->GetRadius()))
     {
-        pos = obj->GetOrigin();
-        fprintf(stderr, "Object stuck\n");
+        // OK something went wrong with our movement
+
+        // let's see if our original position was OK
+        // If it is also stuck (if cond. here), then
+        // the TryUnstuck function will set the obj->Origin to something
+        // that is hopefully OK.
+        // otherwise we just use the old obj position before
+        if(GetBSP()->IsSphereStuck(obj->GetOrigin(), obj->GetRadius()))
+        {
+            if(TryUnstuck(obj))
+            {
+                fprintf(stderr, "Object successfully unstuck\n");
+            }
+            else
+            {
+                fprintf(stderr, "Failed to unstuck object\n");
+                assert(0); // uh oh, should not happen
+            }
+        }
+        pos = obj->GetOrigin(); // this is either the original position or some position from TryUnstuck()
     }
 
     obj->m_locIsOnGround = groundhit;
     obj->SetOrigin(pos);
     obj->SetVel(vel);
+}
+
+bool CWorld::TryUnstuck(CObj* obj) const
+{
+    static const vec3_t offset_table[] =
+    {
+        vec3_t( -1,  1, -1),
+        vec3_t(  1,  1, -1),
+        vec3_t(  1,  1,  1),
+        vec3_t( -1,  1,  1),
+        vec3_t( -1, -1, -1),
+        vec3_t(  1, -1, -1),
+        vec3_t(  1, -1,  1),
+        vec3_t( -1, -1,  1)
+    };
+    static const float offset_table_size = sizeof(offset_table)/sizeof(offset_table[0]);
+    const float radius = obj->GetRadius();
+    const float radius_scale = radius * 0.1f;
+    int i, j;
+
+    for(j=1; j<4; j++)
+    {
+        for(i=0;i<offset_table_size;i++)
+        {
+            const vec3_t try_pos = obj->GetOrigin() + j * radius_scale * offset_table[i];
+            if(!GetBSP()->IsSphereStuck(try_pos, radius))
+            {
+                obj->SetOrigin(try_pos);
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 // returns true if something was hit (level or obj)
