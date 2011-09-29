@@ -329,7 +329,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 
         obj->GetParticleSystem()->Update(dt, ticks, obj->GetOrigin());
 
-        // FIXME use some kind of frustum test for the particle system!
+        // FIXME use some kind of frustum test for the particle system
         //glPushMatrix();
         //glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
         obj->GetParticleSystem()->Render(side, up, dir);
@@ -551,10 +551,10 @@ bool CRenderer::InitShader()
     m_lightmap = glGetUniformLocation(m_program, "lightmap");
     m_uselightmap = glGetUniformLocation(m_program, "uselightmap");
     m_normalMap = glGetUniformLocation(m_program, "normalMap");
-    glUniform1i(m_shadowMapUniform, 7);
-    glUniform1i(m_normalMap, 1);
-    glUniform1i(m_tex, 0);
-    glUniform1i(m_lightmap, 1);
+    glUniform1i(m_tex, 0); // diffuse texture to channel 0
+    glUniform1i(m_normalMap, 1); // tangent space normal map in channel 1
+    glUniform1i(m_lightmap, 2); // pre-baked shadows to channel 2
+    glUniform1i(m_shadowMapUniform, 7); // shadow space matrix to channel 7
     glUniform1i(m_uselightmap, 0);
     glUseProgram(0);
 

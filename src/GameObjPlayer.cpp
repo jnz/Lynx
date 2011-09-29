@@ -194,6 +194,15 @@ void CGameObjPlayer::FireRocket()
     GetWorld()->AddObj(rocket); // godspeed little projectile
 }
 
+void CGameObjPlayer::Respawn(const vec3_t& location,
+                             const quaternion_t& rotation)
+{
+    CGameObj::Respawn(location, rotation);
+
+    m_prim_triggered = 0;
+    m_prim_triggered_time = 0;
+}
+
 void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t& dir, CGameObj* dealer, bool& killed_me)
 {
     CGameObj::DealDamage(damage, hitpoint, dir, dealer, killed_me);

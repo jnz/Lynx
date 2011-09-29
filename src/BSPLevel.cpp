@@ -494,7 +494,6 @@ void CBSPLevel::RenderGL(const vec3_t& origin, const CFrustum& frustum) const
 
         glClientActiveTexture(GL_TEXTURE2);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisable(GL_TEXTURE_2D);
     }
 
     glActiveTexture(GL_TEXTURE0);

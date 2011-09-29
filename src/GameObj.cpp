@@ -12,7 +12,7 @@
 
 CGameObj::CGameObj(CWorld* world) : CObj(world)
 {
-    m_health = 100;
+    m_health = GAME_OBJ_BASE_HEALTH;
 }
 
 CGameObj::~CGameObj(void)
@@ -35,6 +35,14 @@ quaternion_t CGameObj::TurnTo(const vec3_t& location) const
     const float dz = location.z - GetOrigin().z;
     const float riwi = atan2(dx, dz);
     return quaternion_t(vec3_t::yAxis, riwi+lynxmath::PI);
+}
+
+void CGameObj::Respawn(const vec3_t& location, const quaternion_t& rotation)
+{
+    SetOrigin(location);
+    SetVel(vec3_t::origin);
+    SetRot(rotation);
+    SetHealth(GAME_OBJ_BASE_HEALTH);
 }
 
 void CGameObj::SpawnParticleBlood(const vec3_t& location, const vec3_t& dir, const float size)

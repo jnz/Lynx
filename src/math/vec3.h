@@ -20,7 +20,7 @@ struct vec3_t
 
     static vec3_t rand(float mx, float my, float mz);
 
-    float Abs(void) const; // absolute value of vector
+    float Abs(void) const; // absolute value of vector/length
     float AbsSquared(void) const; // absolute value squared
     float AbsFast(void) const; // absolute value of vector with fast sqrt (might be inaccurate)
 
@@ -30,6 +30,7 @@ struct vec3_t
     vec3_t NormalizedFast(void) const;
     bool IsNormalized() const;
     void SetLength(float length);
+    void MaxLength(float length); // if vector length (Abs) is larger than length, set to length
 
     bool IsNull() const; // is vector 0,0,0? (no epsilon test)
     bool Equals(const vec3_t& cmp, const float epsilon) const;
@@ -126,6 +127,20 @@ LYNX_INLINE void vec3_t::SetLength(float scalelen)
         y *= ilength;
         z *= ilength;
     //}
+}
+
+// if vector length (Abs) is larger than length, set to length
+LYNX_INLINE void vec3_t::MaxLength(float length)
+{
+    const float curlength = Abs();
+
+    if(curlength > length)
+    {
+        const float ilength = length/curlength;
+        x *= ilength;
+        y *= ilength;
+        z *= ilength;
+    }
 }
 
 LYNX_INLINE vec3_t vec3_t::Normalized(void) const

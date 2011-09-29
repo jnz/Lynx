@@ -18,6 +18,8 @@ enum
     GAME_OBJ_LAST // last item
 };
 
+#define GAME_OBJ_BASE_HEALTH       100
+
 class CGameObj :
     public CObj
 {
@@ -32,6 +34,8 @@ public:
     void AddHealth(int health) { m_health += health; }
 
     quaternion_t TurnTo(const vec3_t& location) const; // rotation along yAxis.
+
+    virtual void Respawn(const vec3_t& location, const quaternion_t& rotation);
 
     virtual void DealDamage(int damage,
                             const vec3_t& hitpoint,

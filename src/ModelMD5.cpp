@@ -1,7 +1,6 @@
 #include "lynx.h"
 #include "math/vec3.h"
 #include "ModelMD5.h"
-#include "BSPBIN.h" // we use the bspbin_vertex_t type
 #include <stdio.h>
 #include <GL/glew.h>
 #define NO_SDL_GLEXT
@@ -12,8 +11,8 @@
 #define new new(_NORMAL_BLOCK,__FILE__, __LINE__)
 #endif
 
-#define MD5_SCALE           (1.0f)   // scale while loading
-#define MD5_SCALE_F         (0.065f) // scale by glScalef
+#define MD5_SCALE                (1.0f)   // scale while loading
+#define MD5_SCALE_F              (0.065f) // scale by glScalef
 #define MD5_RESET_BASE_POSITION // keep the model base position at 0,0,0 during the animation
 
 /* Animation Joint info */
@@ -97,8 +96,8 @@ void CModelMD5::RenderSkeleton(const std::vector<md5_joint_t>& skel) const
 
 bool CModelMD5::AllocVertexBuffer()
 {
-    m_vertex_buffer = new bspbin_vertex_t[m_max_verts];
-    m_vertex_index_buffer = new vertexindex_t[m_max_tris*3];
+    m_vertex_buffer = new md5_vbo_vertex_t[m_max_verts];
+    m_vertex_index_buffer = new md5_vertexindex_t[m_max_tris*3];
 
     glGenBuffers(1, &m_vbo);
     if(m_vbo < 1)
@@ -150,28 +149,19 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
         return false;
     }
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(bspbin_vertex_t) * vertexcount, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(md5_vbo_vertex_t) * vertexcount, NULL, GL_DYNAMIC_DRAW);
     if(glGetError() != GL_NO_ERROR)
     {
         fprintf(stderr, "MD5: Failed to buffer data\n");
         return false;
     }
 
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(bspbin_vertex_t) * vertexcount, m_vertex_buffer);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(md5_vbo_vertex_t) * vertexcount, m_vertex_buffer);
     if(glGetError() != GL_NO_ERROR)
     {
         fprintf(stderr, "MD5: Failed to upload VBO data\n");
         return false;
     }
-
-    // the following depends on the bspbin_vertex_t struct
-    // (byte offsets)
-    //glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
-    //glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
-    //glClientActiveTexture(GL_TEXTURE0);
-    //glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
-    //glClientActiveTexture(GL_TEXTURE1);
-    //glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
 
     if(glGetError() != GL_NO_ERROR)
     {
@@ -186,14 +176,14 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
         return false;
     }
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertexindex_t) * indexcount, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(md5_vertexindex_t) * indexcount, NULL, GL_DYNAMIC_DRAW);
     if(glGetError() != GL_NO_ERROR)
     {
         fprintf(stderr, "MD5: Failed to buffer index data\n");
         return false;
     }
 
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(vertexindex_t) * indexcount, m_vertex_index_buffer);
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(md5_vertexindex_t) * indexcount, m_vertex_index_buffer);
     if(glGetError() != GL_NO_ERROR)
     {
         fprintf(stderr, "MD5: Failed to upload index VBO data\n");
@@ -228,18 +218,18 @@ void CModelMD5::Render(const md5_state_t* state)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
 
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(0));
+        glVertexPointer(3, GL_FLOAT, sizeof(md5_vbo_vertex_t), BUFFER_OFFSET(0));
 
         glEnableClientState(GL_NORMAL_ARRAY);
-        glNormalPointer(GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(12));
+        glNormalPointer(GL_FLOAT, sizeof(md5_vbo_vertex_t), BUFFER_OFFSET(12));
 
         glClientActiveTexture(GL_TEXTURE0);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(24));
+        glTexCoordPointer(2, GL_FLOAT, sizeof(md5_vbo_vertex_t), BUFFER_OFFSET(24));
 
         glClientActiveTexture(GL_TEXTURE1);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(4, GL_FLOAT, sizeof(bspbin_vertex_t), BUFFER_OFFSET(32));
+        glTexCoordPointer(4, GL_FLOAT, sizeof(md5_vbo_vertex_t), BUFFER_OFFSET(32));
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, m_meshes[i].texnormal);
@@ -249,8 +239,8 @@ void CModelMD5::Render(const md5_state_t* state)
 
         glDrawElements(GL_TRIANGLES,
                        m_meshes[i].num_tris*3,
-                       MY_GL_VERTEXINDEX_TYPE,
-                       BUFFER_OFFSET(0 * sizeof(vertexindex_t)));
+                       MD5_GL_VERTEXINDEX_TYPE,
+                       BUFFER_OFFSET(0 * sizeof(md5_vertexindex_t)));
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -1050,7 +1040,6 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
         else if(sscanf (buff, " frameRate %d", &anim->frameRate) == 1)
         {
             //printf ("md5anim: animation's frame rate is %d\n", anim->frameRate);
-            anim->frameRate = 1;
         }
         else if(sscanf (buff, " numAnimatedComponents %d", &numAnimatedComponents) == 1)
         {

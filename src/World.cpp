@@ -168,27 +168,12 @@ const static vec3_t gravity(0, -GRAVITY, 0);
 #define MAX_CLIP_PLANES      5
 #define OVERCLIP            (1.01f)
 #define F_SCALE             (0.98f)
-#define MAX_VELOCITY        (35.0f)
+#define MAX_VELOCITY        (35.0f) // 35 m/s = 126 km/h
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {
     if(obj->GetFlags() & OBJ_FLAGS_GHOST)
         return;
-
-    if(obj->GetVel().y < -250.0f)
-    {
-        fprintf(stderr, "World error: obj in free fall (on ground: %i) obj id: %i res: %s\n",
-                obj->m_locIsOnGround ? 1 : 0,
-                obj->GetID(), obj->GetResource().c_str());
-        // hack:
-        // Somehow the object is in free fall,
-        // now we just select a random spawn point and place the object with
-        // zero velocity there.
-        bspbin_spawn_t point = GetBSP()->GetRandomSpawnPoint();
-        obj->SetOrigin(point.point);
-        obj->SetVel(vec3_t::origin);
-        return;
-    }
 
     bool groundhit = false; // obj on ground?
     bool wallhit = false; // contact with level geometry
@@ -199,11 +184,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
     // quake style movement clipping
     vec3_t vel = obj->GetVel();
-    if(vel.AbsFast() > MAX_VELOCITY) // clip max velocity
-    {
-        fprintf(stderr, "Velocity too high\n");
-        vel.SetLength(MAX_VELOCITY);
-    }
+    vel.MaxLength(MAX_VELOCITY); // the velocity is too damn high
 
     vec3_t planes[MAX_CLIP_PLANES];
     vec3_t pos = obj->GetOrigin();

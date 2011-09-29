@@ -10,6 +10,17 @@ class CModelMD5;
 
 #define BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK //FIXME translate some doom3 models in the code... the pain... remove this ASAP... ASAP!
 
+#define MD5_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_INT
+typedef uint32_t md5_vertexindex_t;
+struct md5_vbo_vertex_t // if you change this, you need to change the VBO code too
+{
+    vec3_t v;
+    vec3_t n;
+    float tu, tv;
+    vec3_t t; // tangent
+    float w; // value to compute bitangent vector: Bitangent = w * (Normal x Tangent)
+};
+
 /* This code is based upon the great MD5 documentation
  * and source code by David Henry */
 
@@ -148,10 +159,10 @@ private:
     int     m_max_tris;
 
     // data for vertex buffer objects
-    unsigned int      m_vbo;
-    unsigned int      m_vboindex;
-    bspbin_vertex_t*  m_vertex_buffer;
-    vertexindex_t*    m_vertex_index_buffer;
+    unsigned int       m_vbo;
+    unsigned int       m_vboindex;
+    md5_vbo_vertex_t*  m_vertex_buffer;
+    md5_vertexindex_t* m_vertex_index_buffer;
 
     // Animation map. Link between the lynx animation id and the raw animation
     // data

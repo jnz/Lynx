@@ -76,7 +76,7 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    const int zombocount = 2; // this is zombo.count
+    const int zombocount = 1; // this is zombo.count
     for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
@@ -140,6 +140,19 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
         obj->m_think.DoThink(GetWorld()->GetLeveltime());
 
         GetWorld()->ObjMove(obj, dt);
+        if(obj->GetOrigin().y < -500.0f)
+        {
+            fprintf(stderr, "GameZombie: obj in free fall (on ground: %s) obj id: %i res: %s\n",
+                    obj->locGetIsOnGround() ? "true" : "false",
+                    obj->GetID(), obj->GetResource().c_str());
+            // Somehow the object is in free fall,
+            // now we just select a random spawn point and place the object with
+            // zero velocity there.
+            bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
+            obj->Respawn(point.point, point.rot);
+            return;
+        }
+
         if(obj->GetType() == GAME_OBJ_TYPE_PLAYER)
         {
             // set player animation to run, if horizontal speed is > 0
@@ -193,7 +206,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 obj2->SetVel(diff);
             }
         }
-        else if(obj->GetType() == GAME_OBJ_TYPE_ROCKET && !(obj->GetFlags()&OBJ_FLAGS_GHOST))
+        else if(obj->GetType() == GAME_OBJ_TYPE_ROCKET && !(obj->GetFlags()&OBJ_FLAGS_GHOST)) // rockets are ghosts for a few seconds after the impact, to fade out the rocket trail. ignore them as ghost objects.
         {
             // FIXME: is this really something the game logic has to
             // take care of every frame? there should be an event callback

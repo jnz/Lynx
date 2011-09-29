@@ -10,6 +10,8 @@ public:
 
     virtual int     GetType() const { return GAME_OBJ_TYPE_ZOMBIE; }
 
+    virtual void    Respawn(const vec3_t& location, const quaternion_t& rotation);
+
     virtual void    DealDamage(int damage,
                                const vec3_t& hitpoint,
                                const vec3_t& dir,

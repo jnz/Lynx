@@ -36,6 +36,9 @@ public:
     void            ActivateRocket();
     void            ActivateGun();
 
+    virtual void    Respawn(const vec3_t& location,
+                            const quaternion_t& rotation);
+
     virtual void    DealDamage(int damage,
                                const vec3_t& hitpoint,
                                const vec3_t& dir,

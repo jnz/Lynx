@@ -18,6 +18,11 @@ CGameObjZombie::~CGameObjZombie(void)
 
 }
 
+void CGameObjZombie::Respawn(const vec3_t& location, const quaternion_t& rotation)
+{
+    CGameObj::Respawn(location, rotation);
+}
+
 void CGameObjZombie::DealDamage(int damage,
                                 const vec3_t& hitpoint,
                                 const vec3_t& dir,
@@ -89,8 +94,7 @@ bool CThinkFuncRespawnZombie::DoThink(uint32_t leveltime)
 
     // add a new zombie to the world
     CGameObjZombie* zombie = new CGameObjZombie(GetWorld());
-    zombie->SetOrigin(point.point);
-    zombie->SetRot(point.rot*zombierot);
+    zombie->Respawn(point.point, point.rot*zombierot);
     GetWorld()->AddObj(zombie);
 
     return true;
