@@ -65,6 +65,7 @@ struct vec3_t
     static const vec3_t zAxis;  // 0,0,1
 
     static vec3_t cross(const vec3_t& a, const vec3_t& b);
+    static float dot(const vec3_t& a, const vec3_t& b);
 
     void Print() const; // print x,y,z to stderr
 
@@ -263,6 +264,11 @@ LYNX_INLINE vec3_t vec3_t::cross(const vec3_t& a, const vec3_t& b)
 
 // dot product
 LYNX_INLINE float operator*(vec3_t const &a, vec3_t const &b)
+{
+    return a.x*b.x+a.y*b.y+a.z*b.z;
+}
+
+LYNX_INLINE float vec3_t::dot(vec3_t const &a, vec3_t const &b)
 {
     return a.x*b.x+a.y*b.y+a.z*b.z;
 }

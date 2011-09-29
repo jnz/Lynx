@@ -247,11 +247,6 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         if(trace.p.m_n.v[1] > 0.7)
             groundhit = true;
 
-        // if the y component is zero, it is a wall
-        // if(fabsf(trace.p.m_n.v[1]) < 0.1f)
-        // {
-        // }
-
         // Did we run out of planes to clip against?
         if(numplanes >= MAX_CLIP_PLANES)
         {   // this shouldn't really happen
@@ -331,6 +326,12 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         {
             vel += gravity*dt;
         }
+    }
+
+    if(GetBSP()->IsSphereStuck(pos, obj->GetRadius()))
+    {
+        pos = obj->GetOrigin();
+        fprintf(stderr, "Object stuck\n");
     }
 
     obj->m_locIsOnGround = groundhit;

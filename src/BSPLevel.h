@@ -40,6 +40,7 @@ public:
     bspbin_spawn_t GetRandomSpawnPoint() const;
 
     void        TraceSphere(bsp_sphere_trace_t* trace) const;
+    bool        IsSphereStuck(const vec3_t& position, const float radius) const;
 
     void        RenderGL(const vec3_t& origin, const CFrustum& frustum) const;
     void        RenderNormals() const;
@@ -47,6 +48,12 @@ public:
 protected:
 
     void        TraceSphere(bsp_sphere_trace_t* trace, const int node) const;
+    bool        IsSphereStuck(const vec3_t& position, const float radius, const int node) const;
+
+    bool        SphereTriangleIntersect(const int triangleindex,
+                                        const vec3_t& sphere_pos,
+                                        const float sphere_radius) const; // used by IsSphereStuck
+
     inline bool GetTriIntersection(const int triangleindex,
                                    const vec3_t& start,
                                    const vec3_t& dir,

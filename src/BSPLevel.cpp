@@ -534,6 +534,62 @@ void CBSPLevel::RenderNormals() const
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+// Static test
+bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
+                                        const vec3_t& sphere_pos,
+                                        const float sphere_radius) const
+{
+    const unsigned int vertexindex1 = m_triangle[triangleindex].v[0];
+    const unsigned int vertexindex2 = m_triangle[triangleindex].v[1];
+    const unsigned int vertexindex3 = m_triangle[triangleindex].v[2];
+    const vec3_t& OA = m_vertex[vertexindex1].v;
+    const vec3_t& OB = m_vertex[vertexindex2].v;
+    const vec3_t& OC = m_vertex[vertexindex3].v;
+    const vec3_t& P = sphere_pos;
+    const float r = sphere_radius;
+
+    // Copy from: http://realtimecollisiondetection.net/blog/?p=103
+
+    const vec3_t A = OA - P;
+    const vec3_t B = OB - P;
+    const vec3_t C = OC - P;
+    const float rr = r * r;
+    const vec3_t V = vec3_t::cross(B - A, C - A);
+    const float d = vec3_t::dot(A, V);
+    const float e = vec3_t::dot(V, V);
+    const bool sep1 = d * d > rr * e;
+    const float aa = vec3_t::dot(A, A);
+    const float ab = vec3_t::dot(A, B);
+    const float ac = vec3_t::dot(A, C);
+    const float bb = vec3_t::dot(B, B);
+    const float bc = vec3_t::dot(B, C);
+    const float cc = vec3_t::dot(C, C);
+    const bool sep2 = (aa > rr) && (ab > aa) && (ac > aa);
+    const bool sep3 = (bb > rr) && (ab > bb) && (bc > bb);
+    const bool sep4 = (cc > rr) && (ac > cc) && (bc > cc);
+    const vec3_t AB = B - A;
+    const vec3_t BC = C - B;
+    const vec3_t CA = A - C;
+    const float d1 = ab - aa;
+    const float d2 = bc - bb;
+    const float d3 = ac - cc;
+    const float e1 = vec3_t::dot(AB, AB);
+    const float e2 = vec3_t::dot(BC, BC);
+    const float e3 = vec3_t::dot(CA, CA);
+    const vec3_t Q1 = A * e1 - d1 * AB;
+    const vec3_t Q2 = B * e2 - d2 * BC;
+    const vec3_t Q3 = C * e3 - d3 * CA;
+    const vec3_t QC = C * e1 - Q1;
+    const vec3_t QA = A * e2 - Q2;
+    const vec3_t QB = B * e3 - Q3;
+    const bool sep5 = (vec3_t::dot(Q1, Q1) > rr * e1 * e1) && (vec3_t::dot(Q1, QC) > 0);
+    const bool sep6 = (vec3_t::dot(Q2, Q2) > rr * e2 * e2) && (vec3_t::dot(Q2, QA) > 0);
+    const bool sep7 = (vec3_t::dot(Q3, Q3) > rr * e3 * e3) && (vec3_t::dot(Q3, QB) > 0);
+    const bool separated = sep1 | sep2 | sep3 | sep4 | sep5 | sep6 | sep7;
+
+    return !separated;
+}
+
 bool CBSPLevel::GetTriIntersection(const int triangleindex,
                                    const vec3_t& start,
                                    const vec3_t& dir,
@@ -792,5 +848,55 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         *trace = trace1;
     else
         *trace = trace2;
+}
+
+bool CBSPLevel::IsSphereStuck(const vec3_t& position, const float radius) const
+{
+    if(m_node == NULL)
+        return false;
+
+    return IsSphereStuck(position, radius, 0); // 0 = root node
+}
+
+bool CBSPLevel::IsSphereStuck(const vec3_t& position, const float radius, const int node) const
+{
+    if(node < 0) // have we reached a leaf?
+    {
+        int triangleindex;
+        const int leafindex = -node-1;
+        const unsigned int trianglecount = m_leaf[leafindex].triangles.size();
+
+        for(unsigned int i=0;i<trianglecount;i++)
+        {
+            triangleindex = m_leaf[leafindex].triangles[i];
+            if(SphereTriangleIntersect(triangleindex, position, radius))
+                return true;
+        }
+        return false;
+    }
+
+    pointplane_t loc;
+
+    // Check if everything is in front of the plane
+    plane_t tmpplane = m_plane[m_node[node].plane];
+    tmpplane.m_d -= radius;
+    loc = tmpplane.Classify(position, BSP_EPSILON);
+    if(loc == POINTPLANE_FRONT)
+    {
+        return IsSphereStuck(position, radius, m_node[node].children[0]);
+    }
+
+    // Check if everythinig is behind the plane
+    tmpplane.m_d = m_plane[m_node[node].plane].m_d + radius;
+    loc = tmpplane.Classify(position, BSP_EPSILON);
+    if(loc == POINTPLANE_BACK)
+    {
+        return IsSphereStuck(position, radius, m_node[node].children[1]);
+    }
+
+    // Check both
+    if(IsSphereStuck(position, radius, m_node[node].children[0]))
+        return true;
+    return IsSphereStuck(position, radius, m_node[node].children[1]);
 }
 
