@@ -197,6 +197,7 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientHUD.cpp" />
     <ClCompile Include="ClientInfo.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="GameLogic.cpp" />

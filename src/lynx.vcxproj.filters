@@ -156,6 +156,9 @@
     <ClCompile Include="..\soil\src\stb_image_aug.cpp">
       <Filter>SOIL</Filter>
     </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BSPBIN.h">

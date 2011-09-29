@@ -91,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Config.cpp" />
     <ClCompile Include="..\src\KDTree.cpp" />
     <ClCompile Include="..\src\lynx.cpp" />
     <ClCompile Include="..\src\math\matrix.cpp" />
