@@ -56,4 +56,8 @@ private:
     CGameLogic* m_gamelogic;
 
     uint32_t m_lastupdate; // last time we have sent the client state to the server
+
+    // Client input config settings
+    cvar_t* m_cfg_mouse_sensitivity;
+    cvar_t* m_cfg_mouse_invert;
 };

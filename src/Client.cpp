@@ -63,6 +63,10 @@ bool CClient::Connect(const char* server, const int port)
     // Precaching important resources while connecting
     m_gamelogic->Precache(m_world->GetResourceManager());
 
+    // Load settings from config file
+    m_cfg_mouse_sensitivity = CLynx::cfg.GetVarFloat("m_sensitiviy", 3.0f, true);
+    m_cfg_mouse_invert = CLynx::cfg.GetVarFloat("m_invert", 0.0f, true);
+
     return true;
 }
 
@@ -203,11 +207,12 @@ void CClient::OnReceive(CStream* stream)
 void CClient::InputMouseMove()
 {
     CObj* obj = GetLocalController();
-    const float sensitivity = 0.5f; // FIXME
+    const float sensitivity = m_cfg_mouse_sensitivity->value/3.0f * 0.5f;
+    const float invert = (m_cfg_mouse_invert->value != 0.0f) ? -1.0f : 1.0f;
     int dx, dy;
     CLynxSys::GetMouseDelta(&dx, &dy);
 
-    m_lat += (float)dy * sensitivity;
+    m_lat -= (float)dy * sensitivity * invert;
     if(m_lat >= 89)
         m_lat = 89;
     else if(m_lat <= -89)
