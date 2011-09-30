@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mathconst.h"
+#include <assert.h>
 
 struct vec3_t
 {
@@ -33,6 +34,7 @@ struct vec3_t
     void MaxLength(float length); // if vector length (Abs) is larger than length, set to length
 
     bool IsNull() const; // is vector 0,0,0? (no epsilon test)
+    bool IsNullEpsilon(const float epsilon=lynxmath::EPSILON) const; // is vector 0,0,0? (with epsilon test)
     bool Equals(const vec3_t& cmp, const float epsilon) const;
 
     bool IsInArea(const vec3_t& min, const vec3_t& max) const;
@@ -99,6 +101,7 @@ LYNX_INLINE void vec3_t::Normalize(void)
 {
     const float abssqr = x*x+y*y+z*z;
 
+    assert(abssqr > lynxmath::EPSILON);
     //if(abssqr > lynxmath::EPSILON)
     //{
         const float ilength = lynxmath::InvSqrt(abssqr);
@@ -112,6 +115,7 @@ LYNX_INLINE void vec3_t::NormalizeFast(void)
 {
     const float abssqr = x*x+y*y+z*z;
 
+    assert(abssqr > lynxmath::EPSILON);
     //if(abssqr > lynxmath::EPSILON)
     //{
         const float ilength = lynxmath::InvSqrtFast(abssqr);
@@ -125,6 +129,7 @@ LYNX_INLINE void vec3_t::SetLength(float scalelen)
 {
     const float length = Abs();
 
+    assert(length > lynxmath::EPSILON);
     //if(length > lynxmath::EPSILON)
     //{
         const float ilength = scalelen/length;
@@ -151,6 +156,7 @@ LYNX_INLINE void vec3_t::MaxLength(float length)
 LYNX_INLINE vec3_t vec3_t::Normalized(void) const
 {
     const float len = Abs();
+    assert(len > lynxmath::EPSILON);
     //if(len < lynxmath::EPSILON)
         //return vec3_t(0.0f, 0.0f, 0.0f);
     const float ilen = 1.0f/len;
@@ -160,6 +166,7 @@ LYNX_INLINE vec3_t vec3_t::Normalized(void) const
 LYNX_INLINE vec3_t vec3_t::NormalizedFast(void) const
 {
     const float ilen = 1.0f/AbsFast();
+    assert(!isnan(ilen));
     return vec3_t(x*ilen, y*ilen, z*ilen);
 }
 
@@ -171,6 +178,11 @@ LYNX_INLINE bool vec3_t::IsNormalized() const
 LYNX_INLINE bool vec3_t::IsNull() const
 {
     return x==0.0f && y==0.0f && z==0.0f;
+}
+
+LYNX_INLINE bool vec3_t::IsNullEpsilon(const float epsilon) const
+{
+    return Equals(vec3_t::origin, epsilon);
 }
 
 LYNX_INLINE bool vec3_t::Equals(const vec3_t& cmp, const float epsilon) const

@@ -76,7 +76,7 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    const int zombocount = 2; // this is zombo.count
+    const int zombocount = 1; // this is zombo.count
     for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();

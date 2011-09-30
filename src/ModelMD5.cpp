@@ -503,9 +503,12 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
     // Normalize the normals
     for(i = 0; i < mesh->num_verts; ++i)
     {
-        mesh->vertices[i].normal.Normalize();
-        mesh->vertices[i].tangent.Normalize();
-        mesh->vertices[i].bitangent.Normalize();
+        if(!mesh->vertices[i].normal.IsNull())
+            mesh->vertices[i].normal.Normalize();
+        if(!mesh->vertices[i].tangent.IsNull())
+            mesh->vertices[i].tangent.Normalize();
+        if(!mesh->vertices[i].bitangent.IsNull())
+            mesh->vertices[i].bitangent.Normalize();
         mesh->vertices[i].w = 1.0f;
         // FIXME not correct, should be something like
         // (((n^t) * bitangents[vindex]) < 0.0f) ? -1.0f : 1.0f
@@ -529,14 +532,18 @@ void CModelMD5::PrepareBindPoseNormals(md5_mesh_t *mesh)
     for(i = 0; i< mesh->num_weights; i++)
     {
         md5_weight_t *weight = &mesh->weights[i];
-        weight->normal.Normalize();
-        weight->tangent.Normalize();
-        weight->bitangent.Normalize();
+        if(!weight->normal.IsNullEpsilon())
+            weight->normal.Normalize();
+        if(!weight->tangent.IsNullEpsilon())
+            weight->tangent.Normalize();
+        if(!weight->bitangent.IsNullEpsilon())
+            weight->bitangent.Normalize();
 
         const vec3_t& n = weight->normal;
         const vec3_t& t = weight->tangent;
         // Gram-Schmidt
-        weight->tangent = (t - n * (n*t)).Normalized();
+        if(!n.IsNullEpsilon() && !t.IsNullEpsilon())
+            weight->tangent = (t - n * (n*t)).Normalized();
         if(!weight->tangent.IsNormalized())
             weight->tangent = vec3_t::yAxis;
     }

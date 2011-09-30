@@ -103,9 +103,9 @@ public:
     void        SetObjState(const obj_state_t* objstate, int id);
     void        CopyObjStateFrom(const CObj* source); // Eigenschaften von anderem Objekt kopieren
 
-    const vec3_t GetOrigin() const { return state.origin; }
+    const vec3_t& GetOrigin() const { return state.origin; }
     void         SetOrigin(const vec3_t& origin) { state.origin = origin; }
-    const vec3_t GetVel() const { return state.vel; }
+    const vec3_t& GetVel() const { return state.vel; }
     void         SetVel(const vec3_t& velocity) { state.vel = velocity; }
     const quaternion_t GetRot() const { return state.rot; }
     void        SetRot(const quaternion_t& rotation);
