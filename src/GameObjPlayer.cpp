@@ -187,7 +187,12 @@ void CGameObjPlayer::FireRocket()
 
     CGameObjRocket* rocket = new CGameObjRocket(GetWorld());
 
-    rocket->SetOrigin(GetOrigin() + GetEyePos() + dir*GetRadius() + side*0.5f + up*0.1f);
+    vec3_t rocketstart = GetOrigin() +
+                         up*GetEyePos().y +
+                         dir*1.1f*GetRadius() +
+                         side*0.5f;
+
+    rocket->SetOrigin(rocketstart);
     rocket->SetVel(dir * rocket->GetRocketSpeed());
     rocket->SetRot(GetLookDir());
     rocket->SetOwner(GetID()); // set rocket ownership to player entity

@@ -4,13 +4,13 @@
 
 #define MAX_SV_PACKETLEN        (24000)
 
-#define MAX_SV_CL_POS_DIFF      (35.0f*35.0f)           // Distance squared
+#define MAX_SV_CL_POS_DIFF      (45.0f*45.0f)           // Distance squared
 #define SERVER_UPDATETIME       (50)                    // Server sends a snapshot to the clients every $SERVER_UPDATETIME ms
 #define RENDER_DELAY            (2*SERVER_UPDATETIME)   // Render delay in ms
 #define MAX_CLIENT_HISTORY      (20*SERVER_UPDATETIME)
 
 #define MAXCLIENTS              (8)
-#define SERVER_MAX_WORLD_AGE    (5000)              // Max. age of a server world snapshot in ms
+#define SERVER_MAX_WORLD_AGE    (6000)              // Max. age of a server world snapshot in ms
 #define MAX_WORLD_BACKLOG       (10*MAXCLIENTS)     // How many world snapshots does the server keep
 
 #define OUTGOING_BANDWIDTH      (1024*15)   // bytes/sec

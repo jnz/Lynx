@@ -33,7 +33,7 @@ CParticleSystemRocket::CParticleSystemRocket(const PROPERTYMAP& properties, CRes
 
 void CParticleSystemRocket::InitParticle(particle_t& p, const vec3_t& ownerpos)
 {
-    p.startalpha = p.alpha = 0.3f + CLynx::randfabs()*0.6f;
+    p.startalpha = p.alpha = 0.1f + CLynx::randfabs()*0.4f;
     p.color = vec3_t(1,1,1);
     // when the rocket hits a wall, it waits a while as ghost
     // to give the particle system time to fade out. if you change

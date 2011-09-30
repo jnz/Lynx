@@ -162,13 +162,13 @@ void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const 
     }
 }
 
-#define GRAVITY                (30.00f) // should this be a world property?
+#define GRAVITY                (90.00f) // should this be a world property?
 const static vec3_t gravity(0, -GRAVITY, 0);
 
 #define MAX_CLIP_PLANES      5
 #define OVERCLIP            (1.01f)
 #define F_SCALE             (0.98f)
-#define MAX_VELOCITY        (55.0f) // m/s
+#define MAX_VELOCITY        (65.0f) // m/s
 
 void CWorld::ObjMove(CObj* obj, const float dt) const
 {

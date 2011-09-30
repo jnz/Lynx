@@ -73,15 +73,17 @@ void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clc
         }
     }
 
+    const float speedfactor = clientobj->locGetIsOnGround() ? 1.0f : 0.3f;
+    const float clientspeed = 20.0f;
+    const float jumpspeed = 100.0f;
+
+    newdir.y = 0;
+    if(newdir.AbsSquared() > 0.1f)
+        newdir.SetLength(clientspeed); // Speed
+    newdir.y += velocity.y; // keep original y velocity
     if(clientobj->locGetIsOnGround())
-    {
-        newdir.y = 0;
-        if(newdir.AbsSquared() > 0.1f)
-            newdir.SetLength(28.0f); // Client Geschwindigkeit
-        newdir.y += velocity.y;
-        newdir += jump * 40.0f;
-        clientobj->SetVel(newdir);
-    }
+        newdir += jump * jumpspeed;
+    clientobj->SetVel(newdir);
 }
 
 void CGameLogic::ClientMouse(CObj* clientobj, float lat, float lon)

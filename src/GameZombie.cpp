@@ -190,19 +190,21 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 if(obj2->GetHealth() <= 0) // don't push dead bodies
                     continue;
 
+                const float savey = obj2->GetVel().y;
                 const float force = 75.0f; // not really a force, where f = ma
                 vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
                 float difflen = diff.AbsFast();
-                if(difflen > 5.0f)
+                if(difflen > (obj2->GetRadius()+obj->GetRadius()))
                     continue;
                 difflen = lynxmath::SqrtFast(difflen); // sqrtfast is ok here
                 if(difflen < 0.75f)
                     difflen = 0.75f;
-                diff = dt*diff*force*1/(difflen*difflen);
                 diff.y = 0.0f;
+                diff = dt*diff*force*1/(difflen*difflen);
                 diff += obj2->GetVel();
                 if(diff.AbsSquared()>25.0f)
                     diff.SetLength(5.0f);
+                diff.y = savey;
                 obj2->SetVel(diff);
             }
         }
