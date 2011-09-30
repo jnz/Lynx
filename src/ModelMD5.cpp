@@ -193,8 +193,9 @@ bool CModelMD5::UploadVertexBuffer(unsigned int vertexcount, unsigned int indexc
     return true;
 }
 
-void CModelMD5::Render(const md5_state_t* state)
+void CModelMD5::Render(const model_state_t* mstate)
 {
+    const md5_state_t* state = (md5_state_t*)mstate;
     // we use the opengl coordinate system here and nothing else
     glPushMatrix();
 #ifdef BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK
@@ -264,8 +265,10 @@ void CModelMD5::Render(const md5_state_t* state)
     glPopMatrix();
 }
 
-void CModelMD5::RenderNormals(const md5_state_t* state)
+void CModelMD5::RenderNormals(const model_state_t* mstate)
 {
+    const md5_state_t* state = (md5_state_t*)mstate;
+
     glPushMatrix();
     glScalef(MD5_SCALE_F, MD5_SCALE_F, MD5_SCALE_F);
     glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
@@ -335,8 +338,10 @@ void CModelMD5::RenderNormals(const md5_state_t* state)
     glPopMatrix();
 }
 
-void CModelMD5::Animate(md5_state_t* state, const float dt) const
+void CModelMD5::Animate(model_state_t* mstate, const float dt) const
 {
+    md5_state_t* state = (md5_state_t*)mstate;
+
     if(state->animdata == NULL)
         return;
 
@@ -377,12 +382,12 @@ void CModelMD5::Animate(md5_state_t* state, const float dt) const
     }
 }
 
-void CModelMD5::SetAnimation(md5_state_t* state, const animation_t animation)
+void CModelMD5::SetAnimation(model_state_t* mstate, const animation_t animation)
 {
+    md5_state_t* state = (md5_state_t*)mstate;
+    
     if(state->animation == animation)
-    {
         return;
-    }
 
     state->curr_frame = 0;
     state->next_frame = 1;
@@ -585,7 +590,7 @@ void CModelMD5::PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_
     UploadVertexBuffer(mesh->num_verts, mesh->num_tris*3);
 }
 
-bool CModelMD5::Load(char *path, CResourceManager* resman, bool loadtexture)
+bool CModelMD5::Load(const char *path, CResourceManager* resman, bool loadtexture)
 {
     FILE* f;
     char buff[1024];

@@ -4,6 +4,7 @@
 #include <math.h>
 #include <sstream> // Particle Tokenizer
 #include <string.h>
+#include "ModelMD5.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -33,6 +34,7 @@ CObj::CObj(CWorld* world)
     state.animation = ANIMATION_NONE;
     state.flags = 0;
     m_mesh = NULL;
+    m_mesh_state = NULL;
     m_sound = NULL;
     m_world = world;
     UpdateMatrix();
@@ -43,7 +45,7 @@ CObj::CObj(CWorld* world)
 
 CObj::~CObj(void)
 {
-
+    SAFE_RELEASE(m_mesh_state);
 }
 
 void CObj::SetRot(const quaternion_t& rotation)
@@ -389,12 +391,20 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
 
     if(state.resource.find(".md5") != std::string::npos)
     {
-        m_mesh = m_world->GetResourceManager()->GetModel(state.resource);
-        assert(GetWorld()->IsClient() ? m_mesh!=NULL : true);
-        if(m_mesh)
+        CModelMD5* mesh = (CModelMD5*)m_world->GetResourceManager()->GetModel(state.resource);
+        if(mesh != m_mesh)
         {
-            m_mesh->SetAnimation(&m_mesh_state, state.animation);
+            if(m_mesh_state)
+                delete m_mesh_state;
+            m_mesh_state = new md5_state_t();
+            m_mesh = mesh;
         }
+        if(m_mesh)
+            m_mesh->SetAnimation(m_mesh_state, state.animation);
+    }
+    else if(state.resource.find(".md2") != std::string::npos)
+    {
+        assert(0); // FIXME: implement me
     }
     else if(state.resource.find(".ogg") != std::string::npos)
     {

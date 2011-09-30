@@ -44,7 +44,7 @@ void CClientHUD::UpdateModel(CResourceManager* resman)
     if(!resman)
         return;
 
-    CModelMD5* resmodel = resman->GetModel(CLynx::GetBaseDirModel() + weapon);
+    CModelMD5* resmodel = (CModelMD5*)resman->GetModel(CLynx::GetBaseDirModel() + weapon);
     if(resmodel != m_model)
     {
         m_model = resmodel;

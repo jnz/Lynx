@@ -73,7 +73,6 @@ void CGameLogic::ClientMove(CObj* clientobj, const std::vector<std::string>& clc
         }
     }
 
-    const float speedfactor = clientobj->locGetIsOnGround() ? 1.0f : 0.3f;
     const float clientspeed = 20.0f;
     const float jumpspeed = 100.0f;
 

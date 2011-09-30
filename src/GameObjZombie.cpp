@@ -55,9 +55,10 @@ void CGameObjZombie::DealDamage(int damage,
     SetVel(vec3_t::origin);
     // SetAnimation(ANIMATION_IDLE); // FIXME we need a animation for a dying zombie
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
+    AddFlags(OBJ_FLAGS_GHOST);
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
-                    GetWorld()->GetLeveltime() + 50,
+                    GetWorld()->GetLeveltime() + 5000, // 5 sec respawn time
                     GetWorld(),
                     this));
     if(CLynx::randfabs() < 0.88f) // 88% change of sound playing

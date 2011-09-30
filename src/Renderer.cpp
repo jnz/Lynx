@@ -13,7 +13,7 @@
 #endif
 
 #define PLANE_NEAR          0.1f
-#define PLANE_FAR           500.0f
+#define PLANE_FAR           800.0f
 #define RENDERER_FOV        90.0f
 #define SHADOW_MAP_RATIO    1.0f
 
@@ -173,7 +173,7 @@ void CRenderer::DrawScene(const CFrustum& frustum,
 
         obj->GetMesh()->Render(obj->GetMeshState());
 #ifdef DRAW_NORMALS
-        obj->GetMesh()->RenderNormals(obj->GetMeshState());
+        obj->GetMesh()->RenderNormals(obj->GetMeshState()); // not implemented for md2s?
 #endif
         glPopMatrix();
     }

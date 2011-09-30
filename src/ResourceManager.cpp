@@ -7,6 +7,7 @@
 #include "../soil/src/SOIL.h"
 #include "ResourceManager.h"
 #include "World.h"
+#include "ModelMD5.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -173,10 +174,10 @@ void CResourceManager::UnloadAllTextures()
     m_texmap.clear();
 }
 
-CModelMD5* CResourceManager::GetModel(std::string mdlname)
+CModel* CResourceManager::GetModel(std::string mdlname)
 {
-    std::map<std::string, CModelMD5*>::iterator iter;
-    CModelMD5* model;
+    std::map<std::string, CModel*>::iterator iter;
+    CModel* model;
 
     if(IsServer())
         return NULL;
@@ -184,7 +185,22 @@ CModelMD5* CResourceManager::GetModel(std::string mdlname)
     iter = m_modelmap.find(mdlname);
     if(iter == m_modelmap.end())
     {
-        model = new CModelMD5();
+        if(mdlname.find(".md5") != std::string::npos)
+        {
+            model = new CModelMD5();
+        }
+        else if(mdlname.find(".md2") != std::string::npos)
+        {
+            // model = new CModelMD2();
+            model = NULL;
+            assert(0); // implement me
+        }
+        else
+        {
+            assert(0); // unknown file extension
+            return NULL;
+        }
+
         if(model->Load((char*)mdlname.c_str(), this, !IsServer()))
         {
             m_modelmap[mdlname] = model;
@@ -206,7 +222,7 @@ CModelMD5* CResourceManager::GetModel(std::string mdlname)
 
 void CResourceManager::UnloadAllModels()
 {
-    std::map<std::string, CModelMD5*>::iterator iter;
+    std::map<std::string, CModel*>::iterator iter;
 
     for(iter=m_modelmap.begin();iter!=m_modelmap.end();iter++)
         delete (*iter).second;

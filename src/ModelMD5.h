@@ -5,7 +5,7 @@
 #include "BSPBIN.h"
 #include <map>
 
-class CModelMD5;
+#include "Model.h"
 #include "ResourceManager.h"
 
 #define BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK //FIXME translate some doom3 models in the code... the pain... remove this ASAP... ASAP!
@@ -103,40 +103,32 @@ struct md5_anim_t
 };
 
 /* md5 animation state */
-struct md5_state_t
+struct md5_state_t : public model_state_t
 {
     md5_state_t()
     {
-        curr_frame = 0;
-        next_frame = 1;
-        animation = ANIMATION_NONE;
         animdata = NULL;
-        time = 0.0f;
     }
-    int curr_frame;
-    int next_frame;
-    animation_t animation; // animation id
     md5_anim_t* animdata; // md5 animation data
-    float time; // from 0.0 s to num_frames/framerate
 
     // skel holds the data of the interpolated
     // skeleton between two frames
     std::vector<md5_joint_t> skel;
 };
 
-class CModelMD5
+class CModelMD5 : public CModel
 {
 public:
-    CModelMD5(void);
-    ~CModelMD5(void);
+    CModelMD5();
+    virtual ~CModelMD5();
 
-    bool    Load(char *path, CResourceManager* resman, bool loadtexture=true);
+    bool    Load(const char *path, CResourceManager* resman, bool loadtexture=true);
     void    Unload();
 
-    void    Render(const md5_state_t* state);
-    void    RenderNormals(const md5_state_t* state);
-    void    Animate(md5_state_t* state, const float dt) const;
-    void    SetAnimation(md5_state_t* state, const animation_t animation);
+    void    Render(const model_state_t* state);
+    void    RenderNormals(const model_state_t* state);
+    void    Animate(model_state_t* state, const float dt) const;
+    void    SetAnimation(model_state_t* state, const animation_t animation);
 
     float   GetSphere() const { return 2.0f; }; // FIXME
 

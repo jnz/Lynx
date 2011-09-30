@@ -2,8 +2,9 @@
 
 #include <string>
 #include <map>
+#include "lynx.h"
 class CResourceManager;
-#include "ModelMD5.h"
+#include "Model.h"
 #include "Sound.h"
 
 class CWorld;
@@ -39,7 +40,7 @@ public:
                              unsigned int* pwidth,
                              unsigned int* pheight) const;
 
-    CModelMD5* GetModel(std::string mdlname);
+    CModel* GetModel(std::string mdlname);
     void UnloadAllModels();
 
     CSound* GetSound(const std::string sndname, const bool silent=false); // silent: no output if loading works
@@ -57,8 +58,9 @@ private:
                              const bool noerrormsg=false);
 
     std::map<std::string, texture_t> m_texmap;
-    std::map<std::string, CModelMD5*> m_modelmap;
+    std::map<std::string, CModel*> m_modelmap;
     std::map<std::string, CSound*> m_soundmap;
 
     CWorld* m_world;
 };
+
