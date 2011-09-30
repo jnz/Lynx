@@ -225,11 +225,11 @@ void CWorldInterp::Update(const float dt, const uint32_t ticks) // Interpoliert 
         vel2 = obj2.vel;
 
         const float dist_sqr = (origin1 - origin2).AbsSquared();
-        if(dist_sqr > 0.1f*0.1f) // bei kurzen abständen linear, sonst mit hermite raumkurve
+        if(dist_sqr > 0.3f*0.3f) // bei kurzen abständen linear, sonst mit hermite raumkurve
         {
-            if(!vel1.IsNull())
+            if(!vel1.IsNullEpsilon())
                 vel1.Normalize();
-            if(!vel2.IsNull())
+            if(!vel2.IsNullEpsilon())
                 vel2.Normalize();
             origin = vec3_t::Hermite(origin1, origin2, vel1, vel2, f);
         }
@@ -237,7 +237,7 @@ void CWorldInterp::Update(const float dt, const uint32_t ticks) // Interpoliert 
         {
             origin = vec3_t::Lerp(origin1, origin2, f);
         }
-        
+
         obj->SetOrigin(origin);
         obj->SetRot(quaternion_t(obj1.rot, obj2.rot, f)); // Quaternion Slerp
     }
