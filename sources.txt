@@ -6,11 +6,12 @@ http://opengameart.org/content/fire-spell-explosion
 
 Sponza Atrium model by Marko Dabrovic.
 
-SOIL texture loading library by Jonathan Dummer.
+SOIL texture loading library by Jonathan Dummer which includes
+code from Sean Barrett.
 
 Tangent vector calculation code by Eric Lengyel.
 
-Doom 3 md5mesh: pinky, marine and rocket launcher.
+Doom 3 md5mesh: pinky, marine, shotgut and rocket launcher.
 
 Clint Bellanger's bitmap font from opengameart.
 http://opengameart.org/content/bitmap-font
