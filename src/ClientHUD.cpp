@@ -53,7 +53,7 @@ void CClientHUD::UpdateModel(CResourceManager* resman)
     if(resmodel)
     {
         m_model = resmodel;
-        m_model->SetAnimation(&m_model_state, ANIMATION_NONE); // HACK
+        m_model->SetAnimation(&m_model_state, ANIMATION_NONE); // hackisch
         m_model->SetAnimation(&m_model_state, weapon_animation);
     }
 }

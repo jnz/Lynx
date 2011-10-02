@@ -21,15 +21,16 @@ public:
     CModelMD2(void);
     ~CModelMD2(void);
 
-    bool    Load(const char *path, CResourceManager* resman, bool loadtexture=true) = 0;
-    void    Unload() = 0;
+    bool    Load(const char *path, CResourceManager* resman, bool loadtexture=true);
+    void    Unload();
 
     void    Render(const model_state_t* state);
-    void    RenderNormals(const model_state_t* state) {}; // not implemented
-    void    Animate(model_state_t* state, const float dt);
-    void    SetAnimation(model_state_t* state, const animation_t animation);
+    void    RenderNormals(const model_state_t* state);
+    void    Animate(model_state_t* state, const float dt) const;
+    void    SetAnimation(model_state_t* state, const animation_t animation) const;
+    float   GetAnimationTime(const animation_t animation) const;
 
-    float   GetSphere() { return 2.0f }; // FIXME
+    float   GetSphere() const;
 
 private:
     int GetNextFrameInAnim(const md2_state_t* state, int increment) const;
@@ -46,3 +47,4 @@ private:
 
     unsigned int    m_tex;
 };
+

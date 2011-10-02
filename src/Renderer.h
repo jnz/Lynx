@@ -33,7 +33,9 @@ protected:
     unsigned int m_tex; // tex0
     unsigned int m_normalMap; // tex1
     unsigned int m_lightmap; // tex2
-    unsigned int m_uselightmap; // uniform int
+    unsigned int m_uselightmap; // shader variable uniform int
+    int          m_lightmapactive; // on/off switch for lightmapping
+    int          m_shaderactive; // on/off switch for GLSL shader
 
     // Shadow
     bool         m_useShadows;

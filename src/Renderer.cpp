@@ -48,18 +48,25 @@ CRenderer::CRenderer(CWorldClient* world)
     m_crosshair = 0;
     m_crosshair_width = 0;
     m_crosshair_height = 0;
+
+    // Config
+    m_lightmapactive = CLynx::cfg.GetVarAsInt("uselightmap", 1);
+    m_shaderactive = CLynx::cfg.GetVarAsInt("useshader", 1);
 }
 
 CRenderer::~CRenderer(void)
 {
-    glDetachShader(m_program, m_vshader);
-    glDeleteShader(m_vshader);
-    m_vshader = 0;
-    glDetachShader(m_program, m_fshader);
-    glDeleteShader(m_fshader);
-    m_fshader = 0;
-    glDeleteProgram(m_program);
-    m_program = 0;
+    if(m_shaderactive)
+    {
+        glDetachShader(m_program, m_vshader);
+        glDeleteShader(m_vshader);
+        m_vshader = 0;
+        glDetachShader(m_program, m_fshader);
+        glDeleteShader(m_fshader);
+        m_fshader = 0;
+        glDeleteProgram(m_program);
+        m_program = 0;
+    }
 
     Shutdown();
 }
@@ -91,27 +98,37 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
 
-    bool shader = InitShader();
-    if(!shader)
+    if(m_shaderactive)
     {
-        fprintf(stderr, "Init shader failed\n");
-        return false;
-    }
-    fprintf(stderr, "GLSL shader loaded\n");
+        bool shader = InitShader();
+        if(!shader)
+        {
+            fprintf(stderr, "Init shader failed\n");
+            return false;
+        }
+        fprintf(stderr, "GLSL shader loaded\n");
 
-    if(!glewIsSupported("GL_EXT_framebuffer_object"))
-    {
-        fprintf(stderr, "No framebuffer support\n");
-        m_useShadows = false;
-    }
+        if(!glewIsSupported("GL_EXT_framebuffer_object"))
+        {
+            fprintf(stderr, "No framebuffer support\n");
+            m_useShadows = false;
+        }
 
-    if(m_useShadows && !CreateShadowFBO())
-    {
-        fprintf(stderr, "Init shadow mapping failed\n");
-        m_useShadows = false;
+        if(m_useShadows && !CreateShadowFBO())
+        {
+            fprintf(stderr, "Init shadow mapping failed\n");
+            m_useShadows = false;
+        }
+        else
+        {
+            fprintf(stderr, "Shadow mapping active\n");
+        }
     }
     else
-        fprintf(stderr, "Shadow mapping active\n");
+    {
+        fprintf(stderr, "Shader disabled\n");
+        m_useShadows = false;
+    }
 
     // loading the crosshair
     std::string pathcross = CLynx::GetBaseDirTexture() + "crosshair.tga";
@@ -142,9 +159,14 @@ void CRenderer::DrawScene(const CFrustum& frustum,
     // Draw the level
     if(!generateShadowMap && world->GetBSP()->IsLoaded())
     {
-        glUniform1i(m_uselightmap, 1);
+        // Draw the level with lightmapping?
+        if(m_lightmapactive && m_shaderactive)
+            glUniform1i(m_uselightmap, 1);
+
         world->GetBSP()->RenderGL(frustum.pos, frustum);
-        glUniform1i(m_uselightmap, 0);
+
+        if(m_shaderactive)
+            glUniform1i(m_uselightmap, 0);
     }
 
     // Draw every object
@@ -272,15 +294,18 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     const quaternion_t lightrot0(quaternion_t(vec3_t::xAxis, -90.0f*lynxmath::DEGTORAD));
     const float lightpos0_4f[4] = {lightpos0.x, lightpos0.y, lightpos0.z, 1};
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos0_4f);
-    if(m_useShadows)
+    if(m_shaderactive)
     {
-        glUseProgram(0); // draw shadowmap with fixed function pipeline
-        PrepareShadowMap(lightpos0,
-                         lightrot0,
-                         world,
-                         localctrlid); // the player is the light
+        if(m_useShadows)
+        {
+            glUseProgram(0); // draw shadowmap with fixed function pipeline
+            PrepareShadowMap(lightpos0,
+                    lightrot0,
+                    world,
+                    localctrlid); // the player is the light
+        }
+        glUseProgram(m_program); // activate shader
     }
-    glUseProgram(m_program); // activate shader
 
     stat_obj_hidden = 0;
     stat_obj_visible = 0;
@@ -292,23 +317,32 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0); // normal texture channel
-    glUniform1i(m_tex, 0); // good old textures: GL_TEXTURE0
-    glUniform1i(m_normalMap, 1); // normal maps are GL_TEXTURE1
-    glUniform1i(m_lightmap, 2); // lightmap
-    if(m_useShadows)
+
+    if(m_shaderactive)
     {
-        glUniform1i(m_shadowMapUniform, 7);
-        glActiveTexture(GL_TEXTURE7); // shadow mapping texture GL_TEXTURE7
-        glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
-        glActiveTexture(GL_TEXTURE0);
-    }
+        glUniform1i(m_tex, 0); // good old textures: GL_TEXTURE0
+        glUniform1i(m_normalMap, 1); // normal maps are GL_TEXTURE1
+        glUniform1i(m_lightmap, 2); // lightmap
+
+        if(m_useShadows)
+        {
+            glUniform1i(m_shadowMapUniform, 7);
+            glActiveTexture(GL_TEXTURE7); // shadow mapping texture GL_TEXTURE7
+            glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+            glActiveTexture(GL_TEXTURE0);
+        }
+
 #ifdef DRAW_NORMALS
-    glUseProgram(0); // use fixed pipeline for this debug mode
+        glUseProgram(0); // use fixed pipeline for this debug mode
 #endif
+    }
+
     // Main drawing
     DrawScene(frustum, world, localctrlid, false);
 
-    glUseProgram(0); // don't use shader for particles
+    if(m_shaderactive)
+        glUseProgram(0); // don't use shader for particles
+
     // Particle Draw
     glDisable(GL_LIGHTING);
     glDepthMask(false);
@@ -352,7 +386,9 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
 #endif
 
     // Draw weapon
-    glUseProgram(m_program);
+    if(m_shaderactive) // use shader for weapon
+        glUseProgram(m_program);
+
     CModelMD5* viewmodel;
     md5_state_t* viewmodelstate;
     m_world->m_hud.GetModel(&viewmodel, &viewmodelstate);
@@ -371,9 +407,11 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     glEnable(GL_LIGHTING);
 
     // Draw HUD
+    if(m_shaderactive)
+        glUseProgram(0); // no shader for HUD
+
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
-    glUseProgram(0); // no shader for HUD
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -404,20 +442,23 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     m_font.DrawGL(10.0f, m_height - 35.0f - (float)m_font.GetHeight(), 0.0f, hudtextbuf);
 
 #ifdef DRAW_SHADOWMAP
-    //glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
-    glBindTexture(GL_TEXTURE_2D, g_fboShadowCamColor);
-    const float shadowmap_debug_width = 200.0f;
-    const float shadowmap_debug_height = shadowmap_debug_width*(float)m_height/(float)m_width;
-    glBegin(GL_QUADS);
-        glTexCoord2d(0,1); // upper left
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glTexCoord2d(0,0); //lower left
-        glVertex3f(0.0f, shadowmap_debug_height, 0.0f);
-        glTexCoord2d(1,0); //lower right
-        glVertex3f(shadowmap_debug_width, shadowmap_debug_height, 0.0f);
-        glTexCoord2d(1,1); // upper right
-        glVertex3f(shadowmap_debug_width, 0.0f, 0.0f);
-    glEnd();
+    if(m_shaderactive)
+    {
+        //glBindTexture(GL_TEXTURE_2D, m_depthTextureId);
+        glBindTexture(GL_TEXTURE_2D, g_fboShadowCamColor);
+        const float shadowmap_debug_width = 200.0f;
+        const float shadowmap_debug_height = shadowmap_debug_width*(float)m_height/(float)m_width;
+        glBegin(GL_QUADS);
+            glTexCoord2d(0,1); // upper left
+            glVertex3f(0.0f, 0.0f, 0.0f);
+            glTexCoord2d(0,0); //lower left
+            glVertex3f(0.0f, shadowmap_debug_height, 0.0f);
+            glTexCoord2d(1,0); //lower right
+            glVertex3f(shadowmap_debug_width, shadowmap_debug_height, 0.0f);
+            glTexCoord2d(1,1); // upper right
+            glVertex3f(shadowmap_debug_width, 0.0f, 0.0f);
+        glEnd();
+    }
 #endif
 
     glBindTexture(GL_TEXTURE_2D, 0);
