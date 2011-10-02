@@ -24,13 +24,13 @@ static const vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal lookup t
 #pragma warning(pop)
 
 #define MAX_SKINNAME    64
-#define MD2_LYNX_SCALE  (0.1f)
+#define MD2_LYNX_SCALE  (0.05f)
 
 #pragma pack(push, 1)
 
 // every struct here, that is byte aligned, is "on-disk" layout
 
-struct md2header_t // (from quake2 src)
+struct md2_file_header_t // (from quake2 src)
 {
     int32_t         ident;
     int32_t         version;
@@ -54,12 +54,14 @@ struct md2header_t // (from quake2 src)
     int32_t         ofs_end;        // end of file
 };
 
+// was md2vertex_t
 struct md2_file_vertex_t // on disk layout
 {
     uint8_t v[3];      // compressed vertex
     uint8_t n;         // normalindex
 };
 
+// was md2frame_t
 struct md2_file_frame_t // on disk layout
 {
     vec3_t            scale;
@@ -68,14 +70,39 @@ struct md2_file_frame_t // on disk layout
     md2_file_vertex_t v[1];
 };
 
+struct md2_file_texcoord_t
+{
+    int16_t s; // u = (float)s / header.skinwidth
+    int16_t t; // v = 1.0f - (float)t / header.skinheight
+};
+
+struct md2_file_triangle_t
+{
+    int16_t index_xyz[3]; // indexes to triangle's vertices
+    int16_t index_st[3];  // indexes to vertices' texture coorinates
+};
+
 #pragma pack(pop)
 
+// was vertex_t
 struct md2_vertex_t
 {
-    vec3_t v; // vector
+    vec3_t v; // pos
     vec3_t n; // normal
 };
 
+struct md2_texcoord_t
+{
+    float u, v;
+};
+
+struct md2_triangle_t
+{
+    unsigned int v[3];
+    unsigned int uv[3];
+};
+
+// was frame_t
 struct md2_frame_t
 {
     char          name[16];
@@ -83,6 +110,7 @@ struct md2_frame_t
     md2_vertex_t* vertices;
 };
 
+// was anim_t
 struct md2_anim_t
 {
     char          name[16];
@@ -98,12 +126,17 @@ CModelMD2::CModelMD2(void)
     m_vertices_per_frame = 0;
     m_anims = NULL;
     m_animcount = 0;
-    m_sphere = 0;
+    m_texcoords = NULL;
+    m_triangles = NULL;
+    m_trianglecount = 0;
 
     m_fps = 6.0f;
     m_invfps = 1.0f/m_fps;
 
     m_tex = 0;
+    m_normalmap = 0;
+
+    m_shaderactive = CLynx::cfg.GetVarAsInt("useshader", 1);
 }
 
 CModelMD2::~CModelMD2(void)
@@ -111,82 +144,96 @@ CModelMD2::~CModelMD2(void)
     Unload();
 }
 
-void CModelMD2::Render(const model_state_t* state) const
+void CModelMD2::Render(const model_state_t* state)
 {
-    assert(m_frames);
+    RenderFixed(state);
+}
 
-    vertex_t* cur_vertices  = m_frames[state->cur_frame].vertices;
-    vertex_t* next_vertices = m_frames[GetNextFrameInAnim(state, 1)].vertices;
-    vertex_t* cur_vertex;
-    vertex_t* next_vertex;
+void CModelMD2::RenderFixed(const model_state_t* state) const
+{
+    md2_vertex_t* cur_vertices  = m_frames[state->curr_frame].vertices;
+    md2_vertex_t* next_vertices = m_frames[state->next_frame].vertices;
+    md2_vertex_t* cur_vertex;
+    md2_vertex_t* next_vertex;
     vec3_t inter_xyz, inter_n; // interpolated
-    int count;
-    float *u, *v;
-    int* cmd = m_glcmds;
 
-    glBindTexture(GL_TEXTURE_2D, m_tex);
-    glTranslatef(0,2.5f,0);
+    int i, j;
+    int uvindex;
+    int vindex;
 
-    while((count = *cmd++))
+    int curprg;
+
+    if(m_shaderactive)
     {
-        if(count > 0)
-        {
-            glBegin(GL_TRIANGLE_STRIP);
-        }
-        else
-        {
-            glBegin(GL_TRIANGLE_FAN);
-            count = -count;
-        }
+        glGetIntegerv(GL_CURRENT_PROGRAM, &curprg);
+        glUseProgram(0);
+    }
 
-        do
-        {
-            u = (float*)cmd++;
-            v = (float*)cmd++;
-            glTexCoord2f(*u, 1.0f-*v);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, m_normalmap);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_tex);
 
-            cur_vertex = &cur_vertices[*cmd];
-            next_vertex = &next_vertices[*cmd];
+    glBegin(GL_TRIANGLES);
+
+    for(i=0;i<m_trianglecount;i++)
+    {
+        for(j=0;j<3;j++)
+        {
+            vindex = m_triangles[i].v[j];
+            uvindex = m_triangles[i].uv[j];
+
+            glTexCoord2f(m_texcoords[uvindex].u,
+                         m_texcoords[uvindex].v);
+
+            cur_vertex = &cur_vertices[vindex];
+            next_vertex = &next_vertices[vindex];
 
             inter_n = cur_vertex->n +
-                        (next_vertex->n - cur_vertex->n) *
-                        state->step * m_fps;
+                (next_vertex->n - cur_vertex->n) *
+                state->time * m_fps;
             glNormal3fv(inter_n.v);
 
             inter_xyz = cur_vertex->v +
-                        (next_vertex->v - cur_vertex->v) *
-                        state->step * m_fps;
+                (next_vertex->v - cur_vertex->v) *
+                state->time * m_fps;
             glVertex3fv(inter_xyz.v);
-            cmd++;
-        }
-        while(--count);
 
-        glEnd();
+        }
     }
+
+    glEnd();
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    if(m_shaderactive)
+        glUseProgram(curprg);
 }
 
-bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
+bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtexture)
 {
     FILE* f;
-    std::string texpath;
     int i;
-    uint8_t* frame;
-    md2frame_t* framehead;
-    md2header_t header;
-    vertex_t* vertex;
-    // For anim setup
-    std::list<anim_t>::iterator iter;
-    std::list<anim_t> animlist;
-    anim_t curanim;
+    uint8_t* frame = NULL;
+    md2_file_frame_t* framehead;
+    md2_file_header_t header;
+    md2_file_texcoord_t* texcoords = NULL;
+    md2_file_triangle_t* triangles = NULL;
+    md2_vertex_t* vertex;
+    std::list<md2_anim_t>::iterator iter;
+    std::list<md2_anim_t> animlist;
+    md2_anim_t curanim;
     char* tmpname;
     char skinname[MAX_SKINNAME];
-    int32_t glreadcount;
 
     Unload();
 
-    texpath = CLynx::ChangeFileExtension(path, "tga");
-    if(loadtexture) // Server muss nicht die Textur laden (oder?)
-        m_tex = resman->GetTexture((char*)texpath.c_str());
+    if(loadtexture)
+    {
+        m_tex = resman->GetTexture(CLynx::ChangeFileExtension(path, "jpg"));
+        m_normalmap = resman->GetTexture(CLynx::GetBaseDirTexture() + "normal.jpg");
+    }
 
     f = fopen(path, "rb");
     if(!f)
@@ -215,34 +262,16 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
             fprintf(stderr, "MD2: Skinname length invalid\n");
             goto loaderr;
         }
-        fprintf(stderr, "Skin: %s\n", skinname);
     }
 
     // vertices
-    m_vertices = new vertex_t[header.num_frames * header.num_xyz];
+    m_vertices = new md2_vertex_t[header.num_frames * header.num_xyz];
     if(!m_vertices)
     {
         fprintf(stderr, "MD2: Out of memory for vertices: %i\n", header.num_frames * header.num_xyz);
         goto loaderr;
     }
     m_vertices_per_frame = header.num_xyz;
-
-    // glcmds
-    assert(sizeof(int32_t) == 4); // paranoid
-    m_glcmds = new int32_t[header.num_glcmds];
-    if(!m_glcmds)
-    {
-        fprintf(stderr, "MD2: Out of memory for glcmds size: %i\n", header.num_glcmds);
-        goto loaderr;
-    }
-    m_glcmdcount = header.num_glcmds;
-    fseek(f, header.ofs_glcmds, SEEK_SET);
-    glreadcount = fread(m_glcmds, sizeof(int32_t), m_glcmdcount, f);
-    if(glreadcount != m_glcmdcount)
-    {
-        fprintf(stderr, "MD2: Failed to read glcmds from file\n");
-        goto loaderr;
-    }
 
     // frames
     frame = new uint8_t[header.framesize];
@@ -251,8 +280,8 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
         fprintf(stderr, "MD2: Out of memory for frame buffer: %i\n", header.framesize);
         goto loaderr;
     }
-    framehead = (md2frame_t*)frame;
-    m_frames = new frame_t[header.num_frames];
+    framehead = (md2_file_frame_t*)frame;
+    m_frames = new md2_frame_t[header.num_frames];
     if(!m_frames)
     {
         fprintf(stderr, "MD2: Out of memory for frames: %i\n", header.num_frames);
@@ -260,13 +289,72 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
     }
     m_framecount = header.num_frames;
 
+    // texcoords
+    texcoords = new md2_file_texcoord_t[header.num_st]; // tmp buffer
+    if(texcoords == NULL)
+    {
+        fprintf(stderr, "MD2: Out of memory for st coordinates: %i\n", header.num_st);
+        goto loaderr;
+    }
+    fseek(f, header.ofs_st, SEEK_SET);
+    if(fread(texcoords, sizeof(md2_file_texcoord_t), header.num_st, f) !=
+             (size_t)header.num_st)
+    {
+        fprintf(stderr, "MD2: Failed to read st coordinates: %i\n", header.num_st);
+        goto loaderr;
+    }
+    m_texcoords = new md2_texcoord_t[header.num_st];
+    if(!m_texcoords)
+    {
+        fprintf(stderr, "MD2: Out of memory\n");
+        goto loaderr;
+    }
+    for(i=0;i<header.num_st;i++)
+    {
+        m_texcoords[i].u = (float)texcoords[i].s / (float)header.skinwidth;
+        m_texcoords[i].v = 1.0f - (float)texcoords[i].t / (float)header.skinheight;
+    }
+    SAFE_RELEASE_ARRAY(texcoords);
+
+    // triangles
+    triangles = new md2_file_triangle_t[header.num_tris]; // tmp
+    if(triangles == NULL)
+    {
+        fprintf(stderr, "MD2: Out of memory for triangles: %i\n", header.num_tris);
+        goto loaderr;
+    }
+    fseek(f, header.ofs_tris, SEEK_SET);
+    if(fread(triangles, sizeof(md2_file_triangle_t), header.num_tris, f) !=
+            (size_t)header.num_tris)
+    {
+        fprintf(stderr, "MD2: Failed to read triangles: %i\n", header.num_tris);
+        goto loaderr;
+    }
+    m_trianglecount = header.num_tris;
+    m_triangles = new md2_triangle_t[header.num_tris];
+    if(m_triangles == NULL)
+    {
+        fprintf(stderr, "MD2: Out of memory for triangles: %i\n", header.num_tris);
+        goto loaderr;
+    }
+    for(i=0;i<header.num_tris;i++)
+    {
+        m_triangles[i].v[0] = triangles[i].index_xyz[0];
+        m_triangles[i].v[1] = triangles[i].index_xyz[1];
+        m_triangles[i].v[2] = triangles[i].index_xyz[2];
+
+        m_triangles[i].uv[0] = triangles[i].index_st[0];
+        m_triangles[i].uv[1] = triangles[i].index_st[1];
+        m_triangles[i].uv[2] = triangles[i].index_st[2];
+    }
+    SAFE_RELEASE_ARRAY(triangles);
+
+    // frames
     fseek(f, header.ofs_frames, SEEK_SET);
     curanim.name[0] = NULL;
-    m_min = vec3_t::origin;
-    m_max = vec3_t::origin;
     for(i=0;i<header.num_frames;i++) // iterating through every frame
     {
-        m_frames[i].num_xyz = header.num_xyz;
+        m_frames[i].num_xyz = header.num_xyz; // always the same?
 
         if(fread(frame, 1, header.framesize, f) != (uint32_t)header.framesize) // read complete frame to memory
         {
@@ -300,19 +388,15 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
                                     framehead->translate.z;
 
             vertex->v *= MD2_LYNX_SCALE;
-            for(int m=0;m<3;m++)
-            {
-                if(vertex->v.v[m] < m_min.v[m])
-                    m_min.v[m] = vertex->v.v[m];
-                else if(vertex->v.v[m] > m_max.v[m])
-                    m_max.v[m] = vertex->v.v[m];
-            }
 
-            vertex->n.z = -(g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][0]);
-            vertex->n.x = g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][1];
-            vertex->n.y = g_bytedirs[framehead->v[j].n % NUMVERTEXNORMALS][2];
             if(framehead->v[j].n >= NUMVERTEXNORMALS)
+            {
                 fprintf(stderr, "MD2: Vertexnormal out of bounds. Frame: %i, vertex: %i\n", i, j);
+                goto loaderr;
+            }
+            vertex->n.z = -(g_bytedirs[framehead->v[j].n][0]);
+            vertex->n.x =  (g_bytedirs[framehead->v[j].n][1]);
+            vertex->n.y =  (g_bytedirs[framehead->v[j].n][2]);
         }
     }
     if(curanim.name[0] != 0)
@@ -320,190 +404,102 @@ bool CModelMD2::Load(char *path, CResourceManager* resman, bool loadtexture)
         curanim.end = i-1;
         animlist.push_back(curanim);
     }
-    delete[] frame;
+    SAFE_RELEASE_ARRAY(frame);
     fclose(f);
     f = NULL;
 
-    m_anims = new anim_t[animlist.size()];
+    m_anims = new md2_anim_t[animlist.size()];
     if(!m_anims)
     {
         fprintf(stderr, "MD2: Failed to create animation table - out of memory\n");
         goto loaderr;
     }
     m_animcount = (int)animlist.size();
-    i = 0;
-    for(iter=animlist.begin();iter!=animlist.end();iter++)
+    memset(m_animmap, 0, sizeof(m_animmap));
+    for(i = 0, iter=animlist.begin(); iter!=animlist.end(); iter++)
     {
         m_anims[i] = (*iter);
-        /*
-        fprintf(stderr, "Animation: %s (%i-%i)\n",
-                    m_anims[i].name,
-                    m_anims[i].start,
-                    m_anims[i].end);
-        */
+        char* name = m_anims[i].name;
+
+        if(strcmp(name, "stand")==0)
+            m_animmap[ANIMATION_IDLE] = i;
+        else if(strcmp(name, "run")==0 || strcmp(name, "walk")==0)
+            m_animmap[ANIMATION_RUN] = i;
+        else if(strcmp(name, "attack")==0 || strcmp(name, "atk")==0)
+            m_animmap[ANIMATION_ATTACK] = i;
+
         i++;
     }
 
-    m_center = (m_max - m_min)*0.5f;
-    m_sphere = m_center.Abs()*0.5f;
-
-    fprintf(stderr, "MD2: Model %s: (Sphere: %.2f)\n", path, m_sphere);
-
     return true;
 loaderr:
+    SAFE_RELEASE_ARRAY(texcoords);
+    SAFE_RELEASE_ARRAY(frame);
+    SAFE_RELEASE_ARRAY(triangles);
     if(f)
         fclose(f);
     Unload();
     return false;
 }
 
-void CModelMD2::GetCenter(vec3_t* center) const
-{
-    *center = m_center;
-}
-
 void CModelMD2::Unload()
 {
-    if(m_frames)
-    {
-        delete[] m_frames;
-        m_frames = NULL;
-    }
+    SAFE_RELEASE_ARRAY(m_frames);
+    SAFE_RELEASE_ARRAY(m_vertices);
+    SAFE_RELEASE_ARRAY(m_anims);
+    SAFE_RELEASE_ARRAY(m_texcoords);
+    SAFE_RELEASE_ARRAY(m_triangles);
+
     m_framecount = 0;
-
-    if(m_vertices)
-    {
-        delete[] m_vertices;
-        m_vertices = NULL;
-    }
     m_vertices_per_frame = 0;
-
-    if(m_anims)
-    {
-        delete[] m_anims;
-        m_anims = NULL;
-    }
     m_animcount = 0;
+    m_trianglecount = 0;
 
-    if(m_glcmds)
-    {
-        delete[] m_glcmds;
-        m_glcmds = NULL;
-    }
-    m_glcmdcount = 0;
-
-    m_sphere = 0.0f;
     m_tex = 0;
+    m_normalmap = 0;
 }
 
-void CModelMD2::Animate(md2_state_t* state, float dt) const
+void CModelMD2::Animate(model_state_t* mstate, const float dt) const
 {
-    if(state->stop_anim)
-        return;
+    md2_state_t* state = (md2_state_t*)mstate;
 
-    state->step += dt;
-    if(state->step >= m_invfps)
+    state->time += dt;
+    if(state->time >= m_invfps)
     {
-        state->cur_frame++;
-        state->step = 0.0f;
-
-        if(state->cur_frame >= m_anims[state->cur_anim].end) // animation ist 1x durchgelaufen
-        {
-            if(state->next_anim != state->cur_anim) // soll keine schleife gespielt werden?
-            {
-                if(state->next_anim >= 0) // es soll die nächste animation 1x gespielt werden
-                {
-                    SetAnimation(state, state->next_anim);
-                    return;
-                }
-                else
-                {
-                    state->cur_frame = m_anims[state->cur_anim].end;
-                    StopAnimation(state);
-                    return;
-                }
-            }
-            state->cur_frame = GetNextFrameInAnim(state, 0); // wieder auf anfang zurücksetzen
-        }
+        state->time = 0.0f;
+        state->curr_frame = GetNextFrameInAnim(state, 1);
+        state->next_frame = GetNextFrameInAnim(state, 1);
+        state->play_count++;
     }
 }
 
 int CModelMD2::GetNextFrameInAnim(const md2_state_t* state, int increment) const
 {
-    if(state->stop_anim)
-        return state->cur_anim; // Angehalten
-
-    int size = m_anims[state->cur_anim].end - m_anims[state->cur_anim].start + 1;
-    int step = state->cur_frame - m_anims[state->cur_anim].start + increment;
-    return m_anims[state->cur_anim].start + (step % size);
+    int size = m_anims[state->md2anim].end - m_anims[state->md2anim].start + 1;
+    int step = state->curr_frame - m_anims[state->md2anim].start + increment;
+    return m_anims[state->md2anim].start + (step % size);
 }
 
-bool CModelMD2::SetAnimation(md2_state_t* state, int i) const
+void CModelMD2::SetAnimation(model_state_t* mstate, const animation_t animation) const
 {
-    if(i < 0 || i >= m_animcount)
-    {
-        assert(0); // unknown animation
-        return false;
-    }
+    md2_state_t* state = (md2_state_t*)mstate;
 
-    state->cur_anim = i;
-    state->cur_frame = m_anims[i].start;
-    state->step = 0.0f;
-    state->stop_anim = 0;
-    return true;
+    //if(state->animation == animation)
+    //    return;
+
+    state->md2anim = m_animmap[animation % ANIMATION_COUNT];
+    state->animation = animation;
+    state->time = 0.0f;
+    state->curr_frame = m_anims[state->md2anim].start;
+    state->next_frame = GetNextFrameInAnim(state, 1);
+    state->play_count = 0;
 }
 
-bool CModelMD2::SetNextAnimation(md2_state_t* state, int i) const
+float CModelMD2::GetAnimationTime(const animation_t animation) const
 {
-    state->next_anim = i;
-    return true;
-}
-
-bool CModelMD2::SetAnimationByName(md2_state_t* state, const char* name) const
-{
-    int i = FindAnimation(name);
-    return SetAnimation(state, i);
-}
-
-bool CModelMD2::SetNextAnimationByName(md2_state_t* state, const char* name) const
-{
-    int i = FindAnimation(name);
-    return SetNextAnimation(state, i);
-}
-
-int CModelMD2::FindAnimation(const char* name) const
-{
-    if(strcmp(name, "default")==0)
-        return 0;
-    for(int i=0;i<m_animcount;i++)
-    {
-        if(strcmp(m_anims[i].name, name)==0)
-            return i;
-    }
-    assert(0);
-    return 0;
-}
-
-float CModelMD2::GetSphere() const
-{
-    return m_sphere;
-}
-
-void CModelMD2::GetAABB(vec3_t* min, vec3_t* max) const
-{
-    *min = m_min;
-    *max = m_max;
-}
-
-void CModelMD2::SetFPS(float fps)
-{
-    m_fps = fps;
-    m_invfps = 1/fps;
-}
-
-float CModelMD2::GetFPS() const
-{
-    return m_fps;
+    const int md2anim = m_animmap[animation % ANIMATION_COUNT];
+    const int len = m_anims[md2anim].end - m_anims[md2anim].start;
+    return (float)len*m_invfps;
 }
 
 /*

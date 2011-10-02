@@ -21,6 +21,7 @@ typedef enum
 {
     LYNX_RESOURCE_TYPE_TEXTURE,
     LYNX_RESOURCE_TYPE_MD5,
+    LYNX_RESOURCE_TYPE_MD2,
     LYNX_RESOURCE_TYPE_SOUND
 } resource_type_t;
 

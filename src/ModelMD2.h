@@ -6,14 +6,20 @@ class CModelMD2;
 #include "Model.h"
 #include "ResourceManager.h"
 
-struct md2_state_t : public model_state_t;
+struct md2_state_t : public model_state_t
 {
-    md2_state_t() {}
+    md2_state_t() {
+        model_state_t();
+        md2anim = 0;
+    }
+    int md2anim;
 };
 
 struct md2_vertex_t;
 struct md2_frame_t;
 struct md2_anim_t;
+struct md2_texcoord_t;
+struct md2_triangle_t;
 
 class CModelMD2 : public CModel
 {
@@ -25,15 +31,17 @@ public:
     void    Unload();
 
     void    Render(const model_state_t* state);
-    void    RenderNormals(const model_state_t* state);
+    void    RenderNormals(const model_state_t* state) {}; // not implemented
     void    Animate(model_state_t* state, const float dt) const;
     void    SetAnimation(model_state_t* state, const animation_t animation) const;
     float   GetAnimationTime(const animation_t animation) const;
 
-    float   GetSphere() const;
+    float   GetSphere() const { return 2.0f; }
 
 private:
-    int GetNextFrameInAnim(const md2_state_t* state, int increment) const;
+    int     GetNextFrameInAnim(const md2_state_t* state, int increment) const;
+
+    void    RenderFixed(const model_state_t* state) const;
 
     md2_frame_t*    m_frames;
     int             m_framecount;
@@ -41,10 +49,18 @@ private:
     int             m_vertices_per_frame;
     md2_anim_t*     m_anims;
     int             m_animcount;
+    md2_texcoord_t* m_texcoords;
+    md2_triangle_t* m_triangles;
+    int             m_trianglecount;
+
+    int             m_animmap[ANIMATION_COUNT]; // map lynx animation id (ANIMATION_IDLE...) to md2 m_anim index
 
     float           m_fps;
     float           m_invfps; // 1/fps
 
-    unsigned int    m_tex;
+    unsigned int    m_tex; // diffuse texture
+    unsigned int    m_normalmap; // tangent space normal mapping
+
+    bool            m_shaderactive; // use shader or fixed pipeline
 };
 

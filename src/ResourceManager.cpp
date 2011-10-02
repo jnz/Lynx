@@ -7,6 +7,7 @@
 #include "../soil/src/SOIL.h"
 #include "ResourceManager.h"
 #include "World.h"
+#include "ModelMD2.h"
 #include "ModelMD5.h"
 
 #ifdef _DEBUG
@@ -43,7 +44,7 @@ bool CResourceManager::IsServer() const
 
 void CResourceManager::Precache(const std::string filename, const resource_type_t type)
 {
-    // only print the path for the client. does this make sense?
+    // only print the path for the client
     if(!IsServer())
         fprintf(stderr, "Precache: %s\n", filename.c_str());
 
@@ -52,6 +53,7 @@ void CResourceManager::Precache(const std::string filename, const resource_type_
         case LYNX_RESOURCE_TYPE_TEXTURE:
             GetTexture(CLynx::GetBaseDirTexture() + filename, false);
             break;
+        case LYNX_RESOURCE_TYPE_MD2:
         case LYNX_RESOURCE_TYPE_MD5:
             GetModel(CLynx::GetBaseDirModel() + filename);
             break;
@@ -67,9 +69,7 @@ void CResourceManager::Precache(const std::string filename, const resource_type_
 unsigned int CResourceManager::GetTexture(const std::string texname, const bool noerrormsg)
 {
     if(IsServer())
-    {
         return 0;
-    }
 
     std::map<std::string, texture_t>::const_iterator iter;
     unsigned int texture; // opengl texture id
@@ -150,9 +150,7 @@ CModel* CResourceManager::GetModel(std::string mdlname)
         }
         else if(mdlname.find(".md2") != std::string::npos)
         {
-            // model = new CModelMD2();
-            model = NULL;
-            assert(0); // implement me
+            model = new CModelMD2();
         }
         else
         {

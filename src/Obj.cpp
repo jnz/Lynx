@@ -5,6 +5,7 @@
 #include <sstream> // Particle Tokenizer
 #include <string.h>
 #include "ModelMD5.h"
+#include "ModelMD2.h"
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -381,7 +382,7 @@ void CObj::CopyObjStateFrom(const CObj* source)
     SetObjState(&source->state, m_id);
 }
 
-void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method also loads sounds
+void CObj::UpdateAnimation() // FIXME the name is misleading, as this method also loads sounds
 {
     m_mesh = NULL;
     m_sound = NULL;
@@ -404,7 +405,16 @@ void CObj::UpdateAnimation() // FIXME name is a bit misleading, as this method a
     }
     else if(state.resource.find(".md2") != std::string::npos)
     {
-        assert(0); // FIXME: implement me
+        CModelMD2* mesh = (CModelMD2*)m_world->GetResourceManager()->GetModel(state.resource);
+        if(mesh != m_mesh)
+        {
+            if(m_mesh_state)
+                delete m_mesh_state;
+            m_mesh_state = new md2_state_t();
+            m_mesh = mesh;
+        }
+        if(m_mesh)
+            m_mesh->SetAnimation(m_mesh_state, state.animation);
     }
     else if(state.resource.find(".ogg") != std::string::npos)
     {

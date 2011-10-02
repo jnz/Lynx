@@ -422,8 +422,8 @@ bool initSDLvideo(int width, int height, int bpp, int fullscreen)
         return false;
     }
 
-    //glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
-    glClearColor(0.85f, 0.85f, 0.85f, 0.0f);
+    glClearColor(0.48f, 0.58f, 0.72f, 0.0f); // cornflower blue
+    // glClearColor(0.85f, 0.85f, 0.85f, 0.0f);
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_DEPTH_TEST);
