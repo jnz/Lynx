@@ -78,7 +78,7 @@ void CObj::SetRadius(float radius)
     state.radius = radius;
 }
 
-std::string CObj::GetResource() const
+const std::string& CObj::GetResource() const
 {
     return state.resource;
 }
@@ -116,7 +116,7 @@ void CObj::SetAnimation(animation_t animation)
     }
 }
 
-vec3_t CObj::GetEyePos() const
+const vec3_t& CObj::GetEyePos() const
 {
     return state.eyepos;
 }
@@ -183,7 +183,7 @@ void CObj::SetParticleSystem(const std::string psystem)
     UpdateParticles();
 }
 
-std::string CObj::GetParticleSystemName() const
+const std::string& CObj::GetParticleSystemName() const
 {
     return state.particles;
 }

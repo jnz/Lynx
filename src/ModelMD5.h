@@ -128,16 +128,18 @@ public:
     void    Render(const model_state_t* state);
     void    RenderNormals(const model_state_t* state);
     void    Animate(model_state_t* state, const float dt) const;
-    void    SetAnimation(model_state_t* state, const animation_t animation);
+    void    SetAnimation(model_state_t* state, const animation_t animation) const;
+    float   GetAnimationTime(const animation_t animation) const; // time in sec. for the animation
 
     float   GetSphere() const { return 2.0f; }; // FIXME
 
 private:
     bool    ReadAnimation(const animation_t animation, const std::string filepath); // animation = "run", "idle", "walk" etc.
     md5_anim_t* GetAnimation(const animation_t animation, bool createnew); // Get md5_anim_t associated with animation string or create a new one
-    void    RenderSkeleton(const std::vector<md5_joint_t>& skel) const;
-    void    PrepareBindPoseNormals(md5_mesh_t *mesh);
-    void    PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton);
+    md5_anim_t* GetAnimation(const animation_t animation) const; // const version
+    void    RenderSkeleton(const std::vector<md5_joint_t>& skel) const; // render opengl line segments to display the skeleton
+    void    PrepareBindPoseNormals(md5_mesh_t *mesh); // calculate normal vectors in model bind pose, so the can be used later
+    void    PrepareMesh(const md5_mesh_t *mesh, const std::vector<md5_joint_t>& skeleton); // calculate current vertices and upload them to the vbo
     bool    AllocVertexBuffer();
     void    DeallocVertexBuffer();
     bool    UploadVertexBuffer(unsigned int vertexcount, unsigned int indexcount) const;

@@ -12,7 +12,7 @@ static const CWeapon g_weapon_registry[] =
 {
 //    id              Readable name        dmg  MD5 model                         rate   range    ammo
     { WEAPON_NONE   , "NULL"            ,    0  , ""                              , 1000 , 0.0f   , -1 },
-    { WEAPON_ROCKET , "Rocket Launcher" ,   80  , "rocket/rocketlauncher.md5mesh" ,  800 , 100.0f , 30 },
+    { WEAPON_ROCKET , "Rocket Launcher" ,   80  , "rocket/rocketlauncher.md5mesh" ,  667 , 100.0f , 30 },
     { WEAPON_GUN    , "Machine Gun"     ,  100  , "gun/gun.md5mesh"               , 1200 , 120.0f , 15 }
 };
 
@@ -107,12 +107,19 @@ void CGameObjPlayer::ActivateGun()
 
 void CGameObjPlayer::CmdFire(bool active)
 {
+    const unsigned int timedelta = GetWorld()->GetLeveltime() - m_prim_triggered_time;
+    CClientInfo* client = GetClient();
+    // check if weapon animation should be idle
+    if(client && !active && timedelta > GetWeapon()->firespeed-100)
+        client->hud.weapon_animation = ANIMATION_IDLE;
+
     if(!m_prim_triggered && active)
     {
-        int timedelta = GetWorld()->GetLeveltime() - m_prim_triggered_time;
         if(timedelta < GetWeapon()->firespeed)
             return;
         m_prim_triggered_time = GetWorld()->GetLeveltime();
+        if(client)
+            client->hud.weapon_animation = ANIMATION_FIRE;
 
         switch(GetWeapon()->type)
         {
@@ -123,7 +130,7 @@ void CGameObjPlayer::CmdFire(bool active)
                 FireGun();
                 break;
             default:
-                assert(0); // handle this?
+                assert(0); // weapon type kaputt
                 break;
         }
     }
@@ -223,7 +230,7 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
     if(killed_me)
         Respawn();
 
-    // Update the HUD, OO design is super sweet in the game logic area
+    // Update the HUD
     CClientInfo* client = GetClient();
     if(client)
         client->hud.health = GetHealth();
@@ -244,5 +251,6 @@ void CGameObjPlayer::InitHUD()
     client->hud.health = GetHealth();
     client->hud.score = 0;
     client->hud.weapon = GetWeapon()->resource;
+    client->hud.weapon_animation = ANIMATION_IDLE;
 }
 

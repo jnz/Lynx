@@ -17,7 +17,7 @@ public:
     std::string      name; // human readable
     int              damage; // base damage
     std::string      resource; // model md5 path
-    int              firespeed; // fire a shot every x ms
+    unsigned int     firespeed; // fire a shot every x ms
     float            maxdist; // effective range
     int              maxammo; // max amount of ammo
 };

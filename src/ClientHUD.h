@@ -15,9 +15,10 @@ public:
     CClientHUD(void);
     ~CClientHUD(void);
 
-    std::string weapon;         // weapon model
-    int16_t score;              // current points
-    int8_t health;              // health
+    std::string       weapon;             // weapon model
+    int16_t           score;              // current points
+    int8_t            health;             // health
+    animation_t       weapon_animation;   // current weapon animation
 
     /*
         Server side: calls Serialize(true, stream, NULL)

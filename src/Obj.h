@@ -103,28 +103,28 @@ public:
     void        SetObjState(const obj_state_t* objstate, int id);
     void        CopyObjStateFrom(const CObj* source); // Eigenschaften von anderem Objekt kopieren
 
-    const vec3_t& GetOrigin() const { return state.origin; }
-    void         SetOrigin(const vec3_t& origin) { state.origin = origin; }
-    const vec3_t& GetVel() const { return state.vel; }
-    void         SetVel(const vec3_t& velocity) { state.vel = velocity; }
-    const quaternion_t GetRot() const { return state.rot; }
-    void        SetRot(const quaternion_t& rotation);
-    void        GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const;
+    const vec3_t&       GetOrigin() const { return state.origin; }
+    void                SetOrigin(const vec3_t& origin) { state.origin = origin; }
+    const vec3_t&       GetVel() const { return state.vel; }
+    void                SetVel(const vec3_t& velocity) { state.vel = velocity; }
+    const quaternion_t& GetRot() const { return state.rot; }
+    void                SetRot(const quaternion_t& rotation);
+    void                GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const;
 
     float       GetRadius() const; // Max. Object sphere size
     void        SetRadius(float radius);
-    std::string GetResource() const;
+    const std::string& GetResource() const;
     void        SetResource(std::string resource);
     animation_t GetAnimation() const;
     void        SetAnimation(animation_t animation);
-    vec3_t      GetEyePos() const;
+    const vec3_t& GetEyePos() const;
     void        SetEyePos(const vec3_t& eyepos);
     OBJFLAGTYPE GetFlags() const;
     void        SetFlags(OBJFLAGTYPE flags);
     void        AddFlags(OBJFLAGTYPE flags);
     void        RemoveFlags(OBJFLAGTYPE flags);
     void        SetParticleSystem(const std::string psystem);
-    std::string GetParticleSystemName() const;
+    const std::string& GetParticleSystemName() const;
 
     // Local Attributes
     bool        locGetIsOnGround() const { return m_locIsOnGround; } // Has this object touched the ground? Set by World::ObjMove
@@ -152,7 +152,7 @@ protected:
     // Animation extension
     CModel*        m_mesh;
     model_state_t* m_mesh_state;
-    void        UpdateAnimation();
+    void           UpdateAnimation();
 
     // Sound
     CSound*     m_sound;

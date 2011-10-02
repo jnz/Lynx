@@ -49,19 +49,6 @@ public:
     static CConfig cfg; // global static config system
 };
 
-typedef int16_t animation_t;         // animation id
-enum
-{
-    ANIMATION_NONE = 0,
-    ANIMATION_IDLE,
-    ANIMATION_IDLE1,
-    ANIMATION_IDLE2,
-    ANIMATION_RUN,
-    ANIMATION_ATTACK,
-    ANIMATION_FIRE,
-    ANIMATION_COUNT // make this the last item
-};
-
 union intfloat_u
 {
     unsigned int ui;

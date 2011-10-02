@@ -253,12 +253,11 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         firedown = true;
         clcmdlist->push_back("+fire");
 
-        // Weapon animation is client side only.
-        CModelMD5* model;
-        md5_state_t* model_state;
-        m_world->m_hud.GetModel(&model, &model_state);
-        if(model)
-            model->SetAnimation(model_state, ANIMATION_FIRE);
+        //CModelMD5* model;
+        //md5_state_t* model_state;
+        //m_world->m_hud.GetModel(&model, &model_state);
+        //if(model)
+            //model->SetAnimation(model_state, ANIMATION_FIRE);
     }
     if(keystate[SDLK_1])
     {
@@ -294,16 +293,16 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         GetLocalController()->SetOrigin(spawn.point);
     }
 
-    if(!firedown)
-    {
-        CModelMD5* model;
-        md5_state_t* model_state;
-        m_world->m_hud.GetModel(&model, &model_state);
-        if(model)
-        {
-            model->SetAnimation(model_state, ANIMATION_IDLE);
-        }
-    }
+    //if(!firedown)
+    //{
+        //CModelMD5* model;
+        //md5_state_t* model_state;
+        //m_world->m_hud.GetModel(&model, &model_state);
+        //if(model)
+        //{
+            //model->SetAnimation(model_state, ANIMATION_IDLE);
+        //}
+    //}
 }
 
 CObj* CClient::GetLocalController()

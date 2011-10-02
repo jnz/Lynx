@@ -353,7 +353,7 @@ void CModelMD5::Animate(model_state_t* mstate, const float dt) const
     assert(interp >= 0.0f && interp <= 1.0f);
     assert((int)state->skel.size() == num_joints);
 
-    for (i = 0; i < num_joints; ++i)
+    for(i = 0; i < num_joints; i++)
     {
         /* Copy parent index */
         state->skel[i].parent = skelA[i].parent;
@@ -379,27 +379,50 @@ void CModelMD5::Animate(model_state_t* mstate, const float dt) const
         const int maxFrames = state->animdata->num_frames-1; // FIXME: is -1 correct?
         state->curr_frame = ((state->curr_frame+1) % maxFrames);
         state->next_frame = ((state->next_frame+1) % maxFrames);
+        if(state->next_frame < state->curr_frame) // one loop is finished
+        {
+            const animation_t next_anim = CModel::GetNextAnimation(state->animation);
+            state->play_count++;
+            if(next_anim != state->animation)
+                SetAnimation(mstate, next_anim);
+        }
     }
 }
 
-void CModelMD5::SetAnimation(model_state_t* mstate, const animation_t animation)
+void CModelMD5::SetAnimation(model_state_t* mstate, const animation_t animation) const
 {
     md5_state_t* state = (md5_state_t*)mstate;
-    
+
     if(state->animation == animation)
         return;
 
     state->curr_frame = 0;
     state->next_frame = 1;
     state->animation = animation;
-    state->animdata = GetAnimation(animation, false);
+    state->animdata = GetAnimation(animation);
     state->time = 0.0f;
+    state->play_count = 0;
     assert((animation != ANIMATION_NONE) ? (state->animdata!=NULL) : 1);
     if(!state->animdata)
         return;
     if(state->skel.size() != (size_t)state->animdata->num_joints)
         state->skel.resize(state->animdata->num_joints);
     Animate(state, 0.0f);
+}
+
+float CModelMD5::GetAnimationTime(const animation_t animation) const
+{
+    const md5_anim_t* anim = GetAnimation(animation);
+    if(!anim)
+    {
+        assert(0);
+        fprintf(stderr, "GetAnimationTime: Animation not found\n");
+        return 0.0f;
+    }
+
+    if(anim->frameRate == 0.0f)
+        return 0.0f;
+    return (float)anim->num_frames / (float)anim->frameRate;
 }
 
 static void md5_calculate_tangent(const md5_vertex_t& v0,
@@ -842,8 +865,6 @@ bool CModelMD5::Load(const char *path, CResourceManager* resman, bool loadtextur
         AllocVertexBuffer();
 
     ReadAnimation(ANIMATION_IDLE,   CLynx::GetDirectory(path) + "idle.md5anim");
-    ReadAnimation(ANIMATION_IDLE1,  CLynx::GetDirectory(path) + "idle1.md5anim");
-    ReadAnimation(ANIMATION_IDLE2,  CLynx::GetDirectory(path) + "idle2.md5anim");
     ReadAnimation(ANIMATION_RUN,    CLynx::GetDirectory(path) + "run.md5anim");
     ReadAnimation(ANIMATION_ATTACK, CLynx::GetDirectory(path) + "attack.md5anim");
     ReadAnimation(ANIMATION_FIRE,   CLynx::GetDirectory(path) + "fire.md5anim");
@@ -950,6 +971,20 @@ static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
     }
 }
 
+md5_anim_t* CModelMD5::GetAnimation(const animation_t animation) const
+{
+    if(animation == ANIMATION_NONE)
+        return NULL;
+
+    const std::map<animation_t, md5_anim_t*>::const_iterator iter = m_animations.find(animation);
+    if(iter == m_animations.end())
+    {
+        fprintf(stderr, "Animation not found: %s\n", CModel::GetStringFromAnimation(animation).c_str());
+        return NULL;
+    }
+    return (*iter).second;
+}
+
 md5_anim_t* CModelMD5::GetAnimation(const animation_t animation, bool createnew)
 {
     md5_anim_t* panim;
@@ -966,7 +1001,7 @@ md5_anim_t* CModelMD5::GetAnimation(const animation_t animation, bool createnew)
         }
         else
         {
-            fprintf(stderr, "Animation not found: %s\n", CResourceManager::GetStringFromAnimation(animation).c_str());
+            fprintf(stderr, "Animation not found: %s\n", CModel::GetStringFromAnimation(animation).c_str());
             panim = NULL;
         }
     }
@@ -974,7 +1009,7 @@ md5_anim_t* CModelMD5::GetAnimation(const animation_t animation, bool createnew)
     {
         if(createnew)
         {
-            fprintf(stderr, "Animation already loaded: %s\n", CResourceManager::GetStringFromAnimation(animation).c_str());
+            fprintf(stderr, "Animation already loaded: %s\n", CModel::GetStringFromAnimation(animation).c_str());
         }
 
         panim = (*iter).second;
