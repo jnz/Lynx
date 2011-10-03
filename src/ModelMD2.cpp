@@ -145,7 +145,7 @@ CModelMD2::CModelMD2(void)
     m_tex = 0;
     m_normalmap = 0;
 
-    m_shaderactive = CLynx::cfg.GetVarAsInt("useshader", 1);
+    m_shaderactive = CLynx::cfg.GetVarAsInt("useshader", 1) ? true : false;
 
     // VBO
     m_vbo_vertex = 0;

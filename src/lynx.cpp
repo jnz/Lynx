@@ -84,7 +84,7 @@ std::string CLynx::FloatToString(float f, int precision)
 bool CLynx::IsFloat(float f)
 {
    std::ostringstream o;
-   return (o << f);
+   return (o << f)?true:false;
 }
 
 int CLynx::random(int min, int max)

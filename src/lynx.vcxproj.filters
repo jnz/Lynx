@@ -159,6 +159,12 @@
     <ClCompile Include="Config.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelMD2.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BSPBIN.h">
@@ -264,6 +270,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="ParticleSystemExplosion.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

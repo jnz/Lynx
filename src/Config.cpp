@@ -95,7 +95,7 @@ cvar_t* CConfig::AddVar(const std::string& name, const std::string& value)
 {
     cvar_t* cvar = GetVar(name, value, true); // create new if not in system
     cvar->string = value;
-    cvar->value = atof(value.c_str());
+    cvar->value = (float)atof(value.c_str());
 
     return cvar;
 }
@@ -114,7 +114,7 @@ cvar_t* CConfig::GetVar(const std::string& name, const std::string default_value
         cvar = new cvar_t;
         cvar->name = name;
         cvar->string = default_value;
-        cvar->value = atof(default_value.c_str());
+        cvar->value = (float)atof(default_value.c_str());
         m_var[name] = cvar;
 
         return cvar;
