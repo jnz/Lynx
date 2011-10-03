@@ -101,3 +101,26 @@ std::string CLynx::GetRandNumInStr(const char* str, unsigned int maxnumber)
     return std::string(tmpstr);
 }
 
+std::string CLynx::ReadCompleteFile(const std::string& path)
+{
+    FILE* f = fopen(path.c_str(), "rb");
+    if(!f)
+        return "";
+
+    fseek(f, 0, SEEK_END);
+    unsigned int fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char* buff = new char[fsize+5]; // 5 bytes, so you can sleep better
+    if(!buff)
+        return "";
+
+    fread(buff, fsize, 1, f);
+    buff[fsize] = NULL;
+    std::string shader(buff);
+
+    delete[] buff;
+    fclose(f);
+
+    return shader;
+}
+

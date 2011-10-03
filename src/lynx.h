@@ -47,6 +47,8 @@ public:
     static std::string GetRandNumInStr(const char* str, unsigned int maxnumber); // replace %i in string with number from 1 - maxnumber
 
     static CConfig cfg; // global static config system
+
+    static std::string ReadCompleteFile(const std::string& path); // read a complete file and return it as a string
 };
 
 union intfloat_u

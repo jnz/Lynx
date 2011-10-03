@@ -101,7 +101,7 @@ LYNX_INLINE void vec3_t::Normalize(void)
 {
     const float abssqr = x*x+y*y+z*z;
 
-    assert(abssqr > lynxmath::EPSILON);
+    assert(!IsNullEpsilon());
     //if(abssqr > lynxmath::EPSILON)
     //{
         const float ilength = lynxmath::InvSqrt(abssqr);

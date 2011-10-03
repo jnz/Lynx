@@ -5,6 +5,7 @@
 class CModelMD2;
 #include "Model.h"
 #include "ResourceManager.h"
+#include <vector>
 
 struct md2_state_t : public model_state_t
 {
@@ -20,6 +21,14 @@ struct md2_frame_t;
 struct md2_anim_t;
 struct md2_texcoord_t;
 struct md2_triangle_t;
+
+// md2_vbo_start_end:
+// index of current vertices in vbo
+struct md2_vbo_start_end_t
+{
+    unsigned int start;
+    unsigned int end;
+};
 
 class CModelMD2 : public CModel
 {
@@ -44,16 +53,17 @@ private:
     void    RenderFixed(const model_state_t* state) const;
 
     md2_frame_t*    m_frames;
-    int             m_framecount;
+    unsigned int    m_framecount;
     md2_vertex_t*   m_vertices;
-    int             m_vertices_per_frame;
+    unsigned int    m_vertices_per_frame;
     md2_anim_t*     m_anims;
-    int             m_animcount;
+    unsigned int    m_animcount;
     md2_texcoord_t* m_texcoords;
+    unsigned int    m_texcoordscount;
     md2_triangle_t* m_triangles;
-    int             m_trianglecount;
+    unsigned int    m_trianglecount;
 
-    int             m_animmap[ANIMATION_COUNT]; // map lynx animation id (ANIMATION_IDLE...) to md2 m_anim index
+    unsigned int    m_animmap[ANIMATION_COUNT]; // map lynx animation id (ANIMATION_IDLE...) to md2 m_anim index
 
     float           m_fps;
     float           m_invfps; // 1/fps
@@ -62,5 +72,22 @@ private:
     unsigned int    m_normalmap; // tangent space normal mapping
 
     bool            m_shaderactive; // use shader or fixed pipeline
+
+    // VBO stuff
+    bool            AllocVertexBuffer();
+    void            DeallocVertexBuffer();
+
+    unsigned int    m_vbo_vertex;
+    unsigned int    m_vboindex;
+
+    // with the m_vbo_frame_table you can do the following
+    // vboindexstart = m_vbo_frame_table[cur_frame].start;
+    // vboindexend = m_vbo_frame_table[cur_frame].end;
+    std::vector<md2_vbo_start_end_t> m_vbo_frame_table;
+
+    // Shader stuff
+    bool            InitShader();
+    static int      m_program;
+    static int      m_interp; // interp uniform for md2 vertex shader
 };
 

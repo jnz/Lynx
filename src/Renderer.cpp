@@ -481,36 +481,13 @@ void CRenderer::UpdatePerspective()
     glMatrixMode(GL_MODELVIEW);
 }
 
-std::string ReadShader(std::string path)
-{
-    FILE* f = fopen(path.c_str(), "rb");
-    if(!f)
-        return "";
-
-    fseek(f, 0, SEEK_END);
-    unsigned int fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char* buff = new char[fsize+10];
-    if(!buff)
-        return "";
-
-    fread(buff, fsize, 1, f);
-    buff[fsize] = NULL;
-    std::string shader(buff);
-
-    delete[] buff;
-    fclose(f);
-
-    return shader;
-}
-
-GLuint LoadAndCompileShader(unsigned int type, std::string path)
+static GLuint LoadAndCompileShader(unsigned int type, std::string path)
 {
     unsigned int shader = glCreateShader(type);
     if(shader < 1)
         return shader;
 
-    std::string shadersrc = ReadShader(path);
+    std::string shadersrc = CLynx::ReadCompleteFile(path);
     if(shadersrc == "")
     {
         fprintf(stderr, "Failed to load shader\n");

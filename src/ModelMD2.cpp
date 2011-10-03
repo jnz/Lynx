@@ -24,7 +24,9 @@ static const vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal lookup t
 #pragma warning(pop)
 
 #define MAX_SKINNAME    64
-#define MD2_LYNX_SCALE  (0.05f)
+#define MD2_LYNX_SCALE  (0.07f)
+
+#define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
 
 #pragma pack(push, 1)
 
@@ -84,12 +86,18 @@ struct md2_file_triangle_t
 
 #pragma pack(pop)
 
-// was vertex_t
+// was vertex_t, now used for VBO, so pack this struct too
+#pragma pack(push, 1)
 struct md2_vertex_t
 {
     vec3_t v; // pos
     vec3_t n; // normal
+    float tu, tv; // texcoord
+    vec3_t t; // tangent
+    float w; // direction of bitangent
+    vec3_t vdir; // lerp direction
 };
+#pragma pack(pop)
 
 struct md2_texcoord_t
 {
@@ -127,6 +135,7 @@ CModelMD2::CModelMD2(void)
     m_anims = NULL;
     m_animcount = 0;
     m_texcoords = NULL;
+    m_texcoordscount = 0;
     m_triangles = NULL;
     m_trianglecount = 0;
 
@@ -137,6 +146,10 @@ CModelMD2::CModelMD2(void)
     m_normalmap = 0;
 
     m_shaderactive = CLynx::cfg.GetVarAsInt("useshader", 1);
+
+    // VBO
+    m_vbo_vertex = 0;
+    m_vboindex = 0;
 }
 
 CModelMD2::~CModelMD2(void)
@@ -144,11 +157,89 @@ CModelMD2::~CModelMD2(void)
     Unload();
 }
 
-void CModelMD2::Render(const model_state_t* state)
+void CModelMD2::Render(const model_state_t* mstate)
 {
-    RenderFixed(state);
+    if(!m_shaderactive)
+    {
+        RenderFixed(mstate);
+        return;
+    }
+    md2_state_t* state = (md2_state_t*)mstate;
+
+    int curprg;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &curprg);
+    glUseProgram(m_program);
+
+        const float interp = state->time * m_fps;
+        glUniform1f(m_interp, interp); // set MD2 interpolation factor for shader 0..1
+
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertex);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex);
+
+        glEnableClientState(GL_VERTEX_ARRAY); // vertex
+        glVertexPointer(3, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(0));
+
+        glEnableClientState(GL_NORMAL_ARRAY); // normal vector
+        glNormalPointer(GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(12));
+
+        glClientActiveTexture(GL_TEXTURE0); // texture coordinates u, v
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(24));
+
+        glClientActiveTexture(GL_TEXTURE1); // tangent and bitangent
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(4, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(32));
+
+        glClientActiveTexture(GL_TEXTURE2); // vertex dir for lerping
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(3, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(48));
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_normalmap);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_tex);
+
+        const unsigned int indexstart = m_vbo_frame_table[state->curr_frame].start;
+        const unsigned int indexend = m_vbo_frame_table[state->curr_frame].end;
+
+        glDrawElements(GL_TRIANGLES,
+                       indexend-indexstart+1,
+                       GL_UNSIGNED_INT,
+                       BUFFER_OFFSET(indexstart * sizeof(uint32_t)));
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glClientActiveTexture(GL_TEXTURE1);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        glClientActiveTexture(GL_TEXTURE2);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
+
+        glActiveTexture(GL_TEXTURE0);
+        glClientActiveTexture(GL_TEXTURE0);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glUseProgram(curprg);
 }
 
+// draw the model with the OpenGL fixed function.
+// this is straightforward but slow code to render triangles
+// if no shader support is available.
+// the MD2 format has support for triangle_strips and
+// is faster than this, but currently we ignore this mode (glcmds)
 void CModelMD2::RenderFixed(const model_state_t* state) const
 {
     md2_vertex_t* cur_vertices  = m_frames[state->curr_frame].vertices;
@@ -157,7 +248,7 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
     md2_vertex_t* next_vertex;
     vec3_t inter_xyz, inter_n; // interpolated
 
-    int i, j;
+    unsigned int i, j;
     int uvindex;
     int vindex;
 
@@ -231,6 +322,12 @@ bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtextur
 
     if(loadtexture)
     {
+        if(m_shaderactive)
+        {
+            if(!InitShader())
+                return false;
+        }
+
         m_tex = resman->GetTexture(CLynx::ChangeFileExtension(path, "jpg"));
         m_normalmap = resman->GetTexture(CLynx::GetBaseDirTexture() + "normal.jpg");
     }
@@ -304,6 +401,7 @@ bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtextur
         goto loaderr;
     }
     m_texcoords = new md2_texcoord_t[header.num_st];
+    m_texcoordscount = header.num_st;
     if(!m_texcoords)
     {
         fprintf(stderr, "MD2: Out of memory\n");
@@ -431,7 +529,11 @@ bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtextur
         i++;
     }
 
-    return true;
+    if(m_shaderactive)
+        return AllocVertexBuffer();
+    else
+        return true;
+
 loaderr:
     SAFE_RELEASE_ARRAY(texcoords);
     SAFE_RELEASE_ARRAY(frame);
@@ -453,10 +555,14 @@ void CModelMD2::Unload()
     m_framecount = 0;
     m_vertices_per_frame = 0;
     m_animcount = 0;
+    m_texcoordscount = 0;
     m_trianglecount = 0;
 
     m_tex = 0;
     m_normalmap = 0;
+
+    // VBO dealloc
+    DeallocVertexBuffer();
 }
 
 void CModelMD2::Animate(model_state_t* mstate, const float dt) const
@@ -502,6 +608,271 @@ float CModelMD2::GetAnimationTime(const animation_t animation) const
     return (float)len*m_invfps;
 }
 
+void CModelMD2::DeallocVertexBuffer()
+{
+    if(m_vbo_vertex > 0)
+    {
+        m_vbo_vertex = 0;
+        glDeleteBuffers(1, &m_vbo_vertex);
+    }
+
+    if(m_vboindex > 0)
+    {
+        glDeleteBuffers(1, &m_vboindex);
+        m_vboindex = 0;
+    }
+
+    m_vbo_frame_table.clear();
+}
+
+// takes the data from m_vertices, m_texxcoords
+// and m_triangles and creates VBOs for the data
+bool CModelMD2::AllocVertexBuffer()
+{
+    if(glGetError() != GL_NO_ERROR)
+    {
+        assert(0); // something is wrong
+        return false;
+    }
+
+    unsigned int i, j, f, a;
+    // from the md2 file, the vertices have a position and
+    // a normal, but the texture coordinates are stored
+    // separate. we try to generate unique vertices and indices
+    std::vector<md2_vertex_t> vbovertices;
+    std::vector<uint32_t> vboindices;
+    vbovertices.reserve(m_vertices_per_frame*m_framecount);
+    vboindices.reserve(m_trianglecount*3*m_framecount);
+    m_vbo_frame_table.clear();
+    m_vbo_frame_table.resize(m_framecount);
+
+    // for each animation
+    for(a=0; a<m_animcount; a++)
+    {
+        const unsigned int framestart = m_anims[a].start;
+        const unsigned int frameend = m_anims[a].end;
+
+        // for each frame in animation
+        for(f=framestart;f<=frameend;f++)
+        {
+            // get vertices for current frame
+            // and next vertices
+            const md2_vertex_t* cur_vertices = m_frames[f].vertices;
+            md2_vertex_t* next_vertices;
+            if(f+1 > frameend) // loop back to the animation start
+                next_vertices = m_frames[framestart].vertices;
+            else
+                next_vertices = m_frames[f+1].vertices;
+
+            md2_vbo_start_end_t vboindextable; // remember the position in the vboindex table for this frame
+            vboindextable.start = vboindices.size();
+            // for each triangle in model
+            for(i=0;i<m_trianglecount;i++)
+            {
+                const md2_triangle_t* tri = &m_triangles[i];
+                // for each vertex of triangle
+                for(j=0;j<3;j++)
+                {
+                    // get the vertex from the md2 structure
+                    uint32_t vindex = tri->v[j];
+                    const md2_vertex_t* pvertex = &cur_vertices[vindex];
+                    const md2_vertex_t* pvertexnext = &next_vertices[vindex];
+                    const md2_texcoord_t* ptexcoord = &m_texcoords[tri->uv[j]];
+
+                    // build the required vertex
+                    md2_vertex_t vertex; // new vertex
+                    vertex.v = pvertex->v; // set vertex coordinates
+                    vertex.n = pvertex->n; // set normal
+                    vertex.tu = ptexcoord->u;
+                    vertex.tv = ptexcoord->v;
+                    vertex.vdir = pvertexnext->v - pvertex->v;
+
+                    // check if we already have the vertex
+                    // otherwise create a new one
+                    if(vbovertices.size() <= vindex ||
+                       vertex.v != vbovertices[vindex].v ||
+                       vertex.n != vbovertices[vindex].n ||
+                       vertex.tu != vbovertices[vindex].tu ||
+                       vertex.tv != vbovertices[vindex].tv ||
+                       vertex.vdir != vbovertices[vindex].vdir)
+                    {
+                        vbovertices.push_back(vertex);
+                        vindex = vbovertices.size()-1;
+                    }
+                    // build index buffer
+                    vboindices.push_back(vindex);
+                }
+            }
+            vboindextable.end = vboindices.size()-1;
+            assert(vboindextable.end > vboindextable.start);
+
+            assert(f < m_vbo_frame_table.size());
+            m_vbo_frame_table[f] = vboindextable;
+        }
+    }
+
+    glGenBuffers(1, &m_vbo_vertex);
+    glGenBuffers(1, &m_vboindex);
+
+    if(m_vbo_vertex < 1 || m_vboindex < 1)
+    {
+        fprintf(stderr, "MD2: Failed to generate VBO\n");
+        return false;
+    }
+
+    fprintf(stderr, "MD2 Vertices: %i\n", (int)vbovertices.size());
+    // VBO VERTEX DATA
+    const unsigned int totalvbosize =
+        sizeof(md2_vertex_t)*vbovertices.size();
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertex); assert(glGetError() == GL_NO_ERROR);
+    // Reserve the data
+    glBufferData(GL_ARRAY_BUFFER,
+                 totalvbosize,
+                 0,
+                 GL_STATIC_DRAW); assert(glGetError() == GL_NO_ERROR);
+    // Upload the data
+    // 2nd parameter: VBO data offset
+    // 3rd parameter: size of source data
+    // 4th parameter: data pointer
+    glBufferSubData(GL_ARRAY_BUFFER, 0, totalvbosize, &vbovertices[0]); assert(glGetError() == GL_NO_ERROR);
+    glBindBuffer(GL_ARRAY_BUFFER, 0); assert(glGetError() == GL_NO_ERROR);
+    // Finished with upload
+
+    // INDEX BUFFER
+    const unsigned int totalvboindexsize =
+        sizeof(uint32_t)*vboindices.size();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboindex); assert(glGetError() == GL_NO_ERROR);
+    // Reserve the data
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 totalvboindexsize,
+                 0,
+                 GL_STATIC_DRAW); assert(glGetError() == GL_NO_ERROR);
+    // Upload the data
+    // 2nd parameter: VBO data offset
+    // 3rd parameter: size of source data
+    // 4th parameter: data pointer
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, totalvboindexsize, &vboindices[0]); assert(glGetError() == GL_NO_ERROR);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); assert(glGetError() == GL_NO_ERROR);
+    // Finished with upload
+
+    assert(glGetError() == GL_NO_ERROR);
+    return (glGetError() == GL_NO_ERROR);
+}
+
+static GLuint LoadAndCompileShader(const unsigned int type, const std::string& path)
+{
+    unsigned int shader = glCreateShader(type);
+    if(shader < 1)
+        return shader;
+
+    std::string shadersrc = CLynx::ReadCompleteFile(path);
+    if(shadersrc == "")
+    {
+        fprintf(stderr, "Failed to load shader\n");
+        return 0;
+    }
+
+    const char* strarray[] = { shadersrc.c_str(), NULL };
+    glShaderSource(shader, 1, strarray, NULL);
+    glCompileShader(shader);
+
+    int status;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    if(status != GL_TRUE)
+    {
+        char logbuffer[1024];
+        int usedlogbuffer;
+        glGetShaderInfoLog(shader, sizeof(logbuffer), &usedlogbuffer, logbuffer);
+        fprintf(stderr, "GL Compile Shader Error: %s\n", logbuffer);
+        return 0;
+    }
+
+    return shader;
+}
+
+int CModelMD2::m_program = 0; // keep this static
+int CModelMD2::m_interp = 0;
+bool CModelMD2::InitShader()
+{
+    if(m_program != 0) // we already have this shader loaded
+        return true;
+
+    int glerr = 0;
+    int islinked = GL_FALSE;
+
+    fprintf(stderr, "Compiling MD2 vertex shader...\n");
+    int vshader = LoadAndCompileShader(GL_VERTEX_SHADER, CLynx::GetBaseDirFX() + "md2vshader.txt");
+    if(vshader < 1)
+        return false;
+
+    fprintf(stderr, "Compiling fragment shader...\n");
+    int fshader = LoadAndCompileShader(GL_FRAGMENT_SHADER, CLynx::GetBaseDirFX() + "md2fshader.txt");
+    if(fshader < 1)
+        return false;
+
+    m_program = glCreateProgram();
+
+    glAttachShader(m_program, vshader);
+    if((glerr = glGetError()) != 0)
+    {
+        fprintf(stderr, "Failed to attach vertex shader\n");
+        return false;
+    }
+    glAttachShader(m_program, fshader);
+    if((glerr = glGetError()) != 0)
+    {
+        fprintf(stderr, "Failed to attach fragment shader\n");
+        return false;
+    }
+
+    glLinkProgram(m_program);
+    glGetProgramiv(m_program, GL_LINK_STATUS, &islinked);
+    if(islinked != GL_TRUE || (glerr = glGetError()) != 0)
+    {
+        char logbuffer[1024];
+        int usedlogbuffer;
+        glGetProgramInfoLog(m_program, sizeof(logbuffer), &usedlogbuffer, logbuffer);
+        fprintf(stderr, "GL Program Link Error:\n%s\n", logbuffer);
+        return false;
+    }
+
+    glUseProgram(m_program);
+    if((glerr = glGetError()) != 0)
+    {
+        if(glerr == GL_INVALID_VALUE)
+            fprintf(stderr, "%s\n", "Error: No Shader program");
+        else if(glerr == GL_INVALID_OPERATION)
+            fprintf(stderr, "%s\n", "Error: invalid operation");
+        else
+            fprintf(stderr, "Failed to use program %i\n", glerr);
+        return false;
+    }
+    int shadowMapUniform = glGetUniformLocation(m_program, "ShadowMap");
+    int tex = glGetUniformLocation(m_program, "tex");
+    int normalMap = glGetUniformLocation(m_program, "normalMap");
+    m_interp = glGetUniformLocation(m_program, "interp");
+    glUniform1i(tex, 0); // diffuse texture to channel 0
+    glUniform1i(normalMap, 1); // tangent space normal map in channel 1
+    glUniform1i(shadowMapUniform, 7); // shadow space matrix to channel 7
+    glUniform1f(m_interp, 0.0f); // MD2 interpolation factor
+    glUseProgram(0);
+
+    int isValid;
+    glValidateProgram(m_program);
+    glGetProgramiv(m_program, GL_VALIDATE_STATUS, &isValid);
+    if(isValid != GL_TRUE)
+    {
+        char logbuffer[1024];
+        int usedlogbuffer;
+        glGetProgramInfoLog(m_program, sizeof(logbuffer), &usedlogbuffer, logbuffer);
+        fprintf(stderr, "GL Program Error:\n%s\n", logbuffer);
+        return false;
+    }
+
+    return true;
+}
+
 /*
 
 Animation: stand (0-39)
@@ -521,3 +892,4 @@ Animation: crpain (169-172)
 Animation: crdeath (173-177)
 
 */
+
