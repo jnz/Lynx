@@ -1,9 +1,6 @@
 # Exported by gile[s] version 2.0
 # 22:54:33 on 11-09-30
 # Registered to DKEPEBEO
-mtllib H:/Dokumente und Einstellungen/aline/Desktop/krempel von jan/gi/scenes/gile[s]-romanbath/test/bath.mtl
-o Scene
-#Begin Vertices
 v 30.000000 10.000000 -245.000000
 v 35.000000 115.000000 -246.856995
 v 35.000000 10.000000 -246.856995
@@ -14221,4 +14218,21 @@ usemtl RB_Marble00.tga
 f 2424/2424/2424 2426/2426/2426 2425/2425/2425
 f 2427/2427/2427 2426/2426/2426 2424/2424/2424
 f 2427/2427/2427 2428/2428/2428 2426/2426/2426
-#End Polygons
+spawn -68.67 2.11 -5.87
+spawn -107.36 12.11 -64.96
+spawn -132.02 12.11 18.34
+spawn -71.72 2.11 111.02
+spawn -42.20 -12.89 118.79
+spawn 7.27 -12.89 101.74
+spawn 38.21 -12.89 109.68
+spawn 68.05 2.99 117.69
+spawn 88.66 7.11 150.09
+spawn 132.84 12.11 212.68
+spawn 71.34 2.11 19.02
+spawn 50.22 -12.89 -23.87
+spawn 40.57 -12.89 -68.88
+spawn 46.03 -12.89 -97.74
+spawn 29.14 -12.89 -111.47
+spawn 8.39 -12.89 -69.66
+spawn 39.00 2.11 -148.07
+spawn 70.73 12.11 -193.33

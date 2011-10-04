@@ -17,7 +17,12 @@ public:
     uint8_t* GetBuffer(); // pointer to raw bytes
     int GetBufferSize(); // total buffer size
 
-    CStream GetStream(); // Get stream object from current position. This is NOT a deep copy, the stream points to the same memory region
+    // Get stream object from current position.
+    // This is NOT a deep copy, the stream points to the same memory region.
+    CStream GetStream();
+
+    // size in bytes the string would occupy in the stream
+    static size_t StringSize(const std::string& value);
 
     // WRITE FUNCTIONS
     void ResetWritePosition(); // Reset write pointer to start
@@ -39,8 +44,6 @@ public:
     void WriteBytes(const uint8_t* values, int len);
     uint16_t WriteString(const std::string& value); // Max Str len: 0xffff. return written bytes
     void WriteStream(const CStream& stream);
-
-    static size_t StringSize(const std::string& value); // size in bytes the string would occupy in the stream
 
     // READ FUNCTIONS
     void ResetReadPosition(); // Read from the beginning

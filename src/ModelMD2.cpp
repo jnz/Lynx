@@ -23,7 +23,8 @@ static const vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal lookup t
 };
 #pragma warning(pop)
 
-#define MAX_SKINNAME    64
+#define MD2_FPS         6             // frames per second
+#define MAX_SKINNAME    64            // max. characters for skin names
 #define MD2_LYNX_SCALE  (0.07f)
 
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
@@ -86,18 +87,16 @@ struct md2_file_triangle_t
 
 #pragma pack(pop)
 
-// was vertex_t, now used for VBO, so pack this struct too
-#pragma pack(push, 1)
+// md2_vertex_t is the vertex format used for VBO
 struct md2_vertex_t
 {
-    vec3_t v; // pos
-    vec3_t n; // normal
-    float tu, tv; // texcoord
-    vec3_t t; // tangent
-    float w; // direction of bitangent
-    vec3_t vdir; // lerp direction
+    vec3_t v;      // position
+    vec3_t n;      // normal vector
+    float tu, tv;  // texcoord u, v
+    vec3_t t;      // tangent vector
+    float w;       // direction of bitangent (-1 or 1): bitangent = cross(n, t)*w
+    vec3_t vdir;   // lerp direction of vertex position in the next frame: vnext = v + vdir
 };
-#pragma pack(pop)
 
 struct md2_texcoord_t
 {
@@ -106,24 +105,22 @@ struct md2_texcoord_t
 
 struct md2_triangle_t
 {
-    unsigned int v[3];
-    unsigned int uv[3];
+    unsigned int v[3];  // vertex indices
+    unsigned int uv[3]; // uv indices
 };
 
-// was frame_t
 struct md2_frame_t
 {
-    char          name[16];
-    int32_t       num_xyz;
-    md2_vertex_t* vertices;
+    char          name[16]; // frame name
+    int32_t       num_xyz;  // number of vertices
+    md2_vertex_t* vertices; // pointer to vertices for this frame
 };
 
-// was anim_t
 struct md2_anim_t
 {
-    char          name[16];
-    int32_t       start;
-    int32_t       end;
+    char          name[16]; // animation sequence name
+    int32_t       start;    // frame number of first frame in this animation
+    int32_t       end;      // last frame in this animation
 };
 
 CModelMD2::CModelMD2(void)
@@ -139,7 +136,7 @@ CModelMD2::CModelMD2(void)
     m_triangles = NULL;
     m_trianglecount = 0;
 
-    m_fps = 6.0f;
+    m_fps = (float)MD2_FPS;
     m_invfps = 1.0f/m_fps;
 
     m_tex = 0;
@@ -260,6 +257,7 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
         glUseProgram(0);
     }
 
+    // FIXME activate normal mapping for MD2 too
     //glActiveTexture(GL_TEXTURE1);
     //glBindTexture(GL_TEXTURE_2D, m_normalmap);
     glActiveTexture(GL_TEXTURE0);
@@ -806,7 +804,7 @@ bool CModelMD2::InitShader()
     if(vshader < 1)
         return false;
 
-    fprintf(stderr, "Compiling fragment shader...\n");
+    fprintf(stderr, "Compiling MD2 fragment shader...\n");
     int fshader = LoadAndCompileShader(GL_FRAGMENT_SHADER, CLynx::GetBaseDirFX() + "md2fshader.txt");
     if(fshader < 1)
         return false;

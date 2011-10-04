@@ -7,30 +7,18 @@ uniform float interp; // lerp factor of model
 // Vertex shader
 void main()
 {
-    vec4 vPos = gl_ModelViewMatrix * gl_Vertex; // transform to eye-space
-
-    vec4 lerpvertex;
+    vec4 lerpvertex; // lerped vertex between current frame and next frame
     lerpvertex.xyz = gl_Vertex.xyz + gl_MultiTexCoord2.xyz*interp;
     lerpvertex.w = 1.0;
     gl_Position = gl_ModelViewProjectionMatrix * lerpvertex;
 
-    ShadowCoord = gl_TextureMatrix[7] * gl_Vertex; // transform position to shadow space
+    // Texture coordinates for base texture
     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0; // base texture
 
-    vec3 n = normalize(gl_NormalMatrix * gl_Normal); // use gl_NormalMatrix * to transform to eye-space
-    vec3 t = normalize(gl_NormalMatrix * gl_MultiTexCoord1.xyz);
-    vec3 b = cross(n, t) * gl_MultiTexCoord1.w;
-
-    // obj space to tangent space matrix
-    /*mat3 tbnMatrix = mat3(t.x, b.x, n.x,*/
-                          /*t.y, b.y, n.y,*/
-                          /*t.z, b.z, n.z);*/
-
-    // light position to eye space
+    // transform light to eye space
     vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
-    lightDir = lightpos.xyz - vPos.xyz;
-    /*lightDir = tbnMatrix * lightDir; // light dir in tangent space*/
-    normal = n;
-    eyedir = -vPos.xyz;
+    lightDir = lightpos.xyz; // lightdir in eye space
+    normal = normalize(gl_NormalMatrix * gl_Normal);
+    eyedir = -lerpvertex.xyz;
 }
 

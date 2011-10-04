@@ -291,9 +291,9 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     if(iter == m_history.end())
     {
         m_world->Serialize(true, &m_stream, NULL);
-        // fprintf(stderr, "NET: Full update MTU: %i Bytes to be send: %i\n",
-        //         client->GetPeer()->mtu,
-        //         m_stream.GetBytesWritten());
+        fprintf(stderr, "NET: Full update MTU: %i Bytes to be send: %i\n",
+                client->GetPeer()->mtu,
+                m_stream.GetBytesWritten());
     }
     else
     {

@@ -98,6 +98,7 @@ void CStream::ResetWritePosition()
 
 int CStream::GetSpaceLeft()
 {
+    assert(m_size >= m_used);
     return m_size - m_used;
 }
 
@@ -128,6 +129,7 @@ CStream CStream::GetStream()
 
 void CStream::WriteAdvance(int bytes)
 {
+    assert(m_used + bytes <= m_size);
     m_used += bytes;
 }
 

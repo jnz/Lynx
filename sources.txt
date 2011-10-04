@@ -16,3 +16,5 @@ Doom 3 md5mesh: pinky, marine, shotgut and rocket launcher.
 Clint Bellanger's bitmap font from opengameart.
 http://opengameart.org/content/bitmap-font
 
+Models by W. Sitters.
+

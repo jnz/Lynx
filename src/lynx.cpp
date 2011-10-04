@@ -108,18 +108,22 @@ std::string CLynx::ReadCompleteFile(const std::string& path)
         return "";
 
     fseek(f, 0, SEEK_END);
-    unsigned int fsize = ftell(f);
+    const unsigned int fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
-    char* buff = new char[fsize+5]; // 5 bytes, so you can sleep better
+    char* buff = new char[fsize+5]; // 1 byte for the NULL, and 4 bytes so you can sleep better
     if(!buff)
         return "";
 
-    fread(buff, fsize, 1, f);
+    if(fread(buff, fsize, 1, f) != 1) // read error
+    {
+        delete[] buff;
+        return "";
+    }
     buff[fsize] = NULL;
     std::string shader(buff);
 
-    delete[] buff;
     fclose(f);
+    delete[] buff;
 
     return shader;
 }

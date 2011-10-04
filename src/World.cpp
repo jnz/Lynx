@@ -339,7 +339,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
         else
         {
             fprintf(stderr, "Failed to unstuck object\n");
-            assert(0); // uh oh, should not happen
+            //assert(0); // uh oh, should not happen
         }
         pos = obj->GetOrigin(); // this is either the original position or some position from TryUnstuck()
     }
