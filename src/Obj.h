@@ -40,6 +40,11 @@ int DeltaDiffQuat(const quaternion_t* newstate,
                   const uint32_t flagparam,
                   uint32_t* updateflags,
                   CStream* stream);
+int DeltaDiffQuatUnit(const quaternion_t* newstate,
+                      const quaternion_t* oldstate,
+                      const uint32_t flagparam,
+                      uint32_t* updateflags,
+                      CStream* stream); //Unit quat
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
                    const uint32_t flagparam,

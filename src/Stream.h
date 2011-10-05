@@ -41,6 +41,7 @@ public:
     void WriteFloat(float value);
     void WriteVec3(const vec3_t& value);
     void WriteQuat(const quaternion_t& value);
+    void WriteQuatUnit(const quaternion_t& value);
     void WriteBytes(const uint8_t* values, unsigned int len);
     uint16_t WriteString(const std::string& value); // Max Str len: 0xffff. returns written bytes
     void WriteStream(const CStream& stream);
@@ -59,7 +60,8 @@ public:
     void ReadChar(int8_t* value); // note: char as in plain c, no unicode
     void ReadFloat(float* value);
     void ReadVec3(vec3_t* value); // 3*4 Bytes
-    void ReadQuat(quaternion_t* value);
+    void ReadQuat(quaternion_t* value); // read quaternion (16 bytes)
+    void ReadQuatUnit(quaternion_t* value); // read unit length quaternion (12 bytes)
     void ReadBytes(uint8_t* values, int len);
     void ReadString(std::string* value);
 

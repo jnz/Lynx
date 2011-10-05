@@ -51,6 +51,9 @@ void CGameObjZombie::DealDamage(int damage,
                                 CGameObj* dealer,
                                 bool& killed_me)
 {
+    if(GetFlags() & OBJ_FLAGS_ELASTIC) // we use this flag to remember that this zombie is dead
+        return;
+
     CGameObj::DealDamage(damage, hitpoint, dir, dealer, killed_me);
 
     if(!killed_me)
@@ -66,21 +69,18 @@ void CGameObjZombie::DealDamage(int damage,
         return;
     }
 
-    if(GetFlags() & OBJ_FLAGS_ELASTIC) // we use this flag to remember that this zombie is dead
-        return;
-
     SpawnParticleBlood(hitpoint, dir, 9.0f); // big splatter effect for death scene
     if(dealer)
     {
         SetRot(TurnTo(dealer->GetOrigin()));
     }
-    SetVel(vec3_t::origin);
+    SetVel(dir.Normalized()*35.0f + vec3_t(0, 20.0f, 0));
     // SetAnimation(ANIMATION_IDLE); // FIXME we need a animation for a dying zombie
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
-    AddFlags(OBJ_FLAGS_GHOST);
+    // AddFlags(OBJ_FLAGS_GHOST);
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
-                    GetWorld()->GetLeveltime() + 5000, // 5 sec respawn time
+                    GetWorld()->GetLeveltime() + 500, // respawn time
                     GetWorld(),
                     this));
     if(CLynx::randfabs() < 0.88f) // 88% change of sound playing

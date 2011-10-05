@@ -219,6 +219,20 @@ int DeltaDiffQuat(const quaternion_t* newstate,
     return 0;
 }
 
+int DeltaDiffQuatUnit(const quaternion_t* newstate,
+                      const quaternion_t* oldstate,
+                      const uint32_t flagparam,
+                      uint32_t* updateflags,
+                      CStream* stream)
+{
+    if(!oldstate || (*newstate != *oldstate)) {
+        *updateflags |= flagparam;
+        if(stream) stream->WriteQuatUnit(*newstate);
+        return sizeof(quaternion_t);
+    }
+    return 0;
+}
+
 int DeltaDiffFloat(const float* newstate,
                    const float* oldstate,
                    const uint32_t flagparam,
@@ -310,15 +324,15 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         CStream tempstream = stream->GetStream(); // we remember the position of the updateflags
         stream->WriteAdvance(sizeof(uint32_t)); // we advance by sizeof(DWORD) bytes
 
-        DeltaDiffVec3(&state.origin,            oldstate ? &oldstate->origin : NULL,        OBJ_STATE_ORIGIN,       &updateflags, stream);
-        DeltaDiffVec3(&state.vel,               oldstate ? &oldstate->vel : NULL,           OBJ_STATE_VEL,          &updateflags, stream);
-        DeltaDiffQuat(&state.rot,               oldstate ? &oldstate->rot : NULL,           OBJ_STATE_ROT,          &updateflags, stream);
-        DeltaDiffFloat(&state.radius,           oldstate ? &oldstate->radius : NULL,        OBJ_STATE_RADIUS,       &updateflags, stream);
-        DeltaDiffString(&state.resource,        oldstate ? &oldstate->resource : NULL,      OBJ_STATE_RESOURCE,     &updateflags, stream);
-        DeltaDiffInt16(&state.animation,        oldstate ? &oldstate->animation : NULL,     OBJ_STATE_ANIMATION,    &updateflags, stream);
-        DeltaDiffVec3(&state.eyepos,            oldstate ? &oldstate->eyepos : NULL,        OBJ_STATE_EYEPOS,       &updateflags, stream);
-        DeltaDiffBytes(&state.flags,            oldstate ? &oldstate->flags : NULL,         OBJ_STATE_FLAGS,        &updateflags, stream, sizeof(state.flags));
-        DeltaDiffString(&state.particles,       oldstate ? &oldstate->particles : NULL,     OBJ_STATE_PARTICLES,    &updateflags, stream);
+        DeltaDiffVec3(&state.origin,       oldstate ? &oldstate->origin : NULL,     OBJ_STATE_ORIGIN,     &updateflags, stream);
+        DeltaDiffVec3(&state.vel,          oldstate ? &oldstate->vel : NULL,        OBJ_STATE_VEL,        &updateflags, stream);
+        DeltaDiffQuat(&state.rot,          oldstate ? &oldstate->rot : NULL,        OBJ_STATE_ROT,        &updateflags, stream);
+        DeltaDiffFloat(&state.radius,      oldstate ? &oldstate->radius : NULL,     OBJ_STATE_RADIUS,     &updateflags, stream);
+        DeltaDiffString(&state.resource,   oldstate ? &oldstate->resource : NULL,   OBJ_STATE_RESOURCE,   &updateflags, stream);
+        DeltaDiffInt16(&state.animation,   oldstate ? &oldstate->animation : NULL,  OBJ_STATE_ANIMATION,  &updateflags, stream);
+        DeltaDiffVec3(&state.eyepos,       oldstate ? &oldstate->eyepos : NULL,     OBJ_STATE_EYEPOS,     &updateflags, stream);
+        DeltaDiffBytes(&state.flags,       oldstate ? &oldstate->flags : NULL,      OBJ_STATE_FLAGS,      &updateflags, stream, sizeof(state.flags));
+        DeltaDiffString(&state.particles,  oldstate ? &oldstate->particles : NULL,  OBJ_STATE_PARTICLES,  &updateflags, stream);
 
         tempstream.WriteDWORD(updateflags); // now we can write the updateflags
 

@@ -258,6 +258,14 @@ void CStream::WriteQuat(const quaternion_t& value)
     WriteFloat(value.w);
 }
 
+void CStream::WriteQuatUnit(const quaternion_t& value)
+{
+    const quaternion_t q = value.Normalized();
+    WriteFloat(value.x);
+    WriteFloat(value.y);
+    WriteFloat(value.z);
+}
+
 void CStream::WriteBytes(const uint8_t* values, unsigned int len)
 {
     if(m_used + len > m_size)
@@ -406,6 +414,14 @@ void CStream::ReadQuat(quaternion_t* value)
     ReadFloat(&value->y);
     ReadFloat(&value->z);
     ReadFloat(&value->w);
+}
+
+void CStream::ReadQuatUnit(quaternion_t* value)
+{
+    ReadFloat(&value->x);
+    ReadFloat(&value->y);
+    ReadFloat(&value->z);
+    value->ComputeW();
 }
 
 void CStream::ReadBytes(uint8_t* values, int len)

@@ -146,12 +146,22 @@ void quaternion_t::Normalize()
     const float abssqr = x*x + y*y* + z*z + w*w;
     if(fabsf(abssqr - 1.0f) > lynxmath::EPSILON ||
        fabsf(abssqr) < lynxmath::EPSILON)
+    {
+        assert(0);
         return;
+    }
     const float invabs = lynxmath::InvSqrt(abssqr);
     x *= invabs;
     y *= invabs;
     z *= invabs;
     w *= invabs;
+}
+
+quaternion_t quaternion_t::Normalized() const
+{
+    quaternion_t q(*this);
+    q.Normalize();
+    return q;
 }
 
 bool quaternion_t::IsNormalized() const
