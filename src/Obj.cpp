@@ -189,7 +189,7 @@ const std::string& CObj::GetParticleSystemName() const
     return state.particles;
 }
 
-// DELTA COMPRESSION CODE (ugly) ------------------------------------
+// DELTA COMPRESSION CODE ----------------------------------------
 
 int DeltaDiffVec3(const vec3_t* newstate,
                   const vec3_t* oldstate,
@@ -200,7 +200,7 @@ int DeltaDiffVec3(const vec3_t* newstate,
     if(!oldstate || (*newstate != *oldstate)) {
         *updateflags |= flagparam;
         if(stream) stream->WriteVec3(*newstate);
-        return STREAM_SIZE_VEC3;
+        return sizeof(vec3_t);
     }
     return 0;
 }
@@ -357,7 +357,8 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             UpdateParticles();
     }
 
-    return updateflags != 0;
+    assert(!stream->GetReadOverflow() && !stream->GetWriteOverflow());
+    return (updateflags != 0) && !stream->GetReadOverflow() && !stream->GetWriteOverflow();
 }
 
 void CObj::SetObjState(const obj_state_t* objstate, int id)

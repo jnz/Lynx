@@ -5,12 +5,16 @@ Lynx is a simple 3D FPS with zombies :)
 If zombies won't convince you, there are some other features:
 
 - Multiplayer with robust network latency interpolation
-- OpenGL 2.0
-- Shadow mapping
-- Per-pixel lighting
-- Normal mapping
+- Delta compression
 - Dedicated server
 - Multiplatform support (Windows, Mac OS X, Linux)
+- OpenGL 2.0
+- Per-pixel lighting
+- Shadow mapping (dynamic)
+- Light mapping (precalculated)
+- Normal mapping
+- MD2 and MD5 mesh support
+- MD2 interpolation on hardware
 - Blender as a map editor + custom KD tree compiler
 - Did I mention zombies?
 
@@ -68,21 +72,6 @@ Copy these files (lynx3d and lynx3dsv) to the game directory:
 
 The game folder contains the *baselynx* folder, where all the resources are
 stored.
-
-Run Lynx
-========
-
-Local game:
-
-> lynx3d
-
-Connect to remote server with the ip address 192.168.0.1 at port 9999:
-
-> lynx3d 192.168.0.1 9999
-
-Start a dedicated server at port 9999:
-
-> lynx3dsv 9999
 
 Create a level in Lynx
 ======================

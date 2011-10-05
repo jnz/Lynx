@@ -2,6 +2,10 @@
 
 #include "mathconst.h"
 #include <assert.h>
+#if defined(WIN32) && defined(_DEBUG)
+#include <float.h>
+#define isnan(x)  (_isnan(x))
+#endif
 
 struct vec3_t
 {

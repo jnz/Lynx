@@ -521,23 +521,22 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
     if(write)
     {
         uint32_t updateflags = 0;
-        CStream tempstream = stream->GetStream();
-        stream->WriteAdvance(sizeof(uint32_t)); // An dieser Stelle sollten als DWORD die Updateflags stehen, diese kennen wir erst, nachdem wir sie geschrieben haben
+        CStream tempstream = stream->GetStream(); // save this position, so we can write here the updateflags a few lines later
+        stream->WriteAdvance(sizeof(uint32_t));
 
         // Write to tempstream to check for updateflags
-        DeltaDiffDWORD(&state.worldid, oldstate ? &oldstate->worldid : NULL, WORLD_STATE_WORLDID, &updateflags, stream);
-        DeltaDiffDWORD(&state.leveltime, oldstate ? &oldstate->leveltime : NULL, WORLD_STATE_LEVELTIME, &updateflags, stream);
-        DeltaDiffString(&state.level, oldstate ? &oldstate->level : NULL, WORLD_STATE_LEVEL, &updateflags, stream);
+        DeltaDiffDWORD(&state.worldid   , oldstate ? &oldstate->worldid : NULL   , WORLD_STATE_WORLDID   , &updateflags , stream);
+        DeltaDiffDWORD(&state.leveltime , oldstate ? &oldstate->leveltime : NULL , WORLD_STATE_LEVELTIME , &updateflags , stream);
+        DeltaDiffString(&state.level    , oldstate ? &oldstate->level : NULL     , WORLD_STATE_LEVEL     , &updateflags , stream);
         // [NEW ATTRIBUTES HERE]
 
         if(updateflags > WORLD_STATE_NO_REAL_CHANGE)
             changes++;
 
         assert(oldstate ? 1 : (updateflags == WORLD_STATE_FULLUPDATE)); // this has to be enforced
-        tempstream.WriteDWORD(updateflags); // Now we know the updateflags and can write them to the actual stream
+        tempstream.WriteDWORD(updateflags); // Now we know the updateflags and can write them to the saved position
 
         // Write all objects
-        assert(GetObjCount() < INT_MAX);
         stream->WriteDWORD((uint32_t)GetObjCount());
 
         obj_state_t obj_oldstate;
@@ -631,7 +630,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
         UpdatePendingObjs();
     }
 
-    return changes > 0;
+    return (changes > 0) && !stream->GetWriteOverflow() && !stream->GetReadOverflow();
 }
 
 world_state_t CWorld::GetWorldState()
