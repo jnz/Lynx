@@ -15,23 +15,22 @@
 
 #pragma warning(push)
 #pragma warning(disable: 4305)
-#define NUMVERTEXNORMALS 162
+#define NUMVERTEXNORMALS 162 // used later to check if a vertex index is valid
 typedef float vec3array[3];
-static const vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal lookup table
+static const vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal table
 {
     #include "anorms.h"
 };
 #pragma warning(pop)
 
-#define MD2_FPS         6             // frames per second
+#define MD2_FPS         8             // frames per second
 #define MAX_SKINNAME    64            // max. characters for skin names
 #define MD2_LYNX_SCALE  (0.07f)
 
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
 
+// structs with _file_ in name are packed to match the layout in the file
 #pragma pack(push, 1)
-
-// every struct here, that is byte aligned, is "on-disk" layout
 
 struct md2_file_header_t // (from quake2 src)
 {
@@ -93,8 +92,8 @@ struct md2_vertex_t
     vec3_t v;      // position
     vec3_t n;      // normal vector
     float tu, tv;  // texcoord u, v
-    vec3_t t;      // tangent vector
-    float w;       // direction of bitangent (-1 or 1): bitangent = cross(n, t)*w
+    //vec3_t t;      // tangent vector
+    //float w;       // direction of bitangent (-1 or 1): bitangent = cross(n, t)*w
     vec3_t vdir;   // lerp direction of vertex position in the next frame: vnext = v + vdir
 };
 
@@ -183,13 +182,14 @@ void CModelMD2::Render(const model_state_t* mstate)
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glTexCoordPointer(2, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(24));
 
-        glClientActiveTexture(GL_TEXTURE1); // tangent and bitangent
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(4, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(32));
+        //glClientActiveTexture(GL_TEXTURE1); // tangent and bitangent
+        //glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        //glTexCoordPointer(4, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(32));
 
         glClientActiveTexture(GL_TEXTURE2); // vertex dir for lerping
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(3, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(48));
+        //glTexCoordPointer(3, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(48));
+        glTexCoordPointer(3, GL_FLOAT, sizeof(md2_vertex_t), BUFFER_OFFSET(32));
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, m_normalmap);
@@ -244,11 +244,10 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
     md2_vertex_t* cur_vertex;
     md2_vertex_t* next_vertex;
     vec3_t inter_xyz, inter_n; // interpolated
-
+    const float lerp = state->time * m_fps;
     unsigned int i, j;
     int uvindex;
     int vindex;
-
     int curprg;
 
     if(m_shaderactive)
@@ -257,9 +256,6 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
         glUseProgram(0);
     }
 
-    // FIXME activate normal mapping for MD2 too
-    //glActiveTexture(GL_TEXTURE1);
-    //glBindTexture(GL_TEXTURE_2D, m_normalmap);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_tex);
 
@@ -278,14 +274,14 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
             cur_vertex = &cur_vertices[vindex];
             next_vertex = &next_vertices[vindex];
 
-            inter_n = cur_vertex->n +
-                (next_vertex->n - cur_vertex->n) *
-                state->time * m_fps;
+            inter_n = vec3_t::Lerp(cur_vertex->n,
+                                   next_vertex->n,
+                                   lerp);
             glNormal3fv(inter_n.GetPointer());
 
-            inter_xyz = cur_vertex->v +
-                (next_vertex->v - cur_vertex->v) *
-                state->time * m_fps;
+            inter_xyz = vec3_t::Lerp(cur_vertex->v,
+                                     next_vertex->v,
+                                     state->time * m_fps);
             glVertex3fv(inter_xyz.GetPointer());
 
         }
@@ -579,8 +575,8 @@ void CModelMD2::Animate(model_state_t* mstate, const float dt) const
 
 int CModelMD2::GetNextFrameInAnim(const md2_state_t* state, int increment) const
 {
-    int size = m_anims[state->md2anim].end - m_anims[state->md2anim].start + 1;
-    int step = state->curr_frame - m_anims[state->md2anim].start + increment;
+    const int size = m_anims[state->md2anim].end - m_anims[state->md2anim].start + 1;
+    const int step = state->curr_frame - m_anims[state->md2anim].start + increment;
     return m_anims[state->md2anim].start + (step % size);
 }
 
@@ -691,8 +687,7 @@ bool CModelMD2::AllocVertexBuffer()
                        vertex.v != vbovertices[vindex].v ||
                        vertex.n != vbovertices[vindex].n ||
                        vertex.tu != vbovertices[vindex].tu ||
-                       vertex.tv != vbovertices[vindex].tv ||
-                       vertex.vdir != vbovertices[vindex].vdir)
+                       vertex.tv != vbovertices[vindex].tv)
                     {
                         vbovertices.push_back(vertex);
                         vindex = vbovertices.size()-1;
