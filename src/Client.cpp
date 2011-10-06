@@ -100,12 +100,19 @@ void CClient::Update(const float dt, const uint32_t ticks)
         switch (event.type)
         {
         case ENET_EVENT_TYPE_RECEIVE:
-            //fprintf(stderr, "CL: A packet of length %u was received \n",
-            //  event.packet->dataLength);
+            //if(CLynxSys::GetKeyState()[SDLK_g])
+                //fprintf(stderr, "CL: A packet of length %u was received \n",
+                    //event.packet->dataLength);
+
+            //if(rand()%5 == 2)
+            //{
+                //fprintf(stderr, "fake packet loss\n");
+                //continue;
+            //}
 
             stream.SetBuffer(event.packet->data,
-                            (int)event.packet->dataLength,
-                            (int)event.packet->dataLength);
+                             event.packet->dataLength,
+                             event.packet->dataLength);
             OnReceive(&stream);
             enet_packet_destroy(event.packet);
 
@@ -128,14 +135,14 @@ void CClient::Update(const float dt, const uint32_t ticks)
     if(result == -1)
         return;
 
-    // Eingabe und Steuerung
+    // Input and control
     std::vector<std::string> clcmdlist;
     bool forcesend = false;
     InputGetCmdList(&clcmdlist, &forcesend);
     InputMouseMove(); // update m_lat and m_lon
     m_gamelogic->ClientMove(GetLocalController(), clcmdlist);
 
-    // Sende Eingabe an Server
+    // Send input to server
     SendClientState(clcmdlist, forcesend, ticks);
 }
 

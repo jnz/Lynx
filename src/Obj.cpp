@@ -18,11 +18,10 @@
 #define OBJ_STATE_RADIUS         (1 <<  3)
 #define OBJ_STATE_RESOURCE       (1 <<  4)
 #define OBJ_STATE_ANIMATION      (1 <<  5)
-#define OBJ_STATE_EYEPOS         (1 <<  6)
-#define OBJ_STATE_FLAGS          (1 <<  7)
-#define OBJ_STATE_PARTICLES      (1 <<  8)
+#define OBJ_STATE_FLAGS          (1 <<  6)
+#define OBJ_STATE_PARTICLES      (1 <<  7)
 
-#define OBJ_STATE_FULLUPDATE     ((1 << 9)-1)
+#define OBJ_STATE_FULLUPDATE     ((1 << 8)-1)
 
 int CObj::m_idpool = 0;
 
@@ -31,7 +30,6 @@ CObj::CObj(CWorld* world)
     assert(world);
     m_id = ++m_idpool;
     state.radius = 2*lynxmath::SQRT_2;
-    state.eyepos = vec3_t(0,0.5f,0);
     state.animation = ANIMATION_NONE;
     state.flags = 0;
     m_mesh = NULL;
@@ -115,16 +113,6 @@ void CObj::SetAnimation(animation_t animation)
         state.animation = animation;
         UpdateResources();
     }
-}
-
-const vec3_t& CObj::GetEyePos() const
-{
-    return state.eyepos;
-}
-
-void CObj::SetEyePos(const vec3_t& eyepos)
-{
-    state.eyepos = eyepos;
 }
 
 OBJFLAGTYPE CObj::GetFlags() const
@@ -330,7 +318,6 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
         DeltaDiffFloat(&state.radius,      oldstate ? &oldstate->radius : NULL,     OBJ_STATE_RADIUS,     &updateflags, stream);
         DeltaDiffString(&state.resource,   oldstate ? &oldstate->resource : NULL,   OBJ_STATE_RESOURCE,   &updateflags, stream);
         DeltaDiffInt16(&state.animation,   oldstate ? &oldstate->animation : NULL,  OBJ_STATE_ANIMATION,  &updateflags, stream);
-        DeltaDiffVec3(&state.eyepos,       oldstate ? &oldstate->eyepos : NULL,     OBJ_STATE_EYEPOS,     &updateflags, stream);
         DeltaDiffBytes(&state.flags,       oldstate ? &oldstate->flags : NULL,      OBJ_STATE_FLAGS,      &updateflags, stream, sizeof(state.flags));
         DeltaDiffString(&state.particles,  oldstate ? &oldstate->particles : NULL,  OBJ_STATE_PARTICLES,  &updateflags, stream);
 
@@ -357,8 +344,6 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
             stream->ReadString(&state.resource);
         if(updateflags & OBJ_STATE_ANIMATION)
             stream->ReadInt16(&state.animation);
-        if(updateflags & OBJ_STATE_EYEPOS)
-            stream->ReadVec3(&state.eyepos);
         if(updateflags & OBJ_STATE_FLAGS)
             stream->ReadBytes(&state.flags, sizeof(state.flags));
         if(updateflags & OBJ_STATE_PARTICLES)

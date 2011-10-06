@@ -198,7 +198,7 @@ void CGameObjPlayer::FireRocket()
     CGameObjRocket* rocket = new CGameObjRocket(GetWorld());
 
     vec3_t rocketstart = GetOrigin() +
-                         up*GetEyePos().y +
+                         up*GetRadius()*0.8f +
                          dir*1.1f*GetRadius() +
                          side*0.5f;
 
@@ -227,7 +227,7 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         //SpawnParticleBlood(hitpoint, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
         // Experimental: spawn blood in front of player's face
         // to get visual feedback on damage
-        SpawnParticleBlood(GetOrigin()+GetEyePos(), dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
+        SpawnParticleBlood(GetOrigin()+GetRadius()*0.8f, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
     }
 
     if(killed_me)

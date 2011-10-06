@@ -100,10 +100,10 @@ void CWorldClient::CreateClientInterp()
         return;
 
     std::list<worldclient_state_t>::iterator iter = m_history.begin();
-    const uint32_t tlocal = CLynxSys::GetTicks(); // aktuelle zeit
-    const uint32_t tlocal_n = (*iter).localtime; // zeit von letztem packet
-    const uint32_t dtupdate = tlocal - tlocal_n; // zeit seit letztem update
-    const uint32_t rendertime = tlocal - RENDER_DELAY; // Zeitpunkt für den interpoliert werden soll
+    const uint32_t tlocal = CLynxSys::GetTicks(); // current time
+    const uint32_t tlocal_n = (*iter).localtime;  // time of last packet
+    const uint32_t dtupdate = tlocal - tlocal_n;  // time since last update
+    const uint32_t rendertime = tlocal - RENDER_DELAY; // interpolation point
 
     if(dtupdate > RENDER_DELAY)
     {
@@ -242,3 +242,4 @@ void CWorldInterp::Update(const float dt, const uint32_t ticks) // Interpoliert 
         obj->SetRot(quaternion_t(obj1.rot, obj2.rot, f)); // Quaternion Slerp
     }
 }
+

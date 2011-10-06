@@ -273,7 +273,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     localctrlid = m_world->GetLocalObj()->GetID();
     world = m_world->GetInterpWorld();
 
-    const vec3_t campos = localctrl->GetOrigin()+localctrl->GetEyePos();
+    const vec3_t campos = localctrl->GetOrigin()+localctrl->GetRadius()*0.8f;
     const quaternion_t camrot = localctrl->GetRot();
 
     m.SetCamTransform(campos, camrot);

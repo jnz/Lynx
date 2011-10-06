@@ -88,7 +88,6 @@ struct obj_state_t
     float           radius;
     std::string     resource;
     animation_t     animation;
-    vec3_t          eyepos;
     OBJFLAGTYPE     flags;
     std::string     particles;      // Particlesystem bound to this object. The string looks something like this: "blood|dx=0.1,dy=0.6,dz=23".
 };
@@ -122,8 +121,6 @@ public:
     void        SetResource(std::string resource);
     animation_t GetAnimation() const;
     void        SetAnimation(animation_t animation);
-    const vec3_t& GetEyePos() const;
-    void        SetEyePos(const vec3_t& eyepos);
     OBJFLAGTYPE GetFlags() const;
     void        SetFlags(OBJFLAGTYPE flags);
     void        AddFlags(OBJFLAGTYPE flags);

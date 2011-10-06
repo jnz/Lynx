@@ -20,6 +20,8 @@
  *
  * */
 
+#define THINK_INTERVAL           50  // ms
+
 class CThinkFunc
 {
 public:
