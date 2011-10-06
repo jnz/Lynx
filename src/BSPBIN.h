@@ -8,7 +8,7 @@
 #define BSPBIN_MAGIC                    0x12051982 // my birthday :)
 #define BSPBIN_VERSION                  7
 #define BSPBIN_HEADER_LEN               (sizeof(bspbin_header_t) + 7*sizeof(bspbin_direntry_t))
-#define MAX_TRACE_DIST      			99999.999f
+#define MAX_TRACE_DIST                  99999.999f
 
 // what data type should we use for the
 // VBO index buffer?
