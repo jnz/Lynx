@@ -5,8 +5,8 @@ Lynx is a simple 3D FPS with zombies :)
 If zombies won't convince you, there are some other features:
 
 - Multiplayer with robust network latency interpolation
-- Delta compression
 - Dedicated server
+- Network delta compression
 - Multiplatform support (Windows, Mac OS X, Linux)
 - OpenGL 2.0
 - Per-pixel lighting
@@ -34,6 +34,15 @@ Download and install the following libraries:
 - enet: [http://enet.bespin.org/SourceDistro.html](http://enet.bespin.org/SourceDistro.html)
 - SDL: [http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip](http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip)
 - glew: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
+
+Compile Lynx on Windows
+=======================
+
+Use the Visual Studio 2010 project file
+
+> lynx.sln
+
+And compile the project. Make sure you have the libraries in path.
 
 Compile Lynx on Linux and Mac OS X
 ==================================
