@@ -20,8 +20,10 @@ public:
     bool            Create(int port); // Start server on port
     void            Shutdown(); // Stop server
 
+    // Server business
     void            Update(const float dt, const uint32_t ticks);
 
+    // Manage client information
     CClientInfo*    GetClient(int id);
     int             GetClientCount() const;
     CLIENTITER      GetClientBegin() { return m_clientlist.begin(); }
@@ -31,17 +33,23 @@ protected:
     bool SendWorldToClient(CClientInfo* client);
     void OnReceive(CStream* stream, CClientInfo* client);
 
-    void UpdateHistoryBuffer(); // Alte HistoryBuffer Einträge löschen, kein Client benötigt mehr so eine alte Welt, oder die Welt ist zu alt und Client bekommt ein komplettes Update.
-    void ClientHistoryACK(CClientInfo* client, uint32_t worldid); // Client bestätigt
+    // Delete old history buffer entries if no client no longer needs them, or
+    // they are so old, that the client probably is disconnected or has a huge lag.
+    void UpdateHistoryBuffer();
+    // Client ACK of snapshot, used for delta compression
+    void ClientHistoryACK(CClientInfo* client, uint32_t worldid);
 
 private:
     ENetHost* m_server;
     std::map<int, CClientInfo*> m_clientlist;
 
-    std::map<uint32_t, world_state_t> m_history; // World History Buffer. Benötigt für Quake 3 Network Modell bzw. differentielle Updates an Clients
+    // World History Buffer. Used for Q3 like delta compression.
+    std::map<uint32_t, world_state_t> m_history;
 
     uint32_t m_lastupdate;
     CWorld* m_world;
 
-    CStream m_stream; // damit buffer nicht jedesmal neu erstellt werden muss
+    // We make this stream a member variable so that the server can reuse it
+    // every frame. Otherwise we would have to new/delete 64k every frame.
+    CStream m_stream;
 };
