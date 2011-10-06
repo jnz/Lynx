@@ -4,6 +4,10 @@
 
 /*
     FIXME: translate this
+    CWorldClient collects the world snapshots from the server.
+    CWorldClient itself is the latest snapshot from the server.
+
+
 
     CWorldClient ist dafür zuständig, den neuesten Zustand
     der Welt, die vom Server aus gesendet wird zu sammeln.

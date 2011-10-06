@@ -29,7 +29,7 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glBegin(GL_QUADS);
 
-    // FIXME use vbos instead of this
+    // use vbos instead of this
     std::vector<particle_t>::const_iterator iter;
     for(iter = m_particles.begin();iter != m_particles.end(); ++iter)
     {

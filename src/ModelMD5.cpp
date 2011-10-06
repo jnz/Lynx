@@ -700,7 +700,6 @@ bool CModelMD5::Load(const char *path, CResourceManager* resman, bool loadtextur
                 /* Read whole line */
                 fgets(buff, sizeof(buff), f);
 
-                /* FIXME possible buffer overflow here for joint->name */
                 if(sscanf(buff, "%s %d ( %f %f %f ) ( %f %f %f )",
                           joint->name, &joint->parent, &tmppos.x,
                           &tmppos.y, &tmppos.z, &joint->orient.x,

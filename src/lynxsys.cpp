@@ -69,3 +69,4 @@ uint8_t* CLynxSys::GetKeyState(unsigned int key, bool keydown, bool keyup)
 
     return keymap;
 }
+

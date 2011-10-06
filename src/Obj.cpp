@@ -95,7 +95,7 @@ void CObj::SetResource(std::string resource)
     if(state.resource != resource)
     {
         state.resource = resource;
-        UpdateAnimation();
+        UpdateResources();
         if(m_mesh)
         {
             state.radius = m_mesh->GetSphere();
@@ -113,7 +113,7 @@ void CObj::SetAnimation(animation_t animation)
     if(animation != state.animation)
     {
         state.animation = animation;
-        UpdateAnimation();
+        UpdateResources();
     }
 }
 
@@ -366,7 +366,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
 
         m_id = id;
         if(updateflags & OBJ_STATE_RESOURCE || updateflags & OBJ_STATE_ANIMATION)
-            UpdateAnimation();
+            UpdateResources();
         if(updateflags & OBJ_STATE_PARTICLES)
             UpdateParticles();
     }
@@ -385,7 +385,7 @@ void CObj::SetObjState(const obj_state_t* objstate, int id)
 
     state = *objstate;
     if(resourcechange)
-        UpdateAnimation();
+        UpdateResources();
     if(rotationchange)
         UpdateMatrix();
     if(particlechange)
@@ -397,7 +397,7 @@ void CObj::CopyObjStateFrom(const CObj* source)
     SetObjState(&source->state, m_id);
 }
 
-void CObj::UpdateAnimation() // FIXME the name is misleading, as this method also loads sounds
+void CObj::UpdateResources()
 {
     m_mesh = NULL;
     m_sound = NULL;

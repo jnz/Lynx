@@ -8,7 +8,8 @@
 #include "Model.h"
 #include "ResourceManager.h"
 
-#define BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK //FIXME translate some doom3 models in the code... the pain... remove this ASAP... ASAP!
+//FIXME translate some doom3 models in the code... the pain... remove this ASAP... ASAP!
+#define BIG_STUPID_DOOM3_ROCKETLAUNCHER_HACK
 
 #define MD5_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_INT
 typedef uint32_t md5_vertexindex_t;

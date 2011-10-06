@@ -154,10 +154,15 @@ public:
 protected:
     obj_state_t state; // Core data
 
+    // UpdateResources: make sure that m_mesh points to the right model
+    // (i.e. the one set in state.resource)
+    // This will also load sounds, if the object has a soundfile
+    // in the state.resource string.
+    void           UpdateResources();
+
     // Animation extension
     CModel*        m_mesh;
     model_state_t* m_mesh_state;
-    void           UpdateAnimation();
 
     // Sound
     CSound*     m_sound;
