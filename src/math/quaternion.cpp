@@ -120,17 +120,16 @@ quaternion_t quaternion_t::Inverse() const
 void quaternion_t::Normalize()
 {
     const float abssqr = x*x + y*y* + z*z + w*w;
-    if(fabsf(abssqr - 1.0f) > lynxmath::EPSILON ||
-       fabsf(abssqr) < lynxmath::EPSILON)
+    //check if it makes sense to normalize
+    if(fabsf(abssqr) > lynxmath::EPSILON &&      // can't normalize 0 quaternion
+       fabsf(abssqr - 1.0f) > lynxmath::EPSILON) // already at length 1
     {
-        assert(0);
-        return;
+        const float invabs = lynxmath::InvSqrt(abssqr);
+        x *= invabs;
+        y *= invabs;
+        z *= invabs;
+        w *= invabs;
     }
-    const float invabs = lynxmath::InvSqrt(abssqr);
-    x *= invabs;
-    y *= invabs;
-    z *= invabs;
-    w *= invabs;
 }
 
 quaternion_t quaternion_t::Normalized() const

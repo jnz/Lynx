@@ -297,7 +297,7 @@ void CStream::WriteStream(const CStream& stream)
         WriteBytes(stream.m_buffer, stream.GetBytesWritten());
 }
 
-size_t CStream::StringSize(const std::string& value)
+unsigned int CStream::StringSize(const std::string& value)
 {
     if(value.length() >= USHRT_MAX)
     {

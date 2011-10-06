@@ -281,12 +281,12 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
             inter_n = cur_vertex->n +
                 (next_vertex->n - cur_vertex->n) *
                 state->time * m_fps;
-            glNormal3fv(inter_n.v);
+            glNormal3fv(inter_n.GetPointer());
 
             inter_xyz = cur_vertex->v +
                 (next_vertex->v - cur_vertex->v) *
                 state->time * m_fps;
-            glVertex3fv(inter_xyz.v);
+            glVertex3fv(inter_xyz.GetPointer());
 
         }
     }
