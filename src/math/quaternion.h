@@ -37,6 +37,7 @@ struct quaternion_t
     quaternion_t Inverse() const;
 
     void Normalize();
+    quaternion_t Normalized() const;
     bool IsNormalized() const;
 
     quaternion_t operator *(const quaternion_t& q) const;

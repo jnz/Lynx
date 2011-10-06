@@ -86,11 +86,13 @@ void CGameObjPlayer::ActivateRocket()
     if(GetWeapon()->type == WEAPON_ROCKET)
         return;
 
+    m_weapon_id = GetWeaponInfoByType(WEAPON_ROCKET);
+
     CClientInfo* client = GetClient();
     assert(client);
 
-    m_weapon_id = GetWeaponInfoByType(WEAPON_ROCKET);
-    client->hud.weapon = GetWeapon()->resource;
+    if(client)
+        client->hud.weapon = GetWeapon()->resource;
 }
 
 void CGameObjPlayer::ActivateGun()
@@ -98,11 +100,12 @@ void CGameObjPlayer::ActivateGun()
     if(GetWeapon()->type == WEAPON_GUN)
         return;
 
+    m_weapon_id = GetWeaponInfoByType(WEAPON_GUN);
+
     CClientInfo* client = GetClient();
     assert(client);
-
-    m_weapon_id = GetWeaponInfoByType(WEAPON_GUN);
-    client->hud.weapon = GetWeapon()->resource;
+    if(client)
+        client->hud.weapon = GetWeapon()->resource;
 }
 
 void CGameObjPlayer::CmdFire(bool active)
@@ -247,10 +250,12 @@ void CGameObjPlayer::InitHUD()
 {
     CClientInfo* client = GetClient();
     assert(client);
-
-    client->hud.health = GetHealth();
-    client->hud.score = 0;
-    client->hud.weapon = GetWeapon()->resource;
-    client->hud.weapon_animation = ANIMATION_IDLE;
+    if(client)
+    {
+        client->hud.health = GetHealth();
+        client->hud.score = 0;
+        client->hud.weapon = GetWeapon()->resource;
+        client->hud.weapon_animation = ANIMATION_IDLE;
+    }
 }
 

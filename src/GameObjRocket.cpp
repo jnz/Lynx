@@ -102,7 +102,7 @@ void CGameObjRocket::DealDamageToNearbyObjs(const std::vector<CObj*>& nearobjs)
         damage = base_damage; // FIXME implement splash damage
         hitobj->DealDamage((int)(damage+0.5f),
                            hitobj->GetOrigin(),
-                           vec3_t::origin,
+                           GetVel(),
                            this,
                            killed_me);
         if(!killed_me || !player) // object is not dead or no owner, continue

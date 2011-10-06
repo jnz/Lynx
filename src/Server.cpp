@@ -291,9 +291,9 @@ bool CServer::SendWorldToClient(CClientInfo* client)
     if(iter == m_history.end())
     {
         m_world->Serialize(true, &m_stream, NULL);
-        fprintf(stderr, "NET: Full update MTU: %i Bytes to be send: %i\n",
-                client->GetPeer()->mtu,
-                m_stream.GetBytesWritten());
+        fprintf(stderr, "NET: Full update. Bytes to be send: %i (MTU: %i)\n",
+                m_stream.GetBytesWritten(),
+                client->GetPeer()->mtu);
     }
     else
     {
@@ -304,17 +304,17 @@ bool CServer::SendWorldToClient(CClientInfo* client)
             client->worldidACK = m_world->GetWorldID();
             return true;
         }
-        // fprintf(stderr, "NET: Half update MTU: %i Bytes to be send: %i\n",
-        //         client->GetPeer()->mtu,
-        //         m_stream.GetBytesWritten());
     }
 
-    // if(client->GetPeer()->mtu < m_stream.GetBytesWritten())
-    // {
-    //     fprintf(stderr, "NET: Packet fragmentation MTU: %i Bytes to be send: %i\n",
-    //             client->GetPeer()->mtu,
-    //             m_stream.GetBytesWritten());
-    // }
+    if(m_stream.GetWriteOverflow())
+    {
+        fprintf(stderr,
+                "Failed to send packet to client. Pending data too large: %i\n",
+                m_stream.GetBytesWritten());
+        assert(0);
+        return false;
+    }
+
     const uint32_t packetflags = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
     packet = enet_packet_create(m_stream.GetBuffer(),
                                 m_stream.GetBytesWritten(),

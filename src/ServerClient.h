@@ -3,6 +3,7 @@
 #define USE_RANGE_ENCODER       // use the enet compression mechanism
 
 #define MAX_SV_PACKETLEN        (USHRT_MAX)
+#define MAX_CL_PACKETLEN        (1024)
 
 #define MAX_SV_CL_POS_DIFF      (45.0f*45.0f)          // Distance squared
 #define SERVER_UPDATETIME       (50)                   // Server sends a snapshot to the clients every $SERVER_UPDATETIME ms

@@ -153,7 +153,7 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
 
     ENetPacket* packet;
     CObj* localctrl = GetLocalController();
-    CStream stream(1024);
+    CStream stream(MAX_CL_PACKETLEN);
 
     CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
     stream.WriteDWORD(m_world->GetWorldID());
@@ -167,6 +167,13 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     for(i=0;i<clcmdlist.size();i++)
         stream.WriteString(clcmdlist[i]);
 
+    if(stream.GetWriteOverflow())
+    {
+        fprintf(stderr, "CL: Packet size too large.\n");
+        assert(0);
+        return;
+    }
+
     const uint32_t packetflags = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
     packet = enet_packet_create(stream.GetBuffer(),
                                 stream.GetBytesWritten(),
@@ -176,8 +183,10 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     {
         int success = enet_peer_send(m_server, 0, packet);
         if(success != 0)
+        {
             fprintf(stdout, "Failed to send packet\n");
-        assert(success == 0);
+            assert(success == 0);
+        }
     }
     m_lastupdate = ticks;
 }
