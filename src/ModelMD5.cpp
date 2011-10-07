@@ -13,7 +13,8 @@
 
 #define MD5_SCALE                (1.0f)   // scale while loading
 #define MD5_SCALE_F              (0.065f) // scale by glScalef
-#define MD5_RESET_BASE_POSITION // keep the model base position at 0,0,0 during the animation
+#define MD5_RESET_BASE_POSITION           // keep the model base position at
+                                          // ( 0,0,0 ) during the animation
 
 /* Animation Joint info */
 struct joint_info_t

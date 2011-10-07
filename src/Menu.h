@@ -160,7 +160,8 @@ protected:
 
     CFont             m_font; // To draw some text
 
-    void              SetTextFieldValue(const std::string fieldid, const std::string text);
+    void              SetTextFieldValue(const std::string fieldid,
+                                        const std::string text);
     std::string       GetTextFieldValue(const std::string fieldid);
 
 private:

@@ -14,9 +14,11 @@
 
 //-Menu Global Stuff----------------------------------------------------
 
-// All coordinates are hardcoded for a virtual screen, the real
+// The menu layout is defined in the
+
+// All coordinates are set for a virtual screen, the real
 // coordinates are calculated according to the current physical
-// screen resolution.
+// screen resolution. The menu is positioned in the center.
 
 #define VIRTUAL_WIDTH  800.0f
 #define VIRTUAL_HEIGHT 600.0f
