@@ -40,8 +40,8 @@ bool CClient::Connect(const char* server, const int port)
     if(IsConnecting() || IsConnected())
         Shutdown();
 
-    // channel limit 5 is arbitrary (1 should be enough)
-    m_client = enet_host_create(NULL, 1, 5, 0, OUTGOING_BANDWIDTH);
+    // channel limit 2
+    m_client = enet_host_create(NULL, 1, 2, 0, OUTGOING_BANDWIDTH);
     if(!m_client)
         return false;
 
@@ -100,13 +100,20 @@ void CClient::Update(const float dt, const uint32_t ticks)
         switch (event.type)
         {
         case ENET_EVENT_TYPE_RECEIVE:
-            //fprintf(stderr, "CL: A packet of length %u was received \n",
-            //  event.packet->dataLength);
+            //if(CLynxSys::GetKeyState()[SDLK_g])
+                //fprintf(stderr, "CL: A packet of length %u was received \n",
+                    //event.packet->dataLength);
+
+            //if(rand()%5 == 2)
+            //{
+                //fprintf(stderr, "fake packet loss\n");
+                //continue;
+            //}
             fprintf(stderr, "ChannelID: %i", event.channelID);
 
             stream.SetBuffer(event.packet->data,
-                            (int)event.packet->dataLength,
-                            (int)event.packet->dataLength);
+                             event.packet->dataLength,
+                             event.packet->dataLength);
             OnReceive(&stream);
             enet_packet_destroy(event.packet);
 
@@ -129,14 +136,14 @@ void CClient::Update(const float dt, const uint32_t ticks)
     if(result == -1)
         return;
 
-    // Eingabe und Steuerung
+    // Input and control
     std::vector<std::string> clcmdlist;
     bool forcesend = false;
     InputGetCmdList(&clcmdlist, &forcesend);
     InputMouseMove(); // update m_lat and m_lon
     m_gamelogic->ClientMove(GetLocalController(), clcmdlist);
 
-    // Sende Eingabe an Server
+    // Send input to server
     SendClientState(clcmdlist, forcesend, ticks);
 }
 
@@ -262,12 +269,6 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     {
         firedown = true;
         clcmdlist->push_back("+fire");
-
-        //CModelMD5* model;
-        //md5_state_t* model_state;
-        //m_world->m_hud.GetModel(&model, &model_state);
-        //if(model)
-            //model->SetAnimation(model_state, ANIMATION_FIRE);
     }
     if(keystate[SDLK_1])
     {
@@ -277,13 +278,13 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
     {
         clcmdlist->push_back("w_gun");
     }
-    if(keystate[SDLK_e])
+    if(keystate[SDLK_e] == 1) // key down event
     {
-        // FIXME temp hack to get local position and stats
+        // Print some stats to the console
         const vec3_t pos = GetLocalController()->GetOrigin();
         const quaternion_t orient = GetLocalController()->GetRot();
-        fprintf(stderr, "(%.2f,%.2f,%.2f)\n", pos.x, pos.y, pos.z);
-        fprintf(stderr, "(%.2f,%.2f,%.2f,%.2f)\n", orient.x, orient.y, orient.z, orient.w);
+        fprintf(stderr, "POS: (%.2f,%.2f,%.2f)\n", pos.x, pos.y, pos.z);
+        fprintf(stderr, "ROT: (%.2f,%.2f,%.2f,%.2f)\n", orient.x, orient.y, orient.z, orient.w);
         fprintf(stderr, "Network stats:\n");
         fprintf(stderr, "Mean round trip time: %i (msec)\n", m_server->roundTripTime);
         fprintf(stderr, "Incoming data total: %i (kbytes)\n", m_client->totalReceivedData/1024);
@@ -291,28 +292,11 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         fprintf(stderr, "Incoming packets total: %i\n", m_client->totalReceivedPackets);
         fprintf(stderr, "Outgoing data total: %i\n", m_client->totalSentPackets);
     }
-    if(keystate[SDLK_q]) // FIXME: only for debugging, unstuck player
-    {
-        vec3_t pos = GetLocalController()->GetOrigin();
-        pos.y += 0.5f;
-        GetLocalController()->SetOrigin(pos);
-    }
-    if(keystate[SDLK_r]) // FIXME: debug method: respawn
+    if(keystate[SDLK_r] == 1) // debug method: respawn local player
     {
         bspbin_spawn_t spawn = m_world->GetBSP()->GetRandomSpawnPoint();
         GetLocalController()->SetOrigin(spawn.point);
     }
-
-    //if(!firedown)
-    //{
-        //CModelMD5* model;
-        //md5_state_t* model_state;
-        //m_world->m_hud.GetModel(&model, &model_state);
-        //if(model)
-        //{
-            //model->SetAnimation(model_state, ANIMATION_IDLE);
-        //}
-    //}
 }
 
 CObj* CClient::GetLocalController()

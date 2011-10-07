@@ -9,15 +9,7 @@
 
 struct vec3_t
 {
-    union
-    {
-        // access vector either by x, y, z or by v[0], v[1], v[2]:
-        struct
-        {
-            float x, y, z;
-        };
-        float v[3];
-    };
+    float x, y, z;
 
     vec3_t() : x(0.0f), y(0.0f), z(0.0f) {}
     vec3_t(float nx, float ny, float nz) : x(nx), y(ny), z(nz) {}
@@ -25,9 +17,9 @@ struct vec3_t
 
     static vec3_t rand(float mx, float my, float mz);
 
-    float Abs(void) const; // absolute value of vector/length
+    float Abs(void) const;        // absolute value of vector/length
     float AbsSquared(void) const; // absolute value squared
-    float AbsFast(void) const; // absolute value of vector with fast sqrt (might be inaccurate)
+    float AbsFast(void) const;    // absolute value of vector with fast sqrt
 
     void Normalize(void);
     void NormalizeFast(void);
@@ -41,13 +33,10 @@ struct vec3_t
     bool IsNullEpsilon(const float epsilon=lynxmath::EPSILON) const; // is vector 0,0,0? (with epsilon test)
     bool Equals(const vec3_t& cmp, const float epsilon) const;
 
-    bool IsInArea(const vec3_t& min, const vec3_t& max) const;
+    static float GetAngleDeg(const vec3_t& a, const vec3_t& b); // angle between a and b in degrees
 
     static vec3_t Lerp(const vec3_t& p1, const vec3_t& p2, const float f); // Linear interpolation between p1 and p2. f=0 equals the point p1, f=1 equals p2
-
     static vec3_t Hermite(const vec3_t& p1, const vec3_t& p2, const vec3_t& t1, const vec3_t& t2, const float t); // Hermite curve (3D Game Programming p. 457)
-
-    static float GetAngleDeg(const vec3_t& a, const vec3_t& b); // angle between a and b in degrees
 
     static bool IsPointInsideTriangle(const vec3_t& v0,
                                       const vec3_t& v1,
@@ -78,12 +67,16 @@ struct vec3_t
     static float dot(const vec3_t& a, const vec3_t& b);
 
     void Print() const; // print x,y,z to stderr
+    const float* GetPointer() const; // Get a pointer to the first element
 
     vec3_t &operator += ( const vec3_t &v );
     vec3_t &operator -= ( const vec3_t &v );
     vec3_t &operator *= ( const float &f );
     vec3_t &operator /= ( const float &f );
     vec3_t  operator -  (void) const;
+
+    float  operator[](const int index) const;
+    float& operator[](const int index);
 };
 
 LYNX_INLINE float vec3_t::Abs(void) const
@@ -196,13 +189,6 @@ LYNX_INLINE bool vec3_t::Equals(const vec3_t& cmp, const float epsilon) const
            (fabs(z-cmp.z) < epsilon);
 }
 
-LYNX_INLINE bool vec3_t::IsInArea(const vec3_t& min, const vec3_t& max) const
-{
-    return  x >= min.x && x <= max.x &&
-            y >= min.y && y <= max.y &&
-            z >= min.z && z <= max.z;
-}
-
 LYNX_INLINE vec3_t &vec3_t::operator +=(const vec3_t &v)
 {
     x+= v.x;
@@ -305,5 +291,20 @@ LYNX_INLINE bool operator!=(vec3_t const &a, vec3_t const &b)
     return ( (fabs(a.x-b.x) > lynxmath::EPSILON) ||
              (fabs(a.y-b.y) > lynxmath::EPSILON) ||
              (fabs(a.z-b.z) > lynxmath::EPSILON) );
+}
+
+LYNX_INLINE float vec3_t::operator[](const int index) const
+{
+    return (&x)[index];
+}
+
+LYNX_INLINE float& vec3_t::operator[](const int index)
+{
+    return (&x)[index];
+}
+
+LYNX_INLINE const float* vec3_t::GetPointer() const
+{
+    return &x;
 }
 

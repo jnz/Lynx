@@ -1,12 +1,15 @@
-varying vec4 ShadowCoord;
 varying vec3 lightDir;
 varying vec3 normal;
 varying vec3 eyedir;
+
+// MD2 interpolation
 uniform float interp; // lerp factor of model
 
 // Vertex shader
 void main()
 {
+    normal = normalize(gl_NormalMatrix * gl_Normal);
+
     vec4 lerpvertex; // lerped vertex between current frame and next frame
     lerpvertex.xyz = gl_Vertex.xyz + gl_MultiTexCoord2.xyz*interp;
     lerpvertex.w = 1.0;
@@ -18,7 +21,6 @@ void main()
     // transform light to eye space
     vec4 lightpos = gl_ModelViewMatrix * gl_LightSource[0].position;
     lightDir = lightpos.xyz; // lightdir in eye space
-    normal = normalize(gl_NormalMatrix * gl_Normal);
     eyedir = -lerpvertex.xyz;
 }
 

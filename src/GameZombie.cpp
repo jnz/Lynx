@@ -33,6 +33,12 @@ static const gamezombie_precache_t g_game_zombie_precache[] =
     {(char*)"marine/marine.md5mesh"         , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"pinky/pinky.md5mesh"           , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"rocket/projectile.md5mesh"     , LYNX_RESOURCE_TYPE_MD5}   ,
+    {(char*)"Mancubus/fatso.md2"            , LYNX_RESOURCE_TYPE_MD2}   ,
+    {(char*)"SSDude/ss-soldier.md2"         , LYNX_RESOURCE_TYPE_MD2}   ,
+    {(char*)"Demon/demon.md2"               , LYNX_RESOURCE_TYPE_MD2}   ,
+    {(char*)"Revenant/revenant.md2"         , LYNX_RESOURCE_TYPE_MD2}   ,
+    {(char*)"Archvile/archvile.md2"         , LYNX_RESOURCE_TYPE_MD2}   ,
+    {(char*)"imp/imp.md2"                   , LYNX_RESOURCE_TYPE_MD2}   ,
     {(char*)"rifle.ogg"                     , LYNX_RESOURCE_TYPE_SOUND} ,
     {(char*)"monsterhit1.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
     {(char*)"monsterhit2.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
@@ -76,7 +82,7 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    const int zombocount = 40; // this is zombo.count
+    const int zombocount = 12; // this is zombo.count
     for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();
@@ -102,7 +108,6 @@ void CGameZombie::Notify(EventNewClientConnected e)
     player->SetResource(CLynx::GetBaseDirModel() + "marine/marine.md5mesh");
     player->SetRadius(2.0f);
     player->SetAnimation(ANIMATION_IDLE);
-    player->SetEyePos(vec3_t(0,1.65f,0)); // FIXME player eye height should not be a magic number
 
     GetWorld()->AddObj(player, true); // set this argument to true, so that we are directly in the next serialize message
     e.client->m_obj = player->GetID(); // Link this object with the client
@@ -131,13 +136,25 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
     CGameObj* obj;
     OBJITER iter;
     CClientInfo* client;
+    bool thinktick;
+    static uint32_t oldtime = 0;
+
+    if(ticks - oldtime > THINK_INTERVAL)
+    {
+        thinktick = true;
+        oldtime = ticks;
+    }
+    else
+    {
+        thinktick = false;
+    }
 
     for(iter = GetWorld()->ObjBegin();iter!=GetWorld()->ObjEnd();iter++)
     {
         obj = (CGameObj*)(*iter).second;
 
-        // FIXME do this only think at fixed intervals, not every frame
-        obj->m_think.DoThink(GetWorld()->GetLeveltime());
+        if(thinktick)
+            obj->m_think.DoThink(GetWorld()->GetLeveltime());
 
         GetWorld()->ObjMove(obj, dt);
         if(obj->GetOrigin().y < -500.0f)
@@ -175,7 +192,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 ((CGameObjPlayer*)obj)->SetLookDir(qlon*qlat);
             }
         }
-        else if(obj->GetType() == GAME_OBJ_TYPE_ZOMBIE) // this if-condition branch applies a force to every other zombie.
+        else if(obj->GetType() == GAME_OBJ_TYPE_ZOMBIE && thinktick) // this if-condition branch applies a force to every other zombie.
         {   // FIXME: O(n^2) complexity - bad?
             OBJITER iter2;
             CGameObj* obj2;
@@ -191,7 +208,7 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                     continue;
 
                 const float savey = obj2->GetVel().y;
-                const float force = 75.0f; // not really a force, where f = ma
+                const float force = 175.0f; // not really a force, where f = ma
                 vec3_t diff(obj2->GetOrigin() - obj->GetOrigin());
                 float difflen = diff.AbsFast();
                 if(difflen > (obj2->GetRadius()+obj->GetRadius()))
@@ -208,8 +225,12 @@ void CGameZombie::Update(const float dt, const uint32_t ticks)
                 obj2->SetVel(diff);
             }
         }
-        else if(obj->GetType() == GAME_OBJ_TYPE_ROCKET && !(obj->GetFlags()&OBJ_FLAGS_GHOST)) // rockets are ghosts for a few seconds after the impact, to fade out the rocket trail. ignore them as ghost objects.
+        else if(obj->GetType() == GAME_OBJ_TYPE_ROCKET &&
+                !(obj->GetFlags()&OBJ_FLAGS_GHOST))
         {
+            // rockets are ghosts for a few seconds after the impact, to fade
+            // out the rocket trail. ignore them as ghost objects.
+
             // FIXME: is this really something the game logic has to
             // take care of every frame? there should be an event callback
             // similar to the level geometry collision callback.

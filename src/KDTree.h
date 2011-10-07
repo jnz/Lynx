@@ -7,10 +7,9 @@
 #include <vector>
 #include "BSPBIN.h"
 
-/*
-    CKDTree verwaltet die Level Geometrie und wird
-    für die Kollisionserkennung und Darstellung genutzt.
- */
+// KDTree basic job is to load a polygoon soup from file and
+// write a .lbsp file.
+// CBSPLevel can then load this lbsp file in the game and render it.
 
 class CKDTree;
 
@@ -24,7 +23,7 @@ struct kd_tri_t // triangle for kd-tree
 {
     int vertices[3];
     int texcoords[3]; // UV coordinates
-    plane_t plane; // triangle plane
+    plane_t plane;    // triangle plane
     std::string texturepath;
 
     vec3_t GetNormal(CKDTree* tree);
@@ -48,9 +47,9 @@ public:
                      const std::string& lightmap);
 
     void        Unload();
-    std::string GetFilename() const; // Aktuell geladener Pfad zu Level
+    std::string GetFilename() const; // Current filepath
 
-    class CKDNode // Hilfsklasse von KDTree, stellt einen Knoten im Baum dar
+    class CKDNode // KDTree helper class: CKDNode is a node in the tree
     {
     public:
 
@@ -67,42 +66,42 @@ public:
             CKDNode* child[2];
         };
 
-        void                    CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn); // Bounding Sphere für diesen Knoten berechnen
-        bool                    IsLeaf() const { return !m_front && !m_back; }
-        void                    SplitTrianglesAlongAxis(const CKDTree* tree,
-                                                        const std::vector<int>& trianglesIn,
-                                                        const int kdAxis,
-                                                        std::vector<int>& front,
-                                                        std::vector<int>& back,
-                                                        std::vector<int>& splitlist,
-                                                        plane_t& splitplane) const;
-        plane_t                 FindSplittingPlane(const CKDTree* tree, const std::vector<int>& triangles, const int kdAxis) const;
+        // Calculate bounding sphere for this node
+        void               CalculateSphere(const CKDTree* tree, const std::vector<int>& trianglesIn);
+        bool               IsLeaf() const { return !m_front && !m_back; }
+        void               SplitTrianglesAlongAxis(const CKDTree* tree,
+                                                   const std::vector<int>& trianglesIn,
+                                                   const int kdAxis,
+                                                   std::vector<int>& front,
+                                                   std::vector<int>& back,
+                                                   std::vector<int>& splitlist,
+                                                   plane_t& splitplane) const;
+        plane_t            FindSplittingPlane(const CKDTree* tree, const std::vector<int>& triangles, const int kdAxis) const;
 
-        plane_t                 m_plane; // Split plane, not set for leafs
-        float                   m_sphere; // Sphere radius
-        vec3_t                  m_sphere_origin; // Sphere origin
-        std::vector<int>        m_triangles; // Only filled when node is a leaf
+        plane_t            m_plane;          // Split plane, not set for leafs
+        float              m_sphere;         // Sphere radius
+        vec3_t             m_sphere_origin;  // Sphere origin
+        std::vector<int>   m_triangles;      // Only filled when node is a leaf
     };
 
-    std::vector<vec3_t>         m_vertices; // Vertices from obj file
-    // std::vector<vec3_t>         m_normals; // Vertex normals
-    std::vector<vec3_t>         m_texcoords; // FIXME vec2_t would be sufficient
-    std::vector<vec3_t>         m_lightmapcoords; // FIXME vec2_t would be sufficient
-    std::vector<kd_tri_t>       m_triangles; // Triangles from obj file
-    CKDNode*                    m_root; // Starting node
-    int                         m_estimatedtexturecount; // how many textures are used in the obj file?
+    std::vector<vec3_t>    m_vertices;       // Vertices from obj file
+    std::vector<vec3_t>    m_texcoords;      // vec2_t would be sufficient
+    std::vector<vec3_t>    m_lightmapcoords; // vec2_t would be sufficient
+    std::vector<kd_tri_t>  m_triangles;      // Triangles from obj file
+    CKDNode*               m_root;           // Starting node
+    int                    m_estimatedtexturecount; // how many textures are used in the obj file?
 
-    bool        WriteToBinary(const std::string filepath);
+    bool                   WriteToBinary(const std::string filepath);
 
 protected:
-    bool        LoadLightmapCoordinates(const std::string& lightmappath,
-                                        std::vector<vec3_t>& lightcoords);
+    bool                   LoadLightmapCoordinates(const std::string& lightmappath,
+                                                   std::vector<vec3_t>& lightcoords);
 
 private:
-    int         m_nodecount; // increased by every CKDNode constructor
-    int         m_leafcount; // increased by every CKNode that is a leaf node
-    int         m_depth;     // set by CKNode constructor
-    std::string m_filename;
+    int                    m_nodecount; // increased by every CKDNode constructor
+    int                    m_leafcount; // increased by every CKNode that is a leaf node
+    int                    m_depth;     // set by CKNode constructor
+    std::string            m_filename;
 
     // Spawn Point
     std::vector<spawn_point_t> m_spawnpoints; // Spawnpoints from level

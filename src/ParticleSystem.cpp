@@ -29,7 +29,7 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glBegin(GL_QUADS);
 
-    // FIXME use vbos instead of this
+    // use vbos instead of this
     std::vector<particle_t>::const_iterator iter;
     for(iter = m_particles.begin();iter != m_particles.end(); ++iter)
     {
@@ -46,13 +46,13 @@ void CParticleSystem::Render(const vec3_t& side, const vec3_t& up, const vec3_t&
         glColor4f(iter->color.x, iter->color.y, iter->color.z, iter->alpha);
 
         glTexCoord2f(1.0f, 1.0f);
-        glVertex3fv(Q1.v);
+        glVertex3fv(Q1.GetPointer());
         glTexCoord2f(0.0f, 1.0f);
-        glVertex3fv(Q2.v);
+        glVertex3fv(Q2.GetPointer());
         glTexCoord2f(0.0f, 0.0f);
-        glVertex3fv(Q3.v);
+        glVertex3fv(Q3.GetPointer());
         glTexCoord2f(1.0f, 0.0f);
-        glVertex3fv(Q4.v);
+        glVertex3fv(Q4.GetPointer());
 
     }
 

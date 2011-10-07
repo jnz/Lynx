@@ -25,13 +25,11 @@ struct quaternion_t
         Slerp(this, q1, q2, t);
     }
 
-    void FromMatrix(const matrix_t &mx);
-    void ToMatrix(matrix_t& m) const;
-    void GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const;
+    void FromMatrix(const matrix_t &mx); // construct from rotation matrix
+    void ToMatrix(matrix_t& m) const; // convert to rotation matrix
+    void GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const; // get the 3 axis vectors of this quaternion
 
-    void LookAt(const vec3_t& pFrom, const vec3_t& pAt, const vec3_t& pUp);
-
-    void RotationAxis(vec3_t v, float a); // a in [rad]
+    void RotationAxis(vec3_t v, float a); // v: rotation axis, a rotation angle in [rad]
 
     void Invert();
     quaternion_t Inverse() const;
@@ -51,8 +49,8 @@ struct quaternion_t
     static void Slerp(quaternion_t *pDest, const quaternion_t& q1, const quaternion_t& q2, const float t);
 };
 
-bool operator == (const quaternion_t& a, const quaternion_t& b);
-bool operator != (const quaternion_t& a, const quaternion_t& b);
+bool operator == (const quaternion_t& a, const quaternion_t& b); // with epsilon test (lynxmath::EPSILON)
+bool operator != (const quaternion_t& a, const quaternion_t& b); // with epsilon test (lynxmath::EPSILON)
 
 LYNX_INLINE vec3_t quaternion_t::Vec3Multiply(const vec3_t& vin) const
 {

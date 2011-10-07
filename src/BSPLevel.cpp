@@ -518,17 +518,17 @@ void CBSPLevel::RenderNormals() const
     for(vindex = 0; vindex < m_vertexcount; vindex++)
     {
         glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-        glVertex3fv(m_vertex[vindex].v.v);
-        glVertex3fv((nscale*m_vertex[vindex].n + m_vertex[vindex].v).v);
+        glVertex3fv(m_vertex[vindex].v.GetPointer());
+        glVertex3fv((nscale*m_vertex[vindex].n + m_vertex[vindex].v).GetPointer());
 
         glColor3f(0.0f, 1.0f, 0.0f);
-        glVertex3fv((tanoff + m_vertex[vindex].v).v);
-        glVertex3fv((nscale*m_vertex[vindex].t + m_vertex[vindex].v + tanoff).v);
+        glVertex3fv((tanoff + m_vertex[vindex].v).GetPointer());
+        glVertex3fv((nscale*m_vertex[vindex].t + m_vertex[vindex].v + tanoff).GetPointer());
 
         glColor3f(0.0f, 0.0f, 1.0f);
         bitangent = m_vertex[vindex].w * (m_vertex[vindex].n ^ m_vertex[vindex].t);
-        glVertex3fv((bitanoff + m_vertex[vindex].v).v);
-        glVertex3fv((nscale*bitangent + m_vertex[vindex].v + bitanoff).v);
+        glVertex3fv((bitanoff + m_vertex[vindex].v).GetPointer());
+        glVertex3fv((nscale*bitangent + m_vertex[vindex].v + bitanoff).GetPointer());
     }
     glEnd();
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

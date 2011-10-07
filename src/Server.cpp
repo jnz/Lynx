@@ -30,8 +30,8 @@ bool CServer::Create(int port)
     addr.host = ENET_HOST_ANY;
     addr.port = port;
 
-    // channel limit 1
-    m_server = enet_host_create(&addr, MAXCLIENTS, 1, 0, 0);
+    // channel limit 2
+    m_server = enet_host_create(&addr, MAXCLIENTS, 2, 0, 0);
     if(!m_server)
         return false;
 

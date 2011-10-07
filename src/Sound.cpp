@@ -36,8 +36,7 @@ void CSound::Unload()
 
 bool CSound::Play() const
 {
-    int result = Mix_PlayChannel(-1, (Mix_Chunk*)m_chunk, 0);
-    // FIXME only for debug builds?
+    const int result = Mix_PlayChannel(-1, (Mix_Chunk*)m_chunk, 0);
     if(result == -1)
         fprintf(stderr, "Failed to play sound\n");
     return (result != -1);
@@ -50,7 +49,6 @@ bool CSound::Play(sound_state_t* state) const
         return false;
     state->cur_channel = Mix_PlayChannel(-1, (Mix_Chunk*)m_chunk, 0);
     state->is_playing = (state->cur_channel != -1);
-    // FIXME only for debug builds?
     if(state->is_playing == -1)
         fprintf(stderr, "Failed to play sound\n");
 

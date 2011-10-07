@@ -154,11 +154,11 @@ void PM_ClipVelocity(const vec3_t& in, const vec3_t& normal, vec3_t& out, const 
 
     for(i=0; i<3; i++)
     {
-        change = normal.v[i]*backoff;
-        out.v[i] = in.v[i] - change;
+        change = normal[i]*backoff;
+        out[i] = in[i] - change;
 
-        if(fabsf(out.v[i]) < STOP_EPSILON) // If out velocity is too small, zero it out.
-           out.v[i] = 0.0f;
+        if(fabsf(out[i]) < STOP_EPSILON) // If out velocity is too small, zero it out.
+           out[i] = 0.0f;
     }
 }
 
@@ -244,7 +244,7 @@ void CWorld::ObjMove(CObj* obj, const float dt) const
 
         // If the plane we hit has a high y component in the normal, then
         //  it's probably a floor
-        if(trace.p.m_n.v[1] > 0.7)
+        if(trace.p.m_n[1] > 0.7)
             groundhit = true;
 
         // Did we run out of planes to clip against?

@@ -74,10 +74,8 @@ void CGameObjZombie::DealDamage(int damage,
     {
         SetRot(TurnTo(dealer->GetOrigin()));
     }
-    SetVel(dir.Normalized()*35.0f + vec3_t(0, 20.0f, 0));
-    // SetAnimation(ANIMATION_IDLE); // FIXME we need a animation for a dying zombie
+    SetVel(dir.Normalized()*35.0f + vec3_t(0, 20.0f, 0)); // kick zombie back and a bit up
     AddFlags(OBJ_FLAGS_ELASTIC); // abuse this flag to mark zombie as dead
-    // AddFlags(OBJ_FLAGS_GHOST);
     m_think.RemoveAll();
     m_think.AddFunc(new CThinkFuncRespawnZombie(
                     GetWorld()->GetLeveltime() + 500, // respawn time

@@ -13,7 +13,8 @@
 
 #define MD5_SCALE                (1.0f)   // scale while loading
 #define MD5_SCALE_F              (0.065f) // scale by glScalef
-#define MD5_RESET_BASE_POSITION // keep the model base position at 0,0,0 during the animation
+#define MD5_RESET_BASE_POSITION           // keep the model base position at
+                                          // ( 0,0,0 ) during the animation
 
 /* Animation Joint info */
 struct joint_info_t
@@ -76,7 +77,7 @@ void CModelMD5::RenderSkeleton(const std::vector<md5_joint_t>& skel) const
     glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_POINTS);
     for(i=0; i<num_joints; i++)
-        glVertex3fv(skel[i].pos.v);
+        glVertex3fv(skel[i].pos.GetPointer());
     glEnd ();
     glPointSize(1.0f);
 
@@ -86,8 +87,8 @@ void CModelMD5::RenderSkeleton(const std::vector<md5_joint_t>& skel) const
     {
         if(skel[i].parent != -1)
         {
-            glVertex3fv(skel[skel[i].parent].pos.v);
-            glVertex3fv(skel[i].pos.v);
+            glVertex3fv(skel[skel[i].parent].pos.GetPointer());
+            glVertex3fv(skel[i].pos.GetPointer());
         }
     }
     glEnd();
@@ -291,45 +292,45 @@ void CModelMD5::RenderNormals(const model_state_t* mstate)
             const vec3_t& normal = m_vertex_buffer[j].n;
             const vec3_t& tangent = m_vertex_buffer[j].t;
             const float w = m_vertex_buffer[j].w;
-            const vec3_t bitangent = w * (normal ^ tangent);
+            const vec3_t bitangent = w * vec3_t::cross(normal, tangent);
 
             glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
             vec3_t to = vertex + 0.2f*normal;
             vec3_t to2 = vertex + 0.25f*normal;
             glBegin(GL_LINES);
-                glVertex3fv(vertex.v);
-                glVertex3fv(to.v);
+                glVertex3fv(vertex.GetPointer());
+                glVertex3fv(to.GetPointer());
             glEnd();
             glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
             glBegin(GL_LINES);
-                glVertex3fv(to.v);
-                glVertex3fv(to2.v);
+                glVertex3fv(to.GetPointer());
+                glVertex3fv(to2.GetPointer());
             glEnd();
 
             glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
             to = vertex + 0.2f*tangent;
             to2 = vertex + 0.25f*tangent;
             glBegin(GL_LINES);
-                glVertex3fv(vertex.v);
-                glVertex3fv(to.v);
+                glVertex3fv(vertex.GetPointer());
+                glVertex3fv(to.GetPointer());
             glEnd();
             glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
             glBegin(GL_LINES);
-                glVertex3fv(to.v);
-                glVertex3fv(to2.v);
+                glVertex3fv(to.GetPointer());
+                glVertex3fv(to2.GetPointer());
             glEnd();
 
             glColor4f(1.0f, 0.0f, 1.0f, 1.0f);
             to = vertex + 0.2f*bitangent;
             to2 = vertex + 0.25f*bitangent;
             glBegin(GL_LINES);
-                glVertex3fv(vertex.v);
-                glVertex3fv(to.v);
+                glVertex3fv(vertex.GetPointer());
+                glVertex3fv(to.GetPointer());
             glEnd();
             glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
             glBegin(GL_LINES);
-                glVertex3fv(to.v);
-                glVertex3fv(to2.v);
+                glVertex3fv(to.GetPointer());
+                glVertex3fv(to2.GetPointer());
             glEnd();
         }
     }
@@ -700,7 +701,6 @@ bool CModelMD5::Load(const char *path, CResourceManager* resman, bool loadtextur
                 /* Read whole line */
                 fgets(buff, sizeof(buff), f);
 
-                /* FIXME possible buffer overflow here for joint->name */
                 if(sscanf(buff, "%s %d ( %f %f %f ) ( %f %f %f )",
                           joint->name, &joint->parent, &tmppos.x,
                           &tmppos.y, &tmppos.z, &joint->orient.x,
@@ -896,19 +896,19 @@ static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
 
         if (jointInfos[i].flags & 1) /* Tx */
         {
-            animatedPos.v[0] = animFrameData[jointInfos[i].startIndex + j] * MD5_SCALE;
+            animatedPos[0] = animFrameData[jointInfos[i].startIndex + j] * MD5_SCALE;
             ++j;
         }
 
         if (jointInfos[i].flags & 2) /* Ty */
         {
-            animatedPos.v[1] = animFrameData[jointInfos[i].startIndex + j] * MD5_SCALE;
+            animatedPos[1] = animFrameData[jointInfos[i].startIndex + j] * MD5_SCALE;
             ++j;
         }
 
         if (jointInfos[i].flags & 4) /* Tz */
         {
-            animatedPos.v[2] = animFrameData[jointInfos[i].startIndex + j] * MD5_SCALE;
+            animatedPos[2] = animFrameData[jointInfos[i].startIndex + j] * MD5_SCALE;
             ++j;
         }
 
@@ -960,13 +960,13 @@ static void BuildFrameSkeleton(const std::vector<joint_info_t>& jointInfos,
 
             /* Add positions */
             rpos = parentJoint->orient.Vec3Multiply(animatedPos);
-            thisJoint->pos.v[0] = rpos.v[0] + parentJoint->pos.v[0];
-            thisJoint->pos.v[1] = rpos.v[1] + parentJoint->pos.v[1];
-            thisJoint->pos.v[2] = rpos.v[2] + parentJoint->pos.v[2];
+            thisJoint->pos[0] = rpos[0] + parentJoint->pos[0];
+            thisJoint->pos[1] = rpos[1] + parentJoint->pos[1];
+            thisJoint->pos[2] = rpos[2] + parentJoint->pos[2];
 
             /* Concatenate rotations */
             thisJoint->orient = parentJoint->orient * animatedOrient;
-            thisJoint->orient.Normalize();
+            //thisJoint->orient.Normalize();
         }
     }
 }
@@ -1117,9 +1117,9 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
 
                 /* Read bounding box */
                 sscanf (buff, " ( %f %f %f ) ( %f %f %f )",
-                        &anim->bboxes[i].min.v[0], &anim->bboxes[i].min.v[1],
-                        &anim->bboxes[i].min.v[2], &anim->bboxes[i].max.v[0],
-                        &anim->bboxes[i].max.v[1], &anim->bboxes[i].max.v[2]);
+                        &anim->bboxes[i].min[0], &anim->bboxes[i].min[1],
+                        &anim->bboxes[i].min[2], &anim->bboxes[i].max[0],
+                        &anim->bboxes[i].max[1], &anim->bboxes[i].max[2]);
                 anim->bboxes[i].min *= MD5_SCALE;
                 anim->bboxes[i].max *= MD5_SCALE;
             }
@@ -1133,8 +1133,8 @@ bool CModelMD5::ReadAnimation(const animation_t animation, const std::string fil
 
                 /* Read base frame joint */
                 if(sscanf (buff, " ( %f %f %f ) ( %f %f %f )",
-                            &baseFrame[i].pos.v[0], &baseFrame[i].pos.v[1],
-                            &baseFrame[i].pos.v[2], &baseFrame[i].orient.x,
+                            &baseFrame[i].pos[0], &baseFrame[i].pos[1],
+                            &baseFrame[i].pos[2], &baseFrame[i].orient.x,
                             &baseFrame[i].orient.y, &baseFrame[i].orient.z) == 6)
                 {
                     /* Compute the w component */

@@ -14,10 +14,6 @@ public:
 
     void Update(const float dt, const uint32_t ticks);
 
-    // Public Stats (FIXME)
-    int stat_obj_visible;
-    int stat_obj_hidden;
-
 protected:
     void UpdatePerspective();
     void DrawScene(const CFrustum& frustum,

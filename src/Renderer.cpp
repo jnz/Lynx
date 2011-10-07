@@ -181,12 +181,7 @@ void CRenderer::DrawScene(const CFrustum& frustum,
 
         // check if object is in view frustum
         if(!generateShadowMap && !frustum.TestSphere(obj->GetOrigin(), obj->GetRadius()))
-        {
-            stat_obj_hidden++;
             continue;
-        }
-        if(!generateShadowMap)
-            stat_obj_visible++;
 
         glPushMatrix();
         glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
@@ -278,7 +273,7 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     localctrlid = m_world->GetLocalObj()->GetID();
     world = m_world->GetInterpWorld();
 
-    const vec3_t campos = localctrl->GetOrigin()+localctrl->GetEyePos();
+    const vec3_t campos = localctrl->GetOrigin()+localctrl->GetRadius()*0.8f;
     const quaternion_t camrot = localctrl->GetRot();
 
     m.SetCamTransform(campos, camrot);
@@ -306,9 +301,6 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         }
         glUseProgram(m_program); // activate shader
     }
-
-    stat_obj_hidden = 0;
-    stat_obj_visible = 0;
 
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(m.pm);
@@ -361,13 +353,11 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
         if(obj->GetID() == localctrlid || !obj->GetParticleSystem())
             continue;
 
+        // Update/animate the particles, depending on dt and the current position.
         obj->GetParticleSystem()->Update(dt, ticks, obj->GetOrigin());
 
-        // FIXME use some kind of frustum test for the particle system
-        //glPushMatrix();
-        //glTranslatef(obj->GetOrigin().x, obj->GetOrigin().y, obj->GetOrigin().z);
+        // Draw the particles. FIXME: this should use a frustum test
         obj->GetParticleSystem()->Render(side, up, dir);
-        //glPopMatrix();
     }
     glDepthMask(true);
     glColor4f(1,1,1,1);
@@ -396,12 +386,10 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     if(viewmodel)
     {
         glClear(GL_DEPTH_BUFFER_BIT);
-        glPushMatrix(); // why is this necessary, hidden bug?
-        glLoadIdentity();
-        //glTranslatef(0.4f, -3.5f, 0.3f); // weapon offset
-
-        viewmodel->Render(viewmodelstate);
-        viewmodel->Animate(viewmodelstate, dt);
+        glPushMatrix();
+          glLoadIdentity();
+          viewmodel->Render(viewmodelstate);
+          viewmodel->Animate(viewmodelstate, dt);
         glPopMatrix();
     }
     glEnable(GL_LIGHTING);
@@ -425,23 +413,23 @@ void CRenderer::Update(const float dt, const uint32_t ticks)
     // Draw center crosshair
     glBegin(GL_QUADS);
         glTexCoord2d(0,1);
-        glVertex3f((m_width - m_crosshair_width)*0.5f, (m_height - m_crosshair_height)*0.5f, 0.0f);
+        glVertex3f((m_width-m_crosshair_width)*0.5f, (m_height-m_crosshair_height)*0.5f,0.0f);
         glTexCoord2d(0,0);
-        glVertex3f((m_width - m_crosshair_width)*0.5f, (m_height + m_crosshair_height)*0.5f, 0.0f);
+        glVertex3f((m_width-m_crosshair_width)*0.5f, (m_height+m_crosshair_height)*0.5f,0.0f);
         glTexCoord2d(1,0);
-        glVertex3f((m_width + m_crosshair_width)*0.5f, (m_height + m_crosshair_height)*0.5f, 0.0f);
+        glVertex3f((m_width+m_crosshair_width)*0.5f, (m_height+m_crosshair_height)*0.5f,0.0f);
         glTexCoord2d(1,1);
-        glVertex3f((m_width + m_crosshair_width)*0.5f, (m_height - m_crosshair_height)*0.5f, 0.0f);
+        glVertex3f((m_width+m_crosshair_width)*0.5f, (m_height-m_crosshair_height)*0.5f,0.0f);
     glEnd();
 
-    // draw current score
+    // draw HUD text: score, health...
     char hudtextbuf[64];
     sprintf(hudtextbuf, "Frags: %i", m_world->m_hud.score);
     m_font.DrawGL(10.0f, m_height - 30.0f, 0.0f, hudtextbuf);
     sprintf(hudtextbuf, "%i", m_world->m_hud.health);
     m_font.DrawGL(10.0f, m_height - 35.0f - (float)m_font.GetHeight(), 0.0f, hudtextbuf);
 
-#ifdef DRAW_SHADOWMAP
+#ifdef DRAW_SHADOWMAP // draw a small window with the scene from the light POV
     if(m_shaderactive)
     {
         //glBindTexture(GL_TEXTURE_2D, m_depthTextureId);

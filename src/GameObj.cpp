@@ -97,7 +97,7 @@ void CGameObj::SpawnParticleExplosion(const vec3_t& location, const float size)
     GetWorld()->AddObj(explosion);
 }
 
-int CGameObj::CreateSoundObj(const vec3_t& location, const std::string& soundpath, uint32_t lifetime) // FIXME is lifetime useful?
+int CGameObj::CreateSoundObj(const vec3_t& location, const std::string& soundpath, uint32_t lifetime)
 {
     CGameObj* sound = new CGameObj(GetWorld());
     sound->SetRadius(0.0f);

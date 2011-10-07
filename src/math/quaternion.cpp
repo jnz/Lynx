@@ -90,30 +90,6 @@ void quaternion_t::GetVec3(vec3_t* dir, vec3_t* up, vec3_t* side) const
     }
 }
 
-void quaternion_t::LookAt(const vec3_t& pFrom, const vec3_t& pAt, const vec3_t& pUp)
-{
-    assert(0); // Is this function OK? Currently untested and seems not so clever
-
-    assert(pUp.IsNormalized());
-    const vec3_t dir = (pAt - pFrom).Normalized();
-    const vec3_t side = (dir ^ pUp).Normalized();
-    const vec3_t up = (side ^ dir).Normalized();
-
-    matrix_t m;
-    m.SetIdentity();
-    m.m[0][0] =  side.x;
-    m.m[0][1] =  side.y;
-    m.m[0][2] =  side.z;
-    m.m[1][0] =  up.x;
-    m.m[1][1] =  up.y;
-    m.m[1][2] =  up.z;
-    m.m[2][0] = -dir.x;
-    m.m[2][1] = -dir.y;
-    m.m[2][2] = -dir.z;
-
-    FromMatrix(m);
-}
-
 void quaternion_t::RotationAxis(vec3_t v, float a)
 {
     const float s = (float)sin(a/2);
@@ -144,17 +120,16 @@ quaternion_t quaternion_t::Inverse() const
 void quaternion_t::Normalize()
 {
     const float abssqr = x*x + y*y* + z*z + w*w;
-    if(fabsf(abssqr - 1.0f) > lynxmath::EPSILON ||
-       fabsf(abssqr) < lynxmath::EPSILON)
+    //check if it makes sense to normalize
+    if(fabsf(abssqr) > lynxmath::EPSILON &&      // can't normalize 0 quaternion
+       fabsf(abssqr - 1.0f) > lynxmath::EPSILON) // already at length 1
     {
-        assert(0);
-        return;
+        const float invabs = lynxmath::InvSqrt(abssqr);
+        x *= invabs;
+        y *= invabs;
+        z *= invabs;
+        w *= invabs;
     }
-    const float invabs = lynxmath::InvSqrt(abssqr);
-    x *= invabs;
-    y *= invabs;
-    z *= invabs;
-    w *= invabs;
 }
 
 quaternion_t quaternion_t::Normalized() const

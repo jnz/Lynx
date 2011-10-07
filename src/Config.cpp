@@ -33,6 +33,7 @@ bool CConfig::AddFile(const std::string& file)
 {
     FILE* f;
     char buff[1024];
+    int i, linelen; // for comment removal
 
     f = fopen(file.c_str(), "rb");
     assert(f);
@@ -42,6 +43,19 @@ bool CConfig::AddFile(const std::string& file)
     while(!feof(f))
     {
         fgets(buff, sizeof(buff), f);
+
+        // remove comments
+        linelen = strlen(buff);
+        for(i=0;i<linelen;i++)
+        {
+            if(buff[i] == '#') // # is the comment character
+            {
+                buff[i] = NULL;
+                break;
+            }
+        }
+
+        // Process the line
         AddLine(buff);
     }
     fclose(f);
@@ -49,25 +63,26 @@ bool CConfig::AddFile(const std::string& file)
     return true;
 }
 
-void CConfig::AddLine(const std::string& line)
+bool CConfig::AddLine(const std::string& line)
 {
     char var[1024]; // variable
     char val[1024]; // value
 
-    // scan for quotes "%s"
+    // scan for two tokens, the second one in quotes "%s"
     if(sscanf(line.c_str(), "%s \"%[^\"]\"", var, val) == 2)
     {
-        if(var[0] != '#') // comment
-            AddVar(std::string(var), std::string(val));
-        return;
+        AddVar(std::string(var), std::string(val));
+        return true;
     }
 
+    // scan for two tokens without quotes
     if(sscanf(line.c_str(), "%s %s", var, val) == 2)
     {
-        if(var[0] != '#') // comment
-            AddVar(std::string(var), std::string(val));
-        return;
+        AddVar(std::string(var), std::string(val));
+        return true;
     }
+
+    return false;
 }
 
 cvar_t* CConfig::AddVarFloat(const std::string& name, const float value)
