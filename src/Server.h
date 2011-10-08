@@ -32,6 +32,8 @@ public:
 protected:
     bool SendWorldToClient(CClientInfo* client);
     void OnReceive(CStream* stream, CClientInfo* client);
+    void OnReceiveClientCtrl(CStream* stream, CClientInfo* client);
+    void OnReceiveChallenge(CStream* stream, CClientInfo* client);
 
     // Delete old history buffer entries if no client no longer needs them, or
     // they are so old, that the client probably is disconnected or has a huge lag.

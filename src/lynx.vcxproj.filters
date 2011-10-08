@@ -144,18 +144,6 @@
     <ClCompile Include="GameObjRocket.cpp">
       <Filter>GameZombie</Filter>
     </ClCompile>
-    <ClCompile Include="..\soil\src\image_DXT.cpp">
-      <Filter>SOIL</Filter>
-    </ClCompile>
-    <ClCompile Include="..\soil\src\image_helper.cpp">
-      <Filter>SOIL</Filter>
-    </ClCompile>
-    <ClCompile Include="..\soil\src\SOIL.cpp">
-      <Filter>SOIL</Filter>
-    </ClCompile>
-    <ClCompile Include="..\soil\src\stb_image_aug.cpp">
-      <Filter>SOIL</Filter>
-    </ClCompile>
     <ClCompile Include="Config.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -164,6 +152,18 @@
     </ClCompile>
     <ClCompile Include="ModelMD2.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\image_DXT.c">
+      <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\image_helper.c">
+      <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\SOIL.c">
+      <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\soil\src\stb_image_aug.c">
+      <Filter>SOIL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

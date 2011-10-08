@@ -2,6 +2,7 @@
 
 #define USE_RANGE_ENCODER       // use the enet compression mechanism
 
+#define SV_MAX_CHALLENGE_TIME   6000                   // a client has X ms after the connection to send the challenge msg
 #define MAX_SV_PACKETLEN        (USHRT_MAX)
 #define MAX_CL_PACKETLEN        (1024)
 

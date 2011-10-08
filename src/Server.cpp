@@ -82,14 +82,18 @@ void CServer::Update(const float dt, const uint32_t ticks)
         switch (event.type)
         {
         case ENET_EVENT_TYPE_CONNECT:
-            clientinfo = new CClientInfo(event.peer);
-            event.peer->data = clientinfo;
-            m_clientlist[clientinfo->GetID()] = clientinfo;
             // Fire Event
             {
-            char hostname[64];
+            // first we get a human readable hostname
+            char hostname[1024];
             enet_address_get_host_ip(&event.peer->address,
                                      hostname, sizeof(hostname));
+
+            // create client object
+            clientinfo = new CClientInfo(event.peer, hostname, ticks);
+            event.peer->data = clientinfo;
+            m_clientlist[clientinfo->GetID()] = clientinfo;
+
             fprintf(stderr, "A new client connected from %s:%u.\n",
                     hostname,
                     event.peer->address.port);
@@ -117,14 +121,14 @@ void CServer::Update(const float dt, const uint32_t ticks)
 
             fprintf(stderr, "Client %i disconnected.\n", clientinfo->GetID());
 
-            // Observer benachrichtigen
+            // Message to all observer
             {
             EventClientDisconnected e;
             e.client = clientinfo;
             CSubject<EventClientDisconnected>::NotifyAll(e);
             }
 
-            // Client aus Client-Liste löschen und Speicher freigeben
+            // Remove client from list and free memory
             iter = m_clientlist.find(clientinfo->GetID());
             assert(iter != m_clientlist.end());
             delete (*iter).second;
@@ -142,7 +146,23 @@ void CServer::Update(const float dt, const uint32_t ticks)
         int sent = 0;
         for(iter = m_clientlist.begin();iter!=m_clientlist.end();iter++)
         {
-            if(SendWorldToClient((*iter).second))
+            CClientInfo* client = (*iter).second;
+            if(client->disconnected)
+                continue;
+
+            // check if we still need a client challenge msg.
+            // if we have not received this message after a certain
+            // time (SV_MAX_CHALLENGE_TIME in ms) we disconnect the client.
+            if(!client->got_challenge &&
+               (ticks - client->GetConnecttime() > SV_MAX_CHALLENGE_TIME))
+            {
+                fprintf(stderr, "Client challenge timeout.\n");
+                enet_peer_disconnect_later(client->GetPeer(), 0);
+                client->disconnected = true;
+                continue;
+            }
+
+            if(SendWorldToClient(client))
                 sent++;
         }
 
@@ -158,55 +178,109 @@ void CServer::Update(const float dt, const uint32_t ticks)
 
 void CServer::OnReceive(CStream* stream, CClientInfo* client)
 {
-    uint8_t type;
+    if(client->disconnected) // don't listen to this guy anymore
+        return;
 
-    type = CNetMsg::ReadHeader(stream);
+    uint8_t type = CNetMsg::ReadHeader(stream);
     switch(type)
     {
     case NET_MSG_CLIENT_CTRL:
-        {
-            uint32_t worldid;
-            stream->ReadDWORD(&worldid);
-            ClientHistoryACK(client, worldid);
-
-            CObj* obj = m_world->GetObj(client->m_obj);
-            assert(obj);
-            if(!obj)
-            {
-                fprintf(stderr, "Invalid client message\n");
-                return;
-            }
-            vec3_t origin, vel;
-            stream->ReadVec3(&origin);
-            stream->ReadVec3(&vel);
-            stream->ReadFloat(&client->lat);
-            stream->ReadFloat(&client->lon);
-            if((origin - obj->GetOrigin()).AbsSquared() < MAX_SV_CL_POS_DIFF)
-            {
-                obj->SetOrigin(origin);
-            }
-            else
-            {
-                fprintf(stderr, "SV: Not accepting client position\n");
-            }
-            obj->SetVel(vel);
-
-            assert(client->clcmdlist.size() < 30);
-            uint16_t cmdcount;
-            stream->ReadWORD(&cmdcount);
-            client->clcmdlist.clear();
-            for(int i=0;i<cmdcount;i++)
-            {
-                std::string cmd;
-                stream->ReadString(&cmd);
-                client->clcmdlist.push_back(cmd);
-            }
-        }
+        OnReceiveClientCtrl(stream, client);
+        break;
+    case NET_MSG_CLIENT_CHALLENGE:
+        OnReceiveChallenge(stream, client);
         break;
     case NET_MSG_INVALID:
     default:
         fprintf(stderr, "Invalid client message\n");
         assert(0);
+        break;
+    }
+}
+
+void CServer::OnReceiveClientCtrl(CStream* stream, CClientInfo* client)
+{
+    if(!client->got_challenge) // don't accept this until we have a challenge msg
+        return;
+
+    uint32_t worldid;
+    stream->ReadDWORD(&worldid);
+    ClientHistoryACK(client, worldid);
+
+    CObj* obj = m_world->GetObj(client->m_obj);
+    assert(obj);
+    if(!obj)
+    {
+        fprintf(stderr, "Invalid client message\n");
+        return;
+    }
+    vec3_t origin, vel;
+    stream->ReadVec3(&origin);
+    stream->ReadVec3(&vel);
+    stream->ReadFloat(&client->lat);
+    stream->ReadFloat(&client->lon);
+    if((origin - obj->GetOrigin()).AbsSquared() < MAX_SV_CL_POS_DIFF)
+    {
+        obj->SetOrigin(origin);
+    }
+    else
+    {
+        fprintf(stderr, "SV: Not accepting client position\n");
+    }
+    obj->SetVel(vel);
+
+    assert(client->clcmdlist.size() < 30);
+    uint16_t cmdcount;
+    stream->ReadWORD(&cmdcount);
+    client->clcmdlist.clear();
+    for(int i=0;i<cmdcount;i++)
+    {
+        std::string cmd;
+        stream->ReadString(&cmd);
+        client->clcmdlist.push_back(cmd);
+    }
+}
+
+void CServer::OnReceiveChallenge(CStream* stream, CClientInfo* client)
+{
+    std::string clientname;
+
+    stream->ReadString(&clientname);
+
+    // validate client name
+    if(clientname.length() < 1 ||
+       clientname.length() > MAX_CLIENT_NAME_LEN)
+    {
+        // bad client name
+        fprintf(stderr, "Bad client name. Disconnecting client.\n");
+        enet_peer_disconnect_later(client->GetPeer(), 0);
+        client->disconnected = true;
+        return;
+    }
+    client->name = clientname;
+    client->got_challenge = true;
+
+    fprintf(stderr, "SV: Accepting new player: %s.\n", clientname.c_str());
+
+    // OK, so we like this client, now we send him the
+    // CHALLENGE_OK msg, so he knows, he is in the game
+    CStream responsestream(128); // 128 bytes for challenge_ok
+
+    CNetMsg::WriteHeader(&responsestream, NET_MSG_CLIENT_CHALLENGE_OK);
+    responsestream.WriteWORD(0);
+
+    ENetPacket* packet;
+    const uint32_t packetflags = ENET_PACKET_FLAG_RELIABLE;
+    packet = enet_packet_create(responsestream.GetBuffer(),
+                                responsestream.GetBytesWritten(),
+                                packetflags);
+    assert(packet);
+    if(!packet)
+        return;
+
+    if(enet_peer_send(client->GetPeer(), 0, packet) != 0)
+    {
+
     }
 }
 
@@ -278,6 +352,9 @@ void CServer::ClientHistoryACK(CClientInfo* client, uint32_t worldid)
 
 bool CServer::SendWorldToClient(CClientInfo* client)
 {
+    if(client->got_challenge == false) // don't send this client until auth'd
+        return true;
+
     ENetPacket* packet;
     int localobj = client->m_obj;
     m_stream.ResetWritePosition();

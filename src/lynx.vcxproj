@@ -189,10 +189,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\soil\src\image_DXT.cpp" />
-    <ClCompile Include="..\soil\src\image_helper.cpp" />
-    <ClCompile Include="..\soil\src\SOIL.cpp" />
-    <ClCompile Include="..\soil\src\stb_image_aug.cpp" />
+    <ClCompile Include="..\soil\src\image_DXT.c" />
+    <ClCompile Include="..\soil\src\image_helper.c" />
+    <ClCompile Include="..\soil\src\SOIL.c" />
+    <ClCompile Include="..\soil\src\stb_image_aug.c" />
     <ClCompile Include="BSPLevel.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientHUD.cpp" />

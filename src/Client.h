@@ -33,15 +33,17 @@ protected:
     void OnReceive(CStream* stream);
 
     void InputMouseMove(); // update m_lat and m_lon
-    void InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend); // forcesend: gibt es cmds, die unbedingt sofort abgeschickt werden müssen
+    void InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcesend); // forcesend: are there commands to be send immediately
     void SendClientState(const std::vector<std::string>& clcmdlist, bool forcesend, uint32_t ticks);
-    CObj* GetLocalController(); // Geist Objekt, das nur auf Client Seite existiert. Sozusagen die virtuelle Kamera
-    CObj* GetLocalObj(); // Tatsächliches Objekt mit dem der Client verknüpft ist
+    void SendChallenge(); // after connecting, we send a challenge message to the server
+    CObj* GetLocalController(); // object that does only exist on the client side. a virtual camera.
+    CObj* GetLocalObj(); // real game object connected to the player
 
 private:
     ENetHost* m_client;
     ENetPeer* m_server;
     bool m_isconnecting;
+    bool m_challenge_ok; // if this is true, the server accepted us for the game
 
     // Input
     int m_forward;

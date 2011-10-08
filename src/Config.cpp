@@ -45,7 +45,7 @@ bool CConfig::AddFile(const std::string& file)
         fgets(buff, sizeof(buff), f);
 
         // remove comments
-        for(int i=0;i<strlen(buff);i++) // gcc will optimize the strlen
+        for(unsigned int i=0;i<strlen(buff);i++) // gcc will optimize the strlen
         {
             if(buff[i] == '#') // # is the comment character
             {
@@ -79,6 +79,16 @@ bool CConfig::AddLine(const std::string& line)
     {
         AddVar(std::string(var), std::string(val));
         return true;
+    }
+
+    // There is something wrong with this line.
+    // Print a warning if we find a printable character.
+    for(unsigned int i=0;i<line.length();i++)
+    {
+        if(line[i] == ' ' || line[i] == '\t' || line[i] == '\n' || line[i] == '\r')
+            continue;
+        fprintf(stderr, "Config: Failed to parse config line: %s\n", line.c_str());
+        break;
     }
 
     return false;

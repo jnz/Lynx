@@ -18,6 +18,7 @@ CClient::CClient(CWorldClient* world, CGameLogic* gamelogic)
     m_client = NULL;
     m_server = NULL;
     m_isconnecting = false;
+    m_challenge_ok = false;
 
     m_gamelogic = gamelogic;
 
@@ -86,6 +87,7 @@ void CClient::Shutdown()
         m_client = NULL;
     }
     m_isconnecting = false;
+    m_challenge_ok = false;
 }
 
 void CClient::Update(const float dt, const uint32_t ticks)
@@ -109,7 +111,6 @@ void CClient::Update(const float dt, const uint32_t ticks)
                 //fprintf(stderr, "fake packet loss\n");
                 //continue;
             //}
-            fprintf(stderr, "ChannelID: %i", event.channelID);
 
             stream.SetBuffer(event.packet->data,
                              event.packet->dataLength,
@@ -130,6 +131,7 @@ void CClient::Update(const float dt, const uint32_t ticks)
         case ENET_EVENT_TYPE_CONNECT:
             m_isconnecting = false;
             fprintf(stderr, "CL: Connected to server.\n");
+            SendChallenge();
             break;
 
         case ENET_EVENT_TYPE_DISCONNECT:
@@ -142,6 +144,11 @@ void CClient::Update(const float dt, const uint32_t ticks)
     }
     // result 1 happens, when too much data is being sent
     if(result == -1)
+        return;
+
+    // we are not ready to send our input yet.
+    // only after the challenge_ok, the server will accept our data.
+    if(!m_challenge_ok)
         return;
 
     // Input and control
@@ -171,7 +178,7 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     CObj* localctrl = GetLocalController();
     CStream stream(MAX_CL_PACKETLEN);
 
-    CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL); // Writing Header
+    CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL);
     stream.WriteDWORD(m_world->GetWorldID());
     stream.WriteVec3(localctrl->GetOrigin());
     stream.WriteVec3(localctrl->GetVel());
@@ -190,6 +197,11 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
         return;
     }
 
+    // thanks to the ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT
+    // option, we don't have to take care of packets larger
+    // than the MTU (1400 bytes normally). Otherwise we would
+    // have to split the stream up in multiple packets and
+    // then reassemble them.
     const uint32_t packetflags = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
     packet = enet_packet_create(stream.GetBuffer(),
                                 stream.GetBytesWritten(),
@@ -207,6 +219,41 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
     m_lastupdate = ticks;
 }
 
+// after connecting, we send a challenge message to the server
+void CClient::SendChallenge()
+{
+    ENetPacket* packet;
+    CStream stream(128);
+    std::string playername = CLynx::cfg.GetVarAsStr("playername", "unnamed");
+
+    CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CHALLENGE);
+    stream.WriteString(playername);
+
+    if(stream.GetWriteOverflow())
+    {
+        fprintf(stderr, "CL: Challenge packet size too large.\n");
+        assert(0); // this should not happen
+        return;
+    }
+
+    // send as reliable packet
+    const uint32_t packetflags = ENET_PACKET_FLAG_RELIABLE;
+    packet = enet_packet_create(stream.GetBuffer(),
+                                stream.GetBytesWritten(),
+                                packetflags);
+    assert(packet);
+    if(packet)
+    {
+        int success = enet_peer_send(m_server, 0, packet);
+        if(success != 0)
+        {
+            fprintf(stdout, "Failed to send packet\n");
+            assert(success == 0);
+            Shutdown(); // this is bad, but what can we do
+        }
+    }
+}
+
 void CClient::OnReceive(CStream* stream)
 {
     uint8_t type;
@@ -222,6 +269,10 @@ void CClient::OnReceive(CStream* stream)
         m_world->m_hud.Serialize(false, stream, m_world->GetResourceManager());
         m_world->Serialize(false, stream);
         m_world->SetLocalObj(localobj);
+        break;
+    case NET_MSG_CLIENT_CHALLENGE_OK:
+        m_challenge_ok = true;
+        fprintf(stderr, "CL: Server accepted us. Challenge OK.\n");
         break;
     case NET_MSG_INVALID:
     default:
