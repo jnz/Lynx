@@ -227,7 +227,7 @@ int DeltaDiffFloat(const float* newstate,
                    uint32_t* updateflags,
                    CStream* stream)
 {
-    if(!oldstate || !(*newstate == *oldstate)) {
+    if( !oldstate || (fabsf(*newstate - *oldstate) > lynxmath::EPSILON) ) {
         *updateflags |= flagparam;
         if(stream) stream->WriteFloat(*newstate);
         return sizeof(float);

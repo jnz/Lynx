@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <string.h>
 
 #ifdef _DEBUG
 #include <crtdbg.h>
@@ -33,7 +34,6 @@ bool CConfig::AddFile(const std::string& file)
 {
     FILE* f;
     char buff[1024];
-    int i, linelen; // for comment removal
 
     f = fopen(file.c_str(), "rb");
     assert(f);
@@ -45,12 +45,11 @@ bool CConfig::AddFile(const std::string& file)
         fgets(buff, sizeof(buff), f);
 
         // remove comments
-        linelen = strlen(buff);
-        for(i=0;i<linelen;i++)
+        for(int i=0;i<strlen(buff);i++) // gcc will optimize the strlen
         {
             if(buff[i] == '#') // # is the comment character
             {
-                buff[i] = NULL;
+                buff[i] = 0;
                 break;
             }
         }

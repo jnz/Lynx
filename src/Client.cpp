@@ -114,7 +114,15 @@ void CClient::Update(const float dt, const uint32_t ticks)
             stream.SetBuffer(event.packet->data,
                              event.packet->dataLength,
                              event.packet->dataLength);
-            OnReceive(&stream);
+            if(event.channelID == 0)
+            {
+                OnReceive(&stream);
+            }
+            else
+            {
+                assert(0);
+            }
+
             enet_packet_destroy(event.packet);
 
             break;

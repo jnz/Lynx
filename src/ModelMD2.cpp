@@ -244,7 +244,7 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
     md2_vertex_t* cur_vertex;
     md2_vertex_t* next_vertex;
     vec3_t inter_xyz, inter_n; // interpolated
-    const float lerp = state->time * m_fps;
+    const float lerpf = state->time * m_fps; // lerp factor 0..1
     unsigned int i, j;
     int uvindex;
     int vindex;
@@ -265,25 +265,25 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
     {
         for(j=0;j<3;j++)
         {
+            // get data
             vindex = m_triangles[i].v[j];
             uvindex = m_triangles[i].uv[j];
-
-            glTexCoord2f(m_texcoords[uvindex].u,
-                         m_texcoords[uvindex].v);
-
             cur_vertex = &cur_vertices[vindex];
             next_vertex = &next_vertices[vindex];
 
+            // interpolate
             inter_n = vec3_t::Lerp(cur_vertex->n,
                                    next_vertex->n,
-                                   lerp);
-            glNormal3fv(inter_n.GetPointer());
-
+                                   lerpf);
             inter_xyz = vec3_t::Lerp(cur_vertex->v,
                                      next_vertex->v,
-                                     state->time * m_fps);
-            glVertex3fv(inter_xyz.GetPointer());
+                                     lerpf);
 
+            // feed to OpenGL
+            glTexCoord2f(m_texcoords[uvindex].u,
+                         m_texcoords[uvindex].v);
+            glNormal3fv(inter_n.GetPointer());
+            glVertex3fv(inter_xyz.GetPointer());
         }
     }
 
@@ -291,6 +291,7 @@ void CModelMD2::RenderFixed(const model_state_t* state) const
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
 
     if(m_shaderactive)
         glUseProgram(curprg);
@@ -443,7 +444,7 @@ bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtextur
 
     // frames
     fseek(f, header.ofs_frames, SEEK_SET);
-    curanim.name[0] = NULL;
+    curanim.name[0] = 0;
     for(i=0;i<header.num_frames;i++) // iterating through every frame
     {
         m_frames[i].num_xyz = header.num_xyz; // always the same?

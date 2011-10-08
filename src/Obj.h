@@ -27,7 +27,6 @@ struct obj_state_t;
 //  - World::ObjMove skips these objects
 //  - World::TraceObj skips these objects
 //  - The object is not rendered
-//
 
 // Serialize Helper Functions: Compare if newstate != oldstate, update updateflags with flagparam and write to stream (if not null)
 int DeltaDiffVec3(const vec3_t* newstate,
@@ -89,7 +88,9 @@ struct obj_state_t
     std::string     resource;
     animation_t     animation;
     OBJFLAGTYPE     flags;
-    std::string     particles;      // Particlesystem bound to this object. The string looks something like this: "blood|dx=0.1,dy=0.6,dz=23".
+    std::string     particles;      // Particlesystem bound to this object. The
+                                    // string looks something like this:
+                                    // "blood|dx=0.1,dy=0.6,dz=23".
 };
 
 class CObj
@@ -101,11 +102,18 @@ public:
     int         GetID() const { return m_id; }
     virtual int GetType() const { return 0; } // poor man's rtti
 
-    bool        Serialize(bool write, CStream* stream, int id, const obj_state_t* oldstate=NULL); // Objekt in einen Byte-Stream schreiben. Wenn oldstate ungleich NULL, wird nur die Differenz geschrieben, gibt true zurück, wenn sich objekt durch geändert hat (beim lesen) oder wenn es sich von oldstate unterscheidet
+    // Serialize:
+    // Write object to a byte stream. If there is an oldstate available,
+    // the delta compression/decompression is used.
+    // For writing, id should match GetID(), for reading, id is the new object id.
+    bool        Serialize(bool write, CStream* stream,
+                          int id, const obj_state_t* oldstate=NULL);
 
     obj_state_t GetObjState() const { return state; }
     void        SetObjState(const obj_state_t* objstate, int id);
-    void        CopyObjStateFrom(const CObj* source); // Eigenschaften von anderem Objekt kopieren
+    // CopyObjStateFrom: Copy from other object.
+    // This will also update the resources.
+    void        CopyObjStateFrom(const CObj* source);
 
     const vec3_t&       GetOrigin() const { return state.origin; }
     void                SetOrigin(const vec3_t& origin) { state.origin = origin; }
@@ -115,75 +123,77 @@ public:
     void                SetRot(const quaternion_t& rotation);
     void                GetDir(vec3_t* dir, vec3_t* up, vec3_t* side) const;
 
-    float       GetRadius() const; // Max. Object sphere size
-    void        SetRadius(float radius);
-    const std::string& GetResource() const;
-    void        SetResource(std::string resource);
-    animation_t GetAnimation() const;
-    void        SetAnimation(animation_t animation);
-    OBJFLAGTYPE GetFlags() const;
-    void        SetFlags(OBJFLAGTYPE flags);
-    void        AddFlags(OBJFLAGTYPE flags);
-    void        RemoveFlags(OBJFLAGTYPE flags);
-    void        SetParticleSystem(const std::string psystem);
-    const std::string& GetParticleSystemName() const;
+    float               GetRadius() const; // Max. object sphere size
+    void                SetRadius(float radius);
+    const std::string&  GetResource() const;
+    void                SetResource(std::string resource);
+    animation_t         GetAnimation() const;
+    void                SetAnimation(animation_t animation);
+    OBJFLAGTYPE         GetFlags() const;
+    void                SetFlags(OBJFLAGTYPE flags);
+    void                AddFlags(OBJFLAGTYPE flags);
+    void                RemoveFlags(OBJFLAGTYPE flags);
+    void                SetParticleSystem(const std::string psystem);
+    const std::string&  GetParticleSystemName() const;
 
     // Local Attributes
-    bool        locGetIsOnGround() const { return m_locIsOnGround; } // Has this object touched the ground? Set by World::ObjMove
+    // Has this object touched the ground? Set by World::ObjMove
+    bool                locGetIsOnGround() const { return m_locIsOnGround; }
 
     // Rotation
-    const matrix_t* GetRotMatrix() const { return &m; } // Direct access to the rotation matrix
+    // Direct access to the rotation matrix, used by the renderer
+    const matrix_t*     GetRotMatrix() const { return &m; }
 
     // Model Data
-    CModel*         GetMesh() const { return m_mesh; }
-    model_state_t*  GetMeshState() { return m_mesh_state; }
+    CModel*             GetMesh() const { return m_mesh; }
+    model_state_t*      GetMeshState() { return m_mesh_state; }
 
     // Sound Data
-    const CSound*   GetSound() const { return m_sound; }
-    sound_state_t*  GetSoundState() { return &m_sound_state; }
+    const CSound*       GetSound() const { return m_sound; }
+    sound_state_t*      GetSoundState() { return &m_sound_state; }
 
     // Particle Systems
-    CParticleSystem* GetParticleSystem() { return m_particlesys.get(); }
+    CParticleSystem*    GetParticleSystem() { return m_particlesys.get(); }
 
     // Wallhit notification, called by World::ObjMove(...)
-    virtual void     OnHitWall(const vec3_t& location, const vec3_t& normal) {}
+    virtual void        OnHitWall(const vec3_t& location, const vec3_t& normal) {}
 
 protected:
-    obj_state_t state; // Core data
+    obj_state_t         state; // Core data
 
     // UpdateResources: make sure that m_mesh points to the right model
     // (i.e. the one set in state.resource)
     // This will also load sounds, if the object has a soundfile
     // in the state.resource string.
-    void           UpdateResources();
+    void                UpdateResources();
 
     // Animation extension
-    CModel*        m_mesh;
-    model_state_t* m_mesh_state;
+    CModel*             m_mesh;
+    model_state_t*      m_mesh_state;
 
     // Sound
-    CSound*     m_sound;
-    sound_state_t m_sound_state;
+    CSound*             m_sound;
+    sound_state_t       m_sound_state;
 
     // Rotation extension
-    void        UpdateMatrix();
-    matrix_t    m;
+    void                UpdateMatrix();
+    matrix_t            m;
 
     // Particle extension
-    void        UpdateParticles();
+    void                UpdateParticles();
     std::auto_ptr<CParticleSystem> m_particlesys;
 
     // Local Attributes
-    bool        m_locIsOnGround;
-    friend class CWorld;
+    bool                m_locIsOnGround;
 
-    CWorld*     GetWorld() { return m_world; }
+    friend class CWorld;
+    CWorld*             GetWorld() { return m_world; }
 
 private:
     // Don't touch these
-    int         m_id;
-    CWorld*     m_world;
+    int                 m_id;
+    CWorld*             m_world;
 
-    static int m_idpool;
+    static int          m_idpool; // unique id number for new objects
 };
 

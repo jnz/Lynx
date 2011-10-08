@@ -3,7 +3,7 @@
 class CWorld;
 #include <map>
 #ifdef __GNUC__
-#include <ext/hash_map>
+#include <unordered_map>
 #else
 #include <hash_map>
 #endif
@@ -43,15 +43,23 @@ class CWorld;
  */
 
 #ifdef __GNUC__
-namespace stdext
-{
-    using namespace __gnu_cxx;
-}
+  #define WORLD_STATE_OBJMAPTYPE    std::unordered_map<int, int>
+  #define WORLD_STATE_OBJITER       std::unordered_map<int, int>::iterator
+  #define WORLD_STATE_CONSTOBJITER  std::unordered_map<int, int>::const_iterator
+  // STL types for our object storage
+  #define OBJMAPTYPE                std::unordered_map<int, CObj*>
+  #define OBJITER                   std::unordered_map<int, CObj*>::iterator
+  #define OBJITERCONST              std::unordered_map<int, CObj*>::const_iterator
+#else
+  #define WORLD_STATE_OBJMAPTYPE    stdext::hash_map<int, int>
+  #define WORLD_STATE_OBJITER       stdext::hash_map<int, int>::iterator
+  #define WORLD_STATE_CONSTOBJITER  stdext::hash_map<int, int>::const_iterator
+  // STL types for our object storage
+  #define OBJMAPTYPE                stdext::hash_map<int, CObj*>
+  #define OBJITER                   stdext::hash_map<int, CObj*>::iterator
+  #define OBJITERCONST              stdext::hash_map<int, CObj*>::const_iterator
 #endif
 
-#define WORLD_STATE_OBJMAPTYPE    stdext::hash_map<int, int>
-#define WORLD_STATE_OBJITER       stdext::hash_map<int, int>::iterator
-#define WORLD_STATE_CONSTOBJITER  stdext::hash_map<int, int>::const_iterator
 
 struct world_state_t
 {
@@ -94,10 +102,6 @@ struct world_obj_trace_t // Search for objects hit by a ray, used by the TraceOb
     CObj*   hitobj; // NULL, if no object was hit
 };
 
-// STL types for our object storage
-#define OBJMAPTYPE   stdext::hash_map<int, CObj*>
-#define OBJITER      stdext::hash_map<int, CObj*>::iterator
-#define OBJITERCONST stdext::hash_map<int, CObj*>::const_iterator
 
 class CWorld
 {
