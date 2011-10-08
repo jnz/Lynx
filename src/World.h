@@ -60,7 +60,6 @@ class CWorld;
   #define OBJITERCONST              stdext::hash_map<int, CObj*>::const_iterator
 #endif
 
-
 struct world_state_t
 {
     uint32_t    leveltime; // time in [ms]

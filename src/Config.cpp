@@ -45,7 +45,8 @@ bool CConfig::AddFile(const std::string& file)
         fgets(buff, sizeof(buff), f);
 
         // remove comments
-        for(unsigned int i=0;i<strlen(buff);i++) // gcc will optimize the strlen
+        // gcc will optimize the strlen
+        for(unsigned int i=0;i<strlen(buff);i++)
         {
             if(buff[i] == '#') // # is the comment character
             {
