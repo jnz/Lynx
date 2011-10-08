@@ -12,6 +12,7 @@ ENDIF(APPLE)
 set(lynx3d_MATH ../src/math/matrix.cpp ../src/math/plane.cpp
                 ../src/math/quaternion.cpp ../src/math/vec3.cpp)
 
-set(kdcompile_SOURCES kdcompile.cpp ../src/KDTree.cpp ../src/lynx.cpp)
+set(kdcompile_SOURCES kdcompile.cpp ../src/KDTree.cpp ../src/Config.cpp
+    ../src/lynx.cpp)
 
 add_executable(kdcompile ${kdcompile_SOURCES} ${lynx3d_MATH})

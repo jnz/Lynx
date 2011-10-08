@@ -2,6 +2,7 @@
 #include "math/vec3.h"
 #include "ModelMD5.h"
 #include <stdio.h>
+#include <string.h>
 #include <GL/glew.h>
 #define NO_SDL_GLEXT
 #include <SDL/SDL_opengl.h>
@@ -754,7 +755,7 @@ bool CModelMD5::Load(const char *path, CResourceManager* resman, bool loadtextur
                         }
                     }
                     assert(j < (int)sizeof(mesh->shader));
-                    mesh->shader[j] = NULL;
+                    mesh->shader[j] = 0;
                     if(loadtexture) // The server needs no texture
                     {
                         // disable error messages for the gettexture function

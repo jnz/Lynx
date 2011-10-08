@@ -443,7 +443,7 @@ bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtextur
 
     // frames
     fseek(f, header.ofs_frames, SEEK_SET);
-    curanim.name[0] = NULL;
+    curanim.name[0] = 0;
     for(i=0;i<header.num_frames;i++) // iterating through every frame
     {
         m_frames[i].num_xyz = header.num_xyz; // always the same?

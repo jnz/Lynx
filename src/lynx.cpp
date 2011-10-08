@@ -119,7 +119,7 @@ std::string CLynx::ReadCompleteFile(const std::string& path)
         delete[] buff;
         return "";
     }
-    buff[fsize] = NULL;
+    buff[fsize] = 0;
     std::string shader(buff);
 
     fclose(f);

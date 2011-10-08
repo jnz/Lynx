@@ -4,11 +4,14 @@ project(lynx3d)
 # States that CMake required version must be >= 2.6
 cmake_minimum_required(VERSION 2.6)
 
-# Mac OS X
-IF(APPLE)
-   INCLUDE_DIRECTORIES("/usr/local/include")
-   LINK_DIRECTORIES("/usr/local/lib")
-ENDIF(APPLE)
+IF(UNIX)
+    IF(APPLE) # Mac OS X
+        INCLUDE_DIRECTORIES("/usr/local/include")
+        LINK_DIRECTORIES("/usr/local/lib")
+    ELSE(APPLE) # GNU c++0x flags are used here
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++0x") # for unordered_map
+    ENDIF(APPLE)
+ENDIF(UNIX)
 
 # Include the directory itself as a path to include directories
 # set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -45,10 +48,11 @@ link_libraries (
     SDLmain # Sadly not included in SDL_LIBRARY variable
 )
 
-set(lynx3d_SOIL ../soil/src/SOIL.cpp
-                ../soil/src/image_DXT.cpp
-                ../soil/src/image_helper.cpp
-                ../soil/src/stb_image_aug.cpp)
+# the external image loading lib SOIL
+set(lynx3d_SOIL ../soil/src/SOIL.c
+                ../soil/src/image_DXT.c
+                ../soil/src/image_helper.c
+                ../soil/src/stb_image_aug.c)
 
 set(lynx3d_MATH math/matrix.cpp math/plane.cpp math/quaternion.cpp math/vec3.cpp)
 
@@ -65,8 +69,9 @@ set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameL
     GameObj.cpp GameObjPlayer.cpp GameObjZombie.cpp GameZombie.cpp
     GameObjRocket.cpp NetMsg.cpp Obj.cpp ParticleSystem.cpp
     ParticleSystemBlood.cpp ParticleSystemDust.cpp ParticleSystemExplosion.cpp
-    ResourceManager.cpp Server.cpp Sound.cpp Stream.cpp Think.cpp World.cpp
-    ModelMD5.cpp lynx.cpp lynxsys.cpp Config.cpp Model.cpp ModelMD2.cpp mainsv.cpp)
+    ParticleSystemRocket.cpp ResourceManager.cpp Server.cpp Sound.cpp
+    Stream.cpp Think.cpp World.cpp ModelMD5.cpp lynx.cpp lynxsys.cpp Config.cpp
+    Model.cpp ModelMD2.cpp mainsv.cpp)
 
 add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})
 add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})

@@ -18,7 +18,7 @@ static const monster_t g_monster_table[] =
     {50,  "Demon/demon.md2"},
     {70,  "Revenant/revenant.md2"},
     {80,  "Archvile/archvile.md2"},
-    {90,  "imp/imp.md2"}
+    {90,  "imp/Imp.md2"}
 };
 static const int g_monster_table_size = sizeof(g_monster_table)/sizeof(g_monster_table[0]);
 

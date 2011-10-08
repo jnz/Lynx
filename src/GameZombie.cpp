@@ -38,7 +38,7 @@ static const gamezombie_precache_t g_game_zombie_precache[] =
     {(char*)"Demon/demon.md2"               , LYNX_RESOURCE_TYPE_MD2}   ,
     {(char*)"Revenant/revenant.md2"         , LYNX_RESOURCE_TYPE_MD2}   ,
     {(char*)"Archvile/archvile.md2"         , LYNX_RESOURCE_TYPE_MD2}   ,
-    {(char*)"imp/imp.md2"                   , LYNX_RESOURCE_TYPE_MD2}   ,
+    {(char*)"imp/Imp.md2"                   , LYNX_RESOURCE_TYPE_MD2}   ,
     {(char*)"rifle.ogg"                     , LYNX_RESOURCE_TYPE_SOUND} ,
     {(char*)"monsterhit1.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,
     {(char*)"monsterhit2.ogg"               , LYNX_RESOURCE_TYPE_SOUND} ,

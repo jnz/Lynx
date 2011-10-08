@@ -506,7 +506,7 @@ static int kdbin_getnodes(const CKDTree& tree,
     bspplane.d = node->m_plane.m_d;
     for(int i=0;i<3;i++)
     {
-        if(fabs(node->m_plane.m_n.v[i]) > 0.0f)
+        if(fabsf(node->m_plane.m_n[i]) > lynxmath::EPSILON)
         {
             bspplane.type = i;
             break;
@@ -938,7 +938,8 @@ plane_t CKDTree::CKDNode::FindSplittingPlane(const CKDTree* tree, const std::vec
         for(j = 0; j<3; j++) // for every triangle vertex
         {
             const int vertexindex = tree->m_triangles[trianglesIn[i]].vertices[j];
-            coords[k++] = tree->m_vertices[vertexindex].v[kdAxis];
+            const vec3_t& v = tree->m_vertices[vertexindex];
+            coords[k++] = v[kdAxis];
         }
     }
 
