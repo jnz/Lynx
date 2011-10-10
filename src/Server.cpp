@@ -14,7 +14,7 @@ CServer::CServer(CWorld* world)
     m_server = NULL;
     m_lastupdate = 0;
     m_world = world;
-    m_stream.Resize(MAX_SV_PACKETLEN);
+    m_stream.SetSize(MAX_SV_PACKETLEN);
 }
 
 CServer::~CServer(void)
@@ -107,8 +107,8 @@ void CServer::Update(const float dt, const uint32_t ticks)
 
         case ENET_EVENT_TYPE_RECEIVE:
             stream.SetBuffer(event.packet->data,
-                            (int)event.packet->dataLength,
-                            (int)event.packet->dataLength);
+                             event.packet->dataLength,
+                             event.packet->dataLength);
             OnReceive(&stream, (CClientInfo*)event.peer->data);
             enet_packet_destroy (event.packet);
             break;
@@ -264,7 +264,8 @@ void CServer::OnReceiveChallenge(CStream* stream, CClientInfo* client)
 
     // OK, so we like this client, now we send him the
     // CHALLENGE_OK msg, so he knows, he is in the game
-    CStream responsestream(128); // 128 bytes for challenge_ok
+    CStream responsestream;
+    responsestream.SetSize(128); // 128 bytes for challenge_ok
 
     CNetMsg::WriteHeader(&responsestream, NET_MSG_CLIENT_CHALLENGE_OK);
     responsestream.WriteWORD(0);

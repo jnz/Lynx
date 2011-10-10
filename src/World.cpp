@@ -11,14 +11,14 @@
 #endif
 
 #pragma warning(disable:4355)
-CWorld::CWorld(void) : m_resman(this)
+CWorld::CWorld() : m_resman(this)
 {
     state.worldid = 0;
     m_leveltimestart = CLynxSys::GetTicks();
     state.leveltime = 0;
 }
 
-CWorld::~CWorld(void)
+CWorld::~CWorld()
 {
     Shutdown();
 }
@@ -521,7 +521,7 @@ bool CWorld::Serialize(bool write, CStream* stream, const world_state_t* oldstat
     if(write)
     {
         uint32_t updateflags = 0;
-        CStream tempstream = stream->GetStream(); // save this position, so we can write here the updateflags a few lines later
+        CStream tempstream = stream->GetShallowCopy(); // save this position, so we can write here the updateflags a few lines later
         stream->WriteAdvance(sizeof(uint32_t));
 
         // Write to tempstream to check for updateflags
@@ -671,5 +671,85 @@ bool world_state_t::GetObjState(const int id, obj_state_t& objstate) const
         return false;
     objstate = objstates[indexiter->second];
     return true;
+}
+
+// --------------------------------------------------
+// CPlayerInfo
+// --------------------------------------------------
+
+void CPlayerInfo::AddPlayer(world_player_t player)
+{
+    // check if there is already someone with that id
+    assert(!GetPlayer(player.id, NULL));
+
+    m_playerlist.push_back(player);
+}
+
+void CPlayerInfo::RemovePlayer(int id)
+{
+    std::vector<world_player_t>::iterator iter;
+    for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
+    {
+        if((*iter).id == id)
+        {
+            m_playerlist.erase(iter);
+            return;
+        }
+    }
+
+    fprintf(stderr, "CPlayerInfo: Player id not found: %i\n", id);
+    assert(0);
+}
+
+void CPlayerInfo::RemoveAllPlayer()
+{
+    m_playerlist.clear();
+}
+
+bool CPlayerInfo::GetPlayer(const int id, world_player_t** player)
+{
+    std::vector<world_player_t>::iterator iter;
+    for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
+    {
+        if((*iter).id == id)
+        {
+            if(player)
+                *player = &(*iter);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CPlayerInfo::Serialize(bool write, CStream* stream, const CPlayerInfo* oldstate)
+{
+    assert(0); //IMPLEMENT ME
+    if(write)
+    {
+        //world_player_t* oldplayer;
+        std::vector<world_player_t>::iterator iter;
+        for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
+        {
+            const world_player_t* player = &(*iter);
+
+            //if(oldstate->GetPlayer(player->id, &oldplayer))
+            //{
+                //// we have the player also in the old state
+                //if(player->name != oldplayer->name)
+                //{
+                    //assert(0); //IMPLEMENT ME
+                //}
+            //}
+            //else
+            //{
+                //// the player is new, write the complete information
+            //}
+        }
+        return true;
+    }
+    else
+    {
+        return true;
+    }
 }
 

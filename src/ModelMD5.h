@@ -167,5 +167,8 @@ private:
     vec3_t m_big_stupid_doom3_rocketlauncher_hack_offset;
 #endif
 
+    // Rule of three
+    CModelMD5(const CModelMD5&);
+    CModelMD5& operator=(const CModelMD5&);
 };
 

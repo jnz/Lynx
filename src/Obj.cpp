@@ -309,7 +309,7 @@ bool CObj::Serialize(bool write, CStream* stream, int id, const obj_state_t* old
     {
         assert(GetID() == id);
         assert(id < INT_MAX);
-        CStream tempstream = stream->GetStream(); // we remember the position of the updateflags
+        CStream tempstream = stream->GetShallowCopy(); // we remember the position of the updateflags
         stream->WriteAdvance(sizeof(uint32_t)); // we advance by sizeof(DWORD) bytes
 
         DeltaDiffVec3(&state.origin,       oldstate ? &oldstate->origin : NULL,     OBJ_STATE_ORIGIN,     &updateflags, stream);

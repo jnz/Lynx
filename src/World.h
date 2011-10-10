@@ -60,21 +60,75 @@ class CWorld;
   #define OBJITERCONST              stdext::hash_map<int, CObj*>::const_iterator
 #endif
 
+// CPlayerInfo and world_player_t (name, score, ping, team etc.):
+// These data structures are used as a property of a world.
+// Normally only the server module has the information about the connected
+// clients. The server is then using the CPlayerInfo class to update
+// the world with informations about the connected players. So the clients
+// can e.g. display a scoreboard.
+//
+// world_player_t is stored in a vector in CPlayerInfo.
+
+enum
+{
+    WORLD_PLAYER_UPDATE_NAME    = 2,
+    WORLD_PLAYER_UPDATE_SCORE   = 4,
+    WORLD_PLAYER_UPDATE_LATENCY = 8,
+};
+
+struct world_player_t
+{
+    world_player_t()
+    {
+        id = 0;
+        name = "not init";
+        score = 0;
+        latency = 0;
+    }
+
+    uint32_t     id;      // player id, copied from CServer's CClientInfo
+    std::string  name;    // player name, human readable
+    uint16_t     score;   // score count
+    uint16_t     latency; // network latency / ping
+};
+
+class CPlayerInfo
+{
+public:
+    void AddPlayer(world_player_t player);
+    void UpdatePlayer(int id, world_player_t);
+    void RemovePlayer(int id);
+    void RemoveAllPlayer();
+    bool GetPlayer(const int id, world_player_t** player);
+
+    // Serialize the world state to a byte stream.
+    // Returns true if the state has changed compared to the oldstate.
+    bool Serialize(bool write, CStream* stream, const CPlayerInfo* oldstate=NULL);
+
+private:
+    // infos about all players in current snapshot is stored here in this vector
+    std::vector<world_player_t> m_playerlist;
+};
+
+// Essential game engine struct: world_state_t
+// This struct holds one complete snapshot of the game.
+//
+// Everything to describe the current state of the game
+// is stored in this struct.
+// The objstates vector contains all the objects.
+// The objindex is a map to the objstates vector
+// indices.
+// E.g. you have the OBJID of an object,
+// then you can access the obj_state_t in this way:
+//
+//  objstates[objindex[OBJID]]
+
 struct world_state_t
 {
-    uint32_t    leveltime; // time in [ms]
-    uint32_t    worldid; // worldid increments every frame, unique world identifier
-    std::string level; // path to .lbsp level file
-
-    // Everything to describe the current state of the game
-    // is stored in this struct.
-    // The objstates vector contains all the objects.
-    // The objindex is a map to the objstates vector
-    // indices.
-    // E.g. you have the OBJID of an object,
-    // then you can access the obj_state_t in this way:
-    //
-    //  objstates[objindex[OBJID]]
+    uint32_t    leveltime;  // time in [ms]
+    uint32_t    worldid;    // worldid increments every frame, unique identifier
+    std::string level;      // path to .lbsp level file
+    //CPlayerInfo playerinfo; // current active players (name, score, ping)
 
     void        AddObjState(obj_state_t objstate, const int id);
     bool        ObjStateExists(const int id) const;
@@ -88,7 +142,9 @@ protected:
     WORLD_STATE_OBJMAPTYPE objindex; // ID to objstates index table. Key = obj id, value = index in objstates table
 };
 
-struct world_obj_trace_t // Search for objects hit by a ray, used by the TraceObj function
+// world_obj_trace_t:
+// Search for objects hit by a ray, used by the CWorld::TraceObj function
+struct world_obj_trace_t
 {
     // Input
     vec3_t  start; // start point
@@ -101,12 +157,11 @@ struct world_obj_trace_t // Search for objects hit by a ray, used by the TraceOb
     CObj*   hitobj; // NULL, if no object was hit
 };
 
-
 class CWorld
 {
 public:
-    CWorld(void);
-    virtual ~CWorld(void);
+    CWorld();
+    virtual ~CWorld();
 
     void            Shutdown();
 
@@ -174,5 +229,10 @@ protected:
 
     std::list<CObj*> m_addobj; // Objects that will be added by UpdatePendingObjs
     std::list<int>  m_removeobj; // Objects that will be deleted by UpdatePendingObjs
+
+private:
+    // Rule of three
+    CWorld(const CWorld&);
+    CWorld& operator=(const CWorld&);
 };
 

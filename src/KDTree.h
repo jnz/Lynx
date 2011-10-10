@@ -108,5 +108,9 @@ private:
 
     // Test Triangle: is a triangle in front or back of the plane?
     polyplane_t TestTriangle(const int triindex, const plane_t& plane) const;
+
+    // Rule of three
+    CKDTree(const CKDTree&);
+    CKDTree& operator=(const CKDTree&);
 };
 

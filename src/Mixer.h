@@ -17,5 +17,9 @@ protected:
 
 private:
     CWorldClient* m_world;
+
+    // Rule of three
+    CMixer(const CMixer&);
+    CMixer& operator=(const CMixer&);
 };
 

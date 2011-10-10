@@ -35,5 +35,10 @@ public:
 protected:
     CModelMD5*  m_model;
     md5_state_t m_model_state;
+
+private:
+    // Rule of three
+    CClientHUD(const CClientHUD&);
+    CClientHUD& operator=(const CClientHUD&);
 };
 

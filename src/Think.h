@@ -53,5 +53,8 @@ public:
     void DoThink(uint32_t leveltime); // alle thinkfuncs ausführen
 private:
     std::list<CThinkFunc*> m_think;
+
+    // Rule of three
+    CThink& operator=(const CThink&);
 };
 

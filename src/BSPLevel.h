@@ -91,4 +91,9 @@ protected:
 
     unsigned int m_vbo;
     unsigned int m_vboindex;
+
+private:
+    // Rule of three
+    CBSPLevel(const CBSPLevel&);
+    CBSPLevel& operator=(const CBSPLevel&);
 };

@@ -182,5 +182,9 @@ private:
 
     // animation
     float             m_animation; // time for animations
+
+    // Rule of three
+    CMenu(const CMenu&);
+    CMenu& operator=(const CMenu&);
 };
 

@@ -31,4 +31,8 @@ protected:
 private:
     CWorld* m_world;
     CServer* m_server;
+
+    // Rule of three
+    CGameLogic(const CGameLogic&);
+    CGameLogic& operator=(const CGameLogic&);
 };

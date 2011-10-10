@@ -195,5 +195,9 @@ private:
     CWorld*             m_world;
 
     static int          m_idpool; // unique id number for new objects
+
+    // Rule of three
+    CObj(const CObj&);
+    CObj& operator=(const CObj&);
 };
 

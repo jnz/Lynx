@@ -38,6 +38,7 @@ struct model_state_t
     int play_count; // how many times is the current animation played
 };
 
+// Model Interface
 class CModel
 {
 public:

@@ -60,5 +60,9 @@ private:
     std::map<std::string, CSound*> m_soundmap;
 
     CWorld* m_world;
+
+    // Rule of three
+    CResourceManager(const CResourceManager&);
+    CResourceManager& operator=(const CResourceManager&);
 };
 

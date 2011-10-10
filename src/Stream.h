@@ -7,19 +7,30 @@
 class CStream
 {
 public:
-    CStream(void);
-    CStream(unsigned int size); // set initial buffer size
-    CStream(uint8_t* buffer, unsigned int size, unsigned int used=0);
-    ~CStream(void);
+    // Starts with an empty buffer. Use SetSize() or SetBuffer() to init.
+    CStream();
+    ~CStream();
+    CStream(const CStream& c); // shallow copy
 
-    void SetBuffer(uint8_t* buffer, unsigned int size, unsigned int used=0);
-    bool Resize(unsigned int newsize); // Change buffer size. Buffer gets destroyed, if newsize < size
-    uint8_t* GetBuffer(); // pointer to raw bytes
-    unsigned int GetBufferSize() const; // total buffer size
+    // Initialize buffer.
+    // Returns true, if successful.
+    bool SetSize(unsigned int newsize);
 
     // Get stream object from current position.
-    // This is NOT a deep copy, the stream points to the same memory region.
-    CStream GetStream();
+    CStream GetShallowCopy() const;
+
+    // Use a foreign buffer. We don't manage this buffer,
+    // so we just read/write, but we won't free the memory.
+    // Reference counting is disabled (-1).
+    // Returns true, if successful.
+    bool SetBuffer(uint8_t* data, const unsigned int len, const unsigned int used);
+
+    // Free (if ref count is 0) the memory.
+    void Release();
+
+    // Direct buffer access
+    uint8_t* GetBuffer(); // pointer to raw bytes
+    unsigned int GetBufferSize() const; // total buffer size
 
     // size in bytes the string would occupy in the stream,
     // this is larger than the character count, as the stream
@@ -66,12 +77,28 @@ public:
     void ReadString(std::string* value);
 
 protected:
-    uint8_t* m_buffer;
-    bool m_foreign; // if the buffer is foreign, we won't free the memory
+
+    struct stream_buffer_t
+    {
+        stream_buffer_t()
+        {
+            buffer = NULL;
+            ref = 1; // start with 1
+        }
+
+        uint8_t* buffer;
+        int ref; // reference counting, -1 means a foreign buffer, that we
+                 // don't manage
+    };
+
+    stream_buffer_t* m_buf;
     unsigned int m_size;
     unsigned int m_position;
     unsigned int m_used;
     bool m_readoverflow; // if you try to read beyond the end of the buffer, this is set to true, until you reset the buffer
     bool m_writeoverflow; // the same for writing
+
+private:
+    CStream& operator=(const CStream&); // disable
 };
 

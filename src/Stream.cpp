@@ -10,90 +10,133 @@
 
 CStream::CStream(void)
 {
-    m_buffer = NULL;
+    m_buf = NULL; // prepare for release call
+    Release(); // let release do the init
+}
+
+void CStream::Release()
+{
+    if(m_buf)
+    {
+        m_buf->ref--; // decrease ref. count
+        if(m_buf->ref == 0) // we are the last one using this buffer
+        {
+            assert(m_buf->buffer);
+            if(m_buf->buffer)
+            {
+                delete[] m_buf->buffer;
+            }
+            delete m_buf;
+        }
+        else if(m_buf->ref < 0) // we are using a foreign buffer
+        {
+            // we don't free the memory
+            // but we have to free the m_buf struct.
+            // If we have a foreign buffer, it is save
+            // to delete this. No one else is using m_buf.
+            delete m_buf;
+        }
+        m_buf = NULL;
+    }
     m_size = 0;
     m_position = 0;
     m_used = 0;
-    m_foreign = false;
     m_writeoverflow = false;
     m_readoverflow = false;
 }
 
-CStream::CStream(unsigned int size)
+// copy constructor
+CStream::CStream(const CStream& c)
 {
-    m_position = 0;
-    m_used = 0;
-    m_foreign = false;
-    m_buffer = NULL;
-    m_writeoverflow = false;
-    m_readoverflow = false;
-    if(!Resize(size))
-        CStream();
+    m_buf = NULL;
+    Release(); // use Release to init
+
+    if(c.m_buf)
+    {
+        if(c.m_buf->ref > 0)
+        {
+            // copy all the variable
+            m_size = c.m_size;
+            m_position = c.m_position;
+            m_used = c.m_used;
+            m_readoverflow = c.m_readoverflow;
+            m_writeoverflow = c.m_writeoverflow;
+
+            m_buf = c.m_buf;
+            // update the ref counter
+            m_buf->ref++;
+        }
+        else
+        {
+            // foreign data
+            SetBuffer(c.m_buf->buffer, c.m_size, c.m_used);
+        }
+    }
 }
 
-CStream::CStream(uint8_t* foreign, unsigned int size, unsigned int used)
+CStream CStream::GetShallowCopy() const
 {
-    m_buffer = NULL;
-    m_foreign = true;
-    SetBuffer(foreign, size, used);
+    CStream c(*this);
+    return c;
 }
 
 CStream::~CStream(void)
 {
-    if(m_buffer && !m_foreign)
-        delete[] m_buffer;
+    Release();
 }
 
-void CStream::SetBuffer(uint8_t* buffer, unsigned int size, unsigned int used)
+bool CStream::SetSize(unsigned int size)
 {
-    if(m_buffer && !m_foreign)
-        delete[] m_buffer;
+    Release();
 
-    m_buffer = buffer;
-    m_size = size;
-    m_position = 0;
-    m_used = used;
-    m_foreign = true;
-    m_writeoverflow = false;
-    m_readoverflow = false;
-}
+    stream_buffer_t* newbuf;
 
-bool CStream::Resize(unsigned int newsize)
-{
-    uint8_t* newbuf;
-    assert(newsize != m_size);
-    if(newsize == m_size)
-        return true;
-
-    newbuf = new uint8_t[newsize + 8]; // 8 bytes for a better sleep
+    newbuf = new stream_buffer_t(); // use default constructor
     assert(newbuf);
     if(!newbuf)
         return false;
 
-    if(m_buffer)
+    newbuf->buffer = new uint8_t[size + 8]; // 8 bytes for a better sleep
+    assert(newbuf->buffer);
+    if(!newbuf->buffer)
     {
-        if(m_used > 0 && newsize >= m_used)
-            memcpy(newbuf, m_buffer, m_position);
-        else
-        {
-            m_position = 0;
-            m_used = 0;
-            m_writeoverflow = false;
-            m_readoverflow = false;
-        }
-
-        if(!m_foreign)
-            delete[] m_buffer;
+        delete newbuf;
+        return false;
     }
-    m_buffer = newbuf;
-    m_size = newsize;
+    m_buf = newbuf;
+    m_size = size;
+
+    return true;
+}
+
+// CStream will not free the buffer!
+bool CStream::SetBuffer(uint8_t* data, const unsigned int len, const unsigned int used)
+{
+    Release();
+
+    stream_buffer_t* newbuf;
+
+    newbuf = new stream_buffer_t(); // use default constructor
+    assert(newbuf);
+    if(!newbuf)
+        return false;
+
+    m_buf = newbuf;
+    m_buf->buffer = data;
+    m_buf->ref = -1; // no ref count for foreign data
+    m_size = len;
+    m_used = used;
 
     return true;
 }
 
 uint8_t* CStream::GetBuffer()
 {
-    return m_buffer;
+    assert(m_buf); // you probably want this
+    if(m_buf)
+        return m_buf->buffer;
+    else
+        return NULL;
 }
 
 unsigned int CStream::GetBufferSize() const
@@ -143,11 +186,6 @@ unsigned int CStream::GetBytesRead() const
     return m_position;
 }
 
-CStream CStream::GetStream()
-{
-    return CStream(m_buffer, m_size, m_used);
-}
-
 void CStream::WriteAdvance(unsigned int bytes)
 {
     if(m_used + bytes > m_size)
@@ -167,7 +205,7 @@ void CStream::WriteDWORD(uint32_t value)
         m_writeoverflow = true;
         return;
     }
-    *((uint32_t*)(m_buffer+m_used)) = value;
+    *((uint32_t*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -179,7 +217,7 @@ void CStream::WriteInt32(int32_t value)
         m_writeoverflow = true;
         return;
     }
-    *((int32_t*)(m_buffer+m_used)) = value;
+    *((int32_t*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -191,7 +229,7 @@ void CStream::WriteInt16(int16_t value)
         m_writeoverflow = true;
         return;
     }
-    *((int16_t*)(m_buffer+m_used)) = value;
+    *((int16_t*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -203,7 +241,7 @@ void CStream::WriteWORD(uint16_t value)
         m_writeoverflow = true;
         return;
     }
-    *((uint16_t*)(m_buffer+m_used)) = value;
+    *((uint16_t*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -215,7 +253,7 @@ void CStream::WriteBYTE(uint8_t value)
         m_writeoverflow = true;
         return;
     }
-    *((uint8_t*)(m_buffer+m_used)) = value;
+    *((uint8_t*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -227,7 +265,7 @@ void CStream::WriteChar(int8_t value)
         m_writeoverflow = true;
         return;
     }
-    *((int8_t*)(m_buffer+m_used)) = value;
+    *((int8_t*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -239,7 +277,7 @@ void CStream::WriteFloat(float value)
         m_writeoverflow = true;
         return;
     }
-    *((float*)(m_buffer+m_used)) = value;
+    *((float*)(m_buf->buffer+m_used)) = value;
     m_used += sizeof(value);
 }
 
@@ -274,7 +312,7 @@ void CStream::WriteBytes(const uint8_t* values, unsigned int len)
         m_writeoverflow = true;
         return;
     }
-    memcpy(m_buffer+m_used, values, len);
+    memcpy(m_buf->buffer+m_used, values, len);
     m_used += len;
 }
 
@@ -294,7 +332,7 @@ uint16_t CStream::WriteString(const std::string& value)
 void CStream::WriteStream(const CStream& stream)
 {
     if(stream.GetBytesWritten() > 0)
-        WriteBytes(stream.m_buffer, stream.GetBytesWritten());
+        WriteBytes(stream.m_buf->buffer, stream.GetBytesWritten());
 }
 
 unsigned int CStream::StringSize(const std::string& value)
@@ -326,7 +364,7 @@ void CStream::ReadDWORD(uint32_t* value)
         assert(0);
         return;
     }
-    *value = *((uint32_t*)(m_buffer+m_position));
+    *value = *((uint32_t*)(m_buf->buffer+m_position));
     m_position += sizeof(uint32_t);
 }
 
@@ -338,7 +376,7 @@ void CStream::ReadInt32(int32_t* value)
         assert(0);
         return;
     }
-    *value = *((int32_t*)(m_buffer+m_position));
+    *value = *((int32_t*)(m_buf->buffer+m_position));
     m_position += sizeof(int32_t);
 }
 
@@ -350,7 +388,7 @@ void CStream::ReadInt16(int16_t* value)
         assert(0);
         return;
     }
-    *value = *((int16_t*)(m_buffer+m_position));
+    *value = *((int16_t*)(m_buf->buffer+m_position));
     m_position += sizeof(int16_t);
 }
 
@@ -362,7 +400,7 @@ void CStream::ReadWORD(uint16_t* value)
         assert(0);
         return;
     }
-    *value = *((uint16_t*)(m_buffer+m_position));
+    *value = *((uint16_t*)(m_buf->buffer+m_position));
     m_position += sizeof(uint16_t);
 }
 
@@ -374,7 +412,7 @@ void CStream::ReadBYTE(uint8_t* value)
         assert(0);
         return;
     }
-    *value = *((uint8_t*)(m_buffer+m_position));
+    *value = *((uint8_t*)(m_buf->buffer+m_position));
     m_position += sizeof(uint8_t);
 }
 
@@ -386,7 +424,7 @@ void CStream::ReadChar(int8_t* value)
         assert(0);
         return;
     }
-    *value = *((int8_t*)(m_buffer+m_position));
+    *value = *((int8_t*)(m_buf->buffer+m_position));
     m_position += sizeof(int8_t);
 }
 
@@ -397,7 +435,7 @@ void CStream::ReadFloat(float* value)
         m_readoverflow = true;
         return;
     }
-    *value = *((float*)(m_buffer+m_position));
+    *value = *((float*)(m_buf->buffer+m_position));
     m_position += sizeof(float);
 }
 
@@ -432,7 +470,7 @@ void CStream::ReadBytes(uint8_t* values, int len)
         assert(0);
         return;
     }
-    memcpy(values, m_buffer+m_position, len);
+    memcpy(values, m_buf->buffer+m_position, len);
     m_position += len;
 }
 
@@ -452,7 +490,7 @@ void CStream::ReadString(std::string* value)
         assert(0);
         return;
     }
-    (*value).assign((char*)(m_buffer+m_position), len);
+    (*value).assign((char*)(m_buf->buffer+m_position), len);
     ReadAdvance(len);
 }
 

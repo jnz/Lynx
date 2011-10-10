@@ -28,7 +28,7 @@ CClient::CClient(CWorldClient* world, CGameLogic* gamelogic)
     m_lastupdate = CLynxSys::GetTicks();
 }
 
-CClient::~CClient(void)
+CClient::~CClient()
 {
     Shutdown();
     enet_deinitialize();
@@ -176,7 +176,8 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
 
     ENetPacket* packet;
     CObj* localctrl = GetLocalController();
-    CStream stream(MAX_CL_PACKETLEN);
+    CStream stream;
+    stream.SetSize(MAX_CL_PACKETLEN);
 
     CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CTRL);
     stream.WriteDWORD(m_world->GetWorldID());
@@ -223,7 +224,8 @@ void CClient::SendClientState(const std::vector<std::string>& clcmdlist, bool fo
 void CClient::SendChallenge()
 {
     ENetPacket* packet;
-    CStream stream(128);
+    CStream stream;
+    stream.SetSize(128);
     std::string playername = CLynx::cfg.GetVarAsStr("playername", "unnamed");
 
     CNetMsg::WriteHeader(&stream, NET_MSG_CLIENT_CHALLENGE);

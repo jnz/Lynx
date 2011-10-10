@@ -54,4 +54,8 @@ private:
     // We make this stream a member variable so that the server can reuse it
     // every frame. Otherwise we would have to new/delete 64k every frame.
     CStream m_stream;
+
+    // Rule of three
+    CServer(const CServer&);
+    CServer& operator=(const CServer&);
 };

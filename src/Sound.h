@@ -31,5 +31,9 @@ public:
 
 private:
     void* m_chunk; // not type safe here. should point to something that  is readable by CMixer
+
+    // Rule of three
+    CSound(const CSound&);
+    CSound& operator=(const CSound&);
 };
 

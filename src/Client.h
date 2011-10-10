@@ -17,7 +17,7 @@ class CClient
 {
 public:
     CClient(CWorldClient* world, CGameLogic* gamelogic);
-    ~CClient(void);
+    ~CClient();
 
     bool Connect(const char* server, const int port);
     void Shutdown();
@@ -62,4 +62,8 @@ private:
     // Client input config settings
     cvar_t* m_cfg_mouse_sensitivity;
     cvar_t* m_cfg_mouse_invert;
+
+    // Rule of three
+    CClient(const CClient&);
+    CClient& operator=(const CClient&);
 };

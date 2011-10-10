@@ -49,4 +49,8 @@ private:
     std::string m_hostname;     // human readable hostname
     uint32_t m_connecttime;     // time of connect event
     static int m_idpool;
+
+    // Rule of three
+    CClientInfo(const CClientInfo&);
+    CClientInfo& operator=(const CClientInfo&);
 };

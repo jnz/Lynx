@@ -89,5 +89,9 @@ private:
     bool            InitShader();
     static int      m_program;
     static int      m_interp; // interp uniform for md2 vertex shader
+
+    // Rule of three
+    CModelMD2(const CModelMD2&);
+    CModelMD2& operator=(const CModelMD2&);
 };
 

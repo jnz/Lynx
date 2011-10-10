@@ -53,5 +53,9 @@ protected:
 private:
     int m_width, m_height;
     CWorldClient* m_world;
+
+    // Rule of three
+    CRenderer(const CRenderer&);
+    CRenderer& operator=(const CRenderer&);
 };
 
