@@ -196,8 +196,8 @@ void CGameObjPlayer::FireRocket()
 
     CGameObjRocket* rocket = new CGameObjRocket(GetWorld());
 
+    // eyepos
     vec3_t rocketstart = GetOrigin() +
-                         up*GetRadius()*0.8f +
                          dir*1.1f*GetRadius() +
                          side*0.5f;
 

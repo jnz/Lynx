@@ -14,10 +14,10 @@
       writes BMP,TGA (define STBI_NO_WRITE to remove code)
       decoded from memory or through stdio FILE (define STBI_NO_STDIO to remove code)
       supports installable dequantizing-IDCT, YCbCr-to-RGB conversion (define STBI_SIMD)
-        
+
    TODO:
       stbi_info_*
-  
+
    history:
       1.16   major bugfix - convert_format converted one too many pixels
       1.15   initialize some fields for thread safety
@@ -78,7 +78,7 @@
 // Basic usage (see HDR discussion below):
 //    int x,y,n;
 //    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
-//    // ... process data if not NULL ... 
+//    // ... process data if not NULL ...
 //    // ... x = width, y = height, n = # 8-bit components per pixel ...
 //    // ... replace '0' with '1'..'4' to force that many components per pixel
 //    stbi_image_free(data)
@@ -139,7 +139,7 @@
 // (linear) floats to preserve the full dynamic range:
 //
 //    float *data = stbi_loadf(filename, &x, &y, &n, 0);
-// 
+//
 // If you load LDR images through this interface, those images will
 // be promoted to floating point values, run through the inverse of
 // constants corresponding to the above:
@@ -214,7 +214,7 @@ extern void   stbi_ldr_to_hdr_scale(float scale);
 
 // get a VERY brief reason for failure
 // NOT THREADSAFE
-extern char    *stbi_failure_reason  (void); 
+extern char    *stbi_failure_reason  (void);
 
 // free the loaded image -- this is just free()
 extern void     stbi_image_free      (void *retval_from_stbi_load);

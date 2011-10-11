@@ -2,10 +2,12 @@
 
 class CWorld;
 #include <map>
-#ifdef __GNUC__
-#include <unordered_map>
-#else
-#include <hash_map>
+#ifdef __linux  // Linux
+  #include <unordered_map>
+#elif defined(__APPLE__) || defined(__APPLE_CC__) // Apple
+  #include <ext/hash_map>
+#else // the rest (Windows)
+  #include <hash_map>
 #endif
 #include <list>
 #include "Obj.h"
@@ -42,7 +44,15 @@ class CWorld;
     - Serialize
  */
 
-#ifdef __GNUC__
+// For the hash_map on Apple
+#if defined(__APPLE__) || defined(__APPLE_CC__) // Apple
+namespace stdext
+{
+    using namespace __gnu_cxx;
+}
+#endif
+
+#ifdef __linux
   #define WORLD_STATE_OBJMAPTYPE    std::unordered_map<int, int>
   #define WORLD_STATE_OBJITER       std::unordered_map<int, int>::iterator
   #define WORLD_STATE_CONSTOBJITER  std::unordered_map<int, int>::const_iterator
