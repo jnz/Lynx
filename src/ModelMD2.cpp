@@ -23,9 +23,11 @@ static const vec3array g_bytedirs[NUMVERTEXNORMALS] = // quake 2 normal table
 };
 #pragma warning(pop)
 
-#define MD2_FPS         8             // frames per second
+#define MD2_FPS         6             // frames per second
 #define MAX_SKINNAME    64            // max. characters for skin names
-#define MD2_LYNX_SCALE  (0.07f)
+#define MD2_LYNX_SCALE  (0.055f)
+#define MD2_FILE_MAGIC  844121161
+#define MD2_FILE_VER    8
 
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
 
@@ -339,7 +341,8 @@ bool CModelMD2::Load(const char *path, CResourceManager* resman, bool loadtextur
         goto loaderr;
     }
 
-    if(header.ident != 844121161 || header.version != 8)
+    if(header.ident != MD2_FILE_MAGIC ||
+       header.version != MD2_FILE_VER)
     {
         fprintf(stderr, "MD2: Unknown format\n");
         goto loaderr;

@@ -61,7 +61,8 @@ protected:
                                         const float sphere_radius,
                                         const vec3_t& dir,
                                         float* f,
-                                        vec3_t* hitnormal) const;
+                                        vec3_t* hitnormal,
+                                        vec3_t* hitpoint) const;
 
 
     bool                m_uselightmap;

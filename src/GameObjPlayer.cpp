@@ -227,7 +227,8 @@ void CGameObjPlayer::DealDamage(int damage, const vec3_t& hitpoint, const vec3_t
         //SpawnParticleBlood(hitpoint, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
         // Experimental: spawn blood in front of player's face
         // to get visual feedback on damage
-        SpawnParticleBlood(GetOrigin()+GetRadius()*0.8f, dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
+        // EyePos
+        SpawnParticleBlood(GetOrigin(), dir, killed_me ? 6.0f: 3.0f); // more blood, if killed
     }
 
     if(killed_me)

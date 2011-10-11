@@ -24,6 +24,9 @@ struct md2_triangle_t;
 
 // md2_vbo_start_end:
 // index of current vertices in vbo
+// the vbo contains all vertices, for all frames.
+// this struct keeps track of the vertex indices for
+// the current frame.
 struct md2_vbo_start_end_t
 {
     unsigned int start;

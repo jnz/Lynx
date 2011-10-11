@@ -13,6 +13,7 @@ struct monster_t
 
 static const monster_t g_monster_table[] =
 {
+    {200, "pinky/pinky.md5mesh"},
     {100, "Mancubus/fatso.md2"},
     {40,  "SSDude/ss-soldier.md2"},
     {50,  "Demon/demon.md2"},
@@ -26,8 +27,6 @@ CGameObjZombie::CGameObjZombie(CWorld* world) : CGameObj(world)
 {
     int monsterindex = rand()%g_monster_table_size;
 
-    //SetResource(CLynx::GetBaseDirModel() + "pinky/pinky.md5mesh");
-    //SetResource(CLynx::GetBaseDirModel() + "imp/imp.md2");
     SetResource(CLynx::GetBaseDirModel() + g_monster_table[monsterindex].modelpath);
     SetHealth(g_monster_table[monsterindex].basehealth);
     SetAnimation(ANIMATION_IDLE);

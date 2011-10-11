@@ -69,46 +69,48 @@ class CWorld;
 //
 // world_player_t is stored in a vector in CPlayerInfo.
 
-enum
-{
-    WORLD_PLAYER_UPDATE_NAME    = 2,
-    WORLD_PLAYER_UPDATE_SCORE   = 4,
-    WORLD_PLAYER_UPDATE_LATENCY = 8,
-};
-
-struct world_player_t
-{
-    world_player_t()
-    {
-        id = 0;
-        name = "not init";
-        score = 0;
-        latency = 0;
-    }
-
-    uint32_t     id;      // player id, copied from CServer's CClientInfo
-    std::string  name;    // player name, human readable
-    uint16_t     score;   // score count
-    uint16_t     latency; // network latency / ping
-};
-
-class CPlayerInfo
-{
-public:
-    void AddPlayer(world_player_t player);
-    void UpdatePlayer(int id, world_player_t);
-    void RemovePlayer(int id);
-    void RemoveAllPlayer();
-    bool GetPlayer(const int id, world_player_t** player);
-
-    // Serialize the world state to a byte stream.
-    // Returns true if the state has changed compared to the oldstate.
-    bool Serialize(bool write, CStream* stream, const CPlayerInfo* oldstate=NULL);
-
-private:
-    // infos about all players in current snapshot is stored here in this vector
-    std::vector<world_player_t> m_playerlist;
-};
+/*
+ *enum
+ *{
+ *    WORLD_PLAYER_UPDATE_NAME    = 2,
+ *    WORLD_PLAYER_UPDATE_SCORE   = 4,
+ *    WORLD_PLAYER_UPDATE_LATENCY = 8,
+ *};
+ *
+ *struct world_player_t
+ *{
+ *    world_player_t()
+ *    {
+ *        id = 0;
+ *        name = "not init";
+ *        score = 0;
+ *        latency = 0;
+ *    }
+ *
+ *    uint32_t     id;      // player id, copied from CServer's CClientInfo
+ *    std::string  name;    // player name, human readable
+ *    uint16_t     score;   // score count
+ *    uint16_t     latency; // network latency / ping
+ *};
+ *
+ *class CPlayerInfo
+ *{
+ *public:
+ *    void AddPlayer(world_player_t player);
+ *    void UpdatePlayer(int id, world_player_t);
+ *    void RemovePlayer(int id);
+ *    void RemoveAllPlayer();
+ *    bool GetPlayer(const int id, world_player_t** player);
+ *
+ *    // Serialize the world state to a byte stream.
+ *    // Returns true if the state has changed compared to the oldstate.
+ *    bool Serialize(bool write, CStream* stream, const CPlayerInfo* oldstate=NULL);
+ *
+ *private:
+ *    // infos about all players in current snapshot is stored here in this vector
+ *    std::vector<world_player_t> m_playerlist;
+ *};
+ */
 
 // Essential game engine struct: world_state_t
 // This struct holds one complete snapshot of the game.

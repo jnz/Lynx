@@ -285,7 +285,7 @@ void CClient::OnReceive(CStream* stream)
 void CClient::InputMouseMove()
 {
     CObj* obj = GetLocalController();
-    const float sensitivity = m_cfg_mouse_sensitivity->value/3.0f * 0.5f;
+    const float sensitivity = m_cfg_mouse_sensitivity->value/6.0f;
     const float invert = (m_cfg_mouse_invert->value != 0.0f) ? -1.0f : 1.0f;
     int dx, dy;
     CLynxSys::GetMouseDelta(&dx, &dy);
@@ -324,7 +324,7 @@ void CClient::InputGetCmdList(std::vector<std::string>* clcmdlist, bool* forcese
         clcmdlist->push_back("+ml");
     if(keystate[SDLK_d])
         clcmdlist->push_back("+mr");
-    if(keystate[SDLK_SPACE])
+    if(keystate[SDLK_SPACE] == 1)
         clcmdlist->push_back("+jmp");
     if(keystate[SDLK_f] || CLynxSys::MouseLeftDown())
     {

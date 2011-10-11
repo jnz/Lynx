@@ -28,6 +28,7 @@ struct gamezombie_precache_t
 // list of resources to load
 static const gamezombie_precache_t g_game_zombie_precache[] =
 {
+    // be aware, that Linux is case-sensitive
     {(char*)"rocket/rocketlauncher.md5mesh" , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"gun/gun.md5mesh"               , LYNX_RESOURCE_TYPE_MD5}   ,
     {(char*)"marine/marine.md5mesh"         , LYNX_RESOURCE_TYPE_MD5}   ,
@@ -82,7 +83,7 @@ bool CGameZombie::InitGame(const char* level)
     }
 
     // Spawn some zombies
-    const int zombocount = 12; // this is zombo.count
+    const int zombocount = 3; // this is zombo.count
     for(int i=0;i<zombocount;i++)
     {
         bspbin_spawn_t point = GetWorld()->GetBSP()->GetRandomSpawnPoint();

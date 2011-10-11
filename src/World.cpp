@@ -34,7 +34,6 @@ void CWorld::Shutdown()
 void CWorld::AddObj(CObj* obj, bool inthisframe)
 {
     assert(obj && !GetObj(obj->GetID()));
-    assert(GetObjCount() < INT_MAX);
     if(!obj)
         return;
 
@@ -677,79 +676,81 @@ bool world_state_t::GetObjState(const int id, obj_state_t& objstate) const
 // CPlayerInfo
 // --------------------------------------------------
 
-void CPlayerInfo::AddPlayer(world_player_t player)
-{
-    // check if there is already someone with that id
-    assert(!GetPlayer(player.id, NULL));
-
-    m_playerlist.push_back(player);
-}
-
-void CPlayerInfo::RemovePlayer(int id)
-{
-    std::vector<world_player_t>::iterator iter;
-    for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
-    {
-        if((*iter).id == id)
-        {
-            m_playerlist.erase(iter);
-            return;
-        }
-    }
-
-    fprintf(stderr, "CPlayerInfo: Player id not found: %i\n", id);
-    assert(0);
-}
-
-void CPlayerInfo::RemoveAllPlayer()
-{
-    m_playerlist.clear();
-}
-
-bool CPlayerInfo::GetPlayer(const int id, world_player_t** player)
-{
-    std::vector<world_player_t>::iterator iter;
-    for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
-    {
-        if((*iter).id == id)
-        {
-            if(player)
-                *player = &(*iter);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool CPlayerInfo::Serialize(bool write, CStream* stream, const CPlayerInfo* oldstate)
-{
-    assert(0); //IMPLEMENT ME
-    if(write)
-    {
-        //world_player_t* oldplayer;
-        std::vector<world_player_t>::iterator iter;
-        for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
-        {
-            const world_player_t* player = &(*iter);
-
-            //if(oldstate->GetPlayer(player->id, &oldplayer))
-            //{
-                //// we have the player also in the old state
-                //if(player->name != oldplayer->name)
-                //{
-                    //assert(0); //IMPLEMENT ME
-                //}
-            //}
-            //else
-            //{
-                //// the player is new, write the complete information
-            //}
-        }
-        return true;
-    }
-    else
-    {
-        return true;
-    }
-}
-
+/*
+ *void CPlayerInfo::AddPlayer(world_player_t player)
+ *{
+ *    // check if there is already someone with that id
+ *    assert(!GetPlayer(player.id, NULL));
+ *
+ *    m_playerlist.push_back(player);
+ *}
+ *
+ *void CPlayerInfo::RemovePlayer(int id)
+ *{
+ *    std::vector<world_player_t>::iterator iter;
+ *    for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
+ *    {
+ *        if((*iter).id == id)
+ *        {
+ *            m_playerlist.erase(iter);
+ *            return;
+ *        }
+ *    }
+ *
+ *    fprintf(stderr, "CPlayerInfo: Player id not found: %i\n", id);
+ *    assert(0);
+ *}
+ *
+ *void CPlayerInfo::RemoveAllPlayer()
+ *{
+ *    m_playerlist.clear();
+ *}
+ *
+ *bool CPlayerInfo::GetPlayer(const int id, world_player_t** player)
+ *{
+ *    std::vector<world_player_t>::iterator iter;
+ *    for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
+ *    {
+ *        if((*iter).id == id)
+ *        {
+ *            if(player)
+ *                *player = &(*iter);
+ *            return true;
+ *        }
+ *    }
+ *    return false;
+ *}
+ *
+ *bool CPlayerInfo::Serialize(bool write, CStream* stream, const CPlayerInfo* oldstate)
+ *{
+ *    assert(0); // FIXME IMPLEMENT ME for a scoreboard
+ *    if(write)
+ *    {
+ *        //world_player_t* oldplayer;
+ *        std::vector<world_player_t>::iterator iter;
+ *        for(iter = m_playerlist.begin(); iter != m_playerlist.end(); ++iter)
+ *        {
+ *            const world_player_t* player = &(*iter);
+ *
+ *            //if(oldstate->GetPlayer(player->id, &oldplayer))
+ *            //{
+ *                //// we have the player also in the old state
+ *                //if(player->name != oldplayer->name)
+ *                //{
+ *                    //assert(0); //IMPLEMENT ME
+ *                //}
+ *            //}
+ *            //else
+ *            //{
+ *                //// the player is new, write the complete information
+ *            //}
+ *        }
+ *        return true;
+ *    }
+ *    else
+ *    {
+ *        return true;
+ *    }
+ *}
+ *
+ */

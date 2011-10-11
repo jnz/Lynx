@@ -590,14 +590,23 @@ bool CBSPLevel::SphereTriangleIntersectStatic(const int triangleindex,
     return !separated;
 }
 
+// This method checks the movement of a sphere along a path,
+// given by the position sphere_pos and the dir vector.
+// If there is a collision with the triangle, the f vector
+// indicates the fraction along the dir vector to the hit point.
+//
+// returns true, if the triangle is hit.
+//
+// Using methods from Eric Lengyel's math book.
 bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
                                         const vec3_t& sphere_pos,
                                         const float sphere_radius,
                                         const vec3_t& dir,
                                         float* f,
-                                        vec3_t* hitnormal) const
+                                        vec3_t* hitnormal,
+                                        vec3_t* hitpoint) const
 {
-    float cf;
+    float cf; // fraction of travelling along the dir vector
     int i;
 
     const int vertexindex1 = m_triangle[triangleindex].v[0];
@@ -609,7 +618,6 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
     plane_t plane(P0, P1, P2); // triangle plane
     plane.m_d -= sphere_radius; // plane shift
 
-    // Using methods from Eric Lengyel's math book.
     *f = MAX_TRACE_DIST;
 
     // Step 1) triangle face
@@ -617,11 +625,11 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
     if(not_parallel && cf >= 0.0f)
     {
         // calculate the hitpoint
-        vec3_t hitpoint = sphere_pos + dir*cf - plane.m_n*sphere_radius;
+        const vec3_t tmp_hitpoint = sphere_pos + dir*cf - plane.m_n*sphere_radius;
 
         // check if we are inside the triangle
         // Barycentric coordinates (math for 3d game programming p. 144)
-        const vec3_t R = hitpoint - P0;
+        const vec3_t R = tmp_hitpoint - P0;
         const vec3_t Q1 = P1 - P0;
         const vec3_t Q2 = P2 - P0;
         const float Q1Q2 = Q1*Q2;
@@ -637,6 +645,7 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
         {
             *f = cf;
             *hitnormal = plane.m_n;
+            *hitpoint = tmp_hitpoint;
             return true; // skip edge and vertex, it must take place before them
         }
     }
@@ -645,19 +654,26 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
     for(i=0;i<3;i++) // for every edge of triangle
     {
         const vec3_t& fromvec = m_vertex[m_triangle[triangleindex].v[i]].v;
-        const vec3_t& tovec = m_vertex[m_triangle[triangleindex].v[(i+1)%3]].v;
+        const int nextindex = (i+1)%3; // keep vertex index between 0 and 2
+        const vec3_t& tovec = m_vertex[m_triangle[triangleindex].v[nextindex]].v;
         if(!vec3_t::RayCylinderIntersect(sphere_pos,
                                          dir,
                                          fromvec,
                                          tovec,
                                          sphere_radius,
-                                         &cf)) continue;
+                                         &cf))
+        {
+            continue;
+        }
+
         if(cf < *f && cf >= 0.0f)
         {
             *f = cf;
 
-            const vec3_t hitpoint = sphere_pos + dir*cf;
-            *hitnormal = (((fromvec-hitpoint)^(tovec-hitpoint)) ^ (tovec-fromvec)).Normalized();
+            *hitpoint = sphere_pos + dir*cf;
+            // calculate normal
+            const vec3_t tmpvec = vec3_t::cross(fromvec-(*hitpoint), tovec-(*hitpoint));
+            *hitnormal = (vec3_t::cross(tmpvec, tovec-fromvec)).Normalized();
         }
     }
 
@@ -673,12 +689,13 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
         {
             continue;
         }
+
         if(cf < *f && cf >= 0.0f)
         {
             *f = cf;
 
-            const vec3_t hitpoint = sphere_pos + dir*cf;
-            *hitnormal = hitpoint - v;
+            *hitpoint = sphere_pos + dir*cf;
+            *hitnormal = *hitpoint - v;
             hitnormal->Normalize();
         }
     }
@@ -686,7 +703,10 @@ bool CBSPLevel::SphereTriangleIntersect(const int triangleindex,
     return *f != MAX_TRACE_DIST;
 }
 
-#define DIST_EPSILON    (0.01f)
+#define DIST_EPSILON    (0.02f)  // 2 cm epsilon for triangle collision
+#define MIN_FRACTION    (0.005f) // at least 0.5% movement along the direction vector
+
+// checking the movement of a sphere along a given path
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
 {
     if(m_node == NULL)
@@ -697,15 +717,15 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace) const
     }
     trace->f = MAX_TRACE_DIST;
     TraceSphere(trace, 0);
-    assert(trace->f == 0.0f || trace->f > 0.01f);
+    assert(trace->f >= 0.0f);
 }
 
 void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
 {
-    if(node < 0) // have we reached a leaf?
+    if(node < 0) // have we reached a leaf (leafs have a negative index)?
     {
         int triangleindex;
-        const int leafindex = -node-1;
+        const int leafindex = -node-1; // convert negative node index to leaf index
         const unsigned int trianglecount = m_leaf[leafindex].triangles.size();
         float cf;
         float minf = trace->f;
@@ -713,30 +733,32 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         vec3_t hitnormal;
         vec3_t hitpoint;
         vec3_t normal;
+        // check every triangle in the leaf
         for(unsigned int i=0;i<trianglecount;i++)
         {
             triangleindex = m_leaf[leafindex].triangles[i];
+            // check if we hit this triangle
             if(SphereTriangleIntersect(triangleindex,
                                        trace->start,
                                        trace->radius,
                                        trace->dir,
                                        &cf,
-                                       &hitnormal))
+                                       &hitnormal,
+                                       &hitpoint))
             {
-                // safety shift along the trace path.
-                // this keeps the object DIST_EPSILON away from
-                // the plane along the plane normal.
-                float df = DIST_EPSILON/(hitnormal * trace->dir);
-                if(df > 0.0f)
-                    df = 0.0f;
-                if(cf + df <= DIST_EPSILON)
-                    cf = 0.0f;
-                else
-                    cf = cf + df;
+                // collision with triangle found:
+                //
+                // safety shift along the trace path.  this keeps the sphere
+                // DIST_EPSILON away from the plane along the plane normal.
+                // this line is super important for a stable collision
+                // detection.
+                cf += DIST_EPSILON/(hitnormal * trace->dir);
+
+                if(cf < MIN_FRACTION)
+                    cf = 0.0f; // prevent small movements
 
                 if(cf < minf)
                 {
-                    hitpoint = trace->start + trace->dir*cf;
                     hitplane.SetupPlane(hitpoint, hitnormal);
                     trace->p = hitplane;
                     trace->f = cf;
@@ -750,7 +772,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
     pointplane_t locstart;
     pointplane_t locend;
 
-    // Prüfen, ob alles vor der Splitplane liegt
+    // Check if everything is in front of the split plane
     plane_t tmpplane = m_plane[m_node[node].plane];
     tmpplane.m_d -= trace->radius;
     locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
@@ -761,7 +783,7 @@ void CBSPLevel::TraceSphere(bsp_sphere_trace_t* trace, const int node) const
         return;
     }
 
-    // Prüfen, ob alles hinter der Splitplane liegt
+    // Check if everything is behind the split plane
     tmpplane.m_d = m_plane[m_node[node].plane].m_d + trace->radius;
     locstart = tmpplane.Classify(trace->start, BSP_EPSILON);
     locend = tmpplane.Classify(trace->start + trace->dir, BSP_EPSILON);
