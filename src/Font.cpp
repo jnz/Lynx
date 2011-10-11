@@ -55,7 +55,6 @@ bool CFont::Init(const std::string texturepath,
     unsigned int fonttex = resman->GetTexture(fontpath, false);
     if(!fonttex)
     {
-        assert(0);
         return false;
     }
     resman->GetTextureDimension(fontpath,

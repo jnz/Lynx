@@ -69,7 +69,6 @@ bool CGameObjPlayer::IsClient()
 
 CClientInfo* CGameObjPlayer::GetClient()
 {
-    assert(IsClient());
     if(!IsClient() || m_gamelogic == NULL)
         return NULL;
 

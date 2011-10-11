@@ -138,7 +138,8 @@ bool CRenderer::Init(int width, int height, int bpp, int fullscreen)
     m_world->GetResourceManager()->GetTextureDimension(pathcross,
              &m_crosshair_width, &m_crosshair_height);
     // loading the font
-    m_font.Init("font.png", 16, 24, m_world->GetResourceManager());
+    if(!m_font.Init("font.png", 16, 24, m_world->GetResourceManager()))
+        return false;
 
     return true;
 }

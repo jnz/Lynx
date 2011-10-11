@@ -118,7 +118,6 @@ int main(int argc, char** argv)
     if(!g_menu.Init(SCREEN_WIDTH, SCREEN_HEIGHT, callback))
     {
         fprintf(stderr, "Failed to load menu\n");
-        assert(0);
         return -1;
     }
     // Draw the menu once, before we continue
@@ -364,7 +363,12 @@ bool clconnect(CWorldClient** worldcl,
     *client   = new CClient(*worldcl, *clgame);
 
     (*mixer)->Init();
-    (*renderer)->Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN);
+    bool success = (*renderer)->Init(SCREEN_WIDTH, SCREEN_HEIGHT, BPP, FULLSCREEN);
+    if(!success)
+    {
+        fprintf(stderr, "Failed to init renderer\n");
+        return false;
+    }
 
     fprintf(stderr, "Connecting to %s:%i\n", serveraddress, serverport);
     if(!(*client)->Connect(serveraddress, serverport))

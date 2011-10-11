@@ -13,7 +13,7 @@
 #endif
 // </memory leak detection>
 
-#define DEFAULT_LEVEL       "testlvl/level1.lbsp"
+#define DEFAULT_LEVEL       "bath/bath.lbsp"
 
 int main(int argc, char** argv)
 {
@@ -27,8 +27,8 @@ int main(int argc, char** argv)
     if(argc > 2) // level
     {
         level = argv[2];
-        fprintf(stderr, "Level: %s", level);
     }
+    fprintf(stderr, "Level: %s\n", level);
     srand((unsigned int)time(NULL));
 
     { // for dumpmemleak
@@ -48,8 +48,7 @@ int main(int argc, char** argv)
     fprintf(stderr, "Starting Server at port: %i\n", svport);
     if(!server.Create(svport))
     {
-        fprintf(stderr, "Failed to create server\n");
-        assert(0);
+        fprintf(stderr, "Failed to create server on port: %i\n", svport);
         return -1;
     }
     svgame.InitGame(level);
@@ -74,7 +73,12 @@ int main(int argc, char** argv)
         worldsv.Update(dt, time);
         server.Update(dt, time);
 
-        SDL_Delay(15);
+        // Limit to 20 fps
+        // so my notebook fan is quiet :-)
+        float dtrest = 1.0f/20.0f - dt;
+        if(dtrest > 0.0f)
+            dtrest = 0.0f;
+        SDL_Delay((uint32_t)(dtrest * 1000.0f));
     }
     }
 #ifdef _WIN32

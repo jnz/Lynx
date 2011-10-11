@@ -36,7 +36,6 @@ bool CConfig::AddFile(const std::string& file)
     char buff[1024];
 
     f = fopen(file.c_str(), "rb");
-    assert(f);
     if(!f)
         return false;
 

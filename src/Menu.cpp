@@ -567,7 +567,7 @@ int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
                                              &tempwidth,
                                              &tempheight))
         {
-            assert(0);
+            assert(0); // this should normally work
             return 1; // error
         }
         else
@@ -579,8 +579,7 @@ int CMenu::LoadBitmap(const std::string path, menu_bitmap_t* bitmap)
     }
     else
     {
-        assert(0);
-        return 1; // error
+        return 1; // failed to load file
     }
 }
 
