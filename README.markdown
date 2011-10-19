@@ -49,7 +49,7 @@ Compile Lynx on Linux and Mac OS X
 
 Download Lynx from Github
 
-> git clone https://jnz@github.com/jnz/Lynx.git lynx
+> git clone https://github.com/jnz/Lynx.git lynx
 
 > cd lynx
 
