@@ -41,10 +41,11 @@ External Libraries
 Download and install the following libraries:
 
 - SDL 1.2.x Development Library: [http://www.libsdl.org/download-1.2.php](http://www.libsdl.org/download-1.2.php)
+- SDL mixer 1.2.x Development Library: [http://www.libsdl.org/projects/SDL_mixer/](http://www.libsdl.org/projects/SDL_mixer/)
 - GLEW Library: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
 
 SDL is used for the cross-platform low level access to audio, keyboard, mouse
-and 3D hardware.
+and 3D hardware. SDL mixer is a cross-platform audio mixer library.
 GLEW is the OpenGL Extension Wrangler Library and is used to access OpenGL
 extensions.
 

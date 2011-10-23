@@ -100,7 +100,7 @@
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL_mixer.lib;enet.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;glew32.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL_mixer.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;glew32.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -148,7 +148,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL_mixer.lib;enet.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;ws2_32.lib;winmm.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL_mixer.lib;SDL.lib;SDLmain.lib;OpenGL32.lib;glu32.lib;ws2_32.lib;winmm.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -189,6 +189,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\enet\callbacks.c" />
+    <ClCompile Include="..\enet\compress.c" />
+    <ClCompile Include="..\enet\host.c" />
+    <ClCompile Include="..\enet\list.c" />
+    <ClCompile Include="..\enet\packet.c" />
+    <ClCompile Include="..\enet\peer.c" />
+    <ClCompile Include="..\enet\protocol.c" />
+    <ClCompile Include="..\enet\win32.c" />
     <ClCompile Include="..\soil\src\image_DXT.c" />
     <ClCompile Include="..\soil\src\image_helper.c" />
     <ClCompile Include="..\soil\src\SOIL.c" />

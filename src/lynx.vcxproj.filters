@@ -31,6 +31,9 @@
     <Filter Include="SOIL">
       <UniqueIdentifier>{e345c178-6f88-4830-a81e-fbb44fe1fd0e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="enet">
+      <UniqueIdentifier>{f5acfc8d-b7e8-46a5-8208-805aa67cc404}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BSPLevel.cpp">
@@ -164,6 +167,30 @@
     </ClCompile>
     <ClCompile Include="..\soil\src\stb_image_aug.c">
       <Filter>SOIL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\callbacks.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\compress.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\host.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\list.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\packet.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\peer.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\protocol.c">
+      <Filter>enet</Filter>
+    </ClCompile>
+    <ClCompile Include="..\enet\win32.c">
+      <Filter>enet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
