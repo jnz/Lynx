@@ -1,5 +1,5 @@
 #pragma once
-#include <enet/enet.h>
+#include "../enet/enet.h"
 #include <vector>
 #include <string>
 #include "ClientHUD.h"

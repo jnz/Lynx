@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <enet/enet.h>
 #include "Stream.h"
 
 #ifdef _DEBUG

@@ -14,7 +14,6 @@
 // VBO index buffer?
 typedef uint32_t vertexindex_t; // if you change this, change MY_GL_VERTEXINDEX_TYPE too
 #define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_INT
-// #define MY_GL_VERTEXINDEX_TYPE  GL_UNSIGNED_SHORT // for uint16_t vertexindex_t
 #define BUFFER_OFFSET(i)    ((char *)NULL + (i)) // VBO Index Access
 
 #pragma pack(push, 1) // manual padding
@@ -78,6 +77,7 @@ struct bspbin_spawn_t
 
 #pragma pack(pop)
 
+// bspbin_leaf_t is special, as we are not writing it directly to the file.
 struct bspbin_leaf_t
 {
     // Dynamic array:

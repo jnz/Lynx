@@ -1,6 +1,6 @@
 #pragma once
 
-#include <enet/enet.h>
+#include "../enet/enet.h"
 #include <map>
 #include "World.h"
 #include "ClientInfo.h"

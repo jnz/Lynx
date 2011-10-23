@@ -39,7 +39,6 @@ IF(WIN32)
 ENDIF(WIN32)
 
 link_libraries (
-    enet
     ${OPENGL_LIBRARIES}
     ${SDL_LIBRARY}
     ${SDLMIXER_LIBRARY}
@@ -52,6 +51,17 @@ set(lynx3d_SOIL ../soil/src/SOIL.c
                 ../soil/src/image_DXT.c
                 ../soil/src/image_helper.c
                 ../soil/src/stb_image_aug.c)
+
+# the external network library enet
+set(lynx3d_ENET ../enet/callbacks.c
+    ../enet/compress.c
+    ../enet/host.c
+    ../enet/list.c
+    ../enet/packet.c
+    ../enet/peer.c
+    ../enet/protocol.c
+    ../enet/win32.c
+    ../enet/unix.c) # lynx3d_ENET
 
 set(lynx3d_MATH math/matrix.cpp math/plane.cpp math/quaternion.cpp math/vec3.cpp)
 
@@ -72,6 +82,6 @@ set(lynx3dsv_SOURCES BSPLevel.cpp ClientHUD.cpp ClientInfo.cpp Frustum.cpp GameL
     Stream.cpp Think.cpp World.cpp ModelMD5.cpp lynx.cpp lynxsys.cpp Config.cpp
     Model.cpp ModelMD2.cpp mainsv.cpp)
 
-add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})
-add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL})
+add_executable(lynx3d ${lynx3d_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL} ${lynx3d_ENET})
+add_executable(lynx3dsv ${lynx3dsv_SOURCES} ${lynx3d_MATH} ${lynx3d_SOIL} ${lynx3d_ENET})
 

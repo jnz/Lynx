@@ -23,7 +23,13 @@ int main(int argc, char** argv)
     path_out = argv[2];
 
     cout << "Loading polygon soup from " << path_in << endl;
+
+    // the lightmap geometry needs to be identical with
+    // the actual geometry from the input.obj, the reason
+    // we have this, is that .obj files don't allow two
+    // different texture coordinates assigned to a vertex.
     path_lightmap = "lightmap.obj";
+    cout << "Lightmap geometry file: " << path_lightmap << endl;
     if(!tree.Load(path_in, path_lightmap))
     {
         cout << "Failed to open input file" << endl;
@@ -42,3 +48,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
