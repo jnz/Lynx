@@ -4,9 +4,8 @@ Lynx
 Lynx is a simple 3D FPS with zombies :)
 If zombies won't convince you, there are some other features:
 
-- Multiplayer with robust network latency interpolation
-- Dedicated server
-- Network delta compression
+- Multiplayer with robust smooth network latency interpolation
+- Network compression (delta compression and PPM range coder)
 - Multiplatform support (Windows, Mac OS X, Linux)
 - OpenGL 2.0
 - Per-pixel lighting
@@ -14,9 +13,13 @@ If zombies won't convince you, there are some other features:
 - Light mapping (precalculated)
 - Normal mapping
 - MD2 and MD5 mesh support
-- MD2 interpolation on hardware
-- Blender as a map editor + custom KD tree compiler
+- MD2 interpolation on hardware (allows to render tons of enemys)
+- KD-tree compiler for collision detection on complex geometry
+- Blender as a map editor
+- Dedicated server mode
 - Did I mention zombies?
+
+![lynx][1]
 
 Dependencies
 ============
@@ -24,16 +27,25 @@ Dependencies
 Software
 --------
 
+On Linux and Mac OS X, the project is using cmake to generate
+a build environment for the project. On Windows, you can use
+the Visual Studio project files.
+
 - cmake [http://www.cmake.org/](http://www.cmake.org/)
+
 
 External Libraries
 ------------------
 
 Download and install the following libraries:
 
-- enet: [http://enet.bespin.org/SourceDistro.html](http://enet.bespin.org/SourceDistro.html)
-- SDL: [http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip](http://www.libsdl.org/release/SDL-devel-1.2.13-VC8.zip)
-- glew: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
+- SDL 1.2.x Development Library: [http://www.libsdl.org/download-1.2.php](http://www.libsdl.org/download-1.2.php)
+- GLEW Library: [http://glew.sourceforge.net/](http://glew.sourceforge.net/)
+
+SDL is used for the cross-platform low level access to audio, keyboard, mouse
+and 3D hardware.
+GLEW is the OpenGL Extension Wrangler Library and is used to access OpenGL
+extensions.
 
 Compile Lynx on Windows
 =======================
@@ -95,3 +107,12 @@ helper program.  kdcompile reads the .obj file and writes a Lynx compatible
 
 > kdcompile mylevel.obj mylevel.lbsp
 
+If you have a lightmap available, you need to place the same geometry in a
+lightmap.obj file, but with lightmap texture coordinates.
+The lightmap itself is stored in the *lightmap.jpg* texture.
+
+Currently I am using the *gile[s]* radiosity lightmapper
+to create lightmaps.
+Link: [http://www.frecle.net/index.php?show=giles.about](http://www.frecle.net/index.php?show=giles.about)
+
+[1]: http://www.zwiener.org/pics/lynx3d/lynx_md5.png
