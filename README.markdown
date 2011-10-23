@@ -19,7 +19,8 @@ If zombies won't convince you, there are some other features:
 - Dedicated server mode
 - Did I mention zombies?
 
-![lynx][1]
+![lynxmd5][1]
+![lynxmenu][2]
 
 Dependencies
 ============
@@ -116,3 +117,5 @@ to create lightmaps.
 Link: [http://www.frecle.net/index.php?show=giles.about](http://www.frecle.net/index.php?show=giles.about)
 
 [1]: http://www.zwiener.org/pics/lynx3d/lynx_md5.png
+[2]: http://www.zwiener.org/pics/lynx3d/lynx_m.png
+
