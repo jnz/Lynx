@@ -211,9 +211,9 @@ int main(int argc, char** argv)
         // Draw GL buffer
         SDL_GL_SwapBuffers();
 
-        // Limit to 60 fps
+        // Limit to 100 fps
         // so my notebook fan is quiet :-)
-        const float dtrest = 1.0f/60.0f - dt;
+        const float dtrest = 1.0f/100.0f - dt;
         if(dtrest > 0.0f)
             SDL_Delay((uint32_t)(dtrest * 1000.0f));
 
