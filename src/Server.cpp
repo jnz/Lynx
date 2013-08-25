@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "NetMsg.h"
 #include "Server.h"
 #include "ServerClient.h"

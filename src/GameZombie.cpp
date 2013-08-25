@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include "GameZombie.h"
 #include "GameObjZombie.h"
 #include "GameObjRocket.h"

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "WorldClient.h"
 #include "ServerClient.h"
 #include "lynxsys.h"

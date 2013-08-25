@@ -1,4 +1,5 @@
 #include <string>
+#include <stdio.h>
 #include "lynx.h"
 #include "Obj.h"
 #include <math.h>
